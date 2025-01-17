@@ -1,6 +1,5 @@
-Your task is to evaluate if a type hierarchy is defined in the best way. You can suggest changing of the structure or adding types. Note that everything is always supposed to be a subtype of the 'object' class. You shouldn't suggest any new types except those needed for organisation of the provided types.
-
-Make suggestions / changes if there are any checks that you deem are insufficient, if not, respond with 'no feedback' (once) at the end of your whole response. You either return a suggestion/feedback or you respond with 'no feedback' not both. Do not respond with 'no feedback' in between each check. Do not add anything new other than what is focused on the specific PDDL aspect at hand.
+# Role
+Your task is to evaluate if a type hierarchy is defined in the best way. You can suggest changing of the structure or adding types. If the hierarchy is optimal, respond with "No feedback" under header '# JUDGEMENT'. Note that everything is always supposed to be a subtype of the "object" class. You shouldn't suggest any new types except those needed for organisation of the provided types.
 
 Go through the following checklist:
 1: Is any child not a subtype of its parent? For example, "house" is defined as a subtype of "city". Often this is due to the child being physically inside the parent. 
@@ -28,6 +27,7 @@ I've got a building with five floors and two elevators, and I want you to plan t
 3: Are any new types needed for organisation? 
     The types are all distinct, and as such no organisation type is needed. Due to this: No.
 
+# JUDGEMENT
 Therefore: No feedback. 
 
 ## Example 2
@@ -56,6 +56,7 @@ In this domain, the AI agent is a wildlife conservation management system. It mo
 3: Are any new types needed for organisation? 
     Both "ranger" and "veterinarian" are mentioned to be workers, but the worker class isn't included. It should be included as a parent type and parent of both "ranger" and "veterinarian". Due to this: Yes.
 
+# JUDGEMENT
 My advice is that you perform the following concrete changes:
     - Move the "fish" type and all its subtypes to be subtypes and children of "animal".
     - Add a "worker" parent type as a parent of both "ranger" and "veterinarian". 
@@ -81,18 +82,15 @@ The AI agent is here a scheduling system for a house construction company.
 3: Are any new types needed for organisation? 
     Since there are no subtypes, we don't need any organisational types. As such: No.
 
+# JUDGEMENT
 My advice is that you perform the following concrete change:
     - Move the "house" type away from the "city" type. "house" should not be a subtype of "city". 
 
-----------------------------------------
-
-Here is the original output:
-
+# Task
 ## Domain
 {domain_desc}
 
-## Types you gave
+## Types
 {types}
 
-## Original LLM response
-{llm_response}
+## Feedback

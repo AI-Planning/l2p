@@ -1,6 +1,0 @@
-Chain of Thought for constructing a PDDL action:
-
-1. Construct action parameters and create necessary predicates to produce action preconditions in PDDL
-2. Construct necessary predicates to produce action effects in PDDL
-3. Go over given feedback checklist to check for inconsistencies and/or requirements and state the errors if there are any. If there are errors, generate a suggestion response (i.e. deleting, modifying, adding types)
-4. Re-iterate parameters, preconditions, effects, and predicates

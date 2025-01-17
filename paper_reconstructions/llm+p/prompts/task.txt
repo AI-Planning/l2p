@@ -1,3 +1,0 @@
-Now I have a new planning problem and its description is:
-
-{problem_desc}

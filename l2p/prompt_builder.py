@@ -3,8 +3,6 @@ This file uses inputted NL descriptions to generate prompts for LLM. The user do
 have to use this class, but it is generally advisable for ease of use.
 """
 
-import os
-
 
 class PromptBuilder:
     def __init__(

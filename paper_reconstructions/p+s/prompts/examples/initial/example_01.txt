@@ -1,0 +1,14 @@
+;The phone rests on the table.
+;The plate is on the phone.
+;The notebook is on the plate.
+;The textbook is on the notebook.
+;There is nothing on the textbook.
+
+### INITIAL
+```
+(ontable phone)
+(on plate phone)
+(on notebook plate)
+(on textbook notebook)
+(clear textbook)
+```

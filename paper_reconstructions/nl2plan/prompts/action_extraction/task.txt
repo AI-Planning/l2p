@@ -1,5 +1,8 @@
+These are all the actions needed for the domain. 
+
+# Task
+## Domain
 {domain_desc}
 
+## Types 
 {types}
-
-{nl_actions}

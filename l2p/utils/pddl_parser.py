@@ -2,10 +2,31 @@
 This file contains collection of functions for extracting/parsing information from LLM output
 """
 
+from pddl.formatter import domain_to_string, problem_to_string
+from pddl import parse_domain, parse_problem
 from .pddl_types import Action, Predicate
 from collections import OrderedDict
 from copy import deepcopy
-import re, ast, json
+import re, ast, json, sys, os
+
+
+def load_file(file_path: str):
+    _, ext = os.path.splitext(file_path)
+    with open(file_path, "r") as file:
+        if ext == ".json":
+            return json.load(file)
+        else:
+            return file.read().strip()
+
+
+def load_files(folder_path: str):
+    file_contents = []
+    for filename in sorted(os.listdir(folder_path)):
+        file_path = os.path.join(folder_path, filename)
+        if os.path.isfile(file_path):
+            with open(file_path, "r") as file:
+                file_contents.append(file.read())
+    return file_contents
 
 
 def parse_params(llm_output):
@@ -16,7 +37,9 @@ def parse_params(llm_output):
     LLM output header should contain '### Parameters' along with structured content.
     """
     params_info = OrderedDict()
-    params_heading = llm_output.split("Parameters")[1].strip().split("###")[0]
+    params_heading = re.split(
+        r"\n#+\s", llm_output.split("Parameters")[1].strip(), maxsplit=1
+    )[0]
     params_str = combine_blocks(params_heading)
     params_raw = []
     for line in params_str.split("\n"):
@@ -189,7 +212,7 @@ def parse_action(llm_response: str, action_name: str) -> Action:
         )
     return {
         "name": action_name,
-        "parameters": parameters,
+        "params": parameters,
         "preconditions": preconditions,
         "effects": effects,
     }
@@ -208,6 +231,7 @@ def parse_objects(llm_response: str) -> dict[str, str]:
 
     objects_head = extract_heading(llm_response, "OBJECTS")
     objects_raw = combine_blocks(objects_head)
+
     objects_clean = clear_comments(
         text=objects_raw, comments=[":", "//", "#", ";", "(", ")"]
     )  # Remove comments
@@ -315,7 +339,7 @@ def prune_types(
                 break
         else:
             for action in actions:
-                if type.split(" ")[0] in action["parameters"].values():
+                if type.split(" ")[0] in action["params"].values():
                     used_types[type] = types[type]
                     break
                 if (
@@ -460,3 +484,29 @@ def format_predicates(predicates: list[Predicate]) -> str:
 def indent(string: str, level: int = 2):
     """Indent string helper function to format PDDL domain/task"""
     return "   " * level + string.replace("\n", f"\n{'   ' * level}")
+
+
+def check_parse_domain(file_path: str):
+    """Run PDDL library to check if file is syntactically correct"""
+    try:
+        domain = parse_domain(file_path)
+        pddl_domain = domain_to_string(domain)
+        return pddl_domain
+    except Exception as e:
+        print("------------------")
+        print(f"Error parsing domain: {e}", file=sys.stderr)
+        print("------------------")
+        sys.exit(1)
+
+
+def check_parse_problem(file_path: str):
+    """Run PDDL library to check if file is syntactically correct"""
+    try:
+        problem = parse_problem(file_path)
+        pddl_problem = problem_to_string(problem)
+        return pddl_problem
+    except Exception as e:
+        print("------------------")
+        print(f"Error parsing domain: {e}", file=sys.stderr)
+        print("------------------")
+        sys.exit(1)

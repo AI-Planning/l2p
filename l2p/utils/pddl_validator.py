@@ -8,6 +8,31 @@ from .pddl_types import Predicate
 
 
 class SyntaxValidator:
+    def __init__(self, error_types=None, unsupported_keywords=None):
+
+        # current error types available
+        default_error_types = [
+            "invalid_header",
+            "invalid_keyword_usage",
+            "unsupported_keywords",
+            "invalid_param_types",
+            "invalid_predicate_name",
+            "invalid_predicate_format",
+            "invalid_predicate_usage",
+        ]
+
+        default_unsupported = [
+            "forall",
+            "when",
+            "exists",
+            "implies",
+        ]  # current unsupported usage of PDDL
+        self.error_types = default_error_types if error_types is None else error_types
+        self.unsupported_keywords = (
+            default_unsupported
+            if unsupported_keywords is None
+            else unsupported_keywords
+        )
 
     # PARAMETER CHECKS
 
@@ -296,6 +321,7 @@ class SyntaxValidator:
             obj_type_found = False
 
             for type_key in types.keys():
+
                 current_type, parent_type = type_key.split(" - ")
 
                 # checks if obj_type is found in types

@@ -1,17 +1,17 @@
-## Domain
+## Domain 
 {domain_desc}
 
-## Available types
+## Types
 {types}
 
-## Future actions to be implemented later
+## Future Actions
+The following actions will be defined later and together they make up the entire domain:
 {action_list}
 
-## Action name
+## Action
 {action_name}
 
-## Action description
 {action_desc}
 
-## Available predicates
+### Available Predicates
 {predicates}

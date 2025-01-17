@@ -1,5 +1,6 @@
 ## Domain
 {domain_desc}
 
-## Types to use
+## Types
+The types are:
 {types}

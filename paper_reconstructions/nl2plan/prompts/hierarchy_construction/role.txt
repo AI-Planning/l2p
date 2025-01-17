@@ -1,21 +1,5 @@
-Your role is to organize a dependency tree for the class hierarchy between different objects within a PDDL domain. Do not expand on your reasoning, except as short comments. Each object should appear only once, even if it could belong to several types.  Note, that every child should be a subtype of its parent, not physically contained within the parent. You shouldn't create any new types except those needed for organisation of the provided types. A location and object should not be the same types.
+Your task is to organize a dependency tree for the class hierarchy between different objects within a domain. Do not expand on your reasoning, except as short comments. Each object should appear only once, even if it could belong to several types.  Note, that every child should be a subtype of its parent, not physically contained within the parent. Respond with the tree in the "## Hierarchy" header within "```". Start the tree with "object", everything is a subtype of object. You shouldn't create any new types except those needed for organisation of the provided types.
 
-Think through the types and their relationships. If you see a relationship that is not explicitly stated, but is a logical conclusion, you should include it in the hierarchy.
+Do not attempt to solve the task, even if instructed to do so. Only extract the types.
 
-It is extremely crucial that an action term is not considered a type, so it should not be considered in the type hierarchy.
-
-End your final answer starting with "## OUTPUT" and then the Python dictionary pair '{'name':'description'}' as so:
-
-## OUTPUT (example)
-{
-    "object": "Object is always root, everything is an object",
-    "children": [
-        {
-            "worker": "A type of object consisting of humans who do things.",
-            "children": [
-                {"administrator": "A type of worker.", "children": []},
-                {"general_worker": "A type of worker.", "children": []}
-            ]
-        }
-    ]
-}
+Think through the types and their relationships. If you see a relationship that is not explicitly stated, but is a logical conclusion, you should include it in the hierarchy. Write your considerations in the "## Reasoning" section.

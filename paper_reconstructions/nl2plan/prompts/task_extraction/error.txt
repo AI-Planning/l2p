@@ -1,0 +1,7 @@
+## Error
+There was a at least one error during {task}. Address the following errors and regenerate your entire response:
+{error_msg}
+
+Regenerate an entire response correcting the above error. Make sure to use the exact same headers as requested before, but start with a "## Response" header to analyze the error.
+
+## Response

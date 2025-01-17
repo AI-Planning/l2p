@@ -1,4 +1,12 @@
-import subprocess, os, re
+"""
+L2P comes pre-packaged with FastDownward: https://www.fast-downward.org 
+
+For usage, users must clone or download the submodule /downward separately and direct the 
+`planner_path` to the folder. This module is not necessary to use L2P, but for ease of use
+to produce plans from generated domain and problem PDDL specifications via LLMs.
+"""
+
+import subprocess, re
 
 # Define the exit codes
 SUCCESS = 0
@@ -28,13 +36,29 @@ DRIVER_UNSUPPORTED = 37
 
 class FastDownward:
 
-    def run_fast_downward(self, domain_file, problem_file, plan_file="sas_plan"):
-        try:
-            downward_path = "downward/fast-downward.py"
+    def __init__(self, planner_path: str):
+        self.planner_path = planner_path  # directory of FastDownward planner
 
-            # lmcut() = landmark-cut heuristic - refer to: https://www.fast-downward.org/PlannerUsage
+    def run_fast_downward(
+        self, domain_file: str, problem_file: str, search_alg: str = "lama-first"
+    ):
+        """
+        Main function to run planner.
+
+        Args:
+            - domain_file (str): PDDL domain file path
+            - problem_file (str): PDDL problem file path
+            - search_alg (str): search algorithm/heuristic to use
+                + refer to: https://www.fast-downward.org/PlannerUsage
+
+        Returns:
+            - success (bool): if a plan was found, otherwise False for incomplete.
+            - plan_output (str): plan output information.
+
+        """
+        try:
             result = subprocess.run(
-                [downward_path, "--alias", "lama-first", domain_file, problem_file],
+                [self.planner_path, "--alias", search_alg, domain_file, problem_file],
                 capture_output=True,
                 text=True,
             )
@@ -43,8 +67,6 @@ class FastDownward:
 
             if result.returncode == SUCCESS:
                 # Planning succeeded
-                with open(plan_file, "w") as f:
-                    f.write(result.stdout)
                 print("Planning succeeded!")
                 print(
                     "All run components successfully terminated (translator: completed, search: found a plan, validate: validated a plan)"

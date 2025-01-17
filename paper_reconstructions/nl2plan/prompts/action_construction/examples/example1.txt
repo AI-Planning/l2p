@@ -1,0 +1,163 @@
+## Domain
+The AI agent is here a scheduling system for a house construction company with administrators who can create orders, workers who perform them and vehicles to transport workers.
+
+Currently, there are a couple of trucks at the Chicago depot and we're trying to build three houses in the area. Jamie is the only administrator, but we've got Emma and Bob available for general work. 
+
+## Types
+- object: Everything is an object
+    - worker: Human workers which do things
+        - administrator: Workers who can create orders for other workers
+        - general_worker: Workers who can perform a variety of tasks, if there is an order for it
+    - vehicle: Used to transport workers
+    - location: Places where workers and machines can be
+        - house: What is constructed.
+
+## Action
+drive
+
+A vehicle drives from a location to another. Requires that the vehicle is at the starting location and that the two locations are connected. Example: truck1 drives from loc1 to house1.
+
+### Available Predicates
+No predicate has been defined yet
+
+### Action Parameters
+Well, first we need to know which vehicle is travelling.
+```
+- ?v - vehicle: The vehicle travelling
+```
+
+Then, we need to know where it's travelling to and from. Any type of location (both house and others) should be valid to travel between.
+```
+- ?from - location: The location travelling from
+- ?to - location: The location travelling to
+```
+
+### Action Preconditions
+To be able to drive from ?from to ?to it's specified that:
+    1: The truck has to be at the starting location.
+    2: The two locations have to be connected.
+
+For this we'll need two predicates:
+ - "at" to define where something is. This should probably work for both vehicles and all workers, so let's define it as "(at ?o - object ?l - location)".
+ - "connected" to define if two locations are connected. This would entail that we can travel between the locations with a vehicle "(connected ?l1 - location ?l2 - location) 
+
+Furthermore, we can assume that the two locations have to be different:
+    3: The locations are different
+
+For this we can use the existing PDDL predicate "=".
+
+Let's specify this in PDDL:
+```
+(and ; All these have to hold
+    (at ?v ?from) ; The vehicle is at the starting location
+    (connected ?to ?from) ; ?to and ?from are connected by a road
+    (not (= ?to ?from)) ; The locations are different
+)
+```
+
+### Action Effects
+So, what happens when the action is performed?
+ - The vehicle is no longer at ?from.
+ - The vehicle is now at ?to.
+
+This doesn't need any new predicates. 
+
+Let's write the PDDL:
+```
+(and
+    (not (at ?v ?from)) ; ?v is no longer at ?from
+    (at ?v ?to) ; ?v is now instead at ?to
+)
+```
+
+### New Predicates
+We used several new predicates. Those have to be specified formally here.
+
+The first predicate we created is "at" which shows where something is. To make it compatible for both vehicles and workers, we use the general object type.
+```
+- (at ?o - object ?l - location): true if the object ?o (a vehicle or a worker) is at the location ?l
+```
+
+The next we added is the "connected" predicate which indicates that a road exists between two locations.
+```
+- (connected ?l1 - location ?l2 - location): true if a road exists between ?l1 and ?l2 allowing vehicle travel between them.
+``` 
+
+## Error
+There was an issue with or feedback for generating the specified action. Correct the following error and regenerate the action, using the exact same headers. Remember that you MUST reuse all the headers ("Action Parameters", "Action Preconditions", "Action Effects" and "New Predicates")
+
+1: Are any necessary precondition checks forgotten?
+    The action explicitly states that the vehicle has to be at the starting location and that the two locations have to be connected. Both of these are checked. Thereby: No. 
+
+2: Are any non-necessary preconditions checked?
+    The precondition schecked is needed, though connected should be used symmetrically (see below). Hence: No.
+
+3: Are any necessary effects forgotten?
+    The effects don't model the fuel usage of the car. This should be done. So: Yes.
+
+4: Are any non-necessary effects included?
+    The effects are correct. Therefore: No.
+
+5: Are the used predicates unclear or can be improved?
+    With the exception of the symmetrical use of "connected", which is detailed below, it's clear. So: No.
+
+6: Should any predicate be used symmetrically and isn't?
+    Since roads are undirected, we need to check if there is a road from ?from to ?to or vice versa. Not doing so creates brittle PDDL. As such: Yes.
+
+You should take the following concrete steps:
+    - Add a "has_fuel" predicate to check that the vehicle has fuel. This should be checked before moving and then emptied.
+    - Make sure that both directions are checked for a road by replacing "(connected ?from ?to)" with "(or (connected ?from ?to) (connected ?to ?from))"
+    - This would result in the following precondition:
+        ```
+        (and
+            (at ?v ?from)
+            (or (connected ?from ?to) (connected ?to ?from))
+        )
+        ``` 
+
+Make sure to reply with all four parts of the action: parameters, preconditions, effects and new predicates. You should also add a "### Response" heading to respond to and consider this error.
+
+## Action
+drive
+
+A vehicle drives from a location to another. Requires that the vehicle is at the starting location and that the two locations are connected. Example: truck1 drives from loc1 to house1.
+
+### Available Predicates
+No predicate has been defined yet
+
+### Response
+Tracking fuel would maybe be more realistic, but nothing in the domain description hints that this is needed for the current problem. As such, to simplify the domain we ignore this advice.
+
+However, the suggestion to check "connected" both ways is great. Let's update this.
+
+### Action Parameters
+Okay, so we'll need the same parameters as last time, but we still need to clearly specify them again:
+```
+- ?v - vehicle: The vehicle travelling
+- ?from - location: The location travelling from
+- ?to - location: The location travelling to
+```
+
+### Action Preconditions
+Now, we'll make the change to check both directions of the "connected" predicate as to create more robust PDDL.
+```
+(and
+    (at ?v ?from) ; The vehicle is at the starting location
+    (or (connected ?from ?to) (connected ?to ?from)) ; A road exists between the locations
+)
+```
+
+### Action Effects
+These are the exact same as above, but they need to be reiterated:
+```
+(and
+    (not (at ?v ?from)) ; ?v is no longer at ?from
+    (at ?v ?to) ; ?v is now instead at ?to
+)
+```
+
+### New Predicates
+```
+- (at ?o - object ?l - location): true if the object ?o (a vehicle or a worker) is at the location ?l
+- (connected ?l1 - location ?l2 - location): true if a road exists between ?l1 and ?l2 allowing vehicle travel between them.
+``` 

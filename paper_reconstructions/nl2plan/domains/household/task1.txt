@@ -1,0 +1,23 @@
+Please toggle lamp_1 on and humidifier_1 off starting from the following state:
+
+- drawer_1 is opened
+- drawer_2 is opened
+- fridge_1 is opened
+- cabinet_1 is not opened
+- cabinet_2 is opened
+- cup_1 in/on cabinet_2
+- plate_1 in/on drawer_2
+- cutting_board_1 in/on countertop_1
+- cutting_board_1 is pickupable
+- blender_1 in/on dining_table_1
+- blender_1 is not pickupable
+- blender_1 is turned off
+- lamp_1 in/on side_table_1
+- lamp_1 is turned off
+- humidifier_1 in/on side_table_1
+- humidifier_1 is turned on
+- apple_1 in/on cabinet_2
+- book_1 in/on dining_table_1
+- book_2 in/on dining_table_1
+- robot at cabinet_1
+- robot is holding mug_1

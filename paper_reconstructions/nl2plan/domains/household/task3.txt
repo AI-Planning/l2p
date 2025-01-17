@@ -1,0 +1,74 @@
+I want you to heat pizza_1 with pan_2.
+
+The following are the current objects and their state:
+- drawer_1 is opened
+- drawer_2 is not opened
+- drawer_3 is opened
+- drawer_4 is not opened
+- fridge_1 is not opened
+- cabinet_1 is opened
+- cabinet_2 is not opened
+- cabinet_3 is not opened
+- cabinet_4 is opened
+- microwave_1 is not opened
+- carpet_1 is not clean
+- carpet_2 is not clean
+- dish_washer_1 is opened
+- garbage_can_1 is not opened
+- cup_1 in/on drawer_3
+- bowl_1 in/on dish_washer_1
+- bowl_2 in/on cabinet_4
+- plate_1 in/on dining_table_1
+- plate_2 in/on cabinet_3
+- pan_1 in/on stove_burner_1
+- pan_2 in/on dining_table_1
+- lunch_box_1 in/on fridge_1
+- lunch_box_1 is not opened
+- lunch_box_2 in/on cabinet_3
+- lunch_box_2 is not opened
+- pizza_box_1 in/on cabinet_2
+- pizza_box_1 is not opened
+- cutting_board_1 in/on countertop_2
+- cutting_board_1 is pickupable
+- toaster_1 in/on countertop_2
+- toaster_1 is not pickupable
+- toaster_1 is turned off
+- blender_1 in/on dining_table_1
+- blender_1 is not pickupable
+- blender_1 is turned off
+- lamp_1 in/on side_table_2
+- lamp_1 is turned on
+- lamp_1 is not pickupable
+- humidifier_1 in/on side_table_2
+- humidifier_1 is turned on
+- humidifier_1 is not pickupable
+- apple_1 in/on lunch_box_2
+- apple_1 is not sliced
+- apple_2 in/on drawer_2
+- apple_2 is not sliced
+- pizza_1 in/on pizza_box_1
+- pizza_1 is not pickupable
+- toast_1 in/on lunch_box_1
+- toast_1 is not sliced
+- orange_1 in/on lunch_box_1
+- orange_1 is not sliced
+- orange_2 in/on drawer_1
+- orange_2 is not sliced
+- banana_1 in/on cabinet_3
+- banana_1 is not sliced
+- potato_1 in/on cabinet_1
+- potato_1 is not sliced
+- fork_1 in/on cabinet_4
+- spoon_1 in/on drawer_4
+- knife_1 in/on cabinet_2
+- book_1 in/on dining_table_1
+- book_2 in/on side_table_2
+- book_3 in/on side_table_2
+- book_4 in/on side_table_1
+- book_5 in/on side_table_1
+- cloth_1 in/on cabinet_3
+- cloth_1 is clean
+- handheld_vacuum_1 in/on shelf_1
+- handheld_vacuum_1 has an empty dust bin
+- robot at drawer_1
+- robot is holding mug_1

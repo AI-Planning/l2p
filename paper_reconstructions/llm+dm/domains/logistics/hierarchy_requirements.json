@@ -1,0 +1,19 @@
+{
+    "hierarchy": {
+    "object": "",
+    "children": [
+        {"truck": "", "children":[]},
+        {"plane": "", "children":[]},
+        {"package": "", "children":[]},
+        {"city": "", "children":[]},
+        {"location": "", "children":[]}
+    ]
+    },
+    "requirements": [
+      "typing",
+      "negative-preconditions",
+      "disjunctive-preconditions",
+      "conditional-effects",
+      "equality"
+    ]
+  }

@@ -1,0 +1,6 @@
+;The accordion rests on the table.
+;The newspaper is on the accordion.
+;The saucepan is on the newspaper.
+;There is nothing on the saucepan.
+;The peacoat rests on the table.
+;There is nothing on the peacoat.

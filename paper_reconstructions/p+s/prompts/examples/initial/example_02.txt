@@ -1,0 +1,16 @@
+;The newspaper rests on the table.
+;The plate is on the newspaper.
+;There is nothing on the plate.
+;The tissue box rests on the table.
+;The textbook is on the tissue box.
+;There is nothing on the textbook.
+
+### INITIAL
+```
+(ontable newspaper)
+(on plate newspaper)
+(clear plate)
+(ontable tissue-box)
+(on textbook tissue-box)
+(clear textbook)
+```

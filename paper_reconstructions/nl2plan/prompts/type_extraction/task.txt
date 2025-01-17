@@ -1,3 +1,2 @@
+## Domain
 {domain_desc}
-
-{types}

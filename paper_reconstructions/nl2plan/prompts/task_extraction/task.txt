@@ -1,8 +1,12 @@
 ## Types
+```
 {types}
+```
 
 ## Predicates
+```
 {predicates}
+```
 
-## Problem description
+## Problem
 {problem_desc}

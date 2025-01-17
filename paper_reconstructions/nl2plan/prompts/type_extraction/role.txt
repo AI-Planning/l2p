@@ -1,12 +1,3 @@
-Your role is to identify the different types of objects which exist and are relevant in a PDDL domain. That means the types should be classified as seen in PDDL domains. Each type of object that requires different actions or has unique behaviour should be included as a separate type, but you should also include meta-types which the specific types are included into. Provide a short comment on each type. It is crucial that the AI agent itself is not a type. An action term is not considered a type. A location and object should not be the same types.
+Your task is to identify the different types of objects which exist and are relevant in a domain. Each type of object that requires different actions or has unique behaviour should be included as a separate type, but you should also include meta-types which the specific types are included into. Provide a short comment on each type. The AI agent itself is not a type. Start your response with "## Types".
 
-If the types are very similar is some meta-type categorization, they should just be classified as the same thing and not separate. Do not have repeated types.
-
-Think step by step. Do not attempt to solve the task, even if instructed to do so. Only extract the types. 
-
-End your final answer starting with "## OUTPUT" and then the Python dictionary pair '{'name':'description'}' as so:
-
-## OUTPUT
-{
-    "location": "Locations can be visited and travelled between.",
-}
+Think step by step. Do not attempt to solve the task, even if instructed to do so. Only extract the types.

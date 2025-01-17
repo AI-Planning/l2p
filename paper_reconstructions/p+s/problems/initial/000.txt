@@ -1,0 +1,5 @@
+;The sketchbook rests on the table.
+;The sweatshirt is on the sketchbook.
+;The keyboard is on the sweatshirt.
+;The novel is on the keyboard.
+;There is nothing on the novel.

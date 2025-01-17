@@ -1,0 +1,8 @@
+move hoist0 depot48-1-1 depot48-2-1 (1)
+go-out hoist0 depot48-2-1 loadarea (1)
+lift hoist0 crate0 container-0-0 loadarea container0 (1)
+go-in hoist0 loadarea depot48-2-1 (1)
+drop hoist0 crate0 depot48-1-1 depot48-2-1 depot48 (1)
+go-out hoist0 depot48-2-1 loadarea (1)
+lift hoist0 crate1 container-0-1 loadarea container0 (1)
+drop hoist0 crate1 depot48-2-1 loadarea depot48 (1)

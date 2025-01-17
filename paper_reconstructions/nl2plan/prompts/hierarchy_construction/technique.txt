@@ -1,7 +1,0 @@
-Chain of Thought for organizing types:
-
-1. Compare the relationships of each type descriptions with the rest of the types in the list dictionary. If they are tightly close (i.e. belong in same category), but are not sub classes of each other, add them to their parent class. If there are no meta-type class for those relationships, create one.
-2. Assemble a hierarchy with the formed relationships in the previous step
-3. Go over given feedback checklist to check for inconsistencies and/or requirements and state the errors if there are any
-4. If there are errors, generate a suggestion response (i.e. deleting, modifying, adding types)
-5. Re-iterate over the type hierarchy and convert it to a nested Python dictionary format with the type-description as key-value pairing. Keep the types the same if they do not need to be modified.

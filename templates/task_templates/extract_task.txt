@@ -1,4 +1,4 @@
-End your final answer starting with headers (in order) "### OBJECTS" "### INITIAL" and "### GOAL" containg respective content with ''' ''' comment blocks in PDDL as so:
+End your final answer starting with headers (in order) "### OBJECTS" (with no brackets) "### INITIAL" and "### GOAL" containg respective content with ''' ''' comment blocks in PDDL as so:
 
 ### OBJECTS
 ```
@@ -21,4 +21,4 @@ object3 - type_1
 )
 ```
 
-Even if there is one goal state, it must contain the PDDL 'and' syntax
+Even if there is one goal state, it must contain the PDDL 'and' syntax. Each object must be declared separately with their type and not grouped - even if objects share the same type.

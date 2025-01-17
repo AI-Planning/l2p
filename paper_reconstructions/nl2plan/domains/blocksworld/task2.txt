@@ -1,0 +1,1 @@
+There are four blocks in two piles. The first has blue on red and the second has green on yellow. I want a single stack ordered (lowest first): red, green, blue, yellow.

@@ -1,0 +1,306 @@
+STEP ONE: TYPE EXTRACTION
+
+{'vehicle': 'The object on which the tyre replacement is being performed. It has hubs and tyres.', 'hub': 'Part of the vehicle where the tyre is mounted. Each hub has one nut.', 'tyre': 'A meta-type for flat and spare tyres.', 'flat_tyre': 'The tyre that is currently flat and needs to be removed.', 'spare_tyre': 'The replacement tyre that will be installed.', 'tool': 'A meta-type for tools used to perform the tyre replacement.', 'wrench': 'A tool used to undo and do up the nuts on the hub.', 'jack': 'A tool used to lift the vehicle to remove and replace the tyre.', 'pump': 'A tool used to inflate the spare tyre if necessary.'}
+
+--------------------
+STEP TWO: HIERARCHY CONSTRUCTION
+
+{'object': 'Object is always root, everything is an object', 'children': [{'vehicle': 'The object on which the tyre replacement is being performed.', 'children': [{'hub': 'Part of the vehicle where the tyre is mounted.', 'children': []}]}, {'tyre': 'A meta-type for tyres.', 'children': [{'flat_tyre': 'The tyre that is currently flat and needs to be removed.', 'children': []}, {'spare_tyre': 'The replacement tyre that will be installed.', 'children': []}]}, {'tool': 'A meta-type for tools used to perform the tyre replacement.', 'children': [{'wrench': 'A tool used to undo and do up the nuts on the hub.', 'children': []}, {'jack': 'A tool used to lift the vehicle to remove and replace the tyre.', 'children': []}, {'pump': 'A tool used to inflate the spare tyre if necessary.', 'children': []}]}]}
+
+--------------------
+STEP THREE: ACTION EXTRACTION
+
+{'fetch_tool': 'The robot fetches a tool from the boot of the vehicle. Example: The robot fetches the wrench from the boot.', 'undo_nut': 'The robot uses the wrench to undo the nut on the hub. Requires the wrench to be in possession of the robot and the hub to be accessible. Example: The robot undoes the nut on hub_1.', 'jack_up_vehicle': 'The robot uses the jack to lift the vehicle. Requires the jack to be in possession of the robot and the vehicle to be in a stable position. Example: The robot jacks up the vehicle.', 'remove_flat_tyre': 'The robot removes the flat tyre from the hub. Requires the nut to be undone and the vehicle to be jacked up. Example: The robot removes the flat tyre from hub_1.', 'install_spare_tyre': 'The robot installs the spare tyre onto the hub. Requires the flat tyre to be removed and the spare tyre to be available. Example: The robot installs the spare tyre on hub_1.', 'do_up_nut': 'The robot uses the wrench to do up the nut on the hub. Requires the spare tyre to be installed and the wrench to be in possession of the robot. Example: The robot does up the nut on hub_1.', 'lower_vehicle': 'The robot uses the jack to lower the vehicle back to the ground. Requires the vehicle to be jacked up. Example: The robot lowers the vehicle.', 'inflate_tyre': 'The robot uses the pump to inflate the spare tyre if necessary. Requires the pump to be in possession of the robot and the spare tyre to be installed. Example: The robot inflates the spare tyre on hub_1.'}
+
+--------------------
+STEP FOUR: ACTION CONSTRUCTION
+
+ACTIONS:
+{'name': 'fetch_tool', 'params': OrderedDict([('?r', 'object'), ('?t', 'tool'), ('?v', 'vehicle')]), 'preconditions': '(and\n    (is_robot ?r) ; The object ?r is a robot\n    (at_vehicle ?r ?v) ; The robot is at the vehicle\n    (in_boot ?t ?v) ; The tool is in the boot of the vehicle\n)', 'effects': '(and\n    (not (in_boot ?t ?v)) ; The tool is no longer in the boot\n    (has_tool ?r ?t) ; The robot now has the tool\n)'}
+{'name': 'undo_nut', 'params': OrderedDict([('?r', 'object'), ('?w', 'wrench'), ('?h', 'hub')]), 'preconditions': '(and\n    (is_robot ?r) ; The object is a robot\n    (has_tool ?r ?w) ; The robot has the wrench\n    (accessible_hub ?h) ; The hub is accessible\n)', 'effects': '(and\n    (nut_undone ?h) ; The nut on the hub is now undone\n)'}
+{'name': 'jack_up_vehicle', 'params': OrderedDict([('?r', 'object'), ('?j', 'jack'), ('?v', 'vehicle')]), 'preconditions': '(and\n    (has_tool ?r ?j) ; The robot has the jack\n    (at_vehicle ?r ?v) ; The robot is at the vehicle\n    (stable_position ?v) ; The vehicle is in a stable position\n)', 'effects': '(and\n    (not (stable_position ?v)) ; The vehicle is no longer in a stable position\n    (jacked_up ?v) ; The vehicle is now jacked up\n)'}
+{'name': 'remove_flat_tyre', 'params': OrderedDict([('?r', 'object'), ('?h', 'hub'), ('?ft', 'flat_tyre'), ('?v', 'vehicle')]), 'preconditions': '(and\n    (nut_undone ?h) ; The nut on the hub is undone\n    (jacked_up ?v) ; The vehicle is jacked up\n    (accessible_hub ?h) ; The hub is accessible\n    (at_vehicle ?r ?v) ; The robot is at the vehicle\n)', 'effects': '(and\n    (not (on_hub ?ft ?h)) ; The flat tyre is no longer on the hub\n    (available_for_disposal ?ft) ; The flat tyre is available for disposal\n)'}
+{'name': 'install_spare_tyre', 'params': OrderedDict([('?r', 'object'), ('?s', 'spare_tyre'), ('?h', 'hub'), ('?f', 'flat_tyre')]), 'preconditions': '(and\n    (not (on_hub ?f ?h)) ; The flat tyre is not on the hub\n    (available ?s) ; The spare tyre is available for installation\n)', 'effects': '(and\n    (on_hub ?s ?h) ; The spare tyre is now on the hub\n    (not (available ?s)) ; The spare tyre is no longer available for handling\n)'}
+{'name': 'do_up_nut', 'params': OrderedDict([('?r', 'object'), ('?w', 'wrench'), ('?h', 'hub'), ('?s', 'spare_tyre'), ('?v', 'vehicle')]), 'preconditions': '(and\n    (is_robot ?r) ; The object is a robot\n    (has_tool ?r ?w) ; The robot has the wrench\n    (on_hub ?s ?h) ; The spare tyre is installed on the hub\n    (accessible_hub ?h) ; The hub is accessible\n    (stable_position ?v) ; The vehicle is in a stable position\n)', 'effects': '(and\n    (not (nut_undone ?h)) ; The nut is no longer undone\n    (nut_done_up ?h) ; The nut is done up on the hub\n)'}
+{'name': 'lower_vehicle', 'params': OrderedDict([('?r', 'object'), ('?j', 'jack'), ('?v', 'vehicle')]), 'preconditions': '(and\n    (jacked_up ?v) ; The vehicle is currently jacked up\n    (has_tool ?r ?j) ; The robot has the jack in its possession\n)', 'effects': '(and\n    (not (jacked_up ?v)) ; The vehicle is no longer jacked up\n    (stable_position ?v) ; The vehicle is now in a stable position\n)'}
+{'name': 'inflate_tyre', 'params': OrderedDict([('?r', 'object'), ('?p', 'pump'), ('?t', 'spare_tyre'), ('?h', 'hub')]), 'preconditions': '(and\n    (has_tool ?r ?p) ; The robot has the pump\n    (on_hub ?t ?h) ; The spare tyre is installed on the hub\n)', 'effects': '(and\n    (inflated ?t) ; The spare tyre is now inflated\n)'}
+
+PREDICATES:
+{'name': 'is_robot', 'desc': 'true if the object ?r is a robot', 'raw': '(is_robot ?r - object): true if the object ?r is a robot', 'params': OrderedDict([('?r', 'object')]), 'clean': '(is_robot ?r - object): true if the object ?r is a robot'}
+{'name': 'in_boot', 'desc': 'true if the tool ?t is in the boot of the vehicle ?v', 'raw': '(in_boot ?t - tool ?v - vehicle): true if the tool ?t is in the boot of the vehicle ?v', 'params': OrderedDict([('?t', 'tool'), ('?v', 'vehicle')]), 'clean': '(in_boot ?t - tool ?v - vehicle): true if the tool ?t is in the boot of the vehicle ?v'}
+{'name': 'at_vehicle', 'desc': 'true if the robot ?r is at the vehicle ?v', 'raw': '(at_vehicle ?r - object ?v - vehicle): true if the robot ?r is at the vehicle ?v', 'params': OrderedDict([('?r', 'object'), ('?v', 'vehicle')]), 'clean': '(at_vehicle ?r - object ?v - vehicle): true if the robot ?r is at the vehicle ?v'}
+{'name': 'has_tool', 'desc': 'true if the robot ?r has the tool ?t', 'raw': '(has_tool ?r - object ?t - tool): true if the robot ?r has the tool ?t', 'params': OrderedDict([('?r', 'object'), ('?t', 'tool')]), 'clean': '(has_tool ?r - object ?t - tool): true if the robot ?r has the tool ?t'}
+{'name': 'accessible_hub', 'desc': 'true if the hub ?h is accessible for the robot to work on', 'raw': '(accessible_hub ?h - hub): true if the hub ?h is accessible for the robot to work on', 'params': OrderedDict([('?h', 'hub')]), 'clean': '(accessible_hub ?h - hub): true if the hub ?h is accessible for the robot to work on'}
+{'name': 'nut_undone', 'desc': 'true if the nut on the hub ?h is undone', 'raw': '(nut_undone ?h - hub): true if the nut on the hub ?h is undone', 'params': OrderedDict([('?h', 'hub')]), 'clean': '(nut_undone ?h - hub): true if the nut on the hub ?h is undone'}
+{'name': 'jacked_up', 'desc': 'true if the vehicle ?v is jacked up', 'raw': '(jacked_up ?v - vehicle): true if the vehicle ?v is jacked up', 'params': OrderedDict([('?v', 'vehicle')]), 'clean': '(jacked_up ?v - vehicle): true if the vehicle ?v is jacked up'}
+{'name': 'stable_position', 'desc': 'true if the vehicle ?v is in a stable position', 'raw': '(stable_position ?v - vehicle): true if the vehicle ?v is in a stable position', 'params': OrderedDict([('?v', 'vehicle')]), 'clean': '(stable_position ?v - vehicle): true if the vehicle ?v is in a stable position'}
+{'name': 'on_hub', 'desc': 'true if the tyre ?t is on the hub ?h', 'raw': '(on_hub ?t - tyre ?h - hub): true if the tyre ?t is on the hub ?h', 'params': OrderedDict([('?t', 'tyre'), ('?h', 'hub')]), 'clean': '(on_hub ?t - tyre ?h - hub): true if the tyre ?t is on the hub ?h'}
+{'name': 'available', 'desc': 'true if the tyre ?t is available for handling', 'raw': '(available ?t - tyre): true if the tyre ?t is available for handling', 'params': OrderedDict([('?t', 'tyre')]), 'clean': '(available ?t - tyre): true if the tyre ?t is available for handling'}
+{'name': 'available_for_disposal', 'desc': 'true if the tyre ?t is available for disposal', 'raw': '(available_for_disposal ?t - tyre): true if the tyre ?t is available for disposal', 'params': OrderedDict([('?t', 'tyre')]), 'clean': '(available_for_disposal ?t - tyre): true if the tyre ?t is available for disposal'}
+{'name': 'nut_done_up', 'desc': 'true if the nut on the hub ?h is done up', 'raw': '(nut_done_up ?h - hub): true if the nut on the hub ?h is done up', 'params': OrderedDict([('?h', 'hub')]), 'clean': '(nut_done_up ?h - hub): true if the nut on the hub ?h is done up'}
+{'name': 'inflated', 'desc': 'true if the spare tyre ?t is inflated', 'raw': '(inflated ?t - spare_tyre): true if the spare tyre ?t is inflated', 'params': OrderedDict([('?t', 'spare_tyre')]), 'clean': '(inflated ?t - spare_tyre): true if the spare tyre ?t is inflated'}
+
+--------------------
+STEP FIVE: TASK EXTRACTION
+
+OBJECTS:
+robot1 - object
+vehicle1 - vehicle
+hub1 - hub
+flat_tyre1 - flat_tyre
+spare_tyre1 - spare_tyre
+wrench1 - wrench
+jack1 - jack
+pump1 - pump
+INITIAL STATES:
+(is_robot robot1)
+(at_vehicle robot1 vehicle1)
+(has_tool robot1 wrench1)
+(has_tool robot1 jack1)
+(has_tool robot1 pump1)
+(accessible_hub hub1)
+(nut_undone hub1)
+(jacked_up vehicle1)
+(stable_position vehicle1)
+(on_hub flat_tyre1 hub1)
+(available spare_tyre1)
+GOAL STATES:
+(AND 
+   (available_for_disposal flat_tyre1) 
+   (on_hub spare_tyre1 hub1) 
+   (nut_done_up hub1) 
+   (inflated spare_tyre1) 
+   (stable_position vehicle1) 
+)
+
+
+PDDL DOMAIN:
+(define (domain tyreworld)
+   (:requirements
+      :strips :typing :equality :negative-preconditions :disjunctive-preconditions :universal-preconditions :conditional-effects)
+
+   (:types 
+      vehicle - object
+      hub - vehicle
+      tyre - object
+      flat_tyre - tyre
+      spare_tyre - tyre
+      tool - object
+      wrench - tool
+      jack - tool
+      pump - tool
+   )
+
+   (:predicates 
+      (is_robot ?r - object) ;  true if the object ?r is a robot
+      (in_boot ?t - tool ?v - vehicle) ;  true if the tool ?t is in the boot of the vehicle ?v
+      (at_vehicle ?r - object ?v - vehicle) ;  true if the robot ?r is at the vehicle ?v
+      (has_tool ?r - object ?t - tool) ;  true if the robot ?r has the tool ?t
+      (accessible_hub ?h - hub) ;  true if the hub ?h is accessible for the robot to work on
+      (nut_undone ?h - hub) ;  true if the nut on the hub ?h is undone
+      (jacked_up ?v - vehicle) ;  true if the vehicle ?v is jacked up
+      (stable_position ?v - vehicle) ;  true if the vehicle ?v is in a stable position
+      (on_hub ?t - tyre ?h - hub) ;  true if the tyre ?t is on the hub ?h
+      (available ?t - tyre) ;  true if the tyre ?t is available for handling
+      (available_for_disposal ?t - tyre) ;  true if the tyre ?t is available for disposal
+      (nut_done_up ?h - hub) ;  true if the nut on the hub ?h is done up
+      (inflated ?t - spare_tyre) ;  true if the spare tyre ?t is inflated
+   )
+
+   (:action fetch_tool
+      :parameters (
+         ?r - object
+         ?t - tool
+         ?v - vehicle
+      )
+      :precondition
+         (and
+             (is_robot ?r) ; The object ?r is a robot
+             (at_vehicle ?r ?v) ; The robot is at the vehicle
+             (in_boot ?t ?v) ; The tool is in the boot of the vehicle
+         )
+      :effect
+         (and
+             (not (in_boot ?t ?v)) ; The tool is no longer in the boot
+             (has_tool ?r ?t) ; The robot now has the tool
+         )
+   )
+
+   (:action undo_nut
+      :parameters (
+         ?r - object
+         ?w - wrench
+         ?h - hub
+      )
+      :precondition
+         (and
+             (is_robot ?r) ; The object is a robot
+             (has_tool ?r ?w) ; The robot has the wrench
+             (accessible_hub ?h) ; The hub is accessible
+         )
+      :effect
+         (and
+             (nut_undone ?h) ; The nut on the hub is now undone
+         )
+   )
+
+   (:action jack_up_vehicle
+      :parameters (
+         ?r - object
+         ?j - jack
+         ?v - vehicle
+      )
+      :precondition
+         (and
+             (has_tool ?r ?j) ; The robot has the jack
+             (at_vehicle ?r ?v) ; The robot is at the vehicle
+             (stable_position ?v) ; The vehicle is in a stable position
+         )
+      :effect
+         (and
+             (not (stable_position ?v)) ; The vehicle is no longer in a stable position
+             (jacked_up ?v) ; The vehicle is now jacked up
+         )
+   )
+
+   (:action remove_flat_tyre
+      :parameters (
+         ?r - object
+         ?h - hub
+         ?ft - flat_tyre
+         ?v - vehicle
+      )
+      :precondition
+         (and
+             (nut_undone ?h) ; The nut on the hub is undone
+             (jacked_up ?v) ; The vehicle is jacked up
+             (accessible_hub ?h) ; The hub is accessible
+             (at_vehicle ?r ?v) ; The robot is at the vehicle
+         )
+      :effect
+         (and
+             (not (on_hub ?ft ?h)) ; The flat tyre is no longer on the hub
+             (available_for_disposal ?ft) ; The flat tyre is available for disposal
+         )
+   )
+
+   (:action install_spare_tyre
+      :parameters (
+         ?r - object
+         ?s - spare_tyre
+         ?h - hub
+         ?f - flat_tyre
+      )
+      :precondition
+         (and
+             (not (on_hub ?f ?h)) ; The flat tyre is not on the hub
+             (available ?s) ; The spare tyre is available for installation
+         )
+      :effect
+         (and
+             (on_hub ?s ?h) ; The spare tyre is now on the hub
+             (not (available ?s)) ; The spare tyre is no longer available for handling
+         )
+   )
+
+   (:action do_up_nut
+      :parameters (
+         ?r - object
+         ?w - wrench
+         ?h - hub
+         ?s - spare_tyre
+         ?v - vehicle
+      )
+      :precondition
+         (and
+             (is_robot ?r) ; The object is a robot
+             (has_tool ?r ?w) ; The robot has the wrench
+             (on_hub ?s ?h) ; The spare tyre is installed on the hub
+             (accessible_hub ?h) ; The hub is accessible
+             (stable_position ?v) ; The vehicle is in a stable position
+         )
+      :effect
+         (and
+             (not (nut_undone ?h)) ; The nut is no longer undone
+             (nut_done_up ?h) ; The nut is done up on the hub
+         )
+   )
+
+   (:action lower_vehicle
+      :parameters (
+         ?r - object
+         ?j - jack
+         ?v - vehicle
+      )
+      :precondition
+         (and
+             (jacked_up ?v) ; The vehicle is currently jacked up
+             (has_tool ?r ?j) ; The robot has the jack in its possession
+         )
+      :effect
+         (and
+             (not (jacked_up ?v)) ; The vehicle is no longer jacked up
+             (stable_position ?v) ; The vehicle is now in a stable position
+         )
+   )
+
+   (:action inflate_tyre
+      :parameters (
+         ?r - object
+         ?p - pump
+         ?t - spare_tyre
+         ?h - hub
+      )
+      :precondition
+         (and
+             (has_tool ?r ?p) ; The robot has the pump
+             (on_hub ?t ?h) ; The spare tyre is installed on the hub
+         )
+      :effect
+         (and
+             (inflated ?t) ; The spare tyre is now inflated
+         )
+   )
+)
+
+PDDL PROBLEM:
+(define
+   (problem tyreworld_problem)
+   (:domain tyreworld)
+
+   (:objects 
+      robot1 - object
+      vehicle1 - vehicle
+      hub1 - hub
+      flat_tyre1 - flat_tyre
+      spare_tyre1 - spare_tyre
+      wrench1 - wrench
+      jack1 - jack
+      pump1 - pump
+   )
+
+   (:init
+      (is_robot robot1)
+      (at_vehicle robot1 vehicle1)
+      (has_tool robot1 wrench1)
+      (has_tool robot1 jack1)
+      (has_tool robot1 pump1)
+      (accessible_hub hub1)
+      (nut_undone hub1)
+      (jacked_up vehicle1)
+      (stable_position vehicle1)
+      (on_hub flat_tyre1 hub1)
+      (available spare_tyre1)
+   )
+
+   (:goal
+      (and 
+         (available_for_disposal flat_tyre1) 
+         (on_hub spare_tyre1 hub1) 
+         (nut_done_up hub1) 
+         (inflated spare_tyre1) 
+         (stable_position vehicle1) 
+      )
+   )
+
+)

@@ -1,0 +1,7 @@
+;The raincoat rests on the table.
+;There is nothing on the raincoat.
+;The hacksaw rests on the table.
+;There is nothing on the hacksaw.
+;The saucepan rests on the table.
+;The mouse pad is on the saucepan.
+;There is nothing on the mouse pad.

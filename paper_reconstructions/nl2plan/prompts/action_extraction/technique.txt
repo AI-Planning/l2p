@@ -1,6 +1,0 @@
-Chain of Thought for extracting PDDL actions in natural language:
-
-1. Iterate over each parent type. Within each parent type, elaborate further descrptions of the subtypes and assign possible related actions in domain. Specifically, assign their action names and a short description of what that action does in the format ''' [ACTION] '''.
-2. Go over given feedback checklist to check for inconsistencies and/or requirements and state the errors if there are any
-3. If there are errors, generate a suggestion response (i.e. deleting, modifying, adding actions)
-4. Re-iterate over the actions and put them into a Python dictionary pair '{'action_name':'action_description'}'. Keep the actions the same if they do not need to be modified.

@@ -1,7 +1,7 @@
 # Role
-You are a PDDL expert and will be given a set of PDDL actions to correct and give feedback and advice on. Consider not only if the actions are technically correct, but also whether they are defined following good standards such as flexibility and clarity. Overly specifying types by use of "is-type" predicates should generally be avoided. Remember that the preconditions should make sure that only valid objects are passed to the action, we can't assume anything except the provided types. Don't assume any restrictions beyond those specified by the domain itself.  Don't unnecessarily overcomplicate the actions. Note that creating new options isn't possible. If the action is well defined, respond with "No feedback".
+You are a PDDL expert and will be given a set of PDDL actions to correct and give feedback and advice on. Consider not only if the actions are technically correct, but also whether they are defined following good standards such as flexibility and clarity. Overly specifying types by use of "is-type" predicates should generally be avoided. Remember that the preconditions should make sure that only valid objects are passed to the action, we can't assume anything except the provided types. Don't assume any restrictions beyond those specified by the domain itself.  Don't unnecessarily overcomplicate the actions. Note that creating new options isn't possible. If the action is well defined, respond with "No feedback" under header '# JUDGEMENT'. 
 
-Make suggestions / changes if there are any checks that you deem are insufficient, if not, respond with 'no feedback' (once) at the end of your whole response. You either return a suggestion/feedback or you respond with 'no feedback' not both. Do not respond with 'no feedback' in between each check. Do not add anything new other than what is focused on the specific PDDL aspect at hand.
+IMPORTANT: Duplicate predicates are acceptable and should not be considered as a suggestion/judge to fix.
 
 Use the following checklist:
 1: Are any necessary precondition checks missing? For example, does the action simply assume that two things are at the same location?
@@ -41,6 +41,7 @@ A ranger guards a location from poachers. The ranger has to be at the location. 
 - ?l - location: The location to guard.
 ```
 
+
 #### Action Preconditions
 ```
 (and
@@ -78,6 +79,7 @@ A ranger guards a location from poachers. The ranger has to be at the location. 
 6: Should any predicate be used in a symmetrical manner?
     None of the predicates are symmetrical. Therefore: No.
 
+# JUDGEMENT
 My concrete suggestions are:
     - Remove the check for "(at ?l ?l)" from the preconditions.
     - Remove "(not (at ?r ?l))" from the effect.
@@ -139,7 +141,6 @@ A truck driver from point A to point B. They need to be connected by a road and 
 )
 ```
 
-
 ### Feedback
 1: Are any necessary precondition checks missing?
     The action explicitly states the truck has to be at the starting location, which also makes sense, but this is never checked. Thereby: Yes. 
@@ -159,6 +160,7 @@ A truck driver from point A to point B. They need to be connected by a road and 
 6: Should any predicate be used in a symmetrical manner?
     Since roads are undirected, we need to check if there is a road from ?from to ?to or vice versa. Not doing so creates brittle PDDL. This should always be done under symmetry. As such: Yes.
 
+# JUDGEMENT
 You should take the following concrete steps:
     - Check that the truck is actually at the starting location by adding "(at ?t ?from)" to the precondition.
     - Make sure that both directions are checked for a road by replacing "(road_between ?from ?to)" with "(or (road_between ?from ?to) (road_between ?to ?from))"
@@ -232,16 +234,14 @@ An elevator picks up a person at a floor where they both are. Example: elevator_
 6: Should any predicate be used in a symmetrical manner?
     None of the predicates have symmetries of that sort. The answer is: No. 
 
+# JUDGEMENT
 Therefore: No feedback.
 
-----------------------------------------
-
-Here is the original output:
-
+# Task
 ## Domain
 {domain_desc}
 
-## Available types
+## Available Types
 {types}
 
 ## Available Predicates
@@ -250,21 +250,24 @@ The following are the predicates which could be used:
 
 You can also suggest new predicates to add.
 
-## Action name
+## Action
 {action_name}
 
-### Action Parameters you gave
-{parameters}
+{action_desc}
 
-### Action Preconditions you gave
+### Action Parameters
+```
+{action_params}
+```
+
+### Action Preconditions
 ```
 {action_preconditions}
 ```
 
-### Action Effects you gave
+### Action Effects
 ```
 {action_effects}
 ```
 
-## Original LLM response
-{llm_response}
+### Feedback

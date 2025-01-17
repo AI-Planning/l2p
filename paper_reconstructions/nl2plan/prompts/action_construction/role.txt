@@ -1,31 +1,38 @@
-You are defining the preconditions and effects (represented in PDDL format) of an AI agent's actions. Information about the AI agent will be provided in the domain description. Note that individual conditions in preconditions and effects should be listed separately. For example, "object_1 is washed and heated" should be considered as two separate conditions "object_1 is washed" and "object_1 is heated". Also, in PDDL, two predicates cannot have the same name even if they have different parameters. Each predicate in PDDL must have a unique name, and its parameters must be explicitly defined in the predicate definition. It is recommended to define predicate names in a simple, intuitive and readable way as well as to avoid symmetrical constraints, so (same_room ?b1 - block ?b2 - block2 ?r - room) should instead be modelled with two predicates, (in_room ?b1 - block ?r - room) and (in_room ?b2 - block ?r - room). Note that creating new actions is not an option. Your end response should not contain random words/characters not found in a PDDL file.
+You are defining the preconditions and effects (represented in PDDL format) of an AI agent's actions. Information about the AI agent will be provided in the domain description. Note that individual conditions in preconditions and effects should be listed separately. For example, "object_1 is washed and heated" should be considered as two separate conditions "object_1 is washed" and "object_1 is heated". Also, in PDDL, two predicates cannot have the same name even if they have different parameters. Each predicate in PDDL must have a unique name, and its parameters must be explicitly defined in the predicate definition. It is recommended to define predicate names in a simple, intuitive and readable way as well as to avoid symmetrical constraints, so (same_room ?b1 - block ?b2 - block2 ?r - room) should instead be modelled with two predicates, (in_room ?b1 - block ?r - room) and (in_room ?b2 - block ?r - room). Note that creating new actions is not an option.
 
-No generated types should be of 'object' but their respective types
+Think through your choices and comment on them as you go.
 
-Every action given must be defined. Think through your choices and comment on them as you go. There should not be any unnecessary words in the final output such as "pddl" or "lisp"
+ADL components like 'forall' 'exists' 'when' 'implies' are strictly forbidden. Implementations should only use basic PDDL usage.
 
-End your final answers underneath the headers: '### Action Parameters,' '### Action Preconditions,' '### Action Effects,' and '### New Predicates' with ''' ''' comment blocks in PDDL. Follow the exact example syntax as the following:
+End your final answers underneath the headers: '### Action Parameters,' '### Action Preconditions,' '### Action Effects,' and '### New Predicates' with ''' ''' comment blocks in PDDL. There must be 3 hastags (#) being used `###`. Here is an example:
 
 ### Action Parameters
 ```
-- ?v - vehicle: The vehicle travelling
+- ?t - type: 'parameter_description'
 ```
 
 ### Action Preconditions
 ```
 (and
-    (at ?v ?from) ; The vehicle is at the starting location
+    (predicate_name ?t1 ?t2) ; COMMENT DESCRIPTION
 )
 ```
 
 ### Action Effects
 ```
 (and
-    (not (at ?v ?from)) ; ?v is no longer at ?from
+    (predicate_name ?t1 ?t2) ; COMMENT DESCRIPTION
 )
 ```
 
 ### New Predicates
 ```
-- (at ?o - object ?l - location): true if the object ?o (a vehicle or a worker) is at the location ?l
+- (predicate_name ?t1 - type_1 ?t2 - type_2): 'predicate_description'
+``` 
+
+IMPORTANT: If there are no new predicates created, keep an empty space enclosed ```  ``` with the '### New Predicates' header like so:
+
+### New Predicates
+```
+
 ``` 

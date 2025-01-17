@@ -1,0 +1,357 @@
+STEP ONE: TYPE EXTRACTION
+
+{'robot': 'The household robot that performs tasks and navigates the environment.', 'furniture': 'Large and normally immovable objects that define locations for the robot and small items.', 'appliance': 'Large and normally immovable devices that may require interaction from the robot.', 'small_item': 'Objects like apples, oranges, bowls, lunch boxes, or lamps that the robot can hold or manipulate.', 'flat_surface': 'A surface on furniture where small items can be placed for manipulation.'}
+
+--------------------
+STEP TWO: HIERARCHY CONSTRUCTION
+
+{'object': 'Object is always root, everything is an object', 'children': [{'robot': 'The household robot that performs tasks and navigates the environment.', 'children': []}, {'furniture': 'Large and normally immovable objects that define locations for the robot and small items.', 'children': [{'flat_surface': 'A surface on furniture where small items can be placed for manipulation.', 'children': []}]}, {'appliance': 'Large and normally immovable devices that may require interaction from the robot.', 'children': []}, {'small_item': 'Objects like apples, oranges, bowls, lunch boxes, or lamps that the robot can hold or manipulate.', 'children': []}]}
+
+--------------------
+STEP THREE: ACTION EXTRACTION
+
+{'navigate_to': 'The robot moves from its current location to a specified piece of furniture or appliance. Example: The robot navigates to the kitchen table.', 'pick_up': 'The robot picks up a small item from a flat surface. Requires the robot to be at the location of the item and the gripper to be empty. Example: The robot picks up an apple from the dining table.', 'put_down': 'The robot places a small item it is holding onto a flat surface. Requires the robot to be at the location of the flat surface. Example: The robot puts down an orange on the kitchen counter.', 'open_appliance': "The robot opens an appliance, such as a refrigerator or oven. Requires the robot to be at the location of the appliance and the gripper to be empty. The appliance's state changes to open. Example: The robot opens the refrigerator.", 'close_appliance': "The robot closes an appliance, such as a refrigerator or oven. Requires the robot to be at the location of the appliance and the gripper to be empty. The appliance's state changes to closed. Example: The robot closes the oven.", 'open_drawer': 'The robot opens a drawer on a piece of furniture. Requires the robot to be at the location of the furniture and the gripper to be empty. Example: The robot opens the drawer of the bedside table.', 'close_drawer': 'The robot closes a drawer on a piece of furniture. Requires the robot to be at the location of the furniture and the gripper to be empty. Example: The robot closes the drawer of the desk.', 'turn_on_appliance': 'The robot turns on an appliance, such as a lamp or a fan. Requires the robot to be at the location of the appliance and the appliance to be in a state that allows it to be turned on (e.g., plugged in). Example: The robot turns on the living room lamp.', 'turn_off_appliance': 'The robot turns off an appliance, such as a lamp or a fan. Requires the robot to be at the location of the appliance and the appliance to be in a state that allows it to be turned off. Example: The robot turns off the bedroom fan.', 'check_state': 'The robot checks the state of an appliance or furniture to determine if it is open, closed, on, or off. Example: The robot checks if the refrigerator is open.'}
+
+--------------------
+STEP FOUR: ACTION CONSTRUCTION
+
+ACTIONS:
+{'name': 'navigate_to', 'params': OrderedDict(), 'preconditions': '(and\n    (at ?r ?current_loc) ; The robot is at its current location\n    (or (is_furniture ?loc) (is_appliance ?loc)) ; The target location is either furniture or an appliance\n)', 'effects': '(and\n    (not (at ?r ?current_loc)) ; The robot is no longer at the current location\n    (at ?r ?loc) ; The robot is now at the target location\n)'}
+{'name': 'pick_up', 'params': OrderedDict([('?r', 'robot'), ('?item', 'small_item'), ('?surface', 'flat_surface')]), 'preconditions': "(and\n    (at ?r ?surface) ; The robot is at the location of the flat surface\n    (on ?item ?surface) ; The item is on the flat surface\n    (gripper_empty ?r) ; The robot's gripper is empty\n)", 'effects': "(and\n    (not (on ?item ?surface)) ; The item is no longer on the flat surface\n    (not (gripper_empty ?r)) ; The robot's gripper is no longer empty\n    (holding ?r ?item) ; The robot is now holding the item\n)"}
+{'name': 'put_down', 'params': OrderedDict([('?r', 'robot'), ('?item', 'small_item'), ('?surface', 'flat_surface')]), 'preconditions': '(and\n    (at ?r ?surface) ; The robot is at the location of the flat surface\n    (holding ?r ?item) ; The robot is holding the item\n    (is_furniture ?surface) ; Ensure the surface is a flat surface\n)', 'effects': "(and\n    (on ?item ?surface) ; The item is now on the flat surface\n    (not (holding ?r ?item)) ; The robot is no longer holding the item\n    (gripper_empty ?r) ; The robot's gripper is now empty\n)"}
+{'name': 'open_appliance', 'params': OrderedDict([('?r', 'robot'), ('?a', 'appliance')]), 'preconditions': "(and\n    (at ?r ?a) ; The robot is at the location of the appliance\n    (is_appliance ?a) ; The location is an appliance\n    (gripper_empty ?r) ; The robot's gripper is empty\n    (appliance_closed ?a) ; The appliance is currently closed\n)", 'effects': '(and\n    (not (appliance_closed ?a)) ; The appliance is no longer closed\n    (appliance_open ?a) ; The appliance is now open\n)'}
+{'name': 'close_appliance', 'params': OrderedDict([('?r', 'robot'), ('?a', 'appliance')]), 'preconditions': "(and\n    (at ?r ?a) ; The robot is at the location of the appliance\n    (gripper_empty ?r) ; The robot's gripper is empty\n    (appliance_open ?a) ; The appliance is open\n)", 'effects': '(and\n    (not (appliance_open ?a)) ; The appliance is no longer open\n    (appliance_closed ?a) ; The appliance is now closed\n)'}
+{'name': 'open_drawer', 'params': OrderedDict([('?r', 'robot'), ('?f', 'furniture')]), 'preconditions': "(and\n    (at ?r ?f) ; The robot is at the location of the furniture\n    (gripper_empty ?r) ; The robot's gripper is empty\n    (not (drawer_open ?f)) ; The drawer is not already open\n)", 'effects': '(and\n    (drawer_open ?f) ; The drawer on the furniture is now open\n)'}
+{'name': 'close_drawer', 'params': OrderedDict([('?r', 'robot'), ('?f', 'furniture')]), 'preconditions': "(and\n    (at ?r ?f) ; The robot is at the location of the furniture\n    (gripper_empty ?r) ; The robot's gripper is empty\n    (drawer_open ?f) ; The drawer on the furniture is open\n)", 'effects': '(and\n    (not (drawer_open ?f)) ; The drawer on the furniture is no longer open\n    (drawer_closed ?f) ; The drawer on the furniture is now closed\n)'}
+{'name': 'turn_on_appliance', 'params': OrderedDict([('?r', 'robot'), ('?a', 'appliance')]), 'preconditions': '(and\n    (at ?r ?a) ; The robot is at the location of the appliance\n    (appliance_off ?a) ; The appliance is currently off\n)', 'effects': '(and\n    (not (appliance_off ?a)) ; The appliance is no longer off\n    (appliance_on ?a) ; The appliance is now on\n)'}
+{'name': 'turn_off_appliance', 'params': OrderedDict([('?r', 'robot'), ('?a', 'appliance')]), 'preconditions': '(and\n    (at ?r ?a) ; The robot is at the location of the appliance\n    (appliance_on ?a) ; The appliance is currently on\n)', 'effects': '(and\n    (not (appliance_on ?a)) ; The appliance is no longer on\n    (appliance_off ?a) ; The appliance is now off\n)'}
+{'name': 'check_state', 'params': OrderedDict([('?r', 'robot'), ('?loc', 'object')]), 'preconditions': '(and\n    (at ?r ?loc) ; The robot is at the location of the object\n    (or (is_furniture ?loc) (is_appliance ?loc)) ; The object is either furniture or an appliance\n)', 'effects': '(and\n    ; No effects as checking state is a non-modifying action\n)'}
+
+PREDICATES:
+{'name': 'at', 'desc': 'true if the robot ?r is at the location ?loc', 'raw': '(at ?r - robot ?loc - object): true if the robot ?r is at the location ?loc', 'params': OrderedDict([('?r', 'robot'), ('?loc', 'object')]), 'clean': '(at ?r - robot ?loc - object): true if the robot ?r is at the location ?loc'}
+{'name': 'is_furniture', 'desc': 'true if the location ?loc is a piece of furniture', 'raw': '(is_furniture ?loc - object): true if the location ?loc is a piece of furniture', 'params': OrderedDict([('?loc', 'object')]), 'clean': '(is_furniture ?loc - object): true if the location ?loc is a piece of furniture'}
+{'name': 'is_appliance', 'desc': 'true if the location ?loc is an appliance', 'raw': '(is_appliance ?loc - object): true if the location ?loc is an appliance', 'params': OrderedDict([('?loc', 'object')]), 'clean': '(is_appliance ?loc - object): true if the location ?loc is an appliance'}
+{'name': 'on', 'desc': 'true if the item is on the flat surface', 'raw': '(on ?item - small_item ?surface - flat_surface): true if the item is on the flat surface', 'params': OrderedDict([('?item', 'small_item'), ('?surface', 'flat_surface')]), 'clean': '(on ?item - small_item ?surface - flat_surface): true if the item is on the flat surface'}
+{'name': 'gripper_empty', 'desc': "true if the robot's gripper is empty", 'raw': "(gripper_empty ?r - robot): true if the robot's gripper is empty", 'params': OrderedDict([('?r', 'robot')]), 'clean': "(gripper_empty ?r - robot): true if the robot's gripper is empty"}
+{'name': 'holding', 'desc': 'true if the robot is holding the item', 'raw': '(holding ?r - robot ?item - small_item): true if the robot is holding the item', 'params': OrderedDict([('?r', 'robot'), ('?item', 'small_item')]), 'clean': '(holding ?r - robot ?item - small_item): true if the robot is holding the item'}
+{'name': 'appliance_open', 'desc': 'true if the appliance ?a is open', 'raw': '(appliance_open ?a - appliance): true if the appliance ?a is open', 'params': OrderedDict([('?a', 'appliance')]), 'clean': '(appliance_open ?a - appliance): true if the appliance ?a is open'}
+{'name': 'appliance_closed', 'desc': 'true if the appliance ?a is closed', 'raw': '(appliance_closed ?a - appliance): true if the appliance ?a is closed', 'params': OrderedDict([('?a', 'appliance')]), 'clean': '(appliance_closed ?a - appliance): true if the appliance ?a is closed'}
+{'name': 'drawer_open', 'desc': 'true if the drawer on the furniture ?f is open', 'raw': '(drawer_open ?f - furniture): true if the drawer on the furniture ?f is open', 'params': OrderedDict([('?f', 'furniture')]), 'clean': '(drawer_open ?f - furniture): true if the drawer on the furniture ?f is open'}
+{'name': 'drawer_closed', 'desc': 'true if the drawer on the furniture ?f is closed', 'raw': '(drawer_closed ?f - furniture): true if the drawer on the furniture ?f is closed', 'params': OrderedDict([('?f', 'furniture')]), 'clean': '(drawer_closed ?f - furniture): true if the drawer on the furniture ?f is closed'}
+{'name': 'appliance_on', 'desc': 'true if the appliance ?a is on', 'raw': '(appliance_on ?a - appliance): true if the appliance ?a is on', 'params': OrderedDict([('?a', 'appliance')]), 'clean': '(appliance_on ?a - appliance): true if the appliance ?a is on'}
+{'name': 'appliance_off', 'desc': 'true if the appliance ?a is off', 'raw': '(appliance_off ?a - appliance): true if the appliance ?a is off', 'params': OrderedDict([('?a', 'appliance')]), 'clean': '(appliance_off ?a - appliance): true if the appliance ?a is off'}
+
+--------------------
+STEP FIVE: TASK EXTRACTION
+
+OBJECTS:
+robot1 - robot
+cabinet_1 - furniture
+cabinet_2 - furniture
+drawer_1 - furniture
+drawer_2 - furniture
+countertop_1 - flat_surface
+dining_table_1 - flat_surface
+side_table_1 - flat_surface
+fridge_1 - appliance
+blender_1 - appliance
+lamp_1 - appliance
+humidifier_1 - appliance
+cup_1 - small_item
+plate_1 - small_item
+cutting_board_1 - small_item
+apple_1 - small_item
+book_1 - small_item
+book_2 - small_item
+mug_1 - small_item
+INITIAL STATES:
+(at robot1 cabinet_1)
+(holding robot1 mug_1)
+(drawer_open drawer_1)
+(drawer_open drawer_2)
+(appliance_open fridge_1)
+(drawer_closed cabinet_1)
+(drawer_open cabinet_2)
+(on cup_1 cabinet_2)
+(on plate_1 drawer_2)
+(on cutting_board_1 countertop_1)
+(on blender_1 dining_table_1)
+(appliance_off blender_1)
+(on lamp_1 side_table_1)
+(appliance_off lamp_1)
+(on humidifier_1 side_table_1)
+(appliance_on humidifier_1)
+(on apple_1 cabinet_2)
+(on book_1 dining_table_1)
+(on book_2 dining_table_1)
+GOAL STATES:
+(AND 
+   (appliance_on lamp_1) 
+   (appliance_off humidifier_1) 
+)
+
+
+PDDL DOMAIN:
+(define (domain household)
+   (:requirements
+      :strips :typing :equality :negative-preconditions :disjunctive-preconditions :universal-preconditions :conditional-effects)
+
+   (:types 
+      robot - object
+      furniture - object
+      flat_surface - furniture
+      appliance - object
+      small_item - object
+   )
+
+   (:predicates 
+      (at ?r - robot ?loc - object) ;  true if the robot ?r is at the location ?loc
+      (is_furniture ?loc - object) ;  true if the location ?loc is a piece of furniture
+      (is_appliance ?loc - object) ;  true if the location ?loc is an appliance
+      (on ?item - small_item ?surface - flat_surface) ;  true if the item is on the flat surface
+      (gripper_empty ?r - robot) ;  true if the robot's gripper is empty
+      (holding ?r - robot ?item - small_item) ;  true if the robot is holding the item
+      (appliance_open ?a - appliance) ;  true if the appliance ?a is open
+      (appliance_closed ?a - appliance) ;  true if the appliance ?a is closed
+      (drawer_open ?f - furniture) ;  true if the drawer on the furniture ?f is open
+      (drawer_closed ?f - furniture) ;  true if the drawer on the furniture ?f is closed
+      (appliance_on ?a - appliance) ;  true if the appliance ?a is on
+      (appliance_off ?a - appliance) ;  true if the appliance ?a is off
+   )
+
+   (:action navigate_to
+      :parameters (
+         
+      )
+      :precondition
+         (and
+             (at ?r ?current_loc) ; The robot is at its current location
+             (or (is_furniture ?loc) (is_appliance ?loc)) ; The target location is either furniture or an appliance
+         )
+      :effect
+         (and
+             (not (at ?r ?current_loc)) ; The robot is no longer at the current location
+             (at ?r ?loc) ; The robot is now at the target location
+         )
+   )
+
+   (:action pick_up
+      :parameters (
+         ?r - robot
+         ?item - small_item
+         ?surface - flat_surface
+      )
+      :precondition
+         (and
+             (at ?r ?surface) ; The robot is at the location of the flat surface
+             (on ?item ?surface) ; The item is on the flat surface
+             (gripper_empty ?r) ; The robot's gripper is empty
+         )
+      :effect
+         (and
+             (not (on ?item ?surface)) ; The item is no longer on the flat surface
+             (not (gripper_empty ?r)) ; The robot's gripper is no longer empty
+             (holding ?r ?item) ; The robot is now holding the item
+         )
+   )
+
+   (:action put_down
+      :parameters (
+         ?r - robot
+         ?item - small_item
+         ?surface - flat_surface
+      )
+      :precondition
+         (and
+             (at ?r ?surface) ; The robot is at the location of the flat surface
+             (holding ?r ?item) ; The robot is holding the item
+             (is_furniture ?surface) ; Ensure the surface is a flat surface
+         )
+      :effect
+         (and
+             (on ?item ?surface) ; The item is now on the flat surface
+             (not (holding ?r ?item)) ; The robot is no longer holding the item
+             (gripper_empty ?r) ; The robot's gripper is now empty
+         )
+   )
+
+   (:action open_appliance
+      :parameters (
+         ?r - robot
+         ?a - appliance
+      )
+      :precondition
+         (and
+             (at ?r ?a) ; The robot is at the location of the appliance
+             (is_appliance ?a) ; The location is an appliance
+             (gripper_empty ?r) ; The robot's gripper is empty
+             (appliance_closed ?a) ; The appliance is currently closed
+         )
+      :effect
+         (and
+             (not (appliance_closed ?a)) ; The appliance is no longer closed
+             (appliance_open ?a) ; The appliance is now open
+         )
+   )
+
+   (:action close_appliance
+      :parameters (
+         ?r - robot
+         ?a - appliance
+      )
+      :precondition
+         (and
+             (at ?r ?a) ; The robot is at the location of the appliance
+             (gripper_empty ?r) ; The robot's gripper is empty
+             (appliance_open ?a) ; The appliance is open
+         )
+      :effect
+         (and
+             (not (appliance_open ?a)) ; The appliance is no longer open
+             (appliance_closed ?a) ; The appliance is now closed
+         )
+   )
+
+   (:action open_drawer
+      :parameters (
+         ?r - robot
+         ?f - furniture
+      )
+      :precondition
+         (and
+             (at ?r ?f) ; The robot is at the location of the furniture
+             (gripper_empty ?r) ; The robot's gripper is empty
+             (not (drawer_open ?f)) ; The drawer is not already open
+         )
+      :effect
+         (and
+             (drawer_open ?f) ; The drawer on the furniture is now open
+         )
+   )
+
+   (:action close_drawer
+      :parameters (
+         ?r - robot
+         ?f - furniture
+      )
+      :precondition
+         (and
+             (at ?r ?f) ; The robot is at the location of the furniture
+             (gripper_empty ?r) ; The robot's gripper is empty
+             (drawer_open ?f) ; The drawer on the furniture is open
+         )
+      :effect
+         (and
+             (not (drawer_open ?f)) ; The drawer on the furniture is no longer open
+             (drawer_closed ?f) ; The drawer on the furniture is now closed
+         )
+   )
+
+   (:action turn_on_appliance
+      :parameters (
+         ?r - robot
+         ?a - appliance
+      )
+      :precondition
+         (and
+             (at ?r ?a) ; The robot is at the location of the appliance
+             (appliance_off ?a) ; The appliance is currently off
+         )
+      :effect
+         (and
+             (not (appliance_off ?a)) ; The appliance is no longer off
+             (appliance_on ?a) ; The appliance is now on
+         )
+   )
+
+   (:action turn_off_appliance
+      :parameters (
+         ?r - robot
+         ?a - appliance
+      )
+      :precondition
+         (and
+             (at ?r ?a) ; The robot is at the location of the appliance
+             (appliance_on ?a) ; The appliance is currently on
+         )
+      :effect
+         (and
+             (not (appliance_on ?a)) ; The appliance is no longer on
+             (appliance_off ?a) ; The appliance is now off
+         )
+   )
+
+   (:action check_state
+      :parameters (
+         ?r - robot
+         ?loc - object
+      )
+      :precondition
+         (and
+             (at ?r ?loc) ; The robot is at the location of the object
+             (or (is_furniture ?loc) (is_appliance ?loc)) ; The object is either furniture or an appliance
+         )
+      :effect
+         (and
+             ; No effects as checking state is a non-modifying action
+         )
+   )
+)
+
+PDDL PROBLEM:
+(define
+   (problem household_problem)
+   (:domain household)
+
+   (:objects 
+      robot1 - robot
+      cabinet_1 - furniture
+      cabinet_2 - furniture
+      drawer_1 - furniture
+      drawer_2 - furniture
+      countertop_1 - flat_surface
+      dining_table_1 - flat_surface
+      side_table_1 - flat_surface
+      fridge_1 - appliance
+      blender_1 - appliance
+      lamp_1 - appliance
+      humidifier_1 - appliance
+      cup_1 - small_item
+      plate_1 - small_item
+      cutting_board_1 - small_item
+      apple_1 - small_item
+      book_1 - small_item
+      book_2 - small_item
+      mug_1 - small_item
+   )
+
+   (:init
+      (at robot1 cabinet_1)
+      (holding robot1 mug_1)
+      (drawer_open drawer_1)
+      (drawer_open drawer_2)
+      (appliance_open fridge_1)
+      (drawer_closed cabinet_1)
+      (drawer_open cabinet_2)
+      (on cup_1 cabinet_2)
+      (on plate_1 drawer_2)
+      (on cutting_board_1 countertop_1)
+      (on blender_1 dining_table_1)
+      (appliance_off blender_1)
+      (on lamp_1 side_table_1)
+      (appliance_off lamp_1)
+      (on humidifier_1 side_table_1)
+      (appliance_on humidifier_1)
+      (on apple_1 cabinet_2)
+      (on book_1 dining_table_1)
+      (on book_2 dining_table_1)
+   )
+
+   (:goal
+      (and 
+         (appliance_on lamp_1) 
+         (appliance_off humidifier_1) 
+      )
+   )
+
+)

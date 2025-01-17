@@ -1,0 +1,17 @@
+{
+    "hierarchy": {
+        "object": "",
+        "children": [
+            {"furnitureAppliance": "", "children":[]},
+            {
+                "householdObject": "",
+                "children": [
+                    {"smallReceptacle": "", "children":[]}
+                ]
+            }
+        ]
+    },
+    "requirements": [
+        "typing", "negative-preconditions", "disjunctive-preconditions", "conditional-effects", "equality"
+    ]
+}

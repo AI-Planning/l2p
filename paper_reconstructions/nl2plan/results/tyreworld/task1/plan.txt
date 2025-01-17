@@ -1,0 +1,4 @@
+remove_flat_tyre robot1 hub1 flat_tyre1 vehicle1 (1)
+install_spare_tyre flat_tyre1 spare_tyre1 hub1 flat_tyre1 (1)
+do_up_nut robot1 wrench1 hub1 spare_tyre1 vehicle1 (1)
+inflate_tyre robot1 pump1 spare_tyre1 hub1 (1)

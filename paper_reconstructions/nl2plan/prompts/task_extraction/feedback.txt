@@ -1,7 +1,6 @@
 # Role
-You are a PDDL expert and will be given the parts of a PDDL problem file to give feedback on. Consider your response and that the domain should be correctly initiated and that the goal should be accurate based on the domain description. It's impossible to create new predicates, you can only use what's already available. Think through your feedback step by step. If the action is well defined, respond with "No feedback".
 
-Make suggestions / changes if there are any checks that you deem are insufficient, if not, respond with 'no feedback' (once) at the end of your whole response. You either return a suggestion/feedback or you respond with 'no feedback' not both. Do not respond with 'no feedback' in between each check. Do not add anything new other than what is focused on the specific PDDL aspect at hand.
+You are a PDDL expert and will be given the parts of a PDDL problem file to give feedback on. Consider your response and that the domain should be correctly initiated and that the goal should be accurate based on the domain description. It's impossible to create new predicates, you can only use what's already available. Think through your feedback step by step. If the action is well defined, respond with "No feedback" under header '# JUDGEMENT'.
 
 Use the following checklist:
 1. Are any necessary objects missing? Keep in mind that a type might have to be included even if it isn't mentioned.
@@ -103,6 +102,7 @@ bob - general_worker: The second worker, Bob
     Even though this could have been handled by the actions, we can't guarantee that it is and as such we have to mirror all these predicates.
     Thereby: Yes.
 
+# JUDGEMENT
 My concrete suggestions are the following:
     - Add a second truck ("truck2"). Initialize it with the following:
         - (at truck2 chicago_depot)
@@ -217,6 +217,7 @@ ranger2 - ranger: One of the available rangers
 8. Should any predicate be used in a symmetrical manner?
     While the "at" predicate could accept two locations, this is clearly not the intent. Hence: No.
 
+# JUDGEMENT
 My concrete suggestions are the following:
     - Remove the "deer4" and "outer4" objects from the domain entirely. They're incorrectly included.
     - Add at least one more ranger object. For example, "ranger3" could be added an initalized like this:
@@ -304,14 +305,13 @@ elevator_2 - elevator: The second elevator in the building.
 8. Should any predicate be used in a symmetrical manner?
     All the predicates are clearly intended to be one-directional, and that is how they're used. So: No.
 
+# JUDGEMENT
 Based on this, the response is: No feedback.
 
-----------------------------------------
+# Task
 
-Here is the original output:
-
-## Problem
-{problem_desc}
+## Domain
+{domain_desc}
 
 ## Available Types
 {types}
@@ -323,14 +323,13 @@ The following are the available predicates which can be used:
 ## State
 This is the state to give feedback on based on the domain and predicates above.
 
-## Objects
+### Objects
 {objects}
 
-## Initial State
-{initial_state}
+### Initial State
+{initial_states}
 
-## Goal State
-{goal_state}
+### Goal State
+{goal_states}
 
-## Original LLM response
-{llm_response}
+## Feedback

@@ -1,0 +1,91 @@
+## Domain
+The AI agent is here a scheduling system for a house construction company with administrators who can create orders, workers who perform them and vehicles to transport things.
+
+Currently, there are a couple of trucks at the Chicago depot and we're trying to build three houses in the area. Jamie is the only administrator, but we've got Emma and Bob available for general work.
+
+## Types
+First, we'll need types for the houses that are built and the depot. We'll also add a general location type to organize this.
+```
+- location: Locations can be visited and travelled between.
+- house: Constructed by the company. Are a type of location.
+- depot: Contains trucks and likely material for the construction. 
+```
+
+Next, we need to model the vehicles itself. General "vehicles" are mentioned, as are trucks. We'll model both for safety.
+```
+- vehicle: Vehicles can transport things, such as material or personell, between locattions.
+- truck: A type of vehicle for ground transport. 
+``` 
+
+After that, the workers need to be included. These are:
+```
+- jamie: An administrator.
+- emma: A worker.
+- bob: A worker.
+```
+
+Lastly, I've repeatedly assumed the existence of construction materials. This is likely needed and useful, so I'll add it in.
+``` 
+- material: Assorted material for constructing houses. Transported by vehicles.
+``` 
+
+## Feedback
+1: Are there any more types which are needed to model the domain?
+    No. There is no need to include any more types.
+
+2:  Are any more types needed for organisation?
+    Yes. Adding in the meta-type "worker" to structure the two worker types (see below) would be good.
+
+3: Are any of the supposed types actually objects?
+    Yes. Jamie, Emma and Bob are all individual objects (or in this case people). They should be replaced with their types, administrator and general_worker. 
+
+4: Should any of the types be removed?
+    No. Beyond the people mentioned above the types are reasonable.
+
+I'd suggest the following:
+- Remove "jamie", "emma" and "bob".
+- Add the following:
+    - worker: A meta-type structuring the specific workers. 
+    - general_worker: A type of worker who can perform a variety of jobs based on orders.
+    - administrator: A type of worker who can create orders.
+
+
+Start with a "## Response" header, then re-iterate an updated version of the "## Types" header. 
+
+## Response
+The feedback raises some valid points, but not all are correct.
+
+I agree that exchanging "jamie", "emma" and "bob" with "administrator" and "general_worker" is correct. 
+
+However, modelling "helicopter" and "excavator" would be too much. We shouldn't include more types than is actually needed and useful for the task at hand, and since no helicopters or excavators exist we'll skip those. 
+
+## Types
+First, I have to re-iterate all the types I want to keep:
+```
+- location: Locations can be visited and travelled between.
+- house: Constructed by the company. Are a type of location.
+- depot: Contains trucks and likely material for the construction. 
+- vehicle: Vehicles can transport things, such as material or personell, between locattions.
+- truck: A type of vehicle for ground transport. 
+- material: Assorted material for constructing houses. Transported by vehicles.
+```
+
+Then, I also want to add the new general worker types:
+```
+- general_worker: A type of worker who can perform a variety of jobs based on orders.
+- administrator: A type of worker who can create orders.
+```
+
+End your final answer starting with "## OUTPUT" and then re-iterate an updated version the Python dictionary pair '{'name':'description'}' as so:
+
+## OUTPUT
+{
+    "location": "Locations can be visited and travelled between.",
+    "house": "Constructed by the company. Are a type of location.",
+    "depot": "Contains trucks and likely material for the construction.",
+    "vehicle": "Vehicles can transport things, such as material or personell, between locattions.",
+    "truck": "A type of vehicle for ground transport.",
+    "material": "Assorted material for constructing houses. Transported by vehicles.",
+    "general_worker": "A type of worker who can perform a variety of jobs based on orders.",
+    "administrator": "A type of worker who can create orders."
+}

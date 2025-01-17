@@ -1,8 +1,5 @@
-You are a PDDL expert and your task is to evaluate if a set of types are correct and sufficent for modelling a given domain.
-
-Make suggestions / changes if there are any checks that you deem are insufficient, if not, respond with 'no feedback' (once) at the end of your whole response. You either return a suggestion/feedback or you respond with 'no feedback' not both. Do not respond with 'no feedback' in between each check. Do not add anything new other than what is focused on the specific PDDL aspect at hand.
-
-Do not respond with 'no feedback' in between each check. Do not add anything new other than what is focused on the specific PDDL aspect at hand.
+# Role
+Your are a PDDL expert and your task is to evaluate if a set of types are correct and sufficent for modelling a given domain. If it is, respond with "no feedback" under header '# JUDGEMENT'. If it isn't, provide your thoughts on how to correct the types. Don't model the available actions, but just the types of objects to be used. 
 
 Go through the following checklist:
 1: Are there additional types which are needed to model the domain?
@@ -13,6 +10,15 @@ Go through the following checklist:
 6: Is the acting agent itself or the resulting plans included? If only one instance of the agent exists, such as the entire problem modelling behaviour for one robot, it should be removed.  
 7: Will any of the included types only ever be used once? If so, it should be removed and modelled implicitly.
 8: Is the acting agent itself or the resulting plans included? The domain might be better modelled in PDDL if some parts are modelled not as objects and types, even if they technically are. 
+
+End your final answer starting with "## OUTPUT" and then re-iterate an updated version the Python dictionary pair '{'name':'description'}' as so:
+
+## OUTPUT
+{
+    "type_1": "description",
+    "type_2": "description",
+    "type_3": "description",
+}
 
 # Examples
 ## Example 1
@@ -61,6 +67,7 @@ There are some flaws in the extracted types. First of all, you shouldn't include
 8: Is the acting agent itself or the resulting plans included? 
     The "road" type is admittedly a type, but it would be more suitable in PDDL to model this as a predicate connection such as "road_between loc1 loc2". As such, this should be removed and saved for later. Answer: Yes. 
 
+# JUDGEMENT
 I'd suggest the following:
 - Remove "jamie", "emma" and "bob".
 - Add the following:
@@ -110,6 +117,7 @@ In this domain, the AI agent is a wildlife conservation management system. It mo
     The "starting_positions" type actually describes the initial state. This should later be defined with for example an "at obj loc" predicate in the initial state instead.
     Similarly, the "target_positions" is better described in the goal state using the same "at obj loc" predicate. 
 
+# JUDGEMENT
 I'd suggest you do the following:
     - Add the following type:
         - patrol: Anti-poaching patrols protecting animals
@@ -151,17 +159,14 @@ I've got a building with five floors and two elevators, and I want you to plan t
 8: Is the acting agent itself or the resulting plans included? 
     The starting and goal states will be positions, and these aren't in any way included. Hence: No. 
 
+# JUDGEMENT
 As such: No feedback.
 
-----------------------------------------
-
-Here is the original output:
-
+# Task
 ## Domain
 {domain_desc}
 
-## Types you gave
+## Types
 {types}
 
-## Original LLM response
-{llm_response}
+## Feedback

@@ -1,0 +1,225 @@
+## Domain
+The AI agent is here a scheduling system for a house construction company with administrators who can create orders, workers who perform them and vehicles to transport workers.
+
+Currently, there are a couple of trucks at the Chicago depot and we're trying to build three houses in the area. Jamie is the only administrator, but we've got Emma and Bob available for general work. 
+
+## Types
+- object: Everything is an object
+    - worker: Human workers which do things
+        - administrator: Workers who can create orders for other workers
+        - general_worker: Workers who can perform a variety of tasks, if there is an order for it
+    - vehicle: Used to transport workers
+    - location: Places where workers and machines can be
+        - house: What is constructed.
+
+## Predicates
+- (at ?o - object ?l - location): true if the object ?o (which should be a worker or vehicle) is at location ?l
+- (inside ?w - worker ?v - vehicle): true if the worker ?w is in the vehicle ?v
+- (wall_order ?h - house): true if there is an order to build a wall at house ?h
+- (wall_built ?h - house): true if a wall has been built for house ?h
+- (floor_order ?h - house): true if there is an order to build a floor at house ?h
+- (floor_built ?h - house): true if a floor has been built for house ?h
+- (floor_order ?h - house): true if there is an order to build a roof at house ?h
+- (roof_built ?h - house): true if a roof has been built for house ?h
+- (finalized ?h - house): true if the house ?h has been completed. 
+- (connected ?l1 - location ?l2 - location): true if there is a road between l1 and l2 allowing travel between them.
+
+## Object Instances
+We assume that there are two trucks since the description said "a couple".
+```
+truck1 - the first truck at the Chicago depot
+truck2 - the second truck at the Chicago depot
+```
+
+Next, let's define the relevant locations. Since "chicago_depot" is not a house, we model it as a general location.
+```
+chicago_depot - location: The Chicago depot
+house1 - The first house to build
+house2 - The second house to build
+house3 - The third house to build
+```
+
+Now, let's model the worker.
+```
+jamie - administrator: The administrator Jamie
+emma - general_worker: The first worker, Emma
+bob - general_worker: The second worker, Bob
+```
+
+## State
+Let's start by specifying where everyone is. It's a reasonable assumption that everyone starts at the Chicago depot.
+```
+(at truck1 chicago_depot): truck1 is at the chicago_depot
+(at truck2 chicago_depot): truck2 is at the chicago_depot
+(at jamie chicago_depot): Jamie is at the depot
+(at emma chicago_depot): Emma is at the depot
+```
+
+We assume that all the houses are entirely unbuilt, that the trucks are unloaded and that no orders are written. As such, all these conditions are false and don't need to be specified. 
+
+Finally, we need to specify how the various locations are connected. Let's assume that all the connections are through the depot acting as a hub.
+```
+(connected house1 chicago_depot): house1 is connected to the chicago_depot
+(connected house2 chicago_depot): house2 is connected to the chicago_depot
+(connected house3 chicago_depot): house3 is connected to the chicago_depot
+``` 
+
+Finally, the "connected" predicate states that two locations are connected if there exists a road between them. So, clearly if (connected A B) then (connected B A) since roads go both ways. So, we need to mirror all the "connected" constraints.
+```
+(connected chicago_depot house1): chicago_depot is connected to house1
+(connected chicago_depot house2): chicago_depot is connected to house2
+(connected chicago_depot house3): chicago_depot is connected to house3
+```
+
+## Goal
+```
+(AND ; all the following should be done
+   (finalised house1) ; house 1 is done
+   (finalised house2) ; house 2 is done
+   (finalised house3) ; house 3 is done
+   (truck1 house1) ; truck1 is at house1 
+)
+```
+
+## Error
+1. Are any necessary objects forgotten?
+   The description states that there are "a couple of trucks". This entails that many trucks exist, but only two are defined. Add some more. Therefore: Yes. 
+
+2. Are any un-necessary objects included?
+   All the objects which are included are actually described and needed. So: No.
+
+3. Are any objects defined as the wrong type?
+   The "house" type is supposed to be used for what is being constructed, the houses built. However, "chicago_depot" is cleraly not being built by us, but is defined as a "house". It should be just a general location. Thereby: Yes.
+
+4. Are any needed or expected predicates missing from the initalization?
+   Naturally, everything needs a starting location and most of the objects are assumed to start at the chicago_depot, which makes sense. However, "bob" lacks a starting position. Hence: Yes.
+
+5. Are any unnecessary or incorrect predicates initialised?
+   All the predicates which are initiated are valid and needed. As such: No. 
+
+6. Is anything forgotten from the goal state?
+   What is requested is, implicitly, that all the houses be finalized. This is checked, so: No.
+
+7. Is anything superflous included in the goal?
+   The wanted position of the truck is not specified and isn't needed for the task to be considered to be completed. This should be removed. Hence: Yes.
+
+8. Should any predicate be used in a symmetrical manner?
+   The "connected" predicate clearly specifies that travel is possible in both directions, which means that (connected A B) should entail (connected B A).
+   Therefore, each "connected" predicate should be mirrored to clarify that they're connected in both directions. This makes the PDDL more robust.
+   However, this is already done. As such: No. 
+
+My concrete suggestions are the following:
+    - Add more trucks to the domain. Initialize them to chicago_depot:
+        - (at truck3 chicago_depot)
+        - (at truck4 chicago_depot)
+    - The starting location for "bob" is missing. Add this in with the following predicate:
+        - (at bob chicago_depot)
+    - Remove the requirement for truck1:s location in the goal. This results in the following goal:
+        ```
+        (AND ; all the houses should be done
+            (finalized house1) ; house 1 is done
+            (finalized house2) ; house 2 is done
+            (finalized house3) ; house 3 is done
+        )
+        ```
+Regenerate an entire response correcting the above error. Make sure to use the exact same headers as requested before, but start with a "## Response" header to analyze the error.
+
+## Response
+The feedback is not entirely correct. Adding more trucks would be too large of an assumption, since the domain task only states "A couple". As such, we leave it with only two trucks.
+
+Adding the starting location for Bob as well as removing the goal condition for truck1 is both correct however. I'll make those changes.
+
+Now I'll reiterate the corrected initialization with the exact same headers.
+
+## Object Instances
+The feedback suggested to use more trucks, but this would be wrong since the domain only specifies "A couple". So, we stick with the two trucks.
+```
+truck1 - the first truck at the Chicago depot
+truck2 - the second truck at the Chicago depot
+```
+
+The locations haven't been updated:
+```
+chicago_depot - location: The Chicago depot
+house1 - The first house to build
+house2 - The second house to build
+house3 - The third house to build
+```
+
+The workers are unchanged from before:
+```
+jamie - administrator: The administrator Jamie
+emma - general_worker: The first worker, Emma
+bob - general_worker: The second worker, Bob
+```
+
+## State
+Let's start by specifying where everyone is again. This time, we  make sure to include Bob.
+```
+(at truck1 chicago_depot): truck1 is at the chicago_depot
+(at truck2 chicago_depot): truck2 is at the chicago_depot
+(at jamie chicago_depot): Jamie is at the depot
+(at emma chicago_depot): Emma is at the depot
+(at bob chicago_depot): Bob is at the depot
+```
+
+We still assume that all the houses are entirely unbuilt and no orders are written. 
+
+The connections between the locations are the same bi-directional connections as before.
+```
+(connected house1 chicago_depot): house1 is connected to the chicago_depot
+(connected house2 chicago_depot): house2 is connected to the chicago_depot
+(connected house3 chicago_depot): house3 is connected to the chicago_depot
+(connected chicago_depot house1): chicago_depot is connected to house1
+(connected chicago_depot house2): chicago_depot is connected to house2
+(connected chicago_depot house3): chicago_depot is connected to house3
+```
+
+## Goal
+For the goal, we remove the "truck1" location predicate, but still check that all the houses are finalised. 
+```
+(AND ; all the following should be done
+   (finalised house1) ; house 1 is done
+   (finalised house2) ; house 2 is done
+   (finalised house3) ; house 3 is done
+)
+```
+
+Thus, we get:
+
+### OBJECTS
+```
+truck1 - the first truck at the Chicago depot
+truck2 - the second truck at the Chicago depot
+chicago_depot - location: The Chicago depot
+house1 - The first house to build
+house2 - The second house to build
+house3 - The third house to build
+jamie - administrator: The administrator Jamie
+emma - general_worker: The first worker, Emma
+bob - general_worker: The second worker, Bob
+```
+
+### INITIAL
+```
+(at truck1 chicago_depot): truck1 is at the chicago_depot
+(at truck2 chicago_depot): truck2 is at the chicago_depot
+(at jamie chicago_depot): Jamie is at the depot
+(at emma chicago_depot): Emma is at the depot
+(at bob chicago_depot): Bob is at the depot
+(connected house1 chicago_depot): house1 is connected to the chicago_depot
+(connected house2 chicago_depot): house2 is connected to the chicago_depot
+(connected house3 chicago_depot): house3 is connected to the chicago_depot
+(connected chicago_depot house1): chicago_depot is connected to house1
+(connected chicago_depot house2): chicago_depot is connected to house2
+(connected chicago_depot house3): chicago_depot is connected to house3
+```
+
+### GOAL
+```
+(AND ; all the following should be done
+   (finalised house1) ; house 1 is done
+   (finalised house2) ; house 2 is done
+   (finalised house3) ; house 3 is done
+)
+```

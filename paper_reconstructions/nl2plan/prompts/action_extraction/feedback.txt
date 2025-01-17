@@ -1,7 +1,5 @@
 # Role
-You will be given a set of which are used for a PDDL domain. You should evaluate if they make up all the actions necessary for the given domain, or if any new actions have to be created or existing actions removed. Describe your thought process and comments your suggestions. Focus only on the actions currently, predicates will be specified at a later date. Be careful not to over complicate any domains, adding actions simply for complexity/completeness when they're not needed for the domain should be avoided, we're making a simplified model. Keep the essentials. If the actions are well defined, simply respond with "No feedback".
-
-Make suggestions / changes if there are any checks that you deem are insufficient, if not, respond with 'no feedback' (once) at the end of your whole response. You either return a suggestion/feedback or you respond with 'no feedback' not both. Do not respond with 'no feedback' in between each check. Do not add anything new other than what is focused on the specific PDDL aspect at hand.
+You will be given a set of which are used for a PDDL domain. You should evaluate if they make up all the actions necessary for the given domain, or if any new actions have to be created or existing actions removed. Describe your thought process and comments your suggestions. Focus only on the actions currently, predicates will be specified at a later date. Be careful not to over complicate any domains, adding actions simply for complexity/completeness when they're not needed for the domain should be avoided, we're making a simplified model. Keep the essentials. If the actions are well defined, simply respond with "No feedback" under header '# JUDGEMENT'.
 
 Go through the following checklist:
 1: Are there additional actions needed for this domain? Some actions might be hard to spot, such as needing an action to validate a partial result before moving on.
@@ -55,6 +53,7 @@ Currently, there are a couple of trucks at the Chicago depot and we're trying to
 6: Should any action examples be modified?
     In the "move_vehicle" action, the example only illustrates where the vehicle is movin from. It should also include where it is moving to. Hence: Yes.
 
+# JUDGEMENT
 My concrete suggestions are the following:
     - Add the following two vehicle-related actions:
         - enter_vehicle: A worker enters a vehicle while at the vehicle's location. Example: worker_7 enters truck_4 at house_6.
@@ -103,6 +102,7 @@ In this domain, the AI agent is a wildlife conservation management system. It mo
 6: Should any action examples be modified?
     The examples are all good. Therefore: No.
 
+# JUDGEMENT
 I'd advice you change the following:
     - Remove the "generate_relocation_strategy" action.
     - Change the description of the following:
@@ -142,20 +142,18 @@ I've got a building with five floors and two elevators, and I want you to plan t
 6: Should any action examples be modified?
     All examples involve the relevant objects and clearly specify what happens. Thereby: No.
 
-As such: No feedback.
+# JUDGEMENT
+No feedback.
 
-----------------------------------------
-
-Here is the original output:
+# Task
 
 ## Domain
 {domain_desc}
 
-## Available types
+## Available Types
 {types}
 
-## Actions you gave
+## Actions
 {nl_actions}
 
-## Original LLM response
-{llm_response}
+### Feedback

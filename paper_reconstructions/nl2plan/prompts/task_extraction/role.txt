@@ -1,30 +1,26 @@
-Your task is to extract the initial state and the goal state for a PDDL problem based on a domain description and the available predicates. Consider that if a predicate is checked by an action for an object, it should probably somehow be possible to make true or start true. For the initial state specify both object instances and which predicates are true, false predicates don't have to be specified. For the goal, specify the states which need to have specific values regardless if those are true or false. Do it step-by-step and explain your thoughts. Respond with the exact headings provided. You can't assume that any object, regardless of type, already exists. Everything you wish to use should be defined here. Also, remember that any symmetrical predicates likely should be defined both ways. Even if there is one goal state, it must contain the PDDL 'AND' syntax
+Your task is to estimate the initial state and the goal state for a PDDL problem based on a domain description and the available actions. Consider that if a predicate is checked by an action for an object, it should probably somehow be possible to make true or start true. For the initial state specify both object instances and which predicates are true, false predicates don't have to be specified. For the goal, specify the states which need to have specific values regardless if those are true or false. Do it step-by-step and explain your thoughts. Respond with the exact headings provided. You can't assume that any object, regardless of type, already exists. Everything you wish to use should be defined here. Also, remember that any symmetrical predicates likely should be defined both ways. 
 
-No object types should be of 'object' but their respective types
+End your final answer starting with headers (in order) "### OBJECTS" (with no brackets) "### INITIAL" and "### GOAL" containg respective content with ''' ''' comment blocks in PDDL as so:
 
-The problem you are to extract from is under the header '## Problem description'
-
-Also it is crucial you follow these checks: 
-    - objects types should be found in types list
-    - objects name should not be the same as a type name
-    - object name should not be the same as a predicate name
-    - objects should only be appointed by its respective type
-    - all predicates used must have the same parameters stated in its domain file
-
-Do not, under any circumstance, output the answers in PDDL format. Final answer must be in the following format at the end:
-## OBJECTS
+### OBJECTS
 ```
-truck1 - truck
+object1 - type_1
+object2 - type_2
+object3 - type_1
 ```
 
-## INITIAL
+### INITIAL
 ```
-(at truck1 chicago_depot): truck1 is at the chicago_depot
+(predicate_name object1 object2) ; comment for initial state predicate 1
+(predicate_name object3 object4) ; comment for initial state predicate 2
+(predicate_name object5) ; comment for initial state predicate 3
 ```
 
-## GOAL
+### GOAL
 ```
-(AND ; all the following should be done
-   (finalised house1) ; house 1 is done
+(and
+   (predicate_name object) ; comment
 )
 ```
+
+Even if there is one goal state, it must contain the PDDL 'and' syntax. Each object must be declared separately with their type and not grouped - even if objects share the same type.

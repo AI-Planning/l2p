@@ -1,0 +1,24 @@
+{
+    "hierarchy": {
+        "object": "",
+        "children": [
+            {
+                "small_object": "",
+                "children": [
+                    {"tool": "", "children":[]},
+                    {"wheel": "", "children":[]},
+                    {"nut": "", "children":[]}
+                ]
+            },
+            {"container": "", "children": []},
+            {"hub": "", "children": []}
+        ]
+    },
+    "requirements": [
+      "typing",
+      "negative-preconditions",
+      "disjunctive-preconditions",
+      "conditional-effects",
+      "equality"
+    ]
+  }
