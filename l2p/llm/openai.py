@@ -50,7 +50,7 @@ class OPENAI(BaseLLM):
         
         # retrieve model configurations
         model_config = self._config.get(self.provider, {}).get(model, {})
-        self.model = model_config.get("engine", model)
+        self.model_name = model_config.get("engine", model)
 
         # call the parent class constructor to handle model and api_key
         super().__init__(model, api_key)
@@ -93,6 +93,7 @@ class OPENAI(BaseLLM):
     @retry(tries=2, delay=60)
     def connect_openai(self, client, model, messages, **kwargs):
         """Send a request to OpenAI API"""
+        
         return client.chat.completions.create(
             model=model, 
             messages=messages, 
@@ -125,7 +126,7 @@ class OPENAI(BaseLLM):
         conn_success, n_retry = False, 0
         while not conn_success and n_retry < max_retry:
             try:
-                print(f"[INFO] connecting to {self.model} ({requested_tokens} tokens)...")
+                print(f"[INFO] connecting to {self.model_name} ({requested_tokens} tokens)...")
 
                 kwargs = {
                     "temperature": self.temperature,
@@ -143,7 +144,7 @@ class OPENAI(BaseLLM):
                 # retrieve completion
                 response = self.connect_openai(
                     client=self.client,
-                    model=self.model,
+                    model=self.model_name,
                     messages=messages,
                     **kwargs
                 )
@@ -180,7 +181,7 @@ class OPENAI(BaseLLM):
 
         # log query information
         self.query_log.append({
-            "model": self.model,
+            "model": self.model_name,
             "prompt_tokens": usage.prompt_tokens if usage else current_tokens,
             "completion_tokens": usage.completion_tokens if usage else len(self.tok.encode(llm_output)),
             "reasoning_tokens": usage.completion_tokens_details.reasoning_tokens if usage else 0,
@@ -218,4 +219,4 @@ class OPENAI(BaseLLM):
             return list(self._config.get(self.provider, {}).keys())
         except KeyError:
             return []
-
+    
