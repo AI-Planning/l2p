@@ -1,26 +1,38 @@
+"""
+This is a subclass (HUGGING_FACE) for abstract class (BaseLLM) that implements an interface 
+to interact with downloaded text generation models from the HuggingFace API. 
+
+A YAML configuration file is required to specify model parameters, costs, and other 
+provider-specific settings. By default, the l2p library includes a configuration file 
+located at 'l2p/llm/llm.yaml'.
+
+Users can also define their own custom models and parameters by extending the YAML 
+configuration using the same format template.
+"""
+
 from retry import retry
 from typing_extensions import override
-from .base import BaseLLM
+from .base import BaseLLM, load_yaml
 
 class HUGGING_FACE(BaseLLM):
     def __init__(
             self, 
-            model_path: str, 
-            max_tokens: int = 4096, 
-            temperature: float = 0.0, 
-            top_p: float = 1.0,
-            context_length: int = 8192,
-            stop = None,
-            ) -> None:
+            model: str,
+            model_path: str, # base directory of stored model
+            config_path: str = "l2p/llm/llm.yaml",
+            provider: str = "huggingface"
+        ) -> None:
+        
+        # load yaml configuration path
+        self.provider = provider
+        self._config = load_yaml(config_path)
+        
+        model_config = self._config.get(self.provider, {}).get(model, {})
+        self.model_name = model_config.get("engine", model)
+        
+        
         
         self.model_path = model_path
-        self.max_tokens = max_tokens
-        self.temperature = temperature
-        self.top_p = top_p
-        self.in_tokens = 0
-        self.out_tokens = 0
-        self.stop = stop
-        
         self._load_transformers()
 
     def _load_transformers(self):
@@ -62,6 +74,7 @@ class HUGGING_FACE(BaseLLM):
                 device_map="auto",
             )
             self.tokenizer = AutoTokenizer.from_pretrained(self.model_path)
+            
         except OSError as e:
             # if model_path is not found, raise an error
             raise ValueError(

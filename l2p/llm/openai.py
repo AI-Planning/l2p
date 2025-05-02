@@ -16,16 +16,14 @@ from typing_extensions import override
 from .base import BaseLLM, load_yaml
 
 class OPENAI(BaseLLM):
-    """Accessing OpenAI"""
-
     def __init__(
-        self,
-        model: str,
-        config_path: str = "l2p/llm/llm.yaml",
-        provider: str = "openai",
-        api_key: str | None = None,   
-        base_url: str = "https://api.openai.com/v1/"
-    ) -> None:
+            self,
+            model: str,
+            config_path: str = "l2p/llm/llm.yaml",
+            provider: str = "openai",
+            api_key: str | None = None,   
+            base_url: str = "https://api.openai.com/v1/"
+        ) -> None:
         
         # load yaml configuration path
         self.provider = provider
@@ -85,7 +83,7 @@ class OPENAI(BaseLLM):
             "reasoning_effort": None
         }
 
-        parameters = model_config.get("parameters", {})
+        parameters = model_config.get("model_params", {})
         for key, default in defaults.items():
             setattr(self, key, parameters.get(key, default))
 
