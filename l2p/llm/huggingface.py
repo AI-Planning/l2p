@@ -65,12 +65,11 @@ class HUGGING_FACE(BaseLLM):
             )
 
         try:
-            dtype = torch.float16 if torch.cuda.is_available() else torch.float32
             # Check if the model_path is valid by trying to load it
             self.model = transformers.pipeline(
                 "text-generation",
                 model=self.model_path,
-                model_kwargs={"torch_dtype": dtype},
+                model_kwargs={"torch_dtype": "auto"},
                 device_map="auto",
             )
             self.tokenizer = AutoTokenizer.from_pretrained(self.model_path)
