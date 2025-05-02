@@ -3,7 +3,7 @@ This file contains collection of functions for PDDL domain generation purposes
 """
 
 from .utils import *
-from .llm_builder import LLM, require_llm
+from .llm import BaseLLM, require_llm
 from collections import OrderedDict
 import re, time
 
@@ -38,7 +38,7 @@ class DomainBuilder:
     @require_llm
     def extract_type(
         self,
-        model: LLM,
+        model: BaseLLM,
         domain_desc: str,
         prompt_template: str,
         types: dict[str, str] = None,
@@ -48,7 +48,7 @@ class DomainBuilder:
         Extracts types with domain given
 
         Args:
-            model (LLM): LLM
+            model (BaseLLM): BaseLLM
             domain_desc (str): domain description
             prompt_template (str): prompt template
             types (dict[str,str]): current types in model
@@ -56,7 +56,7 @@ class DomainBuilder:
 
         Returns:
             type_dict (dict[str,str]): dictionary of types with (name:description) pair
-            llm_response (str): the raw string LLM response
+            llm_response (str): the raw string BaseLLM response
         """
 
         # replace prompt placeholders
@@ -90,7 +90,7 @@ class DomainBuilder:
     @require_llm
     def extract_type_hierarchy(
         self,
-        model: LLM,
+        model: BaseLLM,
         domain_desc: str,
         prompt_template: str,
         types: dict[str, str] = None,
@@ -100,7 +100,7 @@ class DomainBuilder:
         Extracts type hierarchy from types list and domain given
 
         Args:
-            model (LLM): LLM
+            model (BaseLLM): BaseLLM
             domain_desc (str): domain description
             prompt_template (str): prompt template
             types (dict[str,str]): current types in model
@@ -108,7 +108,7 @@ class DomainBuilder:
 
         Returns:
             type_hierarchy (dict[str,str]): dictionary of type hierarchy
-            llm_response (str): the raw string LLM response
+            llm_response (str): the raw string BaseLLM response
         """
 
         # replace prompt placeholders
@@ -143,7 +143,7 @@ class DomainBuilder:
     @require_llm
     def extract_nl_actions(
         self,
-        model: LLM,
+        model: BaseLLM,
         domain_desc: str,
         prompt_template: str,
         types: dict[str, str] = None,
@@ -151,10 +151,10 @@ class DomainBuilder:
         max_retries: int = 3,
     ) -> tuple[dict[str, str], str]:
         """
-        Extract actions in natural language given domain description using LLM.
+        Extract actions in natural language given domain description using BaseLLM.
 
         Args:
-            model (LLM): LLM
+            model (BaseLLM): BaseLLM
             domain_desc (str): domain description
             prompt_template (str): prompt template
             types (dict[str,str]): current types in model
@@ -163,7 +163,7 @@ class DomainBuilder:
 
         Returns:
             nl_actions (dict[str, str]): a dictionary of extracted actions {action name: action description}
-            llm_response (str): the raw string LLM response
+            llm_response (str): the raw string BaseLLM response
         """
 
         # replace prompt placeholders
@@ -186,7 +186,7 @@ class DomainBuilder:
 
                 llm_response = model.query(
                     prompt=prompt_template
-                )  # get LLM llm_response
+                )  # get BaseLLM llm_response
 
                 # extract respective types from response
                 nl_actions = convert_to_dict(llm_response=llm_response)
@@ -206,7 +206,7 @@ class DomainBuilder:
     @require_llm
     def extract_pddl_action(
         self,
-        model: LLM,
+        model: BaseLLM,
         domain_desc: str,
         prompt_template: str,
         action_name: str,
@@ -218,10 +218,10 @@ class DomainBuilder:
         max_retries: int = 3,
     ) -> tuple[Action, list[Predicate], str, tuple[bool, str]]:
         """
-        Extract an action and predicates from a given action description using LLM
+        Extract an action and predicates from a given action description using BaseLLM
 
         Args:
-            model (LLM): LLM
+            model (BaseLLM): BaseLLM
             domain_desc (str): domain description
             prompt_template (str): action construction prompt
             action_name (str): action name
@@ -235,7 +235,7 @@ class DomainBuilder:
         Returns:
             action (Action): constructed action class
             new_predicates (list[Predicate]): a list of new predicates
-            llm_response (str): the raw string LLM response
+            llm_response (str): the raw string BaseLLM response
             validation_info (tuple[bool, str]): validation check information
         """
 
@@ -330,7 +330,7 @@ class DomainBuilder:
     @require_llm
     def extract_pddl_actions(
         self,
-        model: LLM,
+        model: BaseLLM,
         domain_desc: str,
         prompt_template: str,
         nl_actions: dict[str, str] = None,
@@ -338,10 +338,10 @@ class DomainBuilder:
         types: dict[str, str] = None,
     ) -> tuple[list[Action], list[Predicate], str]:
         """
-        Extract all actions from a given action description using LLM
+        Extract all actions from a given action description using BaseLLM
 
         Args:
-            model (LLM): LLM
+            model (BaseLLM): BaseLLM
             domain_desc (str): domain description
             prompt_template (str): action construction prompt
             nl_actions (dict[str, str]): NL actions currently in model
@@ -351,7 +351,7 @@ class DomainBuilder:
         Returns:
             action (Action): constructed action class
             new_predicates (list[Predicate]): a list of new predicates
-            llm_response (str): the raw string LLM response
+            llm_response (str): the raw string BaseLLM response
         """
 
         model.reset_tokens()
@@ -393,7 +393,7 @@ class DomainBuilder:
                 parse_action(llm_response=rest_of_string, action_name=action_name)
             )
 
-        # if user queries predicate creation via LLM
+        # if user queries predicate creation via BaseLLM
         try:
             new_predicates = parse_new_predicates(llm_response)
 
@@ -413,7 +413,7 @@ class DomainBuilder:
     @require_llm
     def extract_parameters(
         self,
-        model: LLM,
+        model: BaseLLM,
         domain_desc: str,
         prompt_template: str,
         action_name: str,
@@ -422,10 +422,10 @@ class DomainBuilder:
         max_retries: int = 3,
     ) -> tuple[OrderedDict, list, str]:
         """
-        Extracts parameters from single action description via LLM
+        Extracts parameters from single action description via BaseLLM
 
         Args:
-            model (LLM): LLM
+            model (BaseLLM): BaseLLM
             domain_desc (str): domain description
             prompt_template (str): prompt template
             action_name (str): action name
@@ -436,7 +436,7 @@ class DomainBuilder:
         Returns:
             param (OrderedDict): ordered list of parameters
             param_raw (list()): list of raw parameters
-            llm_response (str): the raw string LLM response
+            llm_response (str): the raw string BaseLLM response
         """
 
         # replace prompt placeholders
@@ -452,7 +452,7 @@ class DomainBuilder:
             try:
                 model.reset_tokens()
 
-                llm_response = model.query(prompt=prompt_template)  # get LLM response
+                llm_response = model.query(prompt=prompt_template)  # get BaseLLM response
 
                 # extract respective types from response
                 param, param_raw = parse_params(llm_output=llm_response)
@@ -471,7 +471,7 @@ class DomainBuilder:
     @require_llm
     def extract_preconditions(
         self,
-        model: LLM,
+        model: BaseLLM,
         domain_desc: str,
         prompt_template: str,
         action_name: str,
@@ -481,10 +481,10 @@ class DomainBuilder:
         max_retries: int = 3,
     ) -> tuple[str, list[Predicate], str]:
         """
-        Extracts preconditions from single action description via LLM
+        Extracts preconditions from single action description via BaseLLM
 
         Args:
-            model (LLM): LLM
+            model (BaseLLM): BaseLLM
             domain_desc (str): domain description
             prompt_template (str): prompt template
             action_name (str): action name
@@ -496,7 +496,7 @@ class DomainBuilder:
         Returns:
             preconditions (str): PDDL format of preconditions
             new_predicates (list[Predicate]): a list of new predicates
-            llm_response (str): the raw string LLM response
+            llm_response (str): the raw string BaseLLM response
         """
 
         # replace prompt placeholders
@@ -516,7 +516,7 @@ class DomainBuilder:
             try:
                 model.reset_tokens()
 
-                llm_response = model.query(prompt=prompt_template)  # get LLM response
+                llm_response = model.query(prompt=prompt_template)  # get BaseLLM response
 
                 # extract respective types from response
                 preconditions = (
@@ -541,7 +541,7 @@ class DomainBuilder:
     @require_llm
     def extract_effects(
         self,
-        model: LLM,
+        model: BaseLLM,
         domain_desc: str,
         prompt_template: str,
         action_name: str,
@@ -552,10 +552,10 @@ class DomainBuilder:
         max_retries: int = 3,
     ) -> tuple[str, list[Predicate], str]:
         """
-        Extracts effects from single action description via LLM
+        Extracts effects from single action description via BaseLLM
 
         Args:
-            model (LLM): LLM
+            model (BaseLLM): BaseLLM
             domain_desc (str): domain description
             prompt_template (str): prompt template
             action_name (str): action name
@@ -568,7 +568,7 @@ class DomainBuilder:
         Returns:
             effects (str): PDDL format of effects
             new_predicates (list[Predicate]): a list of new predicates
-            llm_response (str): the raw string LLM response
+            llm_response (str): the raw string BaseLLM response
         """
 
         # replace prompt placeholders
@@ -589,7 +589,7 @@ class DomainBuilder:
             try:
                 model.reset_tokens()
 
-                llm_response = model.query(prompt=prompt_template)  # get LLM response
+                llm_response = model.query(prompt=prompt_template)  # get BaseLLM response
 
                 # extract respective types from response
                 effects = (
@@ -614,7 +614,7 @@ class DomainBuilder:
     @require_llm
     def extract_predicates(
         self,
-        model: LLM,
+        model: BaseLLM,
         domain_desc: str,
         prompt_template: str,
         types: dict[str, str] = None,
@@ -623,10 +623,10 @@ class DomainBuilder:
         max_retries: int = 3,
     ) -> tuple[list[Predicate], str]:
         """
-        Extracts predicates via LLM
+        Extracts predicates via BaseLLM
 
         Args:
-            model (LLM): LLM
+            model (BaseLLM): BaseLLM
             domain_desc (str): domain description
             prompt_template (str): prompt template
             types (dict[str,str]): current types in model
@@ -636,7 +636,7 @@ class DomainBuilder:
 
         Returns:
             new_predicates (list[Predicate]): a list of new predicates
-            llm_response (str): the raw string LLM response
+            llm_response (str): the raw string BaseLLM response
         """
 
         # replace prompt placeholders

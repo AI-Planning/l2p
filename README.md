@@ -8,7 +8,8 @@ L2P is an offline, natural language -to- planning model system that supports dom
 
 This is the general setup to build domain predicates:
 ```python
-from l2p.llm_builder import OPENAI
+import os
+from l2p.llm.openai import OPENAI
 from l2p.utils import load_file
 from l2p.domain_builder import DomainBuilder
 
@@ -41,6 +42,8 @@ print(f"PDDL domain predicates:\n{predicate_str}")
 
 Here is how you would setup a PDDL problem:
 ```python
+from typing import List
+from l2p.utils.pddl_types import Predicate
 from l2p.task_builder import TaskBuilder
 
 task_builder = TaskBuilder()
@@ -131,7 +134,7 @@ pip install -r requirements.txt
 These environments can then be exited with `conda deactivate` and `deactivate` respectively. The instructions below assume that a suitable environemnt is active.
 
 **API keys**
-L2P requires access to an LLM. L2P provides support for OpenAI's GPT-series models. To configure these, provide the necessary API-key in an environment variable.
+L2P requires access to an LLM. L2P provides support for OpenAI's models and other providers compatible with OpenAI SDK. To configure these, provide the necessary API-key in an environment variable.
 
 **OpenAI**
 ```
@@ -155,7 +158,7 @@ args = parser.parse_args()
 huggingface_model = HUGGING_FACE(model_path=args.model_path, max_tokens=args.max_len, temperature=args.temp)
 ```
 
-**llm_builder.py** contains an abstract class and method for implementing any model classes in the case of other third-party LLM uses.
+**l2p/llm/base.py** contains an abstract class and method for implementing any model classes in the case of other third-party LLM uses.
 
 ## Planner
 For ease of use, our library contains submodule [FastDownward](https://github.com/aibasel/downward/tree/308812cf7315fe896dbcd319493277d82aa36bd2). Fast Downward is a domain-independent classical planning system that users can run their PDDL domain and problem files on. The motivation is that the majority of papers involving PDDL-LLM usage uses this library as their planner.

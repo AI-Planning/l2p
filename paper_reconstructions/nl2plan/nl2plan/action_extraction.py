@@ -16,7 +16,7 @@ class ActionExtraction:
 
     def action_extraction(
         self,
-        model: LLM,
+        model: BaseLLM,
         domain_desc: str,
         action_extraction_prompt: PromptBuilder,
         type_hierarchy: dict[str, str],
@@ -26,7 +26,7 @@ class ActionExtraction:
         Main function of the action extraction construction step.
 
         Args:
-            - model (LLM): LLM to inquire.
+            - model (BaseLLM): LLM to inquire.
             - domain_desc (str): specific domain description to work off.
             - action_extraction_prompt (PromptBuilder): base prompt to extract actions.
             - feedback_prompt (str): feedback template for LLM to correct output.

@@ -3,7 +3,7 @@ This file contains collection of functions for PDDL feedback generation purposes
 """
 
 from .utils import *
-from .llm_builder import LLM, require_llm
+from .llm import BaseLLM, require_llm
 from .domain_builder import DomainBuilder
 from .task_builder import TaskBuilder
 from collections import OrderedDict
@@ -17,7 +17,7 @@ class FeedbackBuilder:
 
     @require_llm
     def get_feedback(
-        self, model: LLM, feedback_template: str, feedback_type: str, llm_response: str
+        self, model: BaseLLM, feedback_template: str, feedback_type: str, llm_response: str
     ) -> tuple[bool, str]:
         """
         This retrieves the type of feedback user requests and returns feedack message.
@@ -53,7 +53,7 @@ class FeedbackBuilder:
     @require_llm
     def type_feedback(
         self,
-        model: LLM,
+        model: BaseLLM,
         domain_desc: str,
         llm_response: str,
         feedback_template: str,
@@ -103,7 +103,7 @@ class FeedbackBuilder:
     @require_llm
     def type_hierarchy_feedback(
         self,
-        model: LLM,
+        model: BaseLLM,
         domain_desc: str,
         llm_response: str,
         feedback_template: str,
@@ -162,7 +162,7 @@ class FeedbackBuilder:
     @require_llm
     def nl_action_feedback(
         self,
-        model: LLM,
+        model: BaseLLM,
         domain_desc: str,
         llm_response: str,
         feedback_template: str,
@@ -219,7 +219,7 @@ class FeedbackBuilder:
     @require_llm
     def pddl_action_feedback(
         self,
-        model: LLM,
+        model: BaseLLM,
         domain_desc: str,
         llm_response: str,
         feedback_template: str,
@@ -315,7 +315,7 @@ class FeedbackBuilder:
     @require_llm
     def parameter_feedback(
         self,
-        model: LLM,
+        model: BaseLLM,
         domain_desc: str,
         llm_response: str,
         feedback_template: str,
@@ -365,7 +365,7 @@ class FeedbackBuilder:
     @require_llm
     def precondition_feedback(
         self,
-        model: LLM,
+        model: BaseLLM,
         domain_desc: str,
         llm_response: str,
         feedback_template: str,
@@ -429,7 +429,7 @@ class FeedbackBuilder:
     @require_llm
     def effect_feedback(
         self,
-        model: LLM,
+        model: BaseLLM,
         domain_desc: str,
         llm_response: str,
         feedback_template: str,
@@ -494,7 +494,7 @@ class FeedbackBuilder:
     @require_llm
     def predicate_feedback(
         self,
-        model: LLM,
+        model: BaseLLM,
         domain_desc: str,
         llm_response: str,
         feedback_template: str,
@@ -541,7 +541,7 @@ class FeedbackBuilder:
     @require_llm
     def task_feedback(
         self,
-        model: LLM,
+        model: BaseLLM,
         problem_desc: str,
         llm_response: str,
         feedback_template: str,
@@ -636,7 +636,7 @@ class FeedbackBuilder:
     @require_llm
     def objects_feedback(
         self,
-        model: LLM,
+        model: BaseLLM,
         problem_desc: str,
         llm_response: str,
         feedback_template: str,
@@ -688,7 +688,7 @@ class FeedbackBuilder:
     @require_llm
     def initial_state_feedback(
         self,
-        model: LLM,
+        model: BaseLLM,
         problem_desc: str,
         llm_response: str,
         feedback_template: str,
@@ -749,7 +749,7 @@ class FeedbackBuilder:
     @require_llm
     def goal_state_feedback(
         self,
-        model: LLM,
+        model: BaseLLM,
         problem_desc: str,
         llm_response: str,
         feedback_template: str,

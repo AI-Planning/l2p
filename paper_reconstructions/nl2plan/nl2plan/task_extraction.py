@@ -18,7 +18,7 @@ class TaskExtraction:
 
     def task_extraction(
         self,
-        model: LLM,
+        model: BaseLLM,
         problem_desc: str,
         task_extraction_prompt: PromptBuilder,
         types: dict[str, str],
@@ -32,7 +32,7 @@ class TaskExtraction:
         initial state, and goal state as components to get PDDL problem.
 
         Args:
-            - model (LLM): The LLM language model connection.
+            - model (BaseLLM): The LLM language model connection.
             - problem_desc (str): not domain, but just problem description
             - task_extraction_prompt (PromptBuilder): task prompt extraction
             - types (dict[str,str]): domain types

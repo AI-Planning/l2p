@@ -23,7 +23,7 @@ class ActionConstruction:
 
     def construct_action(
         self,
-        model: LLM,
+        model: BaseLLM,
         domain_desc: str,
         act_constr_prompt: PromptBuilder,
         action_list: str,
@@ -42,7 +42,7 @@ class ActionConstruction:
         token usage (but could drastically affect results).
 
         Args:
-            model (LLM): The LLM language model connection.
+            model (BaseLLM): The LLM language model connection.
             act_constr_prompt (PromptBuilder): action construction prompt.
             action_name (str): The name of the action.
             action_desc (str): The action description.
@@ -153,7 +153,7 @@ class ActionConstruction:
 
     def action_construction(
         self,
-        model: LLM,
+        model: BaseLLM,
         domain_desc: str,
         act_constr_prompt: PromptBuilder,
         nl_actions: dict[str, str],
@@ -168,7 +168,7 @@ class ActionConstruction:
         will be generated on the current predicate list.
 
         Args:
-            - model (LLM): The LLM language model connection.
+            - model (BaseLLM): The LLM language model connection.
             - domain_desc (str): description of domain
             - act_constr_prompt (PromptBuilder): action prompt extraction
             - nl_actions (dict[str,str]): list of actions in natural language

@@ -13,7 +13,7 @@ from itertools import combinations
 
 
 def run_parse_and_solve(
-    model: LLM,
+    model: BaseLLM,
     prompt_initial: str,
     prompt_goal: str,
     problem_path: str,
@@ -24,7 +24,7 @@ def run_parse_and_solve(
     Main framework of P+S - translate initial and goal states to PDDL from NL
 
     Args:
-        model (LLM): LLM model to run inference
+        model (BaseLLM): LLM model to run inference
         prompt_initial (str): prompt for translating initial state
         prompt_goal (str): prompt for translating goal state
         problem_path (str): directory of specific problem

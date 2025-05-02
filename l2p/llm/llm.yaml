@@ -1,0 +1,351 @@
+openai:
+  o1:
+    family: o1
+    engine: o1
+    parameters:
+      context_length: 8192 # max: 200000
+      temperature: 1.0
+      top_p: 1.0
+      max_completion_tokens: 8192 # max: 100000
+      frequency_penalty: 0.0
+      presence_penalty: 0.0
+      stop:
+      reasoning_effort: medium
+    cost_usd_mtok:
+      input: 15.00
+      output: 60.00
+  o1-mini:
+    family: o1
+    engine: o1-mini
+    parameters:
+      context_length: 8192 # max: 128000
+      temperature: 1.0
+      top_p: 1.0
+      max_completion_tokens: 8192 # max: 65536
+      frequency_penalty: 0.0
+      presence_penalty: 0.0
+      stop:
+    cost_usd_mtok:
+      input: 1.10
+      output: 4.40
+  o3:
+    family: o3
+    engine: o3
+    parameters:
+      context_length: 8192 # max: 200000
+      temperature: 1.0
+      top_p: 1.0
+      max_completion_tokens: 8192 # max: 100000
+      frequency_penalty: 0.0
+      presence_penalty: 0.0
+      stop:
+      reasoning_effort: medium
+    cost_usd_mtok:
+      input: 10.00
+      output: 40.00
+  o3-mini:
+    family: o3
+    engine: o3-mini
+    parameters:
+      context_length: 8192 # max: 200000
+      temperature: 1.0
+      top_p: 1.0
+      max_completion_tokens: 8192 # max: 100000
+      frequency_penalty: 0.0
+      presence_penalty: 0.0
+      stop:
+      reasoning_effort: medium
+    cost_usd_mtok:
+      input: 1.10
+      output: 4.40
+  o4-mini:
+    family: o4
+    engine: o4-mini
+    parameters:
+      context_length: 8192 # max: 200000
+      temperature: 1.0
+      top_p: 1
+      max_completion_tokens: 8192 # max: 100000
+      frequency_penalty: 0.0
+      presence_penalty: 0.0
+      stop:
+      reasoning_effort: medium
+    cost_usd_mtok:
+      input: 1.10
+      output: 4.40
+  gpt-4.1:
+    family: gpt-4.1
+    engine: gpt-4.1
+    parameters:
+      context_length: 8192 # max: 1047576
+      temperature: 0.0
+      top_p: 1.0
+      max_completion_tokens: 8192 # max: 32768
+      frequency_penalty: 0.0
+      presence_penalty: 0.0
+      stop:
+    cost_usd_mtok:
+      input: 2.00
+      output: 8.00
+  gpt-4.1-nano:
+    family: gpt-4.1
+    engine: gpt-4.1-nano
+    parameters:
+      context_length: 8192 # max: 1047576
+      temperature: 0.0
+      top_p: 1.0
+      max_completion_tokens: 8192 # max: 32768
+      frequency_penalty: 0.0
+      presence_penalty: 0.0
+      stop:
+    cost_usd_mtok:
+      input: 0.10
+      output: 0.40
+  gpt-4.1-mini:
+    family: gpt-4.1
+    engine: gpt-4.1-mini
+    parameters:
+      context_length: 8192 # max: 1047576
+      temperature: 0.0
+      top_p: 1.0
+      max_completion_tokens: 8192 # max: 32768
+      frequency_penalty: 0.0
+      presence_penalty: 0.0
+      stop:
+    cost_usd_mtok:
+      input: 0.40
+      output: 1.60
+  chatgpt-4o-latest:
+    family: gpt-4o
+    engine: chatgpt-4o-latest
+    parameters:
+      context_length: 8192 # max: 128000
+      temperature: 0.0
+      top_p: 1.0
+      max_completion_tokens: 8192 # max: 16384
+      frequency_penalty: 0.0
+      presence_penalty: 0.0
+      stop:
+    cost_usd_mtok:
+      input: 5.00
+      output: 15.00
+  gpt-4o:
+    family: gpt-4o
+    engine: gpt-4o
+    parameters:
+      context_length: 8192 # max: 128000
+      temperature: 0.0
+      top_p: 1.0
+      max_completion_tokens: 8192 # max: 16384
+      frequency_penalty: 0.0
+      presence_penalty: 0.0
+      stop:
+    cost_usd_mtok:
+      input: 2.50
+      output: 10.00
+  gpt-4o-mini:
+    family: gpt-4o
+    engine: gpt-4o-mini
+    parameters:
+      context_length: 8192 # max: 128000
+      temperature: 0.0
+      top_p: 1.0
+      max_completion_tokens: 8192 # max: 16384
+      frequency_penalty: 0.0
+      presence_penalty: 0.0
+      stop:
+    cost_usd_mtok:
+      input: 0.15
+      output: 0.60
+  gpt-4:
+    family: gpt-4
+    engine: gpt-4
+    parameters:
+      context_length: 8192
+      temperature: 0.0
+      top_p: 1.0
+      max_completion_tokens: 8192
+      frequency_penalty: 0.0
+      presence_penalty: 0.0
+      stop:
+    cost_usd_mtok:
+      input: 30.00
+      output: 60.00
+  gpt-4-turbo:
+    family: gpt-4
+    engine: gpt-4-turbo
+    parameters:
+      context_length: 8192 # max: 128000
+      temperature: 0.0
+      top_p: 1.0
+      max_completion_tokens: 4096
+      frequency_penalty: 0.0
+      presence_penalty: 0.0
+      stop:
+    cost_usd_mtok:
+      input: 10.00
+      output: 30.00
+  gpt-3.5-turbo:
+    family: gpt-3.5
+    engine: gpt-3.5-turbo
+    parameters:
+      context_length: 8192 # max: 16385
+      temperature: 0.0
+      top_p: 1.0
+      max_completion_tokens: 4096
+      frequency_penalty: 0.0
+      presence_penalty: 0.0
+      stop:
+    cost_usd_mtok:
+      input: 0.50
+      output: 1.50
+
+deepseek:
+  deepseek-v3:
+    family: deepseek
+    engine: deepseek-chat
+    parameters:
+      context_length: 8192
+      temperature: 0.0
+      top_p: 1.0
+      max_completion_tokens: 4096
+      stop:
+    cost_usd_mtok:
+      input: 0.035 # discount price (orig. $0.07 USD)
+      output: 0.550 # discount price (orig. $1.10 USD) 
+  deepseek-r1:
+    family: deepseek
+    engine: deepseek-reasoner
+    parameters:
+      context_length: 8192
+      temperature: 0.0
+      top_p: 1.0
+      max_completion_tokens: 4096
+      stop:
+    cost_usd_mtok:
+      input: 0.035 # discount price (orig. $0.14 USD)
+      output: 0.550 # discount price (orig. $2.19 USD)
+
+anthropic:
+  claude-3.7-sonnet:
+    family: claude
+    engine: claude-3-7-sonnet-20250219
+    parameters:
+      context_length: 8192 # max: 200000
+      temperature: 0.0
+      top_p: 1.0
+      max_completion_tokens: 8192 # max: 64000
+      stop:
+    cost_usd_mtok:
+      input: 3.00
+      output: 15.00
+    
+  claude-3.5-sonnet:
+    family: claude
+    engine: claude-3-5-sonnet-20241022
+    parameters:
+      context_length: 8192 # max: 200000
+      temperature: 0.0
+      top_p: 1.0
+      max_completion_tokens: 8192
+      stop:
+    cost_usd_mtok:
+      input: 3.00
+      output: 15.00
+
+  claude-3.5-haiku:
+    family: claude
+    engine: claude-3-5-haiku-20241022
+    parameters:
+      context_length: 8192 # max: 200000
+      temperature: 0.0
+      top_p: 1.0
+      max_completion_tokens: 8192
+      stop:
+    cost_usd_mtok:
+      input: 0.80
+      output: 4.00
+
+  claude-3-haiku:
+    family: claude
+    engine: claude-3-haiku-20240307
+    parameters:
+      context_length: 8192 # max: 200000
+      temperature: 0.0
+      top_p: 1.0
+      max_completion_tokens: 4096
+      stop:
+    cost_usd_mtok:
+      input: 0.25
+      output: 1.25
+
+  claude-3-opus:
+    family: claude
+    engine: claude-3-opus-20240229
+    parameters:
+      context_length: 8192 # max: 200000
+      temperature: 0.0
+      top_p: 1.0
+      max_completion_tokens: 4096
+      stop:
+    cost_usd_mtok:
+      input: 15.00
+      output: 75.00
+
+vllm:
+  llama2-7b:
+    family: llama-2
+    engine: meta-llama/Llama-2-7b-chat-hf
+    max_completion_tokens: 2048
+    temperature: 0.0
+    top_p: 1.0
+    context_length: 4096
+    dtype: float16
+    ngpu: 1
+    stop:
+  llama2-13b:
+    family: llama-2
+    engine: meta-llama/Llama-2-13b-chat-hf
+    context_length: 4096
+    temperature: 0.0
+    top_p: 1.0
+    dtype: float16
+    ngpu: 2
+    max_completion_tokens: 2048
+    stop:
+  llama2-70b:
+    family: llama-2
+    engine: meta-llama/Llama-2-70b-chat-hf
+    context_length: 4096
+    temperature: 0.0
+    top_p: 1.0
+    dtype: float16
+    ngpu: 4
+    max_completion_tokens: 2048
+    stop:
+  llama3.1-70b:
+    family: llama-3.1
+    engine: meta-llama/Llama-3.1-70B-Instruct
+    context_length: 8192
+    temperature: 0.0
+    top_p: 1.0
+    max_completion_tokens: 4096
+    stop:
+  llama3.1-8b:
+    family: llama-3.1
+    engine: meta-llama/Llama-3.1-8B-Instruct
+    context_length: 8192
+    temperature: 0.0
+    top_p: 1.0
+    max_completion_tokens: 4096
+    stop:
+
+# {PROVIDER}:
+#   {MODEL_NAME}:
+#     family: {FAMILY_NAME}
+#     engine: {MODEL_API_NAME}
+#     max_completion_tokens: 
+#     temperature:
+#     top_p:
+#     context_length:
+#     stop:

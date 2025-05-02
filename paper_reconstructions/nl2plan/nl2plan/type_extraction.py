@@ -15,7 +15,7 @@ class TypeExtraction:
 
     def type_extraction(
         self,
-        model: LLM,
+        model: BaseLLM,
         domain_desc: str,
         type_extraction_prompt: PromptBuilder,
         feedback_prompt: str,
@@ -24,7 +24,7 @@ class TypeExtraction:
         Main function of the type extraction step.
 
         Args:
-            - model (LLM): LLM to inquire.
+            - model (BaseLLM): LLM to inquire.
             - domain_desc (str): specific domain description to work off.
             - type_extraction_prompt (PromptBuilder): base prompt to extract types.
             - feedback_prompt (str): feedback template for LLM to correct output.

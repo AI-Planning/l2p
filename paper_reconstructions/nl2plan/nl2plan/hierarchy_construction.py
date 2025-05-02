@@ -15,7 +15,7 @@ class HierarchyConstruction:
 
     def hierarchy_construction(
         self,
-        model: LLM,
+        model: BaseLLM,
         domain_desc: str,
         type_hierarchy_prompt: PromptBuilder,
         types: dict[str, str],
@@ -25,7 +25,7 @@ class HierarchyConstruction:
         Main function of the hierarchy construction step.
 
         Args:
-            - model (LLM): LLM to inquire.
+            - model (BaseLLM): LLM to inquire.
             - domain_desc (str): specific domain description to work off.
             - type_hierarchy_prompt (PromptBuilder): base prompt to organize types.
             - feedback_prompt (str): feedback template for LLM to correct output.

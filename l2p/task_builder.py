@@ -3,7 +3,7 @@ This file contains collection of functions for PDDL task generation purposes
 """
 
 from .utils import *
-from .llm_builder import LLM, require_llm
+from .llm import BaseLLM, require_llm
 import time
 
 
@@ -32,7 +32,7 @@ class TaskBuilder:
     @require_llm
     def extract_objects(
         self,
-        model: LLM,
+        model: BaseLLM,
         problem_desc: str,
         prompt_template: str,
         types: dict[str, str] = None,
@@ -43,7 +43,7 @@ class TaskBuilder:
         Extracts objects with given predicates in current model
 
         Args:
-            model (LLM): LLM
+            model (BaseLLM): BaseLLM
             problem_desc (str): problem description
             domain_desc (str): domain description
             prompt_template (str): prompt template class
@@ -53,7 +53,7 @@ class TaskBuilder:
 
         Returns:
             objects (dict[str,str]): dictionary of object types {name:description}
-            llm_response (str): the raw string LLM response
+            llm_response (str): the raw string BaseLLM response
         """
 
         # replace prompt placeholders
@@ -73,7 +73,7 @@ class TaskBuilder:
             try:
                 model.reset_tokens()
 
-                llm_response = model.query(prompt=prompt_template)  # get LLM response
+                llm_response = model.query(prompt=prompt_template)  # get BaseLLM response
 
                 # extract respective types from response
                 objects = parse_objects(llm_response)
@@ -91,7 +91,7 @@ class TaskBuilder:
     @require_llm
     def extract_initial_state(
         self,
-        model: LLM,
+        model: BaseLLM,
         problem_desc: str,
         prompt_template: str,
         types: dict[str, str] = None,
@@ -105,7 +105,7 @@ class TaskBuilder:
         Extracts initial states with given predicates, objects, and states in current model
 
         Args:
-            model (LLM): LLM
+            model (BaseLLM): BaseLLM
             problem_desc (str): problem description
             domain_desc (str): domain description
             prompt_template (str): prompt template class
@@ -118,7 +118,7 @@ class TaskBuilder:
 
         Returns:
             initial (list[dict[str,str]]): list of dictionary of initial states [{predicate,params,neg}]
-            llm_response (str): the raw string LLM response
+            llm_response (str): the raw string BaseLLM response
         """
 
         # replace prompt placeholders
@@ -164,7 +164,7 @@ class TaskBuilder:
     @require_llm
     def extract_goal_state(
         self,
-        model: LLM,
+        model: BaseLLM,
         problem_desc: str,
         prompt_template: str,
         types: dict[str, str] = None,
@@ -178,7 +178,7 @@ class TaskBuilder:
         Extracts goal states with given predicates, objects, and states in current model
 
         Args:
-            model (LLM): LLM
+            model (BaseLLM): BaseLLM
             problem_desc (str): problem description
             domain_desc (str): domain description
             prompt_template (str): prompt template class
@@ -191,7 +191,7 @@ class TaskBuilder:
 
         Returns:
             goal (list[dict[str,str]]): list of dictionary of goal states [{predicate,params,neg}]
-            llm_response (str): the raw string LLM response
+            llm_response (str): the raw string BaseLLM response
         """
 
         # replace prompt placeholders
@@ -237,7 +237,7 @@ class TaskBuilder:
     @require_llm
     def extract_task(
         self,
-        model: LLM,
+        model: BaseLLM,
         problem_desc: str,
         prompt_template: str,
         types: dict[str, str] = None,
@@ -249,7 +249,7 @@ class TaskBuilder:
         Extracts whole task specification in current model
 
         Args:
-            model (LLM): LLM
+            model (BaseLLM): BaseLLM
             problem_desc (str): problem description
             domain_desc (str): domain description
             prompt_template (str): prompt template class
@@ -262,7 +262,7 @@ class TaskBuilder:
             objects (dict[str,str]): dictionary of object types {name:description}
             initial (list[dict[str,str]]): list of dictionary of initial states [{predicate,params,neg}]
             goal (list[dict[str,str]]): list of dictionary of goal states [{predicate,params,neg}]
-            llm_response (str): the raw string LLM response
+            llm_response (str): the raw string BaseLLM response
         """
 
         model.reset_tokens()
@@ -307,7 +307,7 @@ class TaskBuilder:
     @require_llm
     def extract_nl_conditions(
         self,
-        model: LLM,
+        model: BaseLLM,
         problem_desc: str,
         prompt_template: str,
         types: dict[str, str] = None,
@@ -320,7 +320,7 @@ class TaskBuilder:
         Extracts initial and goal states in natural language
 
         Args:
-            model (LLM): LLM
+            model (BaseLLM): BaseLLM
             problem_desc (str): problem description
             domain_desc (str): domain description
             prompt_template (str): prompt template class
@@ -331,7 +331,7 @@ class TaskBuilder:
             max_retries (int): max # of retries if failure occurs
 
         Returns:
-            llm_response (str): the raw string LLM response
+            llm_response (str): the raw string BaseLLM response
         """
 
         # replace prompt placeholders

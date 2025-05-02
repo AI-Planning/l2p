@@ -72,7 +72,7 @@ def get_types(hierarchy_requirements):
 
 
 def construct_action(
-    model: LLM,
+    model: BaseLLM,
     act_pred_prompt: str,
     action_name: str,
     predicates: list[Predicate],
@@ -86,7 +86,7 @@ def construct_action(
     Process looping until it abides the custom syntax validation check.
     
     Args:
-        - model (LLM): the large language model to be inferenced
+        - model (BaseLLM): the large language model to be inferenced
         - act_pred_prompt (str): contains information of action and format creation passed to LLM
         - action_name (str): current action to be generated
         - predicates (list[Predicate]): current list of predicates generated
@@ -161,7 +161,7 @@ def construct_action(
 
 
 def run_llm_dm(
-    model: LLM,
+    model: BaseLLM,
     domain: str = "household",
     max_iter: int = 2,
     max_attempts: int = 8
@@ -171,7 +171,7 @@ def run_llm_dm(
     actions (params, preconditions, effects) and predicates to create an overall PDDL domain file.
     
     Args:
-        - model (LLM): the large language model to be inferenced
+        - model (BaseLLM): the large language model to be inferenced
         - domain (str): choice of domain to task (defaults to `household`)
         - max_iter: outer loop iteration; # of overall action list resets (defaults to 2)
         - max_attempts: # of attempts to generate a single actions properly (defaults to 8)
