@@ -110,8 +110,8 @@ class OPENAI(BaseLLM):
     ) -> str:
         """Generate a response from OpenAI based on the prompt."""
 
-        if prompt is None:
-            raise ValueError("Prompt cannot be None")
+        if not isinstance(prompt, str) or not prompt.strip():
+            raise ValueError("Prompt must be a non-empty string.")
 
         messages = messages or [{"role": "user", "content": prompt}]
 

@@ -55,7 +55,7 @@ class HUGGING_FACE(BaseLLM):
 
         # attempt to import `AutoTokenizer` from `transformers`
         try:
-            from transformers import AutoTokenizer, AutoConfig
+            from transformers import AutoTokenizer, AutoConfig, AutoModelForCausalLM
         except ImportError:
             raise ImportError(
                 "The 'transformers.AutoTokenizer' module is required but is not installed properly. "
