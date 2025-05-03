@@ -289,6 +289,21 @@ anthropic:
       output: 75.00
 
 huggingface:
+
+  gpt2:
+    family: gpt2
+    engine: openai-community/gpt2
+    model_params:
+      context_length: 1024
+      max_completion_tokens:
+      temperature: 0.0
+      top_p: 1.0
+      do_sample: false
+      stop:
+    model_config:
+      torch_dtype: float32
+      device_map: auto
+
   llama2-7b:
     family: llama-2
     engine: meta-llama/Llama-2-7b-chat-hf

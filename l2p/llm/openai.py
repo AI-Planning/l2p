@@ -5,7 +5,7 @@ supports providers that are compatible with OpenAI SDK usage (i.e. DeepSeek, Ant
 
 A YAML configuration file is required to specify model parameters, costs, and other 
 provider-specific settings. By default, the l2p library includes a configuration file 
-located at 'l2p/llm/llm.yaml'.
+located at 'l2p/llm/utils/llm.yaml'.
 
 Users can also define their own custom models and parameters by extending the YAML 
 configuration using the same format template.
@@ -19,7 +19,7 @@ class OPENAI(BaseLLM):
     def __init__(
             self,
             model: str,
-            config_path: str = "l2p/llm/llm.yaml",
+            config_path: str = "l2p/llm/utils/llm.yaml",
             provider: str = "openai",
             api_key: str | None = None,   
             base_url: str = "https://api.openai.com/v1/"
@@ -48,14 +48,14 @@ class OPENAI(BaseLLM):
         
         # retrieve model configurations
         model_config = self._config.get(self.provider, {}).get(model, {})
-        self.model_name = model_config.get("engine", model)
+        self.model_engine = model_config.get("engine", model)
 
         # call the parent class constructor to handle model and api_key
         super().__init__(model, api_key)
         self.client = OpenAI(api_key=api_key, base_url=base_url)
 
         # set model parameters
-        self._set_default_parameters(model_config)
+        self._set_parameters(model_config)
 
         # initialize tokenizer and metadata storage
         self.tok = tiktoken.get_encoding("cl100k_base")
@@ -68,8 +68,8 @@ class OPENAI(BaseLLM):
         self.cost_per_output_token = model_config.get("cost_usd_mtok", {}).get("output", 0)
 
 
-    def _set_default_parameters(self, model_config: dict) -> None:
-        """Set default parameters from the model configuration."""
+    def _set_parameters(self, model_config: dict) -> None:
+        """Set parameters from the model configuration."""
 
         # default values for parameters if none exists
         defaults = {
@@ -105,13 +105,17 @@ class OPENAI(BaseLLM):
         prompt: str,
         messages=None,
         end_when_error=False,
-        max_retry=5,
+        max_retry=3,
         est_margin=200,
     ) -> str:
         """Generate a response from OpenAI based on the prompt."""
 
+        if prompt is None:
+            raise ValueError("Prompt cannot be None")
+
         messages = messages or [{"role": "user", "content": prompt}]
 
+        # estimate current usage of tokens
         current_tokens = sum(len(self.tok.encode(m["content"])) for m in messages)
         requested_tokens = min(self.max_completion_tokens, self.context_length - current_tokens - est_margin)
 
@@ -124,7 +128,7 @@ class OPENAI(BaseLLM):
         conn_success, n_retry = False, 0
         while not conn_success and n_retry < max_retry:
             try:
-                print(f"[INFO] connecting to {self.model_name} ({requested_tokens} tokens)...")
+                print(f"[INFO] connecting to {self.model_engine} ({requested_tokens} tokens)...")
 
                 kwargs = {
                     "temperature": self.temperature,
@@ -142,7 +146,7 @@ class OPENAI(BaseLLM):
                 # retrieve completion
                 response = self.connect_openai(
                     client=self.client,
-                    model=self.model_name,
+                    model=self.model_engine,
                     messages=messages,
                     **kwargs
                 )
@@ -179,7 +183,7 @@ class OPENAI(BaseLLM):
 
         # log query information
         self.query_log.append({
-            "model": self.model_name,
+            "model": self.model_engine,
             "prompt_tokens": usage.prompt_tokens if usage else current_tokens,
             "completion_tokens": usage.completion_tokens if usage else len(self.tok.encode(llm_output)),
             "reasoning_tokens": usage.completion_tokens_details.reasoning_tokens if usage else 0,
