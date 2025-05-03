@@ -80,7 +80,7 @@ class HUGGING_FACE(BaseLLM):
         self.query_log = []
         
         # set model
-        self.llm = AutoModelForCausalLM.from_pretrained(pretrained_model_name_or_path=self.model_engine,
+        self.llm = AutoModelForCausalLM.from_pretrained(pretrained_model_name_or_path=self.model_path,
                                                         device_map=self.device_map,
                                                         torch_dtype=self.torch_dtype).to(self.device)
         
@@ -90,11 +90,11 @@ class HUGGING_FACE(BaseLLM):
         try:
             # lightweight check — will raise OSError if the model path is invalid
             if self.api_key:
-                self.tokenizer = self.AutoTokenizer.from_pretrained(self.model_engine, token=self.api_key)
+                self.tokenizer = self.AutoTokenizer.from_pretrained(self.model_path, token=self.api_key)
             else:
-                self.tokenizer = self.AutoTokenizer.from_pretrained(self.model_engine)
+                self.tokenizer = self.AutoTokenizer.from_pretrained(self.model_path)
 
-            self.context_length = self.AutoConfig.from_pretrained(self.model_engine).max_position_embeddings
+            self.context_length = self.AutoConfig.from_pretrained(self.model_path).max_position_embeddings
         
         except OSError as e:
             # if model_path is not found, raise an error

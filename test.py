@@ -1,13 +1,14 @@
 from config import HF_API_KEY
 from l2p import *
+import os
 
 domain_builder = DomainBuilder()
 
-model = "llama3.1-8b"
+model = "gpt-4o-mini"
 model_path = "/home/tant2002/scratch/llama3_1_8b_instruct"
-api_key = HF_API_KEY
+api_key = os.environ.get("OPENAI_API_KEY")
 
-llm = HUGGING_FACE(model=model, model_path=model_path, api_key=api_key)
+llm = OPENAI(model=model, api_key=api_key)
 
 response = llm.query("Hello, world!")
 print(response)
