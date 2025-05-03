@@ -2,7 +2,7 @@
 This is a subclass (HUGGING_FACE) for abstract class (BaseLLM) that implements an interface 
 to interact with downloaded text generation models from the HuggingFace API. 
 
-A YAML configuration file is required to specify model parameters, costs, and other 
+A YAML configuration file is required to specify model parameters and other 
 provider-specific settings. By default, the l2p library includes a configuration file 
 located at 'l2p/llm/utils/llm.yaml'.
 
@@ -23,7 +23,7 @@ class HUGGING_FACE(BaseLLM):
             model_path: str, # base directory of stored model
             config_path: str = "l2p/llm/utils/llm.yaml",
             provider: str = "huggingface",
-            api_key: str | None = None
+            api_key: str | None = None # only if model is affiliated w/ private repo
         ) -> None:
 
         self.api_key = api_key
