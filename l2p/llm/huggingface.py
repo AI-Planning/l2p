@@ -10,9 +10,11 @@ Users can also define their own custom models and parameters by extending the YA
 configuration using the same format template.
 """
 
-from retry import retry
 from typing_extensions import override
 from .base import BaseLLM, load_yaml
+from .utils.prompt_template import prompt_templates
+import warnings
+warnings.filterwarnings("ignore", message="`do_sample` is set to `False`.*")
 
 class HUGGING_FACE(BaseLLM):
     def __init__(
@@ -20,69 +22,80 @@ class HUGGING_FACE(BaseLLM):
             model: str,
             model_path: str, # base directory of stored model
             config_path: str = "l2p/llm/utils/llm.yaml",
-            provider: str = "huggingface"
+            provider: str = "huggingface",
+            api_key: str | None = None
         ) -> None:
+
+        self.api_key = api_key
         
         # load yaml configuration path
         self.provider = provider
         self._config = load_yaml(config_path)
-        
-        # retrieve model configurations
-        model_config = self._config.get(self.provider, {}).get(model, {})
-        self.model_engine = model_config.get("engine", model)
-        self.model_path = model_path
 
-        # load model
-        self._load_transformers()
-
-        self._set_parameters(model_config)
-
-        print(self.context_length)
-        print(self.temperature)
-        print(self.top_p)
-
-
-    def _load_transformers(self):
-
-        # attempt to import the `transformers` library
+        # attempt to import neccessary libraries
         try:
             import transformers
-        except ImportError:
-            raise ImportError(
-                "The 'transformers' library is required for HUGGING_FACE but is not installed. "
-                "Install it using: `pip install transformers`."
-            )
-
-        # attempt to import `AutoTokenizer` from `transformers`
-        try:
             from transformers import AutoTokenizer, AutoConfig, AutoModelForCausalLM
+            self.AutoTokenizer = AutoTokenizer
+            self.AutoConfig = AutoConfig
+            self.AutoModelForCausalLM = AutoModelForCausalLM
         except ImportError:
             raise ImportError(
-                "The 'transformers.AutoTokenizer' module is required but is not installed properly. "
-                "Ensure that the 'transformers' library is installed correctly."
+                "The 'transformers' library (and its components like AutoTokenizer) is required for HUGGING_FACE "
+                "but is not installed or failed to import properly. Install it using: `pip install transformers`."
             )
-
-        # attempt to import the `torch` library
         try:
             import torch
+            self.torch = torch
         except ImportError:
             raise ImportError(
                 "The 'torch' library is required for HUGGING_FACE but is not installed. "
                 "Install it using: `pip install torch`."
             )
+        
+        self.device = "cuda" if self.torch.cuda.is_available() else "cpu"
+        
+        # retrieve model configurations
+        model_config = self._config.get(self.provider, {}).get(model, {})
+        self.model_engine = model_config.get("engine", model)
+        self.model_path = model_path
+        
+        # check/load model
+        self._load_transformer()
+        
+        # set parameters for model
+        self._set_parameters(model_config)
+        
+        # set model configuration
+        self._set_configs(model_config)
+        
+        # assign other default model parameters
+        self.batch_size = 1
+        self.pad_token_id = self.tokenizer.eos_token_id
+        self.eos_token_id = self.tokenizer.eos_token_id
+
+        # recording logs
+        self.in_tokens = 0
+        self.out_tokens = 0
+        self.query_log = []
+        
+        # set model
+        self.llm = AutoModelForCausalLM.from_pretrained(pretrained_model_name_or_path=self.model_engine,
+                                                        device_map=self.device_map,
+                                                        torch_dtype=self.torch_dtype).to(self.device)
+        
+    def _load_transformer(self):
+        """Checks and loads model tokenizer/context length if exists."""
 
         try:
-            # Check if the model_path is valid by trying to load it
-            self.model = transformers.pipeline(
-                "text-generation",
-                model=self.model_engine,
-                model_kwargs={"torch_dtype": "float16"},
-                device_map="auto",
-            )
+            # lightweight check — will raise OSError if the model path is invalid
+            if self.api_key:
+                self.tokenizer = self.AutoTokenizer.from_pretrained(self.model_engine, token=self.api_key)
+            else:
+                self.tokenizer = self.AutoTokenizer.from_pretrained(self.model_engine)
 
-            self.tokenizer = AutoTokenizer.from_pretrained(self.model_engine)
-            self.context_length = AutoConfig.from_pretrained(self.model_engine).max_position_embeddings
-            
+            self.context_length = self.AutoConfig.from_pretrained(self.model_engine).max_position_embeddings
+        
         except OSError as e:
             # if model_path is not found, raise an error
             raise ValueError(
@@ -92,144 +105,180 @@ class HUGGING_FACE(BaseLLM):
             # catch any other exceptions and raise a generic error
             raise RuntimeError(f"An error occurred while loading the model: {str(e)}")
         
-
-    
-        
     def _set_parameters(self, model_config: dict) -> None:
         """Set parameters from the model configuration"""
-
-        # default values for paramters if none exists
+        
+        # default values for parameters if none exists
         defaults = {
             "context_length": self.context_length,
+            "max_new_tokens": 512,
             "temperature": 0.0,
             "top_p": 1.0,
-            "stop": None
+            "stop": None,
+            "do_sample": False
         }
-
+        
         parameters = model_config.get("model_params", {})
         for key, default in defaults.items():
             setattr(self, key, parameters.get(key, default))
+            
+    def _set_configs(self, model_config: dict) -> None:
+        """Set model hardware configuration."""
 
-    # Retry decorator to handle retries on request
-    @retry(tries=2, delay=60)
-    def connect_huggingface(self, input, temperature, max_tokens, top_p, numSample):
-        if self.model is None or self.tokenizer is None:
-            self._load_transformers()
+        # Mapping from string to torch.dtype
+        dtype_map = {
+            "float32": self.torch.float32,
+            "float16": self.torch.float16,
+            "bfloat16": self.torch.bfloat16,
+            "int8": self.torch.int8,
+        }
 
-        if numSample > 1:
-            responses = []
-            sequences = self.model(
-                input,
-                do_sample=True,
-                top_k=1,
-                num_return_sequences=numSample,
-                max_new_tokens=max_tokens,
-                return_full_text=False,
-                temperature=temperature,
-                top_p=top_p,
-                pad_token_id=self.tokenizer.eos_token_id,
-            )
+        # Extract inner config if it exists
+        configs = model_config.get("model_config", {})
 
-            for seq in sequences:
-                response = seq["generated_text"]
-                responses.append(response)
-            return responses
-
+        # Get and parse torch_dtype
+        d_type = configs.get("torch_dtype", "float32")
+        if isinstance(d_type, str):
+            if d_type in dtype_map:
+                self.torch_dtype = dtype_map[d_type]
+            else:
+                raise ValueError(f"Unsupported torch_dtype string: '{d_type}'. Must be one of {list(dtype_map.keys())}.")
+        elif isinstance(d_type, self.torch.dtype):
+            self.torch_dtype = d_type
         else:
-            sequences = self.model(
-                input,
-                do_sample=False,
-                num_return_sequences=1,
-                max_new_tokens=max_tokens,
-                return_full_text=False,
-                temperature=temperature,
-                top_p=top_p,
-                pad_token_id=self.tokenizer.eos_token_id,
-            )
+            raise TypeError("torch_dtype must be a string or torch.dtype instance.")
 
-            seq = sequences[0]
-            response = seq["generated_text"]
+        # Set other default config values
+        self.device_map = configs.get("device_map", "auto")
+        
+    
+    def generate_prompt(self, system_message, prompt):
+        """Generate prompt structure for specific LLM."""
+        system_message = system_message or "You are a PDDL coding assistant. Provide concise, correct code only.\n"
+        model_name = self.model_engine.lower()
 
-            return response
+        # try to find matching template key from the prompt_templates
+        for key in prompt_templates:
+            if key in model_name:
+                template = prompt_templates[key]
+                return template.format(system_prompt=system_message, prompt=prompt).strip()
 
+        # default fallback if no template matched
+        return prompt
+    
     @override
     def query(
         self, 
-        prompt: str, 
-        numSample=1, 
-        end_when_error=False, 
-        max_retry=3, 
-        est_margin=200
+        prompt: str,
+        system_prompt: str = None,
+        end_when_error: bool=False,
+        max_retry: int=3,
+        est_margin: int=200,
         ) -> str:
-        """Generate a response from HuggingFace based on prompt."""
+        """Generate a response from HuggingFace model based on the prompt."""
+        
+        if not isinstance(prompt, str) or not prompt.strip():
+            raise ValueError("Prompt must be a non-empty string.")
+        
+        full_prompt = self.generate_prompt(system_prompt, prompt)
+        assert full_prompt is not None
 
-        if prompt is None:
-            raise ValueError("Prompt cannot be None")
+        input = self.tokenizer([full_prompt], return_tensors="pt")
+        requested_tokens = len(input.input_ids[0])
 
-        # estimate current usage of tokens
-        current_tokens = len(self.tokenizer.encode(prompt))
-        requested_tokens = min(self.context_length, self.context_length - current_tokens - est_margin)
+        available_context = self.context_length - requested_tokens - est_margin
+        max_new_tokens = min(self.max_new_tokens, max(0, available_context))
 
         print(
-            f"Requesting {requested_tokens} tokens "
-            f"(estimated prompt: {current_tokens} tokens, margin: {est_margin}, window: {self.context_length}"
+            f"Requesting {max_new_tokens} tokens "
+            f"(estimated prompt: {requested_tokens} tokens, margin: {est_margin}, window: {self.context_length})"
         )
 
+        # request response
+        conn_success, n_retry = False, 0
+        while not conn_success and n_retry < max_retry:
+            try:
+                # print token information
+                print(f"[INFO] connecting to {self.model_engine} ({requested_tokens} tokens)...")
+                if requested_tokens >= self.context_length:
+                    print(
+                        f"[WARNING] Prompt is {requested_tokens} tokens and exceeds context length "
+                        f"({self.context_length}). It will be truncated."
+                    )
+                
+                input = {k: v.to(self.device) for k, v in input.items()}
 
-
-        # # request response
-        # conn_success, n_retry = False, 0
-        # while not conn_success and n_retry < max_retry:
-        #     try:
-        #         print(f"[INFO] Connecting to {self.model_engine} ({requested_tokens} tokens)...")
-
-        #         kwargs = {
-        #             "temperature":,
-        #             "max_new_tokens":,
-        #             "top_p":,
-        #             "stop":,
-        #             "do_sample":,
-                    
-        #         }
-
-        #         llm_output = self.connect_huggingface(
-        #             input=prompt,
-        #             temperature=self.temperature,
-        #             max_tokens=requested_tokens,
-        #             top_p=self.top_p,
-        #             numSample=numSample,
-        #         )
-        #         conn_success = True
-        #     except Exception as e:
-        #         print(f"[ERROR] LLM error: {e}")
-        #         if end_when_error:
-        #             break
+                # get response from LLM
+                with self.torch.no_grad():
+                    outputs = self.llm.generate(**input,
+                                        max_new_tokens = max_new_tokens,
+                                        temperature = self.temperature,
+                                        top_p = self.top_p,
+                                        pad_token_id = self.pad_token_id,
+                                        eos_token_id = self.eos_token_id,
+                                        do_sample=self.do_sample
+                                        )
+                
+                # retrieve output content from LLM response
+                llm_output = self.tokenizer.decode(outputs[0][requested_tokens:], skip_special_tokens=True)
             
-        #     n_retry += 1
+                # exclude texts after stop token
+                if self.stop is not None:
+                    llm_output = llm_output.split(self.stop)[0]
+                    
+                conn_success = True
 
-        # # Token management
-        # response_tokens = len(self.tokenizer.encode(llm_output))
-        # self.out_tokens += response_tokens
-        # self.in_tokens += current_tokens
+            except Exception as e:
+                print(f"[ERROR] LLM error: {e}")
+                if end_when_error:
+                    break
+                n_retry += 1
+        
+        if not conn_success:
+            raise ConnectionError(
+                f"Failed to generate response after {max_retry} retries."
+            )
+        
+        # retrieve output tokens
+        output_ids = self.tokenizer(llm_output, return_tensors="pt", truncation=True).input_ids
+        output_token_count = len(output_ids[0])
 
-        # return llm_output
+        # record token counts
+        self.in_tokens += requested_tokens
+        self.out_tokens += output_token_count
 
-    def get_tokens(self) -> tuple[int, int]:
+        self.query_log.append({
+            "model": self.model_engine,
+            "prompt_tokens": requested_tokens,
+            "completion_tokens": output_token_count,
+            "total_tokens": requested_tokens + output_token_count,
+            "prompt": full_prompt,
+            "output": llm_output,
+        })
+    
+        return llm_output
+    
+    def get_tokens(self) -> tuple[int,int]:
+        """Return input and output token counts."""
         return self.in_tokens, self.out_tokens
-
+    
     def reset_tokens(self) -> None:
+        """Reset token counts."""
         self.in_tokens = 0
         self.out_tokens = 0
 
+    def get_query_log(self) -> list:
+        """Retrieve query log."""
+        return self.query_log
+    
+    def reset_query_log(self) -> None:
+        """Reset query log."""
+        self.query_log = []
+
     @override
     def valid_models(self) -> list[str]:
-        """Return a list of valid model names."""
+        """Returns a list of valid model engines."""
         try:
             return list(self._config.get(self.provider, {}).keys())
         except KeyError:
             return []
-
-if __name__ == "__main__":
-
-    llm = HUGGING_FACE(model="gpt2", model_path="/Users/marcustantakoun/.cache/huggingface/hub/models--openai-community--gpt2")
-    

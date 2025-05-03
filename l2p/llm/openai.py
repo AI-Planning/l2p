@@ -206,7 +206,7 @@ class OPENAI(BaseLLM):
         self.in_tokens = 0
         self.out_tokens = 0
 
-    def get_query_log(self) -> None:
+    def get_query_log(self) -> list:
         """Retrieve query log."""
         return self.query_log
     
@@ -216,7 +216,7 @@ class OPENAI(BaseLLM):
 
     @override
     def valid_models(self) -> list[str]:
-        """Return a list of valid model names."""
+        """Returns a list of valid model engines."""
         try:
             return list(self._config.get(self.provider, {}).keys())
         except KeyError:
