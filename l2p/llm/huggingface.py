@@ -26,12 +26,6 @@ class HUGGING_FACE(BaseLLM):
             api_key: str | None = None # only if model is affiliated w/ private repo
         ) -> None:
 
-        self.api_key = api_key
-        
-        # load yaml configuration path
-        self.provider = provider
-        self._config = load_yaml(config_path)
-
         # attempt to import neccessary libraries
         try:
             import transformers
@@ -54,6 +48,12 @@ class HUGGING_FACE(BaseLLM):
             )
         
         self.device = "cuda" if self.torch.cuda.is_available() else "cpu"
+
+        self.api_key = api_key
+        
+        # load yaml configuration path
+        self.provider = provider
+        self._config = load_yaml(config_path)
         
         # retrieve model configurations
         model_config = self._config.get(self.provider, {}).get(model, {})
@@ -82,7 +82,7 @@ class HUGGING_FACE(BaseLLM):
         # set model
         self.llm = AutoModelForCausalLM.from_pretrained(pretrained_model_name_or_path=self.model_path,
                                                         device_map=self.device_map,
-                                                        torch_dtype=self.torch_dtype).to(self.device)
+                                                        torch_dtype=self.dtype).to(self.device)
         
     def _load_transformer(self):
         """Checks and loads model tokenizer/context length if exists."""
@@ -137,16 +137,16 @@ class HUGGING_FACE(BaseLLM):
         configs = model_config.get("model_config", {})
 
         # Get and parse torch_dtype
-        d_type = configs.get("torch_dtype", "float32")
+        d_type = configs.get("dtype", "float32")
         if isinstance(d_type, str):
             if d_type in dtype_map:
-                self.torch_dtype = dtype_map[d_type]
+                self.dtype = dtype_map[d_type]
             else:
-                raise ValueError(f"Unsupported torch_dtype string: '{d_type}'. Must be one of {list(dtype_map.keys())}.")
+                raise ValueError(f"Unsupported dtype string: '{d_type}'. Must be one of {list(dtype_map.keys())}.")
         elif isinstance(d_type, self.torch.dtype):
-            self.torch_dtype = d_type
+            self.dtype = d_type
         else:
-            raise TypeError("torch_dtype must be a string or torch.dtype instance.")
+            raise TypeError("dtype must be a string or torch.dtype instance.")
 
         # Set other default config values
         self.device_map = configs.get("device_map", "auto")
