@@ -147,15 +147,15 @@ Refer to [here](https://platform.openai.com/docs/quickstart) for more informatio
 
 Additionally, we have included support for using Huggingface models. One can set up their environment like so:
 ```
-parser = argparse.ArgumentParser(description="Define Parameters")
-parser.add_argument('-test_dataset', action='store_true')
-parser.add_argument("--temp", type=float, default=0.01, help = "temperature for sampling")
-parser.add_argument("--max_len", type=int, default=4e3, help = "max number of tokens in answer")
-parser.add_argument("--num_sample", type=int, default=1, help = "number of answers to sample")
+parser = argparse.ArgumentParser(description="Testing HF usage")
+parser.add_argument('-test_hf', action='store_true')
+parser.add_argument("--model", type=float, default="llama3.1-8b", help = "model name")
 parser.add_argument("--model_path", type=str, default="/path/to/model", help = "path to llm")
+parser.add_argument("--config_path", type=str, default="l2p/llm/utils/llm.yaml", help = "path to yaml configuration")
+parser.add_argument("--provider", type=str, default="huggingface", help = "backend provider")
 args = parser.parse_args()
 
-huggingface_model = HUGGING_FACE(model_path=args.model_path, max_tokens=args.max_len, temperature=args.temp)
+huggingface_model = HUGGING_FACE(model=args.model, model_path=args.model_path, config_path=args.config_path, provider=args.provider)
 ```
 
 **l2p/llm/base.py** contains an abstract class and method for implementing any model classes in the case of other third-party LLM uses.
