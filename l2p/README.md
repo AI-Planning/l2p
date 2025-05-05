@@ -1,7 +1,7 @@
 # L2P: LLM-Powered PDDL Planning
 
 **Official Documentation:**  
-For detailed function references, visit our website: [Official API Documentation](https://sliding.toys/mystic-square/8-puzzle/daily/).  
+For detailed function references, visit our website: [Official API Documentation]().  
 The L2P classes can be divided as follows:
 
 ---
@@ -85,40 +85,19 @@ Generates prompt templates for LLMs to assemble organized prompts and swap betwe
 
 ---
 
-## llm_builder.py
-This class is responsible for extracting LLMs
-**API keys**
-L2P requires access to an LLM. L2P provides support for OpenAI's GPT-series models. To configure these, provide the necessary API-key in an environment variable.
+## ./llm Folder
+This class is responsible for loading models. Currently, we provide LLM interface support for compatible OPENAI SDK providers, as well as Huggingface API. Users can implement specific backend provider LLM interfaces using **BaseLLM**, found in **l2p/llm/base.py**, which contains an abstract class and method for implementing any model classes in the case of other third-party LLM uses. 
 
-**OpenAI**
-```
-export OPENAI_API_KEY='YOUR-KEY' # e.g. OPENAI_API_KEY='sk-123456'
-```
-
-Refer to [here](https://platform.openai.com/docs/quickstart) for more information.
-
-**HuggingFace**
-
-Additionally, we have included support for using Huggingface models. One can set up their environment like so:
-```python
-parser = argparse.ArgumentParser(description="Define Parameters")
-parser.add_argument('-test_dataset', action='store_true')
-parser.add_argument("--temp", type=float, default=0.01, help = "temperature for sampling")
-parser.add_argument("--max_len", type=int, default=4e3, help = "max number of tokens in answer")
-parser.add_argument("--num_sample", type=int, default=1, help = "number of answers to sample")
-parser.add_argument("--model_path", type=str, default="/path/to/model", help = "path to llm")
-args = parser.parse_args()    
-
-huggingface_model = HUGGING_FACE(model_path=args.model_path, max_tokens=args.max_len, temperature=args.temp)
-```
-
-**llm_builder.py** contains an abstract class and method for implementing any model classes in the case of other third-party LLM uses.
+Users can refer to l2p/llm/utils/llm.yaml to better understand (and create their own) model configuration options, including tokenizer settings, generation parameters, and provider-specific settings.
 
 ## utils
 This parent folder contains other tools necessary for L2P. They consist of:
 
+### pddl_format.py
+Contains tools to format L2P's python structured PDDL components into strings required for **DomainBuilder.generate_domain** and **TaskBuilder.generate_task**.
+
 ### pddl_parser.py
-Contains tools to parse L2P information extraction
+Contains tools to parse L2P information extraction.
 
 ### pddl_types.py
 Contains PDDL types 'Action' and 'Predicate' as well as Domain, Problem, and Plan details. These can be utilized to help organize builder method calls easier.

@@ -1,8 +1,8 @@
 # l2p : LLM-driven Planning Model library kit
 
-This library is a collection of tools for PDDL model generation extracted from natural language driven by large language models. This library is an expansion from the survey paper **Leveraging Large Language Models for Automated Planning and Model Construction: A Survey** (coming soon)
+This library is a collection of tools for PDDL model generation extracted from natural language driven by large language models. This library is an expansion from the survey paper [**LLMs as Planning Modelers: A Survey for Leveraging Large Language Models to Construct Automated Planning Models**](https://arxiv.org/abs/2503.18971v1)
 
-L2P is an offline, natural language -to- planning model system that supports domain-agnostic planning. It does this via creating an intermediate [PDDL](https://planning.wiki/guide/whatis/pddl) representation of the domain and task, which can then be solved by a classical planner.
+L2P is an offline, natural language-to-planning model system that supports domain-agnostic planning. It does this via creating an intermediate [PDDL](https://planning.wiki/guide/whatis/pddl) representation of the domain and task, which can then be solved by a classical planner.
 
 ## Usage
 
@@ -149,14 +149,16 @@ Additionally, we have included support for using Huggingface models. One can set
 ```
 parser = argparse.ArgumentParser(description="Testing HF usage")
 parser.add_argument('-test_hf', action='store_true')
-parser.add_argument("--model", type=float, default="llama3.1-8b", help = "model name")
-parser.add_argument("--model_path", type=str, default="/path/to/model", help = "path to llm")
+parser.add_argument("--model", type=float, required=True, help = "model name")
+parser.add_argument("--model_path", type=str, required=True, help = "path to llm")
 parser.add_argument("--config_path", type=str, default="l2p/llm/utils/llm.yaml", help = "path to yaml configuration")
 parser.add_argument("--provider", type=str, default="huggingface", help = "backend provider")
 args = parser.parse_args()
 
 huggingface_model = HUGGING_FACE(model=args.model, model_path=args.model_path, config_path=args.config_path, provider=args.provider)
 ```
+
+Users can refer to l2p/llm/utils/llm.yaml to better understand (and create their own) model configuration options, including tokenizer settings, generation parameters, and provider-specific settings.
 
 **l2p/llm/base.py** contains an abstract class and method for implementing any model classes in the case of other third-party LLM uses.
 
