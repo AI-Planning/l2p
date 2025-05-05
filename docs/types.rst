@@ -57,7 +57,7 @@ And converts it into this: ::
 
     predicate: Predicate = {'name': 'on_top', 
                             'desc': 'true if the block ?b1 is on top of the block ?b2', 
-                            'raw': '(on_top ?b1 - block ?b2 - block): true if the block ?b1 is on top of the block ?b', 
+                            'raw': '(on_top ?b1 - block ?b2 - block): true if the block ?b1 is on top of the block ?b2', 
                             'params': OrderedDict([('?b1', 'block'), ('?b2', 'block')]), 
                             'clean': '(on_top ?b1 - block ?b2 - block): true if the block ?b1 is on top of the block ?b2'}
 

@@ -408,12 +408,12 @@ class TaskBuilder:
         return self.goal
 
     def generate_task(
-        self, domain: str, problem: str, objects: str, initial: str, goal: str
+        self, domain_name: str, problem: str, objects: str, initial: str, goal: str
     ):
         # Write problem file
         desc = "(define\n"
         desc += f"   (problem {problem})\n"
-        desc += f"   (:domain {domain})\n\n"
+        desc += f"   (:domain {domain_name})\n\n"
         desc += f"   (:objects \n{indent(objects)}\n   )\n\n"
         desc += f"   (:init\n{indent(initial)}\n   )\n\n"
         desc += f"   (:goal\n{indent(goal)}\n   )\n\n"

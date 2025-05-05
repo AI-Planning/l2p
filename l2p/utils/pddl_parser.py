@@ -7,7 +7,12 @@ from pddl import parse_domain, parse_problem
 from .pddl_types import Action, Predicate
 from collections import OrderedDict
 from copy import deepcopy
-import re, ast, json, sys, os
+from typing import Optional
+import re
+import ast
+import json
+import sys
+import os
 
 
 def load_file(file_path: str):
@@ -317,37 +322,67 @@ def parse_goal(llm_response: str) -> list[dict[str, str]]:
 
 
 def prune_types(
-    types: dict[str, str], predicates: list[Predicate], actions: list[Action]
+    types: dict[str, str] | list[dict[str, str]],
+    predicates: list[Predicate],
+    actions: list[Action]
 ) -> dict[str, str]:
     """
     Prune types that are not used in any predicate or action.
 
     Args:
-        types (list[str]): A list of types.
+        types (dict or list): Either a flat dict of {type: description} or a nested list of type hierarchies.
         predicates (list[Predicate]): A list of predicates.
         actions (list[Action]): A list of actions.
 
     Returns:
-        list[str]: The pruned list of types.
+        dict[str, str]: A dictionary of used types.
     """
-
     used_types = {}
-    for type in types:
+    all_type_names = {}
+
+    def collect_all_types(obj):
+        """Recursively extract all type names and their descriptions from the input."""
+        
+        # if setup is normal types dictionary
+        if isinstance(obj, dict):
+            for type_name, desc in obj.items():
+                all_type_names[type_name] = desc
+                
+        # if set up is type hierarchy list dictionary
+        elif isinstance(obj, list):
+            for node in obj:
+                type_name = next((k for k in node if k != "children"), None)
+                if type_name:
+                    all_type_names[type_name] = node[type_name]
+                    collect_all_types(node.get("children", []))
+
+    # flatten all types into all_type_names
+    collect_all_types(types)
+
+    # identify used types
+    for type_name in all_type_names:
+        base_name = type_name.split(" ")[0]
+        found = False
+
         for pred in predicates:
-            if type.split(" ")[0] in pred["params"].values():
-                used_types[type] = types[type]
+            if base_name in pred["params"].values():
+                used_types[type_name] = all_type_names[type_name]
+                found = True
                 break
-        else:
-            for action in actions:
-                if type.split(" ")[0] in action["params"].values():
-                    used_types[type] = types[type]
-                    break
-                if (
-                    type.split(" ")[0] in action["preconditions"]
-                    or type.split(" ")[0] in action["effects"]
-                ):  # If the type is included in a "forall" or "exists" statement
-                    used_types[type] = types[type]
-                    break
+        if found:
+            continue
+
+        for action in actions:
+            if base_name in action["params"].values():
+                used_types[type_name] = all_type_names[type_name]
+                break
+            if (
+                base_name in action["preconditions"]
+                or base_name in action["effects"]
+            ):
+                used_types[type_name] = all_type_names[type_name]
+                break
+
     return used_types
 
 
@@ -396,26 +431,78 @@ def extract_heading(llm_output: str, heading: str):
     return heading_str
 
 
-def convert_to_dict(llm_response: str) -> dict[str, str]:
-    """Converts string into Python dictionary format."""
-    dict_pattern = re.compile(
-        r"{.*}", re.DOTALL
-    )  # regular expression to find the JSON-like dictionary structure
-    match = dict_pattern.search(
-        llm_response
-    )  # search for the pattern in the llm_response
+def convert_to_dict(llm_response: str) -> Optional[dict[str, str]]:
+    """
+    Safely extracts and evaluates a dictionary structure from a string (LLM response).
 
-    # safely evaluate the string to convert it into a Python dictionary
-    if match:
-        dict_str = match.group(0)
-        try:
-            dict = ast.literal_eval(dict_str)
-            return dict
-        except Exception as e:
-            print(f"Error parsing dictionary: {e}")
+    Args:
+        llm_response (str): Raw string from the LLM expected to contain a flat dictionary.
+
+    Returns:
+        dict[str, str] | None: Parsed dictionary if valid, else None.
+    """
+    try:
+        # Regex to extract the first dictionary-like structure
+        dict_pattern = re.compile(r"{[^{}]*}", re.DOTALL)
+        match = dict_pattern.search(llm_response)
+
+        if not match:
+            print("No dictionary found in the LLM response.")
             return None
-    else:
-        print("No dictionary found in the llm_response.")
+
+        dict_str = match.group(0)
+        parsed = ast.literal_eval(dict_str)
+
+        # Validate it is a flat dictionary with string keys and values
+        if isinstance(parsed, dict) and all(
+            isinstance(k, str) and isinstance(v, str) for k, v in parsed.items()
+        ):
+            return parsed
+
+        print("Parsed object is not a flat dictionary of string keys and values.")
+        return None
+
+    except Exception as e:
+        print(f"Error parsing dictionary: {e}")
+        return None
+    
+    
+def convert_to_list_of_dict(llm_response: str) -> Optional[list[dict[str,str]]]:
+    """
+    Safely parses LLM response into a list of nested dictionaries representing the type hierarchy.
+
+    Args:
+        llm_response (str): raw LLM output expected to contain a Python list of dictionaries.
+
+    Returns:
+        list[dict[str,str]] | None: Parsed type hierarchy if valid, else None.
+    """
+    try:
+        parsed = ast.literal_eval(llm_response)
+
+        # Ensure it's a list of dicts with proper structure
+        if not isinstance(parsed, list):
+            return None
+
+        def validate_type_node(node):
+            if not isinstance(node, dict):
+                return False
+            if "children" not in node:
+                return False
+            if not isinstance(node["children"], list):
+                return False
+            for child in node["children"]:
+                if not validate_type_node(child):
+                    return False
+            return True
+
+        if all(validate_type_node(item) for item in parsed):
+            return parsed
+
+        return None
+
+    except Exception as e:
+        print(f"Failed to convert response to dict: {e}")
         return None
 
 
@@ -441,37 +528,15 @@ def combine_blocks(heading_str: str):
     ).strip()  # remove leading/trailing whitespace and internal empty lines
 
 
-def format_dict(dictionary):
-    """Formats dictionary in JSON format easier for readability"""
-    return json.dumps(dictionary, indent=4)
+def pretty_print_dict(data):
+    """Formats dictionary or list of dictionaries in JSON format for readability."""
+    if isinstance(data, (dict, list)):
+        return json.dumps(data, indent=4)
+    else:
+        raise TypeError("Input must be a dictionary or a list of dictionaries")
 
 
-def format_types(type_hierarchy: dict[str, str]) -> dict[str, str]:
-    """Formats Python dictionary hierarchy to PDDL formatted dictionary"""
-
-    def process_node(node, parent_type=None):
-        current_type = list(node.keys())[0]
-        description = node[current_type]
-        parent_type = parent_type if parent_type else current_type
-
-        name = (
-            f"{current_type} - {parent_type}"
-            if current_type != parent_type
-            else f"{current_type}"
-        )
-        desc = f"; {description}"
-
-        result[name] = desc
-
-        for child in node.get("children", []):
-            process_node(child, current_type)
-
-    result = {}
-    process_node(type_hierarchy)
-    return result
-
-
-def format_predicates(predicates: list[Predicate]) -> str:
+def pretty_print_predicates(predicates: list[Predicate]) -> str:
     """Formats list of predicates easier for readability"""
     if not predicates:
         return ""

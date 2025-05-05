@@ -27,6 +27,7 @@ class SyntaxValidator:
             "exists",
             "implies",
         ]  # current unsupported usage of PDDL
+        
         self.error_types = default_error_types if error_types is None else error_types
         self.unsupported_keywords = (
             default_unsupported

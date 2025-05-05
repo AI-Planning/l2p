@@ -1,10 +1,23 @@
+# Prices vary for respective API providers. Default prices may not reflect current prices.
+
+# [Structure template]
+# {PROVIDER}:
+#   {MODEL_NAME}:
+#     family: {FAMILY_NAME}
+#     engine: {MODEL_API_NAME}
+#     max_completion_tokens: 
+#     temperature:
+#     top_p:
+#     context_length:
+#     stop:
+
 openai:
   o1:
     family: o1
     engine: o1
     model_params:
-      context_length: 8192 # max: 200000
-      max_completion_tokens: 8192 # max: 100000
+      context_length: 8192 # max: 200k
+      max_completion_tokens: 8192 # max: 100k
       temperature: 1.0
       top_p: 1.0
       frequency_penalty: 0.0
@@ -18,7 +31,7 @@ openai:
     family: o1
     engine: o1-mini
     model_params:
-      context_length: 8192 # max: 128000
+      context_length: 8192 # max: 128k
       max_completion_tokens: 8192 # max: 65536
       temperature: 1.0
       top_p: 1.0
@@ -32,8 +45,8 @@ openai:
     family: o3
     engine: o3
     model_params:
-      context_length: 8192 # max: 200000
-      max_completion_tokens: 8192 # max: 100000
+      context_length: 8192 # max: 200k
+      max_completion_tokens: 8192 # max: 100k
       temperature: 1.0
       top_p: 1.0
       frequency_penalty: 0.0
@@ -47,8 +60,8 @@ openai:
     family: o3
     engine: o3-mini
     model_params:
-      context_length: 8192 # max: 200000
-      max_completion_tokens: 8192 # max: 100000
+      context_length: 8192 # max: 200k
+      max_completion_tokens: 8192 # max: 100k
       temperature: 1.0
       top_p: 1.0
       frequency_penalty: 0.0
@@ -62,8 +75,8 @@ openai:
     family: o4
     engine: o4-mini
     model_params:
-      context_length: 8192 # max: 200000
-      max_completion_tokens: 8192 # max: 100000
+      context_length: 8192 # max: 200k
+      max_completion_tokens: 8192 # max: 100k
       temperature: 1.0
       top_p: 1
       frequency_penalty: 0.0
@@ -119,7 +132,7 @@ openai:
     family: gpt-4o
     engine: chatgpt-4o-latest
     model_params:
-      context_length: 8192 # max: 128000
+      context_length: 8192 # max: 128k
       max_completion_tokens: 8192 # max: 16384
       temperature: 0.0
       top_p: 1.0
@@ -133,7 +146,7 @@ openai:
     family: gpt-4o
     engine: gpt-4o
     model_params:
-      context_length: 8192 # max: 128000
+      context_length: 8192 # max: 128k
       max_completion_tokens: 8192 # max: 16384
       temperature: 0.0
       top_p: 1.0
@@ -147,7 +160,7 @@ openai:
     family: gpt-4o
     engine: gpt-4o-mini
     model_params:
-      context_length: 8192 # max: 128000
+      context_length: 8192 # max: 128k
       max_completion_tokens: 8192 # max: 16384
       temperature: 0.0
       top_p: 1.0
@@ -175,7 +188,7 @@ openai:
     family: gpt-4
     engine: gpt-4-turbo
     model_params:
-      context_length: 8192 # max: 128000
+      context_length: 8192 # max: 128k
       max_completion_tokens: 4096
       temperature: 0.0
       top_p: 1.0
@@ -205,7 +218,7 @@ deepseek:
     family: deepseek
     engine: deepseek-chat
     model_params:
-      context_length: 8192
+      context_length: 8192 # max: 64k
       max_completion_tokens: 4096
       temperature: 0.0
       top_p: 1.0
@@ -217,7 +230,7 @@ deepseek:
     family: deepseek
     engine: deepseek-reasoner
     model_params:
-      context_length: 8192
+      context_length: 8192 # max: 64k
       max_completion_tokens: 4096
       temperature: 0.0
       top_p: 1.0
@@ -231,8 +244,8 @@ anthropic:
     family: claude
     engine: claude-3-7-sonnet-20250219
     model_params:
-      context_length: 8192 # max: 200000
-      max_completion_tokens: 8192 # max: 64000
+      context_length: 8192 # max: 200k
+      max_completion_tokens: 8192 # max: 64k
       temperature: 0.0
       top_p: 1.0
       stop:
@@ -243,7 +256,7 @@ anthropic:
     family: claude
     engine: claude-3-5-sonnet-20241022
     model_params:
-      context_length: 8192 # max: 200000
+      context_length: 8192 # max: 200k
       max_completion_tokens: 8192
       temperature: 0.0
       top_p: 1.0
@@ -255,7 +268,7 @@ anthropic:
     family: claude
     engine: claude-3-5-haiku-20241022
     model_params:
-      context_length: 8192 # max: 200000
+      context_length: 8192 # max: 200k
       max_completion_tokens: 8192
       temperature: 0.0
       top_p: 1.0
@@ -267,7 +280,7 @@ anthropic:
     family: claude
     engine: claude-3-haiku-20240307
     model_params:
-      context_length: 8192 # max: 200000
+      context_length: 8192 # max: 200k
       max_completion_tokens: 4096
       temperature: 0.0
       top_p: 1.0
@@ -279,7 +292,7 @@ anthropic:
     family: claude
     engine: claude-3-opus-20240229
     model_params:
-      context_length: 8192 # max: 200000
+      context_length: 8192 # max: 200k
       max_completion_tokens: 4096
       temperature: 0.0
       top_p: 1.0
@@ -288,14 +301,15 @@ anthropic:
       input: 15.00
       output: 75.00
 
+# The total context window is shared between input and output tokens.
+# Max new tokens generated is limited to (context window - input tokens).
 huggingface:
-
   gpt2:
     family: gpt2
     engine: openai-community/gpt2
     model_params:
       context_length: 1024
-      max_new_tokens: 1022
+      max_new_tokens: 512
       temperature: 0.0
       top_p: 1.0
       do_sample: false
@@ -303,7 +317,6 @@ huggingface:
     model_config:
       torch_dtype: float32
       device_map: null
-
   llama2-7b:
     family: llama-2
     engine: meta-llama/Llama-2-7b-chat-hf
@@ -330,6 +343,9 @@ huggingface:
     model_config:
       torch_dtype: float16
       device_map: null
+    cost_usd_mtok:
+      input: 0.52 # (when hosted on Azure)
+      output: 0.67 # (when hosted on Azure)
   llama2-70b:
     family: llama-2
     engine: meta-llama/Llama-2-70b-chat-hf
@@ -343,12 +359,15 @@ huggingface:
     model_config:
       torch_dtype: float16
       device_map: null
-  llama3.1-70b:
+    cost_usd_mtok:
+      input: 1.54 # (when hosted on Azure)
+      output: 1.77 # (when hosted on Azure)
+  llama3.1-405b:
     family: llama-3.1
-    engine: meta-llama/Llama-3.1-70B-Instruct
+    engine: meta-llama/Llama-3.1-405B-Instruct
     model_params:
-      context_length: 8192
-      max_new_tokens: 4096
+      context_length: 8192 # max: 128k
+      max_new_tokens: 2048
       temperature: 0.0
       top_p: 1.0
       do_sample: false
@@ -356,6 +375,25 @@ huggingface:
     model_config:
       torch_dtype: float16
       device_map: null
+    cost_usd_mtok:
+      input: 5.33 # (when hosted on Azure)
+      output: 16.00 # (when hosted on Azure)
+  llama3.1-70b:
+    family: llama-3.1
+    engine: meta-llama/Llama-3.1-70B-Instruct
+    model_params:
+      context_length: 8192 # max: 128k
+      max_new_tokens: 2048
+      temperature: 0.0
+      top_p: 1.0
+      do_sample: false
+      stop:
+    model_config:
+      torch_dtype: float16
+      device_map: null
+    cost_usd_mtok:
+      input: 2.68 # (when hosted on Azure)
+      output: 3.54 # (when hosted on Azure)
   llama3.1-8b:
     family: llama-3.1
     engine: meta-llama/Llama-3.1-8B-Instruct
@@ -369,6 +407,9 @@ huggingface:
     model_config:
       torch_dtype: float16
       device_map: null
+    cost_usd_mtok:
+      input: 0.30 # (when hosted on Azure)
+      output: 0.61 # (when hosted on Azure)
   codellama-7b:
     family: codellama
     engine: codellama/CodeLlama-7b-Instruct-hf
@@ -417,14 +458,3 @@ huggingface:
     model_config:
       torch_dtype: float16
       device_map: null
-
-
-# {PROVIDER}:
-#   {MODEL_NAME}:
-#     family: {FAMILY_NAME}
-#     engine: {MODEL_API_NAME}
-#     max_completion_tokens: 
-#     temperature:
-#     top_p:
-#     context_length:
-#     stop:

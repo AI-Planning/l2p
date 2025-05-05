@@ -19,7 +19,7 @@ class ActionExtraction:
         model: BaseLLM,
         domain_desc: str,
         action_extraction_prompt: PromptBuilder,
-        type_hierarchy: dict[str, str],
+        type_hierarchy: list[dict[str, str]],
         feedback_prompt: str,
     ) -> dict[str, str]:
         """
@@ -48,7 +48,7 @@ class ActionExtraction:
             feedback_template=feedback_prompt,
             feedback_type="llm",
             nl_actions=nl_actions,
-            type_hierarchy=type_hierarchy,
+            types=type_hierarchy,
         )
 
         return nl_actions

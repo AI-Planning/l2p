@@ -7,6 +7,15 @@ from .llm import BaseLLM, require_llm
 from collections import OrderedDict
 import re, time
 
+REQUIREMENTS = [
+    ":strips",
+    ":typing",
+    ":equality",
+    ":negative-preconditions",
+    ":disjunctive-preconditions",
+    ":universal-preconditions",
+    ":conditional-effects",
+]
 
 class DomainBuilder:
     def __init__(
@@ -36,13 +45,14 @@ class DomainBuilder:
     """Extract functions"""
 
     @require_llm
-    def extract_type(
+    def extract_types(
         self,
         model: BaseLLM,
         domain_desc: str,
         prompt_template: str,
         types: dict[str, str] = None,
         max_retries: int = 3,
+        check_invalid_obj_usage: bool = True
     ) -> tuple[dict[str, str], str]:
         """
         Extracts types with domain given
@@ -60,7 +70,7 @@ class DomainBuilder:
         """
 
         # replace prompt placeholders
-        types_str = format_dict(types) if types else "No types provided."
+        types_str = pretty_print_dict(types) if types else "No types provided."
 
         prompt_template = prompt_template.replace("{domain_desc}", domain_desc)
         prompt_template = prompt_template.replace("{types}", types_str)
@@ -74,6 +84,11 @@ class DomainBuilder:
 
                 # extract respective types from response
                 types = convert_to_dict(llm_response=llm_response)
+                
+                # flag that removes keyword 'object' if detected
+                if check_invalid_obj_usage:
+                    if types and "object" in types:
+                        del types["object"]
 
                 if types is not None:
                     return types, llm_response
@@ -93,8 +108,9 @@ class DomainBuilder:
         model: BaseLLM,
         domain_desc: str,
         prompt_template: str,
-        types: dict[str, str] = None,
+        types: dict[str, str] | list[dict[str,str]] = None,
         max_retries: int = 3,
+        check_invalid_obj_usage: bool = True
     ) -> tuple[dict[str, str], str]:
         """
         Extracts type hierarchy from types list and domain given
@@ -112,7 +128,7 @@ class DomainBuilder:
         """
 
         # replace prompt placeholders
-        types_str = format_dict(types) if types else "No types provided."
+        types_str = pretty_print_dict(types) if types else "No types provided."
 
         prompt_template = prompt_template.replace("{domain_desc}", domain_desc)
         prompt_template = prompt_template.replace("{types}", types_str)
@@ -126,10 +142,21 @@ class DomainBuilder:
                 llm_response = model.query(prompt=prompt_template)
 
                 # extract respective types from response
-                type_hierarchy = convert_to_dict(llm_response=llm_response)
+                type_hierarchy = convert_to_list_of_dict(llm_response=llm_response)
 
                 if type_hierarchy is not None:
-                    return type_hierarchy, llm_response
+                    if check_invalid_obj_usage:
+                        # promote children if top-level "object" type exists
+                        new_hierarchy = []
+                        for entry in type_hierarchy:
+                            if "object" in entry:
+                                children = entry.get("children", [])
+                                new_hierarchy.extend(children)
+                            else:
+                                new_hierarchy.append(entry)
+                        return new_hierarchy, llm_response
+                    else:
+                        return type_hierarchy, llm_response
 
             except Exception as e:
                 print(
@@ -146,7 +173,7 @@ class DomainBuilder:
         model: BaseLLM,
         domain_desc: str,
         prompt_template: str,
-        types: dict[str, str] = None,
+        types: dict[str, str] | list[dict[str,str]] = None,
         nl_actions: dict[str, str] = None,
         max_retries: int = 3,
     ) -> tuple[dict[str, str], str]:
@@ -167,7 +194,7 @@ class DomainBuilder:
         """
 
         # replace prompt placeholders
-        types_str = format_dict(types) if types else "No types provided."
+        types_str = pretty_print_dict(types) if types else "No types provided."
         nl_actions_str = (
             "\n".join(f"{name}: {desc}" for name, desc in nl_actions.items())
             if nl_actions
@@ -213,7 +240,7 @@ class DomainBuilder:
         action_desc: str = None,
         action_list: str = None,
         predicates: list[Predicate] = None,
-        types: dict[str, str] = None,
+        types: dict[str, str] | list[dict[str,str]] = None,
         syntax_validator: SyntaxValidator = None,
         max_retries: int = 3,
     ) -> tuple[Action, list[Predicate], str, tuple[bool, str]]:
@@ -240,7 +267,7 @@ class DomainBuilder:
         """
 
         # replace prompt placeholders
-        types_str = format_dict(types) if types else "No types provided."
+        types_str = pretty_print_dict(types) if types else "No types provided."
         predicates_str = (
             "\n".join([f"- {pred['clean']}" for pred in predicates])
             if predicates
@@ -335,7 +362,7 @@ class DomainBuilder:
         prompt_template: str,
         nl_actions: dict[str, str] = None,
         predicates: list[Predicate] = None,
-        types: dict[str, str] = None,
+        types: dict[str, str] | list[dict[str,str]] = None,
     ) -> tuple[list[Action], list[Predicate], str]:
         """
         Extract all actions from a given action description using BaseLLM
@@ -357,12 +384,12 @@ class DomainBuilder:
         model.reset_tokens()
 
         # replace prompt placeholders
-        types_str = format_dict(types) if types else "No types provided."
+        types_str = pretty_print_dict(types) if types else "No types provided."
         predicates_str = (
-            format_predicates(predicates) if predicates else "No predicates provided."
+            pretty_print_predicates(predicates) if predicates else "No predicates provided."
         )
         nl_actions_str = (
-            format_dict(nl_actions) if nl_actions else "No actions provided."
+            pretty_print_dict(nl_actions) if nl_actions else "No actions provided."
         )
 
         prompt_template = prompt_template.replace("{domain_desc}", domain_desc)
@@ -418,7 +445,7 @@ class DomainBuilder:
         prompt_template: str,
         action_name: str,
         action_desc: str,
-        types: dict[str, str] = None,
+        types: dict[str, str] | list[dict[str,str]] = None,
         max_retries: int = 3,
     ) -> tuple[OrderedDict, list, str]:
         """
@@ -440,7 +467,7 @@ class DomainBuilder:
         """
 
         # replace prompt placeholders
-        types_str = format_dict(types) if types else "No types provided."
+        types_str = pretty_print_dict(types) if types else "No types provided."
 
         prompt_template = prompt_template.replace("{domain_desc}", domain_desc)
         prompt_template = prompt_template.replace("{action_name}", action_name)
@@ -501,7 +528,7 @@ class DomainBuilder:
 
         # replace prompt placeholders
         predicates_str = (
-            format_predicates(predicates) if predicates else "No predicates provided."
+            pretty_print_predicates(predicates) if predicates else "No predicates provided."
         )
         params_str = "\n".join(params) if params else "No parameters provided."
 
@@ -573,7 +600,7 @@ class DomainBuilder:
 
         # replace prompt placeholders
         predicates_str = (
-            format_predicates(predicates) if predicates else "No predicates provided."
+            pretty_print_predicates(predicates) if predicates else "No predicates provided."
         )
         params_str = "\n".join(params) if params else "No parameters provided."
 
@@ -617,7 +644,7 @@ class DomainBuilder:
         model: BaseLLM,
         domain_desc: str,
         prompt_template: str,
-        types: dict[str, str] = None,
+        types: dict[str, str] | list[dict[str,str]] = None,
         predicates: list[Predicate] = None,
         nl_actions: dict[str, str] = None,
         max_retries: int = 3,
@@ -640,9 +667,9 @@ class DomainBuilder:
         """
 
         # replace prompt placeholders
-        types_str = format_dict(types) if types else "No types provided."
+        types_str = pretty_print_dict(types) if types else "No types provided."
         predicates_str = (
-            format_predicates(predicates) if predicates else "No predicates provided."
+            pretty_print_predicates(predicates) if predicates else "No predicates provided."
         )
         nl_actions_str = (
             "\n".join(f"{name}: {desc}" for name, desc in nl_actions.items())
@@ -676,14 +703,43 @@ class DomainBuilder:
 
         raise RuntimeError("Max retries exceeded. Failed to extract predicates.")
 
-    """Delete functions"""
 
+    """Delete functions"""
+    
     def delete_type(self, name: str):
-        """Deletes specific type from current model"""
+        """Deletes a specific type from both `self.types` and `self.type_hierarchy`."""
+        
+        # remove from flat types dictionary if present
         if self.types is not None:
-            self.types = {
-                type_: desc for type_, desc in self.types.items() if type_ != name
-            }
+            self.types = {type_: desc for type_, desc in self.types.items() if type_ != name}
+
+        def remove_and_promote(node_list):
+            updated_list = []
+
+            for node in node_list:
+                # get the current node's type name and description
+                type_name = next((k for k in node if k != "children"), None)
+                if type_name is None:
+                    continue
+
+                # if this is the type to remove, promote its children to the current level
+                if type_name == name:
+                    children = node.get("children", [])
+                    updated_list.extend(remove_and_promote(children))
+                else:
+                    # recursively clean the children
+                    children = remove_and_promote(node.get("children", []))
+                    updated_node = {
+                        type_name: node[type_name],
+                        "children": children
+                    }
+                    updated_list.append(updated_node)
+
+            return updated_list
+
+        # update the type_hierarchy if it exists
+        if self.type_hierarchy is not None:
+            self.type_hierarchy = remove_and_promote(self.type_hierarchy)
 
     def delete_nl_action(self, name: str):
         """Deletes specific NL action from current model"""
@@ -708,13 +764,14 @@ class DomainBuilder:
                 predicate for predicate in self.predicates if predicate["name"] != name
             ]
 
+
     """Set functions"""
 
     def set_types(self, types: dict[str, str]):
         """Sets types for current model"""
         self.types = types
 
-    def set_type_hierarchy(self, type_hierarchy: dict[str, str]):
+    def set_type_hierarchy(self, type_hierarchy: list[dict[str, str]]):
         """Sets type hierarchy for current model"""
         self.type_hierarchy = type_hierarchy
 
@@ -729,6 +786,7 @@ class DomainBuilder:
     def set_predicate(self, predicate: Predicate):
         """Appends a predicate for current model"""
         self.predicates.append(predicate)
+
 
     """Get functions"""
 
@@ -752,46 +810,52 @@ class DomainBuilder:
         """Returns predicates from current model"""
         return self.predicates
 
+
     def generate_domain(
         self,
-        domain: str,
-        types: str | None,
-        predicates: str,
-        actions: list[Action],
-        requirements: list[str],
+        domain_name: str,
+        types: dict[str,str] | list[dict[str,str]] | None = None,
+        predicates: list[Predicate] | None = None,
+        actions: list[Action] = [],
+        requirements: list[str] = REQUIREMENTS,
     ) -> str:
         """
         Generates PDDL domain from given information
 
         Args:
-            domain (str): domain name
-            types (str): domain types
-            predicates (str): domain predicates
+            domain_name (str): domain name
+            types (str | None): domain types
+            predicates (str | None): domain predicates
             actions (list[Action]): domain actions
             requirements (list[str]): domain requirements
 
         Returns:
             desc (str): PDDL domain
         """
+
         desc = ""
-        desc += f"(define (domain {domain})\n"
-        desc += (
-            indent(string=f"(:requirements\n   {' '.join(requirements)})", level=1)
-            + "\n\n"
-        )
-        if types:  # Only add types if not None or empty string
-            desc += f"   (:types \n{indent(string=types, level=2)}\n   )\n\n"
-        desc += f"   (:predicates \n{indent(string=predicates, level=2)}\n   )"
-        desc += self.action_descs(actions)
+        desc += f"(define (domain {domain_name})\n"
+        desc += indent(string=f"(:requirements\n   {' '.join(requirements)})", level=1)
+        if types:
+            types_str = format_types_to_string(types)
+            desc += f"\n\n   (:types \n{indent(string=types_str, level=2)}\n   )"
+        if not predicates:
+            print("[WARNING]: Domain has no predicates. This may cause planners to reject the domain or behave unexpectedly.")
+        else:
+            pred_str = format_predicates(predicates)
+            desc += f"\n\n   (:predicates \n{indent(string=pred_str, level=2)}\n   )"
+        if not actions:
+            print("[WARNING]: Domain has no actions. The planner will not be able to generate any plan unless the goal is already satisfied.")
+        else:
+            desc += self.action_descs(actions)
         desc += "\n)"
         desc = desc.replace("AND", "and").replace("OR", "or")
         return desc
 
     def action_desc(self, action: Action) -> str:
         """Helper function to format individual action descriptions"""
-        param_str = "\n".join(
-            [f"{name} - {type}" for name, type in action["params"].items()]
-        )  # name includes ?
+        param_str = format_action_params(action)
+        
         desc = f"(:action {action['name']}\n"
         desc += f"   :parameters (\n{indent(string=param_str, level=2)}\n   )\n"
         desc += f"   :precondition\n{indent(string=action['preconditions'], level=2)}\n"
@@ -799,13 +863,9 @@ class DomainBuilder:
         desc += ")"
         return desc
 
-    def action_descs(self, actions) -> str:
+    def action_descs(self, actions: list[Action]) -> str:
         """Helper function to combine all action descriptions"""
         desc = ""
         for action in actions:
             desc += "\n\n" + indent(self.action_desc(action), level=1)
         return desc
-
-    def format_predicates(self, predicates: list[Predicate]) -> str:
-        """Helper function that formats predicate list into string"""
-        return "\n".join([pred["clean"].replace(":", " ; ") for pred in predicates])

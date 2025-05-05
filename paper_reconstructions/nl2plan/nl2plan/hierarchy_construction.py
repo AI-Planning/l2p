@@ -20,7 +20,7 @@ class HierarchyConstruction:
         type_hierarchy_prompt: PromptBuilder,
         types: dict[str, str],
         feedback_prompt: str,
-    ) -> dict[str, str]:
+    ) -> list[dict[str, str]]:
         """
         Main function of the hierarchy construction step.
 

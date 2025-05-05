@@ -64,7 +64,7 @@ class FeedbackBuilder:
 
         model.reset_tokens()
 
-        type_str = format_dict(types) if types else "No types provided."
+        type_str = pretty_print_dict(types) if types else "No types provided."
 
         feedback_template = feedback_template.replace("{domain_desc}", domain_desc)
         feedback_template = feedback_template.replace("{types}", type_str)
@@ -87,14 +87,14 @@ class FeedbackBuilder:
             )
 
             prompt = (
-                f"\n\nYou now are revising your answer using feedback. Here is the feedback you outputted:\n{fb_msg}"
+                f"\n\nYou are revising your answer using feedback. Here is the feedback you outputted:\n{fb_msg}"
                 f'\nEnd your final answer starting with "## OUTPUT" and then re-iterate an updated version of the Python dictionary pair like so:\n{structure_prompt}'
                 f"\n\nApply the suggestions to your original answer:\n{type_str}"
             )
 
             model.reset_tokens()
 
-            types, llm_response = domain_builder.extract_type(
+            types, llm_response = domain_builder.extract_types(
                 model, domain_desc, prompt, type_str
             )
 
@@ -108,14 +108,14 @@ class FeedbackBuilder:
         llm_response: str,
         feedback_template: str,
         feedback_type: str = "llm",
-        type_hierarchy: dict[str, str] = None,
-    ) -> tuple[dict[str, str], str]:
+        type_hierarchy: list[dict[str, str]] = None,
+    ) -> tuple[list[dict[str, str]], str]:
         """Makes LLM call using feedback prompt, then parses it into type hierarchy format"""
 
         model.reset_tokens()
 
         type_str = (
-            format_dict(type_hierarchy) if type_hierarchy else "No types provided."
+            pretty_print_dict(type_hierarchy) if type_hierarchy else "No types provided."
         )
 
         feedback_template = feedback_template.replace("{domain_desc}", domain_desc)
@@ -130,23 +130,36 @@ class FeedbackBuilder:
             structure_prompt = textwrap.dedent(
                 """
             ## OUTPUT
-            {
-                "parent_type_1": "description",
-                "children": [
-                    {
-                        "child_type_1": "description",
-                        "children": [
-                            {"child_child_type_1": "description", "children": []},
-                            {"child_child_type_2": "description", "children": []}
-                        ]
-                    }
-                ]
-            }
+            [
+                {
+                    "parent_type_1": "description for parent type 1",
+                    "children": [
+                        {
+                            "child_type_1": "description for child type 1",
+                            "children": [
+                                {"child_child_type_1": "description for child type 1a", "children": []},
+                                {"child_child_type_2": "description for child type 1b", "children": []}
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "parent_type_2": "",
+                    "children": [
+                        {
+                            "child_type_2": "description for child type 2",
+                            "children": [
+                                {"child_child_type_3": "description for child type 2a", "children": []}
+                            ]
+                        }
+                    ]
+                }
+            ]
             """
             )
 
             prompt = (
-                f"\n\nYou now are revising your answer using feedback. Here is the feedback you outputted:\n{fb_msg}"
+                f"\n\nYou are revising your answer using feedback. Here is the feedback you outputted:\n{fb_msg}"
                 f'\nEnd your final answer starting with "## OUTPUT" and then re-iterate an updated version of the Python dictionary pair like so:\n{structure_prompt}'
                 f"\n\nApply the suggestions to your original answer:\n{type_str}"
             )
@@ -168,17 +181,17 @@ class FeedbackBuilder:
         feedback_template: str,
         feedback_type: str = "llm",
         nl_actions: dict[str, str] = None,
-        type_hierarchy: dict[str, str] = None,
+        types: dict[str, str] | list[dict[str,str]] = None,
     ) -> tuple[dict[str, str], str]:
         """Makes LLM call using feedback prompt, then parses it into nl_action format"""
 
         model.reset_tokens()
 
         type_str = (
-            format_dict(type_hierarchy) if type_hierarchy else "No types provided."
+            pretty_print_dict(types) if types else "No types provided."
         )
         nl_action_str = (
-            format_dict(nl_actions) if nl_actions else "No actions provided."
+            pretty_print_dict(nl_actions) if nl_actions else "No actions provided."
         )
 
         feedback_template = feedback_template.replace("{domain_desc}", domain_desc)
@@ -203,14 +216,14 @@ class FeedbackBuilder:
             )
 
             prompt = (
-                f"\n\nYou now are revising your answer using feedback. Here is the feedback you outputted:\n{fb_msg}"
+                f"\n\nYou are revising your answer using feedback. Here is the feedback you outputted:\n{fb_msg}"
                 f'\nEnd your final answer starting with "## OUTPUT" and then re-iterate an updated version of the Python dictionary pair like so:\n{structure_prompt}'
                 f"\n\nApply the suggestions to your original answer:\n{nl_action_str}"
             )
 
             model.reset_tokens()
 
-            nl_actions, llm_response = domain_builder.extract_type_hierarchy(
+            nl_actions, llm_response = domain_builder.extract_nl_actions(
                 model, domain_desc, prompt
             )
 
@@ -226,15 +239,15 @@ class FeedbackBuilder:
         feedback_type: str = "llm",
         action: Action = None,
         predicates: list[Predicate] = None,
-        types: dict[str, str] = None,
+        types: dict[str, str] | list[dict[str,str]] = None,
     ) -> tuple[Action, list[Predicate], str, tuple[bool, str], bool]:
         """Makes LLM call using feedback prompt, then parses it into action format"""
 
         model.reset_tokens()
 
-        type_str = format_dict(types) if types else "No types provided."
+        type_str = pretty_print_dict(types) if types else "No types provided."
         predicate_str = (
-            format_predicates(predicates) if predicates else "No predicates provided."
+            pretty_print_predicates(predicates) if predicates else "No predicates provided."
         )
         param_str = (
             "\n".join([f"{name} - {type}" for name, type in action["params"].items()])
@@ -298,7 +311,7 @@ class FeedbackBuilder:
             )
 
             prompt = (
-                f"\n\nYou now are revising your answer using feedback. Here is the feedback you outputted:\n{fb_msg}"
+                f"\n\nYou are revising your answer using feedback. Here is the feedback you outputted:\n{fb_msg}"
                 f"\n\n{structure_prompt}"
                 f"\n\nFollow the same syntax format as the original output in your answer:\n{llm_response}"
             )
@@ -323,13 +336,13 @@ class FeedbackBuilder:
         parameter: OrderedDict = None,
         action_name: str = None,
         action_desc: str = None,
-        types: dict[str, str] = None,
+        types: dict[str, str] | list[dict[str,str]] = None,
     ) -> tuple[OrderedDict, OrderedDict, str]:
         """Makes LLM call using feedback prompt, then parses it into parameter format"""
 
         model.reset_tokens()
 
-        type_str = format_dict(types) if types else "No types provided."
+        type_str = pretty_print_dict(types) if types else "No types provided."
         param_str = (
             "\n".join([f"{name} - {type}" for name, type in parameter.items()])
             if parameter
@@ -351,7 +364,7 @@ class FeedbackBuilder:
 
         if not no_fb:
             prompt = (
-                f"\n\nYou now are revising your answer using feedback. Here is the feedback you outputted:\n{fb_msg}"
+                f"\n\nYou are revising your answer using feedback. Here is the feedback you outputted:\n{fb_msg}"
                 f"\n\nFollow the same syntax format as the original output in your answer:\n{llm_response}"
             )
 
@@ -374,16 +387,16 @@ class FeedbackBuilder:
         preconditions: str = None,
         action_name: str = None,
         action_desc: str = None,
-        types: dict[str, str] = None,
+        types: dict[str, str] | list[dict[str,str]] = None,
         predicates: list[Predicate] = None,
     ) -> tuple[str, list[Predicate], str]:
         """Makes LLM call using feedback prompt, then parses it into precondition format"""
 
         model.reset_tokens()
 
-        type_str = format_dict(types) if types else "No types provided."
+        type_str = pretty_print_dict(types) if types else "No types provided."
         predicate_str = (
-            format_predicates(predicates) if predicates else "No predicates provided."
+            pretty_print_predicates(predicates) if predicates else "No predicates provided."
         )
         param_str = (
             "\n".join([f"{name} - {type}" for name, type in parameter.items()])
@@ -413,7 +426,7 @@ class FeedbackBuilder:
 
         if not no_fb:
             prompt = (
-                f"\n\nYou now are revising your answer using feedback. Here is the feedback you outputted:\n{fb_msg}"
+                f"\n\nYou are revising your answer using feedback. Here is the feedback you outputted:\n{fb_msg}"
                 f"\n\nFollow the same syntax format as the original output in your answer:\n{llm_response}"
             )
 
@@ -439,16 +452,16 @@ class FeedbackBuilder:
         effects: str = None,
         action_name: str = None,
         action_desc: str = None,
-        types: dict[str, str] = None,
+        types: dict[str, str] | list[dict[str,str]] = None,
         predicates: list[Predicate] = None,
     ) -> tuple[str, list[Predicate], str]:
         """Makes LLM call using feedback prompt, then parses it into effects format"""
 
         model.reset_tokens()
 
-        type_str = format_dict(types) if types else "No types provided."
+        type_str = pretty_print_dict(types) if types else "No types provided."
         predicate_str = (
-            format_predicates(predicates) if predicates else "No predicates provided."
+            pretty_print_predicates(predicates) if predicates else "No predicates provided."
         )
         param_str = (
             "\n".join([f"{name} - {type}" for name, type in parameter.items()])
@@ -480,7 +493,7 @@ class FeedbackBuilder:
 
         if not no_fb:
             prompt = (
-                f"\n\nYou now are revising your answer using feedback. Here is the feedback you outputted:\n{fb_msg}"
+                f"\n\nYou are revising your answer using feedback. Here is the feedback you outputted:\n{fb_msg}"
                 f"\n\nFollow the same syntax format as the original output in your answer:\n{llm_response}"
             )
 
@@ -499,7 +512,7 @@ class FeedbackBuilder:
         llm_response: str,
         feedback_template: str,
         feedback_type: str = "llm",
-        types: dict[str, str] = None,
+        types: dict[str, str] | list[dict[str,str]] = None,
         predicates: list[Predicate] = None,
         nl_actions: dict[str, str] = None,
     ) -> tuple[list[Predicate], str]:
@@ -507,12 +520,12 @@ class FeedbackBuilder:
 
         model.reset_tokens()
 
-        type_str = format_dict(types) if types else "No types provided."
+        type_str = pretty_print_dict(types) if types else "No types provided."
         predicate_str = (
-            format_predicates(predicates) if predicates else "No predicates provided."
+            pretty_print_predicates(predicates) if predicates else "No predicates provided."
         )
         nl_action_str = (
-            format_dict(nl_actions) if nl_actions else "No actions provided."
+            pretty_print_dict(nl_actions) if nl_actions else "No actions provided."
         )
 
         feedback_template = feedback_template.replace("{domain_desc}", domain_desc)
@@ -527,7 +540,7 @@ class FeedbackBuilder:
 
         if not no_fb:
             prompt = (
-                f"\n\nYou now are revising your answer using feedback. Here is the feedback you outputted:\n{fb_msg}"
+                f"\n\nYou are revising your answer using feedback. Here is the feedback you outputted:\n{fb_msg}"
                 f"\n\nFollow the same syntax format as the original output in your answer:\n{llm_response}"
             )
 
@@ -547,7 +560,7 @@ class FeedbackBuilder:
         feedback_template: str,
         feedback_type: str = "llm",
         predicates: list[Predicate] = None,
-        types: dict[str, str] = None,
+        types: dict[str, str] | list[dict[str,str]] = None,
         objects: dict[str, str] = None,
         initial: list[dict[str, str]] = None,
         goal: list[dict[str, str]] = None,
@@ -556,9 +569,9 @@ class FeedbackBuilder:
 
         model.reset_tokens()
 
-        type_str = format_dict(types) if types else "No types provided."
+        type_str = pretty_print_dict(types) if types else "No types provided."
         predicate_str = (
-            format_predicates(predicates) if predicates else "No predicates provided."
+            pretty_print_predicates(predicates) if predicates else "No predicates provided."
         )
         objects_str = (
             "\n".join([f"{obj} - {type}" for obj, type in objects.items()])
@@ -620,7 +633,7 @@ class FeedbackBuilder:
             )
 
             prompt = (
-                f"\n\nYou now are revising your answer using feedback. Here is the feedback you outputted:\n{fb_msg}"
+                f"\n\nYou are revising your answer using feedback. Here is the feedback you outputted:\n{fb_msg}"
                 f"\n\n{structure_prompt}"
                 f"\n\nFollow the same syntax format as the original output in your answer:\n{llm_response}"
             )
@@ -641,7 +654,7 @@ class FeedbackBuilder:
         llm_response: str,
         feedback_template: str,
         feedback_type: str = "llm",
-        type_hierarchy: dict[str, str] = None,
+        types: dict[str, str] | list[dict[str,str]] = None,
         predicates: list[Predicate] = None,
         objects: dict[str, str] = None,
     ) -> tuple[dict[str, str], str]:
@@ -650,10 +663,10 @@ class FeedbackBuilder:
         model.reset_tokens()
 
         type_str = (
-            format_dict(type_hierarchy) if type_hierarchy else "No types provided."
+            pretty_print_dict(types) if types else "No types provided."
         )
         predicate_str = (
-            format_predicates(predicates) if predicates else "No predicates provided."
+            pretty_print_predicates(predicates) if predicates else "No predicates provided."
         )
         objects_str = (
             "\n".join([f"{obj} - {type}" for obj, type in objects.items()])
@@ -673,7 +686,7 @@ class FeedbackBuilder:
 
         if not no_fb:
             prompt = (
-                f"\n\nYou now are revising your answer using feedback. Here is the feedback you outputted:\n{fb_msg}"
+                f"\n\nYou are revising your answer using feedback. Here is the feedback you outputted:\n{fb_msg}"
                 f"\n\nFollow the same syntax format as the original output in your answer:\n{llm_response}"
             )
 
@@ -693,7 +706,7 @@ class FeedbackBuilder:
         llm_response: str,
         feedback_template: str,
         feedback_type: str = "llm",
-        type_hierarchy: dict[str, str] = None,
+        types: dict[str, str] | list[dict[str,str]] = None,
         predicates: list[Predicate] = None,
         objects: dict[str, str] = None,
         initial: list[dict[str, str]] = None,
@@ -703,10 +716,10 @@ class FeedbackBuilder:
         model.reset_tokens()
 
         type_str = (
-            format_dict(type_hierarchy) if type_hierarchy else "No types provided."
+            pretty_print_dict(types) if types else "No types provided."
         )
         predicate_str = (
-            format_predicates(predicates) if predicates else "No predicates provided."
+            pretty_print_predicates(predicates) if predicates else "No predicates provided."
         )
         objects_str = (
             "\n".join([f"{obj} - {type}" for obj, type in objects.items()])
@@ -734,7 +747,7 @@ class FeedbackBuilder:
 
         if not no_fb:
             prompt = (
-                f"\n\nYou now are revising your answer using feedback. Here is the feedback you outputted:\n{fb_msg}"
+                f"\n\nYou are revising your answer using feedback. Here is the feedback you outputted:\n{fb_msg}"
                 f"\n\nFollow the same syntax format as the original output in your answer:\n{llm_response}"
             )
 
@@ -754,7 +767,7 @@ class FeedbackBuilder:
         llm_response: str,
         feedback_template: str,
         feedback_type: str = "llm",
-        type_hierarchy: dict[str, str] = None,
+        types: dict[str, str] | list[dict[str,str]] = None,
         predicates: list[Predicate] = None,
         objects: dict[str, str] = None,
         initial: list[dict[str, str]] = None,
@@ -765,10 +778,10 @@ class FeedbackBuilder:
         model.reset_tokens()
 
         type_str = (
-            format_dict(type_hierarchy) if type_hierarchy else "No types provided."
+            pretty_print_dict(types) if types else "No types provided."
         )
         predicate_str = (
-            format_predicates(predicates) if predicates else "No predicates provided."
+            pretty_print_predicates(predicates) if predicates else "No predicates provided."
         )
         objects_str = (
             "\n".join([f"{obj} - {type}" for obj, type in objects.items()])
@@ -800,7 +813,7 @@ class FeedbackBuilder:
 
         if not no_fb:
             prompt = (
-                f"\n\nYou now are revising your answer using feedback. Here is the feedback you outputted:\n{fb_msg}"
+                f"\n\nYou are revising your answer using feedback. Here is the feedback you outputted:\n{fb_msg}"
                 f"\n\nFollow the same syntax format as the original output in your answer:\n{llm_response}"
             )
 

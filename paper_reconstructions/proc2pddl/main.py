@@ -42,9 +42,9 @@ if __name__ == "__main__":
         "here are the actions I want:\n"
         + (str(nl_actions))
         + "\n\nhere are the types I have:\n"
-        + format_dict(types)
+        + pretty_print_dict(types)
         + "\n\nhere are the predicates I have:\n"
-        + format_predicates(predicates)
+        + pretty_print_predicates(predicates)
     )
     ZPD_prompt = PromptBuilder(
         role=role, technique=technique, examples=[example], task=task
@@ -99,7 +99,7 @@ if __name__ == "__main__":
 
     # generate domain
     pddl_domain = domain_builder.generate_domain(
-        domain="survive_deserted_island",
+        domain_name="survive_deserted_island",
         requirements=requirements,
         types=types_str,
         predicates=predicate_str,

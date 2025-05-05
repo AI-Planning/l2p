@@ -30,13 +30,6 @@ DOMAINS = [
     "tyreworld",
 ]
 
-UNSUPPORTED_KEYWORDS = [
-    "forall", 
-    "when", 
-    "exists", 
-    "implies"
-]
-
 def get_action_prompt(prompt_template: str, action_desc: str):
     """Creates prompt for specific action."""
     
@@ -145,6 +138,8 @@ def construct_action(
             error_prompt = error_prompt.replace("{llm_response}", llm_response)
             
             act_pred_prompt = error_prompt
+            
+            print(error_prompt)
         
         # break the loop if no syntax error was made
         else:
@@ -163,7 +158,7 @@ def construct_action(
 def run_llm_dm(
     model: BaseLLM,
     domain: str = "household",
-    max_iter: int = 2,
+    max_iter: int = 1,
     max_attempts: int = 8
     ):
     """
@@ -255,25 +250,12 @@ def run_llm_dm(
         if gen_done:
             break
         
-        
-    # format components for PDDL generation
-    predicate_str = "\n".join(
-            [pred["clean"].replace(":", " ; ") for pred in predicates]
-        )
-        
-    pruned_types = {
-        name: description
-        for name, description in types.items()
-        if name not in UNSUPPORTED_KEYWORDS
-    }  # remove unsupported words
-    types_str = "\n".join(pruned_types)
-        
     # generate PDDL format
     pddl_domain = domain_builder.generate_domain(
-            domain=domain,
+            domain_name=domain,
             requirements=reqs,
-            types=types_str,
-            predicates=predicate_str,
+            types=types,
+            predicates=predicates,
             actions=action_list,
         )
     
@@ -281,8 +263,6 @@ def run_llm_dm(
     domain_file = f"{result_log_dir}/domain.pddl"
     with open(domain_file, "w") as f:
         f.write(pddl_domain)
-        
-    
 
 if __name__ == "__main__":
     
@@ -293,5 +273,5 @@ if __name__ == "__main__":
 
     # run LLM+DM method on all domains
     run_llm_dm(model=gpt_model, domain="logistics")
-    run_llm_dm(model=gpt_model, domain="household")
-    run_llm_dm(model=gpt_model, domain="tyreworld")
+    # run_llm_dm(model=gpt_model, domain="household")
+    # run_llm_dm(model=gpt_model, domain="tyreworld")
