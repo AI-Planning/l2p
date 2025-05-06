@@ -1,5 +1,5 @@
 (define
-   (problem blocksworld-4ops_problem)
+   (problem blocksworld_problem)
    (:domain blocksworld)
 
    (:objects 

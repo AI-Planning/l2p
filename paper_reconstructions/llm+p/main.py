@@ -82,18 +82,13 @@ def llm_ic_pddl_planner(args, problem_name):
         prompt_template=prompt,
     )
 
-    # construct PDDL components into PDDL problem file
-    object_str = task_builder.format_objects(objects)
-    initial_state_str = task_builder.format_initial(initial)
-    goal_state_str = task_builder.format_goal(goal)
-
     # generate proper PDDL structure
     pddl_problem = task_builder.generate_task(
-        domain.name,
-        problem_name,
-        object_str,
-        initial_state_str,
-        goal_state_str,
+        domain_name=domain.name,
+        problem_name=problem_name,
+        objects=objects,
+        initial=initial,
+        goal=goal,
     )
 
     # write generated pddl into folder

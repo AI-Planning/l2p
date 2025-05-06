@@ -254,7 +254,7 @@ def run_nl2plan(args, domain: str, problem: str):
         problem_name = args.domain + "_problem"
         pddl_problem = task_builder.generate_task(
             domain_name=args.domain,
-            problem=problem_name,
+            problem_name=problem_name,
             objects=objects,
             initial=initial,
             goal=goal,

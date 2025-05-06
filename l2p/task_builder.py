@@ -127,12 +127,12 @@ class TaskBuilder:
         )
         types_str = "\n".join(types) if types else "No types provided."
         objects_str = (
-            self.format_objects(objects) if objects else "No objects provided."
+            format_objects(objects) if objects else "No objects provided."
         )
         initial_str = (
-            self.format_initial(initial) if initial else "No initial state provided."
+            format_initial(initial) if initial else "No initial state provided."
         )
-        goal_str = self.format_goal(goal) if goal else "No goal state provided."
+        goal_str = format_goal(goal) if goal else "No goal state provided."
 
         prompt_template = prompt_template.replace("{types}", types_str)
         prompt_template = prompt_template.replace("{predicates}", predicate_str)
@@ -200,12 +200,12 @@ class TaskBuilder:
         )
         types_str = "\n".join(types) if types else "No types provided."
         objects_str = (
-            self.format_objects(objects) if objects else "No objects provided."
+            format_objects(objects) if objects else "No objects provided."
         )
         initial_str = (
-            self.format_initial(initial) if initial else "No initial state provided."
+            format_initial(initial) if initial else "No initial state provided."
         )
-        goal_str = self.format_goal(goal) if goal else "No goal state provided."
+        goal_str = format_goal(goal) if goal else "No goal state provided."
 
         prompt_template = prompt_template.replace("{types}", types_str)
         prompt_template = prompt_template.replace("{predicates}", predicate_str)
@@ -273,7 +273,7 @@ class TaskBuilder:
         )
         types_str = "\n".join(types) if types else "No types provided."
         action_str = (
-            self.format_action(actions=actions) if actions else "No actions provided."
+            format_actions(actions=actions) if actions else "No actions provided."
         )
 
         prompt_template = prompt_template.replace("{types}", types_str)
@@ -340,10 +340,10 @@ class TaskBuilder:
         )
         types_str = "\n".join(types) if types else "No types provided."
         objects_str = (
-            self.format_objects(objects) if objects else "No objects provided."
+            format_objects(objects) if objects else "No objects provided."
         )
         action_str = (
-            self.format_action(actions=actions) if actions else "No actions provided."
+            format_actions(actions=actions) if actions else "No actions provided."
         )
 
         prompt_template = prompt_template.replace("{problem_desc}", problem_desc)
@@ -371,10 +371,10 @@ class TaskBuilder:
 
     """Delete function"""
 
-    def delete_objects(self, name):
+    def delete_objects(self, object: dict[str,str]):
         if self.objects is not None:
             self.objects = {
-                var: type_ for var, type_ in self.objects.items() if var != name
+                var: type_ for var, type_ in self.objects.items() if var != object
             }
 
     def delete_initial_state(self, state: dict[str, str]):
@@ -388,12 +388,12 @@ class TaskBuilder:
     """Set functions"""
 
     def set_objects(self, objects: dict[str, str]):
-        self.set_objects = objects
+        self.objects = objects
 
-    def set_initial(self, initial: dict[str, str]):
-        self.set_initial = initial
+    def set_initial(self, initial: list[dict[str, str]]):
+        self.initial = initial
 
-    def set_goal(self, goal: str):
+    def set_goal(self, goal: list[dict[str,str]]):
         self.goal = goal
 
     """Get functions"""
@@ -401,71 +401,27 @@ class TaskBuilder:
     def get_objects(self) -> dict[str, str]:
         return self.objects
 
-    def get_initial(self) -> dict[str, str]:
+    def get_initial(self) -> list[dict[str, str]]:
         return self.initial
 
-    def get_goal(self) -> str:
+    def get_goal(self) -> list[dict[str,str]]:
         return self.goal
 
     def generate_task(
-        self, domain_name: str, problem: str, objects: str, initial: str, goal: str
+        self, 
+        domain_name: str, 
+        problem_name: str, 
+        objects: dict[str,str], 
+        initial: list[dict[str,str]], 
+        goal: list[dict[str,str]]
     ):
         # Write problem file
         desc = "(define\n"
-        desc += f"   (problem {problem})\n"
+        desc += f"   (problem {problem_name})\n"
         desc += f"   (:domain {domain_name})\n\n"
-        desc += f"   (:objects \n{indent(objects)}\n   )\n\n"
-        desc += f"   (:init\n{indent(initial)}\n   )\n\n"
-        desc += f"   (:goal\n{indent(goal)}\n   )\n\n"
+        desc += f"   (:objects \n{indent(format_objects(objects))}\n   )\n\n"
+        desc += f"   (:init\n{indent(format_initial(initial))}\n   )\n\n"
+        desc += f"   (:goal\n{indent(format_goal(goal))}\n   )\n\n"
         desc += ")"
         desc = desc.replace("AND", "and").replace("OR", "or")
         return desc
-
-    def format_action(self, actions: list[Action]) -> str:
-        desc = ""
-        for action in actions:
-            param_str = "\n".join(
-                [f"{name} - {type}" for name, type in action["params"].items()]
-            )  # name includes ?
-            desc += f"(:action {action['name']}\n"
-            desc += f"   :parameters (\n{indent(param_str,2)}\n   )\n"
-            desc += f"   :precondition\n{indent(action['preconditions'],2)}\n"
-            desc += f"   :effect\n{indent(action['effects'],2)}\n"
-            desc += ")\n"
-        return desc
-
-    def format_objects(self, objects: dict[str, str]) -> str:
-        objects = "\n".join(
-            [f"{obj} - {type}" if type else f"{obj}" for obj, type in objects.items()]
-        )
-        return objects
-
-    def format_initial(self, initial_states: list[dict[str, str]]) -> str:
-        inner_str = [
-            f"({state['name']} {' '.join(state['params'])})" for state in initial_states
-        ]  # The main part of each predicate
-        full_str = [
-            f"(not {inner})" if state["neg"] else inner
-            for state, inner in zip(initial_states, inner_str)
-        ]  # add `not` if needed
-        initial_states_str = "\n".join(
-            full_str
-        )  # combine the states into a single string
-
-        return initial_states_str
-
-    def format_goal(self, goal_states: list[dict[str, str]]) -> str:
-        goal_states_str = "(AND \n"
-
-        # loop through each dictionary in the list
-        for item in goal_states:
-            # extract the name and parameters from the dictionary
-            name = item["name"]
-            params = " ".join(item["params"])
-            goal_states_str += (
-                f"   ({name} {params}) \n"  # append the predicate in the desired format
-            )
-
-        goal_states_str += ")"
-
-        return goal_states_str

@@ -431,7 +431,7 @@ def extract_heading(llm_output: str, heading: str):
     return heading_str
 
 
-def convert_to_dict(llm_response: str) -> Optional[dict[str, str]]:
+def parse_types(llm_response: str) -> Optional[dict[str, str]]:
     """
     Safely extracts and evaluates a dictionary structure from a string (LLM response).
 
@@ -467,7 +467,7 @@ def convert_to_dict(llm_response: str) -> Optional[dict[str, str]]:
         return None
     
     
-def convert_to_list_of_dict(llm_response: str) -> Optional[list[dict[str,str]]]:
+def parse_type_hierarchy(llm_response: str) -> Optional[list[dict[str,str]]]:
     """
     Safely parses LLM response into a list of nested dictionaries representing the type hierarchy.
 
@@ -507,7 +507,7 @@ def convert_to_list_of_dict(llm_response: str) -> Optional[list[dict[str,str]]]:
 
 
 def clear_comments(text: str, comments=[":", "//", "#", ";"]) -> str:
-    """Remove comments from the text."""
+    """Helper function that removes comments from the text."""
     for comment in comments:
         text = "\n".join([line.split(comment)[0] for line in text.split("\n")])
     return text
@@ -526,29 +526,6 @@ def combine_blocks(heading_str: str):
     return combined.replace(
         "\n\n", "\n"
     ).strip()  # remove leading/trailing whitespace and internal empty lines
-
-
-def pretty_print_dict(data):
-    """Formats dictionary or list of dictionaries in JSON format for readability."""
-    if isinstance(data, (dict, list)):
-        return json.dumps(data, indent=4)
-    else:
-        raise TypeError("Input must be a dictionary or a list of dictionaries")
-
-
-def pretty_print_predicates(predicates: list[Predicate]) -> str:
-    """Formats list of predicates easier for readability"""
-    if not predicates:
-        return ""
-    return "\n".join(
-        f"{i + 1}. {pred['name']}: {pred.get('desc', 'No description provided') or 'No description provided'}"
-        for i, pred in enumerate(predicates)
-    )
-
-
-def indent(string: str, level: int = 2):
-    """Indent string helper function to format PDDL domain/task"""
-    return "   " * level + string.replace("\n", f"\n{'   ' * level}")
 
 
 def check_parse_domain(file_path: str):

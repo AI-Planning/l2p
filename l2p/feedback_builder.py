@@ -624,7 +624,7 @@ class FeedbackBuilder:
             ### GOAL
             ```
             (and
-            (predicate_name object) ; comment
+                (predicate_name object) ; comment
             )
             ```
 

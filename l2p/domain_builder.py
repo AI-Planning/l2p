@@ -83,7 +83,7 @@ class DomainBuilder:
                 llm_response = model.query(prompt=prompt_template)  # prompt model
 
                 # extract respective types from response
-                types = convert_to_dict(llm_response=llm_response)
+                types = parse_types(llm_response=llm_response)
                 
                 # flag that removes keyword 'object' if detected
                 if check_invalid_obj_usage:
@@ -142,7 +142,7 @@ class DomainBuilder:
                 llm_response = model.query(prompt=prompt_template)
 
                 # extract respective types from response
-                type_hierarchy = convert_to_list_of_dict(llm_response=llm_response)
+                type_hierarchy = parse_type_hierarchy(llm_response=llm_response)
 
                 if type_hierarchy is not None:
                     if check_invalid_obj_usage:
@@ -216,7 +216,7 @@ class DomainBuilder:
                 )  # get BaseLLM llm_response
 
                 # extract respective types from response
-                nl_actions = convert_to_dict(llm_response=llm_response)
+                nl_actions = format_types(llm_response=llm_response)
 
                 if nl_actions is not None:
                     return nl_actions, llm_response
@@ -316,7 +316,7 @@ class DomainBuilder:
                                     llm_response, syntax_validator.unsupported_keywords
                                 )
                             )
-                        elif e == "invalid_param_types" and types:
+                        elif e == "invalid_params" and types:
                             validation_info = syntax_validator.validate_params(
                                 action["params"], types
                             )
@@ -847,25 +847,7 @@ class DomainBuilder:
         if not actions:
             print("[WARNING]: Domain has no actions. The planner will not be able to generate any plan unless the goal is already satisfied.")
         else:
-            desc += self.action_descs(actions)
+            desc += format_actions(actions)
         desc += "\n)"
         desc = desc.replace("AND", "and").replace("OR", "or")
-        return desc
-
-    def action_desc(self, action: Action) -> str:
-        """Helper function to format individual action descriptions"""
-        param_str = format_action_params(action)
-        
-        desc = f"(:action {action['name']}\n"
-        desc += f"   :parameters (\n{indent(string=param_str, level=2)}\n   )\n"
-        desc += f"   :precondition\n{indent(string=action['preconditions'], level=2)}\n"
-        desc += f"   :effect\n{indent(string=action['effects'], level=2)}\n"
-        desc += ")"
-        return desc
-
-    def action_descs(self, actions: list[Action]) -> str:
-        """Helper function to combine all action descriptions"""
-        desc = ""
-        for action in actions:
-            desc += "\n\n" + indent(self.action_desc(action), level=1)
         return desc

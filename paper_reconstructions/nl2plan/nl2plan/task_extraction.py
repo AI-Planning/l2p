@@ -119,9 +119,4 @@ class TaskExtraction:
             goal=goal,
         )
 
-        # format the inputs into proper Python structures
-        objects = self.task_builder.format_objects(objects)
-        initial = self.task_builder.format_initial(initial)
-        goal = self.task_builder.format_goal(goal)
-
         return objects, initial, goal

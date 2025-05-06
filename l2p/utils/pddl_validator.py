@@ -8,14 +8,18 @@ from .pddl_types import Predicate
 
 
 class SyntaxValidator:
-    def __init__(self, error_types=None, unsupported_keywords=None):
+    def __init__(
+            self, 
+            error_types: list[str] | None = None,
+            unsupported_keywords: list[str] | None = None
+            ) -> None:
 
-        # current error types available
+        # current [ERROR] types available
         default_error_types = [
             "invalid_header",
             "invalid_keyword_usage",
             "unsupported_keywords",
-            "invalid_param_types",
+            "invalid_params",
             "invalid_predicate_name",
             "invalid_predicate_format",
             "invalid_predicate_usage",
@@ -26,7 +30,7 @@ class SyntaxValidator:
             "when",
             "exists",
             "implies",
-        ]  # current unsupported usage of PDDL
+        ]
         
         self.error_types = default_error_types if error_types is None else error_types
         self.unsupported_keywords = (
@@ -38,13 +42,25 @@ class SyntaxValidator:
     # PARAMETER CHECKS
 
     def validate_params(
-        self, parameters: OrderedDict, types: dict[str, str] | None
+        self, parameters: OrderedDict, types: dict[str, str] | None = None
     ) -> tuple[bool, str]:
-        """Checks whether a PDDL action parameter contains types found in object types."""
+        """Checks whether a PDDL action parameter is correctly formatted and type declaration assigned correctly."""
+
+        # check if parameter names (i.e. ?a) contains '?'
+        invalid_param_names = []
+        for param_name, param_type in parameters.items():
+            if not param_name.startswith("?"):
+                invalid_param_names.append(f"{param_name} - {param_type}")
         
-        types = types or {}
-        
-        # If no types are defined, inform the user and check for parameter types
+        if invalid_param_names:
+            feedback_msg = (
+                f'Character `?` is not found in parameter(s) `{invalid_param_names}` '
+                'Please insert `?` in front of the parameter names (i.e. ?boat - vehicle)'
+            )
+            return False, feedback_msg
+
+        types = types or {} # checks if types is empty
+        # if no types are defined, check if parameters contain types
         if not types:
             for param_name, param_type in parameters.items():
                 if param_type is not None and param_type != "":
@@ -55,30 +71,33 @@ class SyntaxValidator:
                     return False, feedback_msg
             
             # if all parameter names do not contain a type
-            return True, "PASS: All parameters are valid."
+            return True, "[PASS]: All parameters are valid."
 
-        # Otherwise, check that parameter types are valid in the given types
-        for param_name, param_type in parameters.items():
+        # otherwise check that parameter types are valid in the given types
+        else:
+            for param_name, param_type in parameters.items():
 
-            if not any(param_type in t for t in types.keys()):
-                feedback_msg = f'There is an invalid object type `{param_type}` for the parameter {param_name} not found in the types {types.keys()}. If you need to use a new type, you can emulate it with an "is_{{type}} ?o - object" precondition. Please revise the PDDL model to fix this error.'
-                return False, feedback_msg
+                if not any(param_type in t for t in types.keys()):
+                    feedback_msg = (f'There is an invalid object type `{param_type}` for the parameter `{param_name}` '
+                                    f'not found in the types {list(types.keys())}. Make sure parameter types align with '
+                                    'provided types, otherwise just leave parameter untyped.'
+                    )
+                    return False, feedback_msg
 
-        feedback_msg = "PASS: All parameter types found in object types."
-        return True, feedback_msg
+            feedback_msg = "[PASS]: All parameter types found in object types."
+            return True, feedback_msg
 
     # PREDICATE CHECKS
 
     def validate_types_predicates(
-        self, predicates: list[dict], types: dict[str, str] | None
+        self, predicates: list[Predicate], types: dict[str, str] | None
     ) -> tuple[bool, str]:
         """Check if predicate name is found within any type definitions"""
         
-        # Handle the case where types is None or empty
+        # if types is None or empty, return true
         types = types or {}
-        
         if not types:
-            feedback_msg = "PASS: All predicate names are unique to object type names"
+            feedback_msg = "[PASS]: No types declared, all predicate names are unique."
             return True, feedback_msg
 
         invalid_predicates = list()
@@ -94,13 +113,13 @@ class SyntaxValidator:
                     invalid_predicates.append(pred_name)
 
         if invalid_predicates:
-            feedback_msg = "ERROR: The following predicate(s) have the same name(s) as existing object types:"
+            feedback_msg = "[ERROR]: The following predicate(s) have the same name(s) as existing object types:"
             for pred_i, pred_name in enumerate(invalid_predicates):
                 feedback_msg += f"\n{pred_i + 1}. {pred_name}"
             feedback_msg += "\nPlease rename these predicates."
             return False, feedback_msg
 
-        feedback_msg = "PASS: All predicate names are unique to object type names"
+        feedback_msg = "[PASS]: All predicate names are unique to object type names"
         return True, feedback_msg
 
     def validate_duplicate_predicates(
@@ -133,11 +152,11 @@ class SyntaxValidator:
                 new_pred_full, existing_pred_full = duplicated_pred_info
                 feedback_msg += f'\n{pred_i + 1}. {new_pred_full.replace(":", ",")}; existing predicate with the same name: {existing_pred_full.replace(":", ",")}'
             feedback_msg += "\n\nYou should reuse existing predicates whenever possible. If you are reusing existing predicate(s), you shouldn't list them under 'New Predicates'. If existing predicates are not enough and you are devising new predicate(s), please use names that are different from existing ones."
-            feedback_msg += "\n\nPlease revise the PDDL model to fix this error.\n\n"
+            feedback_msg += "\n\nPlease revise the PDDL model to fix this [ERROR].\n\n"
             feedback_msg += "Parameters:"
             return False, feedback_msg
 
-        feedback_msg = "PASS: All predicates are unique to each other."
+        feedback_msg = "[PASS]: All predicates are unique to each other."
         return True, feedback_msg
 
     def validate_format_predicates(
@@ -189,7 +208,7 @@ class SyntaxValidator:
             feedback_msg += "\nPlease revise these definitions and output the entire PDDL action model again."
             return False, feedback_msg
 
-        feedback_msg = "PASS: All predicates are formatted correctly."
+        feedback_msg = "[PASS]: All predicates are formatted correctly."
         return True, feedback_msg
 
     def validate_pddl_usage_predicates(
@@ -235,14 +254,14 @@ class SyntaxValidator:
                     n_expected_param = len(target_pred_info["params"])
                     if n_expected_param != len(curr_pred_params):
 
-                        feedback_msg = f'In the {part}, the predicate `{curr_pred_name}` requires {n_expected_param} parameters but {len(curr_pred_params)} parameters were provided. Object type should not be declared in the {part}, but just the variable. For example, "(drive ?a ?from)" does not contain its object types, just variables. Do not change the predicates. Please revise the PDDL model to fix this error.'
+                        feedback_msg = f'In the {part}, the predicate `{curr_pred_name}` requires {n_expected_param} parameters but {len(curr_pred_params)} parameters were provided. Object type should not be declared in the {part}, but just the variable. For example, "(drive ?a ?from)" does not contain its object types, just variables. Do not change the predicates. Please revise the PDDL model to fix this [ERROR].'
                         return False, feedback_msg
 
                     # (ii) check if there is any unknown param
                     for curr_param in curr_pred_params:
 
                         if curr_param not in action_params[0]:
-                            feedback_msg = f"In the {part} and in the predicate `{curr_pred_name}`, there is an unknown parameter `{curr_param}`. You should define all parameters (i.e., name and type) under the `### Action Parameters` list. Please revise the PDDL model to fix this error (and other potentially similar errors)."
+                            feedback_msg = f"In the {part} and in the predicate `{curr_pred_name}`, there is an unknown parameter `{curr_param}`. You should define all parameters (i.e., name and type) under the `### Action Parameters` list. Please revise the PDDL model to fix this [ERROR] (and other potentially similar errors)."
                             return False, feedback_msg
 
                     # (iii) check if the object types are correct
@@ -255,11 +274,11 @@ class SyntaxValidator:
                         claimed_type = action_params[0][curr_param]
 
                         if not self.validate_type(target_type, claimed_type, types):
-                            feedback_msg = f"There is a syntax error in the {part.lower()}, the {param_idx+1}-{get_ordinal_suffix(param_idx+1)} parameter of `{curr_pred_name}` should be a `{target_type}` but a `{claimed_type}` was given. Please use the correct predicate or devise new one(s) if needed (but note that you should use existing predicates as much as possible)."
+                            feedback_msg = f"There is a syntax [ERROR] in the {part.lower()}, the {param_idx+1}-{get_ordinal_suffix(param_idx+1)} parameter of `{curr_pred_name}` should be a `{target_type}` but a `{claimed_type}` was given. Please use the correct predicate or devise new one(s) if needed (but note that you should use existing predicates as much as possible)."
                             return False, feedback_msg
             idx += 1
 
-        feedback_msg = "PASS: all correct use of predicates."
+        feedback_msg = "[PASS]: all correct use of predicates."
         return True, feedback_msg
 
     def validate_usage_predicates(
@@ -318,7 +337,7 @@ class SyntaxValidator:
             feedback_msg = f"FAIL: You seem to have generated an action model with an unusually long list of effects. Please include only the relevant preconditions/effects and keep the action model concise.\n\nParameters:"
             return False, feedback_msg
 
-        feedback_msg = "PASS: predicate output is fine."
+        feedback_msg = "[PASS]: predicate output is fine."
         return True, feedback_msg
 
     def validate_task_objects(
@@ -354,13 +373,13 @@ class SyntaxValidator:
                 # checks if obj_name matches either current_type or parent_type
                 if obj_name == current_type:
                     feedback_msgs.append(
-                        f"ERROR: Object variable '{obj_name}' matches the type name '{current_type}', change it to be unique from types: {types.keys()}"
+                        f"[ERROR]: Object variable '{obj_name}' matches the type name '{current_type}', change it to be unique from types: {types.keys()}"
                     )
                     valid = False
                     break
                 if obj_name == parent_type:
                     feedback_msgs.append(
-                        f"ERROR: Object variable '{obj_name}' matches the type name '{parent_type}', change it to be unique from types: {types.keys()}"
+                        f"[ERROR]: Object variable '{obj_name}' matches the type name '{parent_type}', change it to be unique from types: {types.keys()}"
                     )
                     valid = False
                     break
@@ -368,12 +387,12 @@ class SyntaxValidator:
             # clause that checks if obj_type is found in types
             if not obj_type_found:
                 feedback_msgs.append(
-                    f"ERROR: Object variable '{obj_name}' has an invalid type '{obj_type}' not found in types: {types.keys()}"
+                    f"[ERROR]: Object variable '{obj_name}' has an invalid type '{obj_type}' not found in types: {types.keys()}"
                 )
                 valid = False
 
         feedback_msg = (
-            "\n".join(feedback_msgs) if not valid else "PASS: all objects are valid."
+            "\n".join(feedback_msgs) if not valid else "[PASS]: all objects are valid."
         )
 
         return valid, feedback_msg
@@ -418,7 +437,7 @@ class SyntaxValidator:
             # if no matches, then that state is missusing a predicate - not found in domain
             if matched_preds == False:
                 feedback_msgs.append(
-                    f"ERROR: In the {state_type} state, '({state['name']} {' '.join(state['params'])})' contains '{state_name}' predicate, which is not found in {[p['name'] for p in predicates]}, predicate in state is missused."
+                    f"[ERROR]: In the {state_type} state, '({state['name']} {' '.join(state['params'])})' contains '{state_name}' predicate, which is not found in {[p['name'] for p in predicates]}, predicate in state is missused."
                 )
                 valid = False
 
@@ -436,12 +455,12 @@ class SyntaxValidator:
 
                 if matched_params == False:
                     feedback_msgs.append(
-                        f"ERROR: In the {state_type} state, '({state['name']} {' '.join(state['params'])})' contains parameter '{state_p}' not found in '{objects.keys()}'."
+                        f"[ERROR]: In the {state_type} state, '({state['name']} {' '.join(state['params'])})' contains parameter '{state_p}' not found in '{objects.keys()}'."
                     )
                     valid = False
 
         feedback_msg = (
-            "\n".join(feedback_msgs) if not valid else "PASS: all objects are valid."
+            "\n".join(feedback_msgs) if not valid else "[PASS]: all objects are valid."
         )
 
         return valid, feedback_msg
@@ -458,7 +477,7 @@ class SyntaxValidator:
                 feedback_msg = f'FAIL: The header `{header}` is missing in the formalised code block. Please include a "```" section in the {header} section.'
                 return False, feedback_msg
 
-        feedback_msg = "PASS: headers are identified properly in LLM output."
+        feedback_msg = "[PASS]: headers are identified properly in LLM output."
         return True, feedback_msg
 
     def validate_unsupported_keywords(
@@ -469,18 +488,18 @@ class SyntaxValidator:
         for key in unsupported_keywords:
             if f"{key}" in llm_response:
                 feedback_msg = (
-                    f"ERROR: The precondition or effect contains the keyword {key}."
+                    f"[ERROR]: The precondition or effect contains the keyword {key}."
                 )
                 return False, feedback_msg
 
-        feedback_msg = "PASS: Unsupported keywords not found in PDDL model."
+        feedback_msg = "[PASS]: Unsupported keywords not found in PDDL model."
         return True, feedback_msg
 
     def validate_keyword_usage(self, llm_response: str):
         """Checks if action effects uses unsupported universal condition keywords"""
 
         if not "Action Effects" in llm_response:
-            feedback_msg = "PASS"
+            feedback_msg = "[PASS]"
             return True, feedback_msg
         heading = llm_response.split("Action Effects")[1].split("```\n")[1].strip()
         for keyword in ["forall", "exists", "if "]:
@@ -490,7 +509,7 @@ class SyntaxValidator:
                 )
                 return False, feedback_msg
 
-        feedback_msg = "PASS: unsupported keywords are not found in the action effects."
+        feedback_msg = "[PASS]: unsupported keywords are not found in the action effects."
         return True, feedback_msg
 
     def validate_new_action_creation(self, llm_response: str) -> tuple[bool, str]:
@@ -505,7 +524,7 @@ class SyntaxValidator:
             feedback_msg = "It's not possible to create new actions at this time. Please only define the requested action."
             return False, feedback_msg
 
-        feedback_msg = "PASS: no new actions created"
+        feedback_msg = "[PASS]: no new actions created"
         return True, feedback_msg
 
     def validate_type(self, target_type, claimed_type, types):
