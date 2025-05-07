@@ -43,6 +43,7 @@ class TestSyntaxValidator(unittest.TestCase):
         types = {
             'arm': 'arm for a robot',
             'block': 'block that can be stacked and unstacked',
+            'table': 'table that blocks sits on'
         }
 
         predicates = [Predicate({'name': 'on_top', 
@@ -51,9 +52,39 @@ class TestSyntaxValidator(unittest.TestCase):
                        'params': OrderedDict([('?b1', 'block'), ('?b2', 'block')]), 
                        'clean': '(on_top ?b1 - block ?b2 - block): true if the block ?b1 is on top of the block ?b2'})]
 
+        # case 1: correct predicates and types
         flag, message = self.syntax_validator.validate_types_predicates(predicates=predicates, types=types)
-        print(flag)
+        self.assertEqual(flag, True)
+        
+        # case 2: no types
+        flag, message = self.syntax_validator.validate_types_predicates(predicates=predicates)
+        self.assertEqual(flag, True)
+        
+        # case 3: predicate name is the same as a type
+        incorrect_predicates = [
+            Predicate({'name': 'on_top', 
+                       'desc': 'true if the block ?b1 is on top of the block ?b2', 
+                       'raw': '(on_top ?b1 - block ?b2 - block): true if the block ?b1 is on top of the block ?b2', 
+                       'params': OrderedDict([('?b1', 'block'), ('?b2', 'block')]), 
+                       'clean': '(on_top ?b1 - block ?b2 - block)'}),
+            Predicate({'name': 'under', 
+                       'desc': 'true if the block ?b1 is under block ?b2', 
+                       'raw': '(under ?b1 - block ?b2 - block): true if the block ?b1 is under block ?b2', 
+                       'params': OrderedDict([('?b1', 'block'), ('?b2', 'block')]), 
+                       'clean': '(under ?b1 - block ?b2 - block)'})
+            ]
+        
+        types = {
+            'on_top': 'true if the block ?b1 is on top of the block ?b2',
+            'under': 'true if the block ?b1 is under block ?b2', 
+            'table': 'table that blocks sits on'
+            }
+        
+        flag, message = self.syntax_validator.validate_types_predicates(predicates=incorrect_predicates, types=types)
         print(message)
+        self.assertEqual(flag, False)
+        
+        
 
 
 if __name__ == "__main__":

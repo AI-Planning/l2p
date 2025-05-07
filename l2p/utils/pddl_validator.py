@@ -47,7 +47,7 @@ class SyntaxValidator:
         """Checks whether a PDDL action parameter is correctly formatted and type declaration assigned correctly."""
 
         # check if parameter names (i.e. ?a) contains '?'
-        invalid_param_names = []
+        invalid_param_names = list()
         for param_name, param_type in parameters.items():
             if not param_name.startswith("?"):
                 invalid_param_names.append(f"{param_name} - {param_type}")
@@ -90,7 +90,7 @@ class SyntaxValidator:
     # PREDICATE CHECKS
 
     def validate_types_predicates(
-        self, predicates: list[Predicate], types: dict[str, str] | None
+        self, predicates: list[Predicate], types: dict[str, str] | None = None,
     ) -> tuple[bool, str]:
         """Check if predicate name is found within any type definitions"""
         
@@ -102,21 +102,20 @@ class SyntaxValidator:
 
         invalid_predicates = list()
         for pred in predicates:
-            pred_name = pred["name"].lower()
 
             for type_key in types.keys():
                 # extract the actual type name, disregarding hierarchical or descriptive parts
                 type_name = type_key.split(" - ")[0].strip().lower()
 
                 # check if the predicate name is exactly the same as the type name
-                if pred_name == type_name:
-                    invalid_predicates.append(pred_name)
+                if pred["name"].lower() == type_name:
+                    invalid_predicates.append(pred)
 
         if invalid_predicates:
             feedback_msg = "[ERROR]: The following predicate(s) have the same name(s) as existing object types:"
-            for pred_i, pred_name in enumerate(invalid_predicates):
-                feedback_msg += f"\n{pred_i + 1}. {pred_name}"
-            feedback_msg += "\nPlease rename these predicates."
+            for pred_i, pred in enumerate(invalid_predicates):
+                feedback_msg += f"\n{pred_i + 1}. `{pred['name'].lower()}` from {pred['clean']}"
+            feedback_msg += f"\nPlease rename these predicates from types: {list(types.keys())}"
             return False, feedback_msg
 
         feedback_msg = "[PASS]: All predicate names are unique to object type names"
