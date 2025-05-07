@@ -6,7 +6,7 @@ Currently, L2P is currently at work to integrate more advanced PDDL aspects. Bel
 
 Types
 -------------------------------------------------------
-**Types** are formatted as a Python dictionary: `dict[str,str]` where the first string represents the PDDL type name, and the second string provides a natural language description of the type.
+**Types** are formatted as a Python dictionary: `dict[str,str]` or a nested list dictionary `list[dict[str,str]]` where the first string represents the PDDL type name, and the second string provides a natural language description of the type.
 
 **Example One (Basic types)**: ::
     
@@ -16,20 +16,49 @@ Types
         "type_3": "description",
     }
 
+Converts to this string using `format_types_to_string(types)` ::
+
+    type_1 ; description
+    type_2 ; description
+    type_3 ; description
+
 **Example Two (Nested types)**: ::
     
-    {
-        "parent_type_1": "description",
-        "children": [
-            {
-                "child_type_1": "description",
-                "children": [
-                    {"child_child_type_1": "description", "children": []},
-                    {"child_child_type_2": "description", "children": []}
-                ]
-            }
-        ]
-    }
+    [
+        {
+            "parent_type_1": "description for parent type 1",
+            "children": [
+                {
+                    "child_type_1": "description for child type 1",
+                    "children": [
+                        {"child_child_type_1": "description for child type 1", "children": []},
+                        {"child_child_type_2": "description for child type 1", "children": []}
+                    ]
+                }
+            ]
+        },
+        {
+            "parent_type_2": "description for parent type 2",
+            "children": [
+                {
+                    "child_type_2": "description for child type 2",
+                    "children": [
+                        {"child_child_type_3": "description for child type 2", "children": []}
+                    ]
+                }
+            ]
+        }
+    ]
+
+Converts to this string using `format_types_to_string(types)` ::
+
+    parent_type_1 ; description for parent type 1
+    child_type_1 - parent_type_1 ; description for child type 1
+    child_child_type_1 - child_type_1 ; description for child type 1
+    child_child_type_2 - child_type_1 ; description for child type 1
+    parent_type_2 ; description for parent type 2
+    child_type_2 - parent_type_2 ; description for child type 2
+    child_child_type_3 - child_type_2 ; description for child type 2
 
 
 Predicates
@@ -50,16 +79,36 @@ For example, **extract_predicates()** takes the LLM output: ::
 
     ### New Predicates
     ```
-    - (on_top ?b1 - block ?b2 - block): true if the block ?b1 is on top of the block ?b
-    ```
+    - (predicate_name_1 ?t1 - type_1 ?t2 - type_2): 'predicate_description'
+    - (predicate_name_2 ?t3 - type_3 ?t4 - type_4): 'predicate_description'
+    - (predicate_name_3 ?t5 - type_5): 'predicate_description'
+    ``` 
 
 And converts it into this: ::
 
-    predicate: Predicate = {'name': 'on_top', 
-                            'desc': 'true if the block ?b1 is on top of the block ?b2', 
-                            'raw': '(on_top ?b1 - block ?b2 - block): true if the block ?b1 is on top of the block ?b2', 
-                            'params': OrderedDict([('?b1', 'block'), ('?b2', 'block')]), 
-                            'clean': '(on_top ?b1 - block ?b2 - block): true if the block ?b1 is on top of the block ?b2'}
+    [
+        {
+            'name': 'predicate_name_1', 
+            'desc': "'predicate_description'", 
+            'raw': "(predicate_name_1 ?t1 - type_1 ?t2 - type_2): 'predicate_description'", 
+            'params': OrderedDict({'?t1': 'type_1', '?t2': 'type_'}), 
+            'clean': '(predicate_name_1 ?t1 - type_1 ?t2 - type_)'
+        }, 
+        {
+            'name': 'predicate_name_2', 
+            'desc': "'predicate_description'", 
+            'raw': "(predicate_name_2 ?t3 - type_3 ?t4 - type_4): 'predicate_description'", 
+            'params': OrderedDict({'?t3': 'type_3', '?t4': 'type_'}), 
+            'clean': '(predicate_name_2 ?t3 - type_3 ?t4 - type_)'
+        }, 
+        {
+            'name': 'predicate_name_3', 
+            'desc': "'predicate_description'", 
+            'raw': "(predicate_name_3 ?t5 - type_5): 'predicate_description'", 
+            'params': OrderedDict({'?t5': 'type_'}), 
+            'clean': '(predicate_name_3 ?t5 - type_)'
+        }
+    ]
 
 Action
 -------------------------------------------------------

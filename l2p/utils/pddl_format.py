@@ -117,8 +117,14 @@ def format_types_to_string(types: dict[str, str] | list[dict[str, str]]) -> str:
 
 
 def format_predicates(predicates: list[Predicate]) -> str:
-    """Formats predicate list into a PDDL-style string."""
-    return "\n".join([pred["clean"].replace(":", " ; ") for pred in predicates])
+    """Formats predicate list into a PDDL-style string, removing exact duplicates."""
+    unique = dict()  # key = (name.lower(), tuple(params)), value = clean string
+    for pred in predicates:
+        key = (pred["name"].lower(), tuple(pred["params"]))
+        if key not in unique:
+            unique[key] = pred["clean"].replace(":", " ; ")
+
+    return "\n".join(unique.values())
 
 
 def format_action(self, actions: list[Action]) -> str:

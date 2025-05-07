@@ -137,7 +137,7 @@ def parse_new_predicates(llm_output) -> list[Predicate]:
             )
 
         # generate a clean version of the predicate
-        clean = f"({predicate_name} {' '.join([f'{k} - {v}' for k, v in params.items()])}): {predicate_desc}"
+        clean = f"({predicate_name} {' '.join([f'{k} - {v}' for k, v in params.items()])})"
 
         # drop the index/dot
         p_line = p_line.strip(" 1234567890.-`")
@@ -185,7 +185,7 @@ def parse_action(llm_response: str, action_name: str) -> Action:
     """
     Parse an action from a given LLM output.
 
-    Args:
+    Parameters:
         llm_response (str): The LLM output.
         action_name (str): The name of the action.
 
@@ -226,7 +226,7 @@ def parse_action(llm_response: str, action_name: str) -> Action:
 def parse_objects(llm_response: str) -> dict[str, str]:
     """
     Extract objects from LLM response and returns dictionary string pairs object(name, type)
-    Args:
+    Parameters:
         - llm_response (str):
         - types (dict[str,str]): WILL BE USED FOR CHECK ERROR RAISES
         - predicates (list[Predicate]): WILL BE USED FOR CHECK ERROR RAISES
@@ -254,7 +254,7 @@ def parse_initial(llm_response: str) -> list[dict[str, str]]:
     """
     Extracts state (PDDL-init) from LLM response and returns it as a list of dict strings
 
-    Args:
+    Parameters:
         llm_response (str): The LLM output.
 
     Returns:
@@ -288,7 +288,7 @@ def parse_goal(llm_response: str) -> list[dict[str, str]]:
     """
     Extracts goal (PDDL-goal) from LLM response and returns it as a string
 
-    Args:
+    Parameters:
         llm_response (str): The LLM output.
 
     Returns:
@@ -329,7 +329,7 @@ def prune_types(
     """
     Prune types that are not used in any predicate or action.
 
-    Args:
+    Parameters:
         types (dict or list): Either a flat dict of {type: description} or a nested list of type hierarchies.
         predicates (list[Predicate]): A list of predicates.
         actions (list[Action]): A list of actions.
@@ -392,7 +392,7 @@ def prune_predicates(
     """
     Remove predicates that are not used in any action.
 
-    Args:
+    Parameters:
         predicates (list[Predicate]): A list of predicates.
         actions (list[Action]): A list of actions.
 
@@ -435,7 +435,7 @@ def parse_types(llm_response: str) -> Optional[dict[str, str]]:
     """
     Safely extracts and evaluates a dictionary structure from a string (LLM response).
 
-    Args:
+    Parameters:
         llm_response (str): Raw string from the LLM expected to contain a flat dictionary.
 
     Returns:
@@ -471,7 +471,7 @@ def parse_type_hierarchy(llm_response: str) -> Optional[list[dict[str,str]]]:
     """
     Safely parses LLM response into a list of nested dictionaries representing the type hierarchy.
 
-    Args:
+    Parameters:
         llm_response (str): raw LLM output expected to contain a Python list of dictionaries.
 
     Returns:

@@ -10,8 +10,8 @@ End your final answer starting with "## OUTPUT" and then the Python list of nest
             {
                 "child_type_1": "description for child type 1",
                 "children": [
-                    {"child_child_type_1": "description for child type 1a", "children": []},
-                    {"child_child_type_2": "description for child type 1b", "children": []}
+                    {"child_child_type_1": "description for child type 1", "children": []},
+                    {"child_child_type_2": "description for child type 1", "children": []}
                 ]
             }
         ]
@@ -22,7 +22,7 @@ End your final answer starting with "## OUTPUT" and then the Python list of nest
             {
                 "child_type_2": "description for child type 2",
                 "children": [
-                    {"child_child_type_3": "description for child type 2a", "children": []}
+                    {"child_child_type_3": "description for child type 2", "children": []}
                 ]
             }
         ]
