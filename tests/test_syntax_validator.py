@@ -9,7 +9,7 @@ class TestSyntaxValidator(unittest.TestCase):
         
         types = {
             'arm': 'arm for a robot',
-            'block': 'block that can be stacked and unstacked',
+            'block': 'block that can be stacked and unstacked'
         }
 
         params = OrderedDict([('?a', 'arm'), ('?top', 'block'), ('?bottom', 'block')])
@@ -322,6 +322,45 @@ class TestSyntaxValidator(unittest.TestCase):
         self.assertEqual(flag, False)
 
         # check if declared predicate object types align with original predicate types
+
+
+
+    def test_validate_usage_predicates(self):
+        pass
+    def test_validate_overflow_predicates(self):
+        pass
+    def test_validate_task_states(self):
+        pass
+    def test_validate_header(self):
+        pass
+    def test_unsupported_keywords(self):
+        pass
+    def test_validate_keyword_usage(self):
+        pass
+    def test_validate_new_saction_creation(self):
+        pass
+    def test_validate_type(self):
+
+        target_type = 'arm'
+
+        claimed_type = 'arm_pit'
+
+        types = {
+            'arm': 'arm for a robot',
+            'block': 'block that can be stacked and unstacked',
+            'table': 'table that blocks sits on'
+        }
+        
+        
+        flag, msg = self.syntax_validator.validate_type(
+            target_type=target_type, 
+            claimed_type=claimed_type, 
+            types=types
+            )
+        
+        print(flag)
+        print(msg)
+
 
 
 if __name__ == "__main__":

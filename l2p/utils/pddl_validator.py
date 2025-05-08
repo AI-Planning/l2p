@@ -44,7 +44,9 @@ class SyntaxValidator:
     # PARAMETER CHECKS
 
     def validate_params(
-        self, parameters: OrderedDict, types: dict[str, str] | None = None
+        self, 
+        parameters: OrderedDict, 
+        types: dict[str, str] | list[dict[str,str]] | None = None
     ) -> tuple[bool, str]:
         """Checks whether a PDDL action parameter is correctly formatted and type declaration assigned correctly."""
 
@@ -61,7 +63,7 @@ class SyntaxValidator:
             )
             return False, feedback_msg
 
-        types = types or {} # checks if types is empty
+        types = format_types(types)
         # if no types are defined, check if parameters contain types
         if not types:
             for param_name, param_type in parameters.items():
@@ -92,15 +94,18 @@ class SyntaxValidator:
     # PREDICATE CHECKS
 
     def validate_types_predicates(
-        self, predicates: list[Predicate], types: dict[str, str] | None = None,
+        self, 
+        predicates: list[Predicate], 
+        types: dict[str, str] | list[dict[str,str]] | None = None,
     ) -> tuple[bool, str]:
         """Check if predicate name is found within any type definitions"""
         
         # if types is None or empty, return true
-        types = types or {}
         if not types:
             feedback_msg = "[PASS]: No types declared, all predicate names are unique."
             return True, feedback_msg
+        
+        types = format_types(types)
 
         invalid_predicates = list()
         for pred in predicates:
@@ -345,14 +350,15 @@ class SyntaxValidator:
                         for t_p in target_pred_info["params"]
                     ]
 
-                    # 
+                    # claimed_type: type from pddl predicate
+                    # target_type: type from original predicate definition
+                    # types: original type definition
+
                     for param_idx, target_type in enumerate(target_param_types):
                         curr_param = curr_pred_params[param_idx]
                         claimed_type = action_params[0][curr_param]
 
                         if not self.validate_type(target_type, claimed_type, types):
-
-                            pred_clean
 
                             feedback_msg = f"[ERROR]: There is a syntax mistake in the {part.lower()}, the {param_idx+1}-{get_ordinal_suffix(param_idx+1)} parameter of existing predicate `{curr_pred_name}` should be type `{target_type}` but `{claimed_type}` was given. Please use the correct predicate or devise new one(s) if needed (but note that you should use existing predicates as much as possible)."
                             return False, feedback_msg
@@ -607,7 +613,12 @@ class SyntaxValidator:
         feedback_msg = "[PASS]: no new actions created"
         return True, feedback_msg
 
-    def validate_type(self, target_type, claimed_type, types):
+    def validate_type(
+            self, 
+            target_type: str, 
+            claimed_type: str, 
+            types: dict[str,str] | list[dict[str,str]] | None = None
+            ) -> tuple[bool, str]:
         """
         Check if the claimed_type is valid for the target_type according to the type hierarchy.
 
@@ -622,7 +633,8 @@ class SyntaxValidator:
 
         # Check if the claimed type matches the target type
         if claimed_type == target_type:
-            return True
+            feedback_msg = "[PASS]: claimed type matches target type definition."
+            return True, feedback_msg
 
         # Iterate through the types hierarchy to check if claimed_type is a subtype of target_type
         current_type = claimed_type
@@ -649,12 +661,14 @@ class SyntaxValidator:
                 super_type = parent_type_entry.split(" - ")[1].strip()
 
                 if super_type == target_type:
-                    return True
+                    feedback_msg = "[PASS]: claimed type matches target type definition."
+                    return True, feedback_msg
                 current_type = super_type
             else:
                 break
 
-        return False
+        feedback_msg = f"[ERROR]: claimed type `{claimed_type}` is not found in :types definition: {all_types}."
+        return False, feedback_msg
     
     def validate_format_types(self, types: dict[str,str] | list[dict[str,str]]) -> tuple[bool, str]: 
         types = format_types(types)

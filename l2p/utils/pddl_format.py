@@ -67,11 +67,17 @@ def format_action_params(action: Action) -> str:
     return " ".join(param_parts)
 
 
-def format_types(types: dict[str,str] | list[dict[str,str]]) -> dict[str, str]:
+def format_types(
+        types: dict[str,str] | list[dict[str,str]] | None = None
+        ) -> dict[str, str]:
     """
     Formats nested Python type hierarchies into flat dictionaries. Flat type dictionaries 
     (no hierarchies) are returned as default.
     """
+
+    if not types:
+        return None
+
     result = {}
 
     def is_nested_format(typ) -> bool:
