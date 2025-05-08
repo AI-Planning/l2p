@@ -34,6 +34,21 @@ class SyntaxValidator:
             "implies",
         ]
         
+        self.PDDL_KEYWORDS = {
+            # Logical keywords
+            "and", "or", "not", "when", "imply",
+            "exists", "forall", "either",
+
+            # Assignment operators
+            "increase", "decrease", "assign", "scale-up", "scale-down",
+
+            # Relational operators
+            "=", "<", ">", "<=", ">=",
+
+            # Type and metric-related
+            "number", "object", "total-cost",
+        }
+        
         self.error_types = default_error_types if error_types is None else error_types
         self.unsupported_keywords = (
             default_unsupported
@@ -128,6 +143,7 @@ class SyntaxValidator:
         feedback_msg = "[PASS]: All predicate names are unique to object type names"
         return True, feedback_msg
 
+
     def validate_duplicate_predicates(
         self, curr_predicates: list[Predicate], new_predicates: list[Predicate]
     ) -> tuple[bool, str]:
@@ -165,6 +181,7 @@ class SyntaxValidator:
             return False, feedback_msg
 
         return True, "[PASS]: All predicates are uniquely named and consistently defined."
+
 
     def validate_format_predicates(
         self,
@@ -209,11 +226,16 @@ class SyntaxValidator:
                         feedback_msg = f"[ERROR]: For PDDL, predicate `({pred_def})` appears to contain invalid or unexpected symbol `{p}`. This might be a parsing error or stray character. Make sure each parameter follows the format `?name - type`."
                         return False, feedback_msg
                     
-                    feedback_msg = "[ERROR]: For PDDL, there is a syntax issue in the predicate definition."
-                    feedback_msg += f"\n`{p}` appears where a variable is expected in predicate `{pred["raw"]}`."
-                    feedback_msg += "\n\nPossible causes:"
-                    feedback_msg += f"\n(1) `{p}` is intended to be a variable but is missing the `?` prefix. All variables must start with `?`, like `?block`."
-                    feedback_msg += f"\n(2) `{p}` is actually a type, in which case it should appear after a `-` in a declaration like `?x - {p}`."
+                    raw_pred = pred["raw"]
+                    
+                    feedback_msg = (
+                        f"[ERROR]: For PDDL, there is a syntax issue in the predicate definition."
+                        f"\n`{p}` appears where a variable is expected in predicate `{raw_pred}`."
+                        f"\n\nPossible causes:"
+                        f"\n(1) `{p}` is intended to be a variable but is missing the `?` prefix. All variables must start with `?`, like `?block`."
+                        f"\n(2) `{p}` is actually a type, in which case it should appear after a `-` in a declaration like `?x - {p}`."
+                    )
+
                     return False, feedback_msg
 
 
@@ -230,7 +252,7 @@ class SyntaxValidator:
 
                     i += 3  # skip ?var - type
                 else:
-                    # Untyped variable (just ?var)
+                    # untyped variable (just ?var)
                     i += 1  # move to next token
 
         if all_invalid_params:
@@ -246,18 +268,19 @@ class SyntaxValidator:
         feedback_msg = "[PASS]: All predicates are formatted correctly."
         return True, feedback_msg
 
+
     def validate_pddl_usage_predicates(
         self,
         pddl: str,
         predicates: list[Predicate],
         action_params: list[str],
-        types: dict[str, str],
+        types: dict[str, str] | list[dict[str,str]] | None = None,
         part="preconditions",
     ) -> tuple[bool, str]:
         """
         This function checks three types of errors:
             - (i) check if the num of params given matches the num of params in predicate definition
-            - (ii) check if there is any param that is not listed under `Parameters:`
+            - (ii) check if there is any param that is not listed under `Action Parameters`
             - (iii) check if the param type matches that in the predicate definition
         """
 
@@ -268,107 +291,181 @@ class SyntaxValidator:
                 else "th"
             )
 
-        # retrieve current predicate information and index
         pred_names = {predicates[i]["name"]: i for i in range(len(predicates))}
-        pred_clean = {predicates[i]["clean"]: i for i in range(len(predicates))}
-
-        # parse pddl component from LLM output
-        pddl_elems = [e for e in pddl.split(" ") if e != ""]
+        pddl_elems = [e for e in pddl.replace("(", " ( ").replace(")", " ) ").split() if e != ""]
         idx = 0
+                
+        action_predicates = dict()
 
         while idx < len(pddl_elems):
-            # open up entering bracket
             if pddl_elems[idx] == "(" and idx + 1 < len(pddl_elems):
-
-                if pddl_elems[idx + 1] in pred_names:  # check if next token is a known predicate
-                    curr_pred_name = pddl_elems[idx + 1]
-                    target_pred_info = predicates[pred_names[curr_pred_name]]
+                pred_candidate = pddl_elems[idx + 1]
+                
+                # put predicate name into list
+                if pred_candidate not in self.PDDL_KEYWORDS and pred_candidate not in {"(", ")"}:
+                    
+                    orig_idx = idx
                     curr_pred_tokens = []
-
-                    # read parameters until closing parenthesis
                     idx += 2
-                    while idx < len(pddl_elems) and ")" not in pddl_elems[idx]:
-                        curr_pred_tokens.append(pddl_elems[idx])
+                    
+                    while idx < len(pddl_elems):
+                        token = pddl_elems[idx]
+                        if token == ")":
+                            break
+                        curr_pred_tokens.append(token)
+                        idx += 1
+                        
+                    action_predicates[pred_candidate] = f"{' '.join(curr_pred_tokens)}"
+                    idx = orig_idx
+                
+                if pred_candidate in pred_names:
+                    curr_pred_name = pred_candidate
+                    target_pred_info = predicates[pred_names[curr_pred_name]]
+                    
+                    curr_pred_tokens = []
+                    idx += 2
+
+                    # Collect predicate parameters until closing ')'
+                    while idx < len(pddl_elems):
+                        token = pddl_elems[idx]
+                        if token == ")":
+                            break
+                        curr_pred_tokens.append(token)
                         idx += 1
 
-                    # handle last param token that might include ')'
-                    if idx < len(pddl_elems) and ")" in pddl_elems[idx]:
-                        curr_pred_tokens.append(pddl_elems[idx].split(")")[0])
-                        idx += 1
+                    curr_pred_line = f"({curr_pred_name} {' '.join(curr_pred_tokens)})"
+                    
 
-                    # clean and format parameters
-                    raw_param_str = " ".join(curr_pred_tokens).split(";")[0].strip().strip("()")
+                    # Clean out comments if any (denoted by ';')
+                    raw_param_str = " ".join(curr_pred_tokens).split(";")[0].strip()
                     curr_pred_params = raw_param_str.split()
-                    curr_pred_line = f"({curr_pred_name} {' '.join(curr_pred_params)})"
 
-                    # check for parameter mismatch
+                    # --- (i) Parameter count check ---
                     n_expected_param = len(target_pred_info["params"])
                     n_actual_param = len(curr_pred_params)
 
                     if n_expected_param != n_actual_param:
                         feedback_msg = (
-                            f"[ERROR]: Predicate `{target_pred_info['clean']}` expects {n_expected_param} parameter variable(s), "
+                            f"[ERROR]: There is a syntax mistake in the {part}.\n"
+                            f"Predicate `{target_pred_info['clean']}` expects {n_expected_param} parameter variable(s), "
                             f"but found {n_actual_param}.\n\n"
-                            f"Parsed line (found in {part}): `{curr_pred_line}`\n"
+                            f"Parsed line: {curr_pred_line}\n"
                             f"Extracted variables: {curr_pred_params}"
-                        )
-                        feedback_msg += "\n\nPossible causes:"
-                        feedback_msg += (
+                            f"\n\nPossible causes:"
                             f"\n(1) Missing variable(s). Example: `(drive ?c)` has only 1 variable, but should be `(drive ?c ?from)` "
                             f"to match the definition `(drive ?c - car ?from - location)`."
-                        )
-                        feedback_msg += (
                             f"\n(2) Object types included incorrectly. Example: `{part}` predicate `(drive ?c ?from)` is correct, "
                             f"but `(drive ?c - car ?from - location)` is incorrect."
                         )
+
                         return False, feedback_msg
 
-                    # (ii) check if there is any unknown param from declared predicate to action parameter
+                    # --- (ii) Unknown parameter check ---
                     for curr_param in curr_pred_params:
-
                         if curr_param not in action_params[0]:
-                            feedback_msg = f"In the {part} and in the predicate `{curr_pred_name}`, there is an unknown parameter `{curr_param}`."
                             feedback_msg = (
-                                f"[ERROR]: A predicate contains parameter variable(s) not found in following action parameter's list: {list(action_params[0].keys())}\n\n"
-                                f"Parsed line (found in {part}): `{curr_pred_line}`\n"
+                                f"[ERROR]: A predicate in {part} contains parameter variable(s) not found in the action parameter list: "
+                                f"{list(action_params[0].keys())}\n\n"
+                                f"Parsed line: {curr_pred_line}\n"
                                 f"Unknown variable: {curr_param}"
+                                f"\n\nPossible solutions:"
+                                f"\n(1) Ensure that the variables used in the predicate match those defined in the action's parameter list."
+                                f"\n(2) If needed, update the action's parameter list and their types to reflect the correct requirements for the action."
                             )
-                            feedback_msg += "\n\nPossible solutions:"
-                            feedback_msg += (
-                                "\n(1) Ensure that the variables used in the predicate match those defined in the action's parameter list."
-                            )
-                            feedback_msg += (
-                                "\n(2) If needed, update the action's parameter list and their types to reflect the correct requirements for the action."
-                            )
+
                             return False, feedback_msg
 
-                    # (iii) check if declared predicate object types align with original predicate types
+                    # --- (iii) Type mismatch check ---
+                    if (types is None or len(types) == 0) and (
+                    any(target_pred_info["params"].values()) or any(action_params[0].values())
+                    ):
+                        source_of_types = []
+                        if any(target_pred_info["params"].values()):
+                            source_of_types.append(f"the predicate(s)")
+                        if any(action_params[0].values()):
+                            source_of_types.append(f"the action parameter list")
 
-                    # retrieve types from original predicate
-                    target_param_types = [
-                        target_pred_info["params"][t_p]
-                        for t_p in target_pred_info["params"]
-                    ]
+                        type_sources = " and ".join(source_of_types)
 
-                    # claimed_type: type from pddl predicate
-                    # target_type: type from original predicate definition
-                    # types: original type definition
+                        feedback_msg = f"[ERROR]: Type information is declared in {type_sources}, but the `types` dictionary is empty or undefined.\n\n"
+
+                        # collect all predicates that contain types
+                        predicates_with_types = [
+                            pred["clean"] for pred in predicates if any(pred["params"].values())
+                        ]
+                        
+                        if predicates_with_types:
+                            feedback_msg += f"Predicates declared with types: {', '.join(predicates_with_types)}\n"
+
+                        violated_params = [f"{k} - {v}" for k, v in action_params[0].items() if v]
+                        if violated_params:
+                            for i in violated_params:
+                                feedback_msg += f"Action parameter with types: {i}\n"
+                                
+                        feedback_msg += (
+                            f"\nTo resolve this, either:\n"
+                            f"1. Remove type annotations from {type_sources} if type checking is not required.\n"
+                            f"2. Provide a valid `types` dictionary that defines the available types.\n"
+                        )
+
+                        return False, feedback_msg
+                    
+                    target_param_types = list(target_pred_info["params"].values())
 
                     for param_idx, target_type in enumerate(target_param_types):
                         curr_param = curr_pred_params[param_idx]
                         claimed_type = action_params[0][curr_param]
+                        flag, _ = self.validate_type(target_type, claimed_type, types)
 
-                        if not self.validate_type(target_type, claimed_type, types):
+                        if not flag:
+                            param_number = param_idx + 1
+                            ordinal_suffix = get_ordinal_suffix(param_number)
+                            parsed_vars = [
+                                f"{param} - {action_params[0][param]}"
+                                for param in curr_pred_params
+                            ]
+                            pred_name = target_pred_info["name"]
+                            clean_pred = target_pred_info["clean"]
 
-                            feedback_msg = f"[ERROR]: There is a syntax mistake in the {part.lower()}, the {param_idx+1}-{get_ordinal_suffix(param_idx+1)} parameter of existing predicate `{curr_pred_name}` should be type `{target_type}` but `{claimed_type}` was given. Please use the correct predicate or devise new one(s) if needed (but note that you should use existing predicates as much as possible)."
+                            feedback_msg = (
+                                f"[ERROR]: There is a syntax mistake in the {part}.\n"
+                                f"- The {param_number}{ordinal_suffix} parameter of predicate `{clean_pred}` should be of type `{target_type}`,\n"
+                                f"  but `{claimed_type}` was provided in `{curr_pred_line}`.\n"
+                                f"- According to the action's parameter list, `{curr_param}` is of type `{claimed_type}`.\n\n"
+                                f"Parsed line: {curr_pred_line}\n"
+                                f"Extracted variables and types: {parsed_vars}\n\n"
+                                f"Expected types for predicate `{pred_name}`: {target_param_types}\n\n"
+                                f"Possible solutions:"
+                                f"\n(1) Correct the variable used in the predicate to match the expected type."
+                                f"\n(2) Update the action's parameter list if the type assignment is incorrect."
+                            )
                             return False, feedback_msg
+
+            # move to next token
             idx += 1
+            
+        available_preds = "\n - ".join([i['raw'] for i in predicates])
+
+        for i in action_predicates.keys():
+            if i not in pred_names.keys():
+                feedback_msg = (
+                    f"[ERROR]: Undeclared predicate `{i}` found in {part}.\n"
+                    f"List of available predicates are:\n"
+                    f" - {available_preds}\n\n"
+                    f"Parsed line: {f'({i} {action_predicates[i]})'}"
+                    f"\n\nMake sure this predicate is declared in the list of known predicates.\n"
+                )
+                return False, feedback_msg
 
         feedback_msg = "[PASS]: all correct use of predicates."
         return True, feedback_msg
 
+
     def validate_usage_predicates(
-        self, llm_response: str, curr_predicates: list[Predicate], types: dict[str, str]
+        self, 
+        llm_response: str, 
+        curr_predicates: list[Predicate] | None = None, 
+        types: dict[str, str] | list[dict[str,str]] | None = None
     ):
         """
         This function performs very basic check over whether the predicates are used in a valid way.
@@ -404,6 +501,7 @@ class SyntaxValidator:
             eff_str, curr_predicates, params_info, types, part="effects"
         )
 
+
     def validate_overflow_predicates(
         self, llm_response: str, limit: int
     ) -> tuple[bool, str]:
@@ -415,16 +513,17 @@ class SyntaxValidator:
             llm_response.split("\nPreconditions:")[1].split("```\n")[1].strip()
         )
         if len(precond_str.split("\n")) > limit:
-            feedback_msg = f"FAIL: You seem to have generated an action model with an unusually long list of preconditions. Please include only the relevant preconditions/effects and keep the action model concise.\n\nParameters:"
+            feedback_msg = f"[ERROR]: You seem to have generated an action model with an unusually long list of preconditions. Please include only the relevant preconditions/effects and keep the action model concise.\n\nParameters:"
             return False, feedback_msg
 
         eff_str = llm_response.split("Effects")[1].split("```\n")[1].strip()
         if len(eff_str.split("\n")) > limit:
-            feedback_msg = f"FAIL: You seem to have generated an action model with an unusually long list of effects. Please include only the relevant preconditions/effects and keep the action model concise.\n\nParameters:"
+            feedback_msg = f"[ERROR]: You seem to have generated an action model with an unusually long list of effects. Please include only the relevant preconditions/effects and keep the action model concise.\n\nParameters:"
             return False, feedback_msg
 
         feedback_msg = "[PASS]: predicate output is fine."
         return True, feedback_msg
+
 
     def validate_task_objects(
         self, objects: dict[str, str], types: dict[str, str]
@@ -482,6 +581,7 @@ class SyntaxValidator:
         )
 
         return valid, feedback_msg
+
 
     def validate_task_states(
         self,
@@ -551,20 +651,22 @@ class SyntaxValidator:
 
         return valid, feedback_msg
 
+
     def validate_header(self, llm_response: str):
         """Checks if domain headers and formatted code block syntax are found in LLM output"""
 
         for header in ["Parameters", "Preconditions", "Effects", "New Predicates"]:
             if header not in llm_response:
-                feedback_msg = f"FAIL: The header `{header}` is missing in the PDDL model. Please include the header `{header}` in the PDDL model."
+                feedback_msg = f"[ERROR]: The header `{header}` is missing in the PDDL model. Please include the header `{header}` in the PDDL model."
                 return False, feedback_msg
         for header in ["Parameters", "Preconditions", "Effects"]:
             if llm_response.split(f"{header}")[1].split("##")[0].count("```\n") < 2:
-                feedback_msg = f'FAIL: The header `{header}` is missing in the formalised code block. Please include a "```" section in the {header} section.'
+                feedback_msg = f'[ERROR]: The header `{header}` is missing in the formalised code block. Please include a "```" section in the {header} section.'
                 return False, feedback_msg
 
         feedback_msg = "[PASS]: headers are identified properly in LLM output."
         return True, feedback_msg
+
 
     def validate_unsupported_keywords(
         self, llm_response: str, unsupported_keywords: list[str]
@@ -580,6 +682,7 @@ class SyntaxValidator:
 
         feedback_msg = "[PASS]: Unsupported keywords not found in PDDL model."
         return True, feedback_msg
+
 
     def validate_keyword_usage(self, llm_response: str):
         """Checks if action effects uses unsupported universal condition keywords"""
@@ -598,6 +701,7 @@ class SyntaxValidator:
         feedback_msg = "[PASS]: unsupported keywords are not found in the action effects."
         return True, feedback_msg
 
+
     def validate_new_action_creation(self, llm_response: str) -> tuple[bool, str]:
         """Checks if the LLM attempts to create a new action (so two or more actions defined in the same response)"""
 
@@ -612,6 +716,7 @@ class SyntaxValidator:
 
         feedback_msg = "[PASS]: no new actions created"
         return True, feedback_msg
+
 
     def validate_type(
             self, 
@@ -631,24 +736,28 @@ class SyntaxValidator:
             - bool: True if claimed_type is valid, False otherwise.
         """
 
-        # Check if the claimed type matches the target type
+        # check if the claimed type matches the target type
         if claimed_type == target_type:
             feedback_msg = "[PASS]: claimed type matches target type definition."
             return True, feedback_msg
 
-        # Iterate through the types hierarchy to check if claimed_type is a subtype of target_type
-        current_type = claimed_type
+        types = format_types(types) # flatten hierarchy
 
-        # Extract all types from the keys in the types dictionary
+        # extract all types from the keys in the types dictionary
         all_types = set()
-        type_hierarchy = {}
         for key in types.keys():
             main_type, *subtype = key.split(" - ")
             all_types.add(main_type.strip())
             if subtype:
                 all_types.add(subtype[0].strip())
-                type_hierarchy[subtype[0].strip()] = main_type.strip()
+             
+        # check if target type is not found in all types
+        if target_type not in all_types:
+            feedback_msg = f"[ERROR]: target type `{target_type}` is not found in :types definition: {all_types}."
+            return False, feedback_msg
 
+        # iterate through the types hierarchy to check if claimed_type is a subtype of target_type
+        current_type = claimed_type   
         while current_type in all_types:
             # find the key that starts with the current type
 
@@ -667,8 +776,9 @@ class SyntaxValidator:
             else:
                 break
 
-        feedback_msg = f"[ERROR]: claimed type `{claimed_type}` is not found in :types definition: {all_types}."
+        feedback_msg = f"[ERROR]: claimed type `{claimed_type}` does not match target `{target_type}` or any of its possible sub-types."
         return False, feedback_msg
+    
     
     def validate_format_types(self, types: dict[str,str] | list[dict[str,str]]) -> tuple[bool, str]: 
         types = format_types(types)
@@ -679,9 +789,10 @@ class SyntaxValidator:
                 invalid_types.append(t_name)
         
         if invalid_types:
+            invalid_types_str = "\n".join(invalid_types)
             feedback_msg = f"[ERROR]: There are type(s) with name(s) that start with character `?`. This is not allowed in PDDL."
             feedback_msg += f"\n\nRemove `?` from the following types:\n"
-            feedback_msg += f"{"\n".join(invalid_types)}"
+            feedback_msg += f"{invalid_types_str}"
             return False, feedback_msg
         
         feedback_msg = "[PASS]: all types are formatted correctly."
