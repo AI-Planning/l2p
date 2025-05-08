@@ -56,7 +56,7 @@ class SyntaxValidator:
             else unsupported_keywords
         )
 
-    # PARAMETER CHECKS
+    # ---- PDDL PARAMETER CHECKS ----
 
     def validate_params(
         self, 
@@ -106,7 +106,97 @@ class SyntaxValidator:
             feedback_msg = "[PASS]: All parameter types found in object types."
             return True, feedback_msg
 
-    # PREDICATE CHECKS
+    
+    # ---- PDDL TYPE CHECKS ----
+
+    def validate_type(
+            self, 
+            target_type: str, 
+            claimed_type: str, 
+            types: dict[str,str] | list[dict[str,str]] | None = None
+            ) -> tuple[bool, str]:
+        """
+        Check if the claimed_type is valid for the target_type according to the type hierarchy.
+
+        Parameters:
+            - target_type (str): The type that is expected for the parameter (from predicate).
+            - claimed_type (str): The type that is provided in the PDDL.
+            - types (dict[str, str]): A dictionary mapping subtypes to their supertypes.
+
+        Returns:
+            - bool: True if claimed_type is valid, False otherwise.
+        """
+
+        # check if the claimed type matches the target type
+        if claimed_type == target_type:
+            feedback_msg = "[PASS]: claimed type matches target type definition."
+            return True, feedback_msg
+
+        types = format_types(types) # flatten hierarchy
+
+        # extract all types from the keys in the types dictionary
+        all_types = set()
+        for key in types.keys():
+            main_type, *subtype = key.split(" - ")
+            all_types.add(main_type.strip())
+            if subtype:
+                all_types.add(subtype[0].strip())
+             
+        # check if target type is not found in all types
+        if target_type not in all_types:
+            feedback_msg = f"[ERROR]: target type `{target_type}` is not found in :types definition: {all_types}."
+            return False, feedback_msg
+
+        # iterate through the types hierarchy to check if claimed_type is a subtype of target_type
+        current_type = claimed_type   
+        while current_type in all_types:
+            # find the key that starts with the current type
+
+            parent_type_entry = next(
+                (k for k in types.keys() if k.startswith(f"{current_type} - ")), None
+            )
+
+            if parent_type_entry:
+                # extract the parent type from the key
+                super_type = parent_type_entry.split(" - ")[1].strip()
+
+                if super_type == target_type:
+                    feedback_msg = "[PASS]: claimed type matches target type definition."
+                    return True, feedback_msg
+                current_type = super_type
+            else:
+                break
+
+        feedback_msg = f"[ERROR]: claimed type `{claimed_type}` does not match target `{target_type}` or any of its possible sub-types."
+        return False, feedback_msg
+    
+    
+    def validate_format_types(
+            self, 
+            types: dict[str,str] | list[dict[str,str]]
+            ) -> tuple[bool, str]: 
+        """Checks if type variables contain `?` characters."""
+
+        # flatten types if it is in a hierarchy
+        types = format_types(types)
+
+        invalid_types = []
+        for t_name, _ in types.items():
+            if t_name.startswith("?"):
+                invalid_types.append(f" - {t_name}")
+        
+        if invalid_types:
+            invalid_types_str = "\n".join(invalid_types)
+            feedback_msg = f"[ERROR]: There are type(s) with name(s) that start with character `?`. This is not allowed in PDDL."
+            feedback_msg += f"\n\nRemove `?` from the following types:\n"
+            feedback_msg += f"{invalid_types_str}"
+            return False, feedback_msg
+        
+        feedback_msg = "[PASS]: all types are formatted correctly."
+        return True, feedback_msg
+    
+
+    # ---- PDDL PREDICATE CHECKS ----
 
     def validate_types_predicates(
         self, 
@@ -503,30 +593,55 @@ class SyntaxValidator:
 
 
     def validate_overflow_predicates(
-        self, llm_response: str, limit: int
+        self, llm_response: str, limit: int = 30
     ) -> tuple[bool, str]:
         """
         Checks if LLM output contains too many predicates in precondition/effects (based on users assigned limit)
         """
-        assert "\nPreconditions:" in llm_response, llm_response
-        precond_str = (
-            llm_response.split("\nPreconditions:")[1].split("```\n")[1].strip()
-        )
-        if len(precond_str.split("\n")) > limit:
-            feedback_msg = f"[ERROR]: You seem to have generated an action model with an unusually long list of preconditions. Please include only the relevant preconditions/effects and keep the action model concise.\n\nParameters:"
+
+        spacer = "="*50
+
+        assert "Preconditions" in llm_response, llm_response
+        precond_str = (llm_response.split("Preconditions")[1].split("```\n")[1].strip())
+        num_prec_pred = len(precond_str.split("\n")) - 2 # for outer brackets
+        if num_prec_pred > limit:
+            feedback_msg = (
+                f"[ERROR]: You seem to have generated an action model with an unusually long list of precondition predicates.\n\n"
+                f"{spacer}\n"
+                f"{precond_str}\n"
+                f"{spacer}\n"
+                f"Extracted predicates: {num_prec_pred}\n\n"
+                f"Please include only the relevant preconditions and keep the action model concise or raise limit of predicates."
+            )
             return False, feedback_msg
 
         eff_str = llm_response.split("Effects")[1].split("```\n")[1].strip()
-        if len(eff_str.split("\n")) > limit:
-            feedback_msg = f"[ERROR]: You seem to have generated an action model with an unusually long list of effects. Please include only the relevant preconditions/effects and keep the action model concise.\n\nParameters:"
+        num_eff_pred = len(eff_str.split("\n")) - 2 # for outer brackets
+        if num_eff_pred > limit:
+            feedback_msg = (
+                f"[ERROR]: You seem to have generated an action model with an unusually long list of effect predicates.\n\n"
+                f"{spacer}\n"
+                f"{eff_str}\n"
+                f"{spacer}\n"
+                f"Extracted predicates: {num_eff_pred}\n\n"
+                f"Please include only the relevant effects and keep the action model concise or raise limit of predicates."
+            )
             return False, feedback_msg
 
-        feedback_msg = "[PASS]: predicate output is fine."
+        feedback_msg = (
+            f"[PASS]: predicate count satisfies limit of {limit}.\n"
+            f"Approximate predicates in preconditions: {num_prec_pred}\n"
+            f"Approximate Predicates in effects: {num_eff_pred}"
+        )
         return True, feedback_msg
 
 
+    # ---- PDDL TASK CHECKS ----
+
     def validate_task_objects(
-        self, objects: dict[str, str], types: dict[str, str]
+        self, 
+        objects: dict[str, str], 
+        types: dict[str, str] | list[dict[str,str]] | None = None
     ) -> tuple[bool, str]:
         """
         Parameters:
@@ -541,38 +656,57 @@ class SyntaxValidator:
             (ii) if object name is the same as type
         """
 
+        # if type hierarchy format
+        if isinstance(types, list):
+            types = format_types(types)
+
         valid = True
         feedback_msgs = []
 
+        type_keys = types.keys() if types else []
+
         for obj_name, obj_type in objects.items():
+
             obj_type_found = False
 
-            for type_key in types.keys():
+            for type_key in type_keys:
+                # Try to split into current_type and parent_type if possible
+                if " - " in type_key:
+                    current_type, parent_type = type_key.split(" - ")
+                else:
+                    current_type = type_key
+                    parent_type = None
 
-                current_type, parent_type = type_key.split(" - ")
-
-                # checks if obj_type is found in types
-                if obj_type == current_type or obj_type == parent_type:
+                # Match object type to current or parent
+                if obj_type == current_type or (parent_type and obj_type == parent_type):
                     obj_type_found = True
 
-                # checks if obj_name matches either current_type or parent_type
+                # Check for name conflict with types
                 if obj_name == current_type:
+                    parsed_line = f"{obj_name} - {obj_type}"
                     feedback_msgs.append(
-                        f"[ERROR]: Object variable '{obj_name}' matches the type name '{current_type}', change it to be unique from types: {types.keys()}"
+                        f"[ERROR]: Object variable '{obj_name}' matches the type name '{current_type}', change it to be unique from types: {list(type_keys)}\n"
+                        f"Violated object declaration: ({parsed_line if obj_type else obj_name})\n"
                     )
                     valid = False
                     break
-                if obj_name == parent_type:
+                if parent_type and obj_name == parent_type:
+                    parsed_line = f"{obj_name} - {obj_type}"
                     feedback_msgs.append(
-                        f"[ERROR]: Object variable '{obj_name}' matches the type name '{parent_type}', change it to be unique from types: {types.keys()}"
+                        f"[ERROR]: Object variable '{obj_name}' matches the type name '{parent_type}', change it to be unique from types: {list(type_keys)}\n"
+                        f"Violated object declaration: ({parsed_line if obj_type else obj_name})\n"
                     )
                     valid = False
                     break
 
-            # clause that checks if obj_type is found in types
+            # if object does not contain a type
+            if not obj_type:
+                continue
+
             if not obj_type_found:
                 feedback_msgs.append(
-                    f"[ERROR]: Object variable '{obj_name}' has an invalid type '{obj_type}' not found in types: {types.keys()}"
+                    f"[ERROR]: Object variable '{obj_name}' has an invalid type '{obj_type}' not found in types: {list(type_keys)}\n"
+                    f"Parsed line: ({obj_name} - {obj_type})\n"
                 )
                 valid = False
 
@@ -593,75 +727,95 @@ class SyntaxValidator:
         """
         Parameters:
             - states (list[dict[str,str]]): a list of dictionaries of the state states.
-            - parameters (OrderedDict): parameters of the current action.
-            - types (dict[str,str]): a dictionary of the domain types.
+            - objects (dict[str,str]): a dictionary of the task objects and their types.
+            - predicates (list[Predicate]): a list of predicate definitions.
+            - state_type (str): optional; 'initial' or 'goal' to label messages.
 
         Returns:
-            - check, feedback_msg (bool, str)
+            - valid (bool): True if all checks pass, False otherwise.
+            - feedback_msg (str): summary of validation results.
 
-        Checks following cases:
-            (i) if predicates in states are found in predicates in domain
-            (ii) if object variables in states are found in task object list
+        Checks:
+            (i) if predicates in states exist in the domain
+            (ii) if all object variables in states are declared in task objects
+            (iii) if types of object variables match predicate parameter types
         """
-
         valid = True
         feedback_msgs = []
 
-        # loop through each state
         for state in states:
+            state_name = state["name"]
+            state_params = state["params"]
 
-            # (i) check if predicates in states are found in predicates in domain
-            matched_preds = False
-            state_name = state["name"]  # retrieve predicate name from state
-
-            # loop through each predicate name from domain
-            for pred in predicates:
-                # check if predicate in state is found in predicate domain
-                if state_name == pred["name"]:
-                    matched_preds = True
-
-            # if no matches, then that state is missusing a predicate - not found in domain
-            if matched_preds == False:
+            # (i) Check if predicate name exists in domain predicates
+            predicate_names = [p["name"] for p in predicates]
+            if state_name not in predicate_names:
                 feedback_msgs.append(
-                    f"[ERROR]: In the {state_type} state, '({state['name']} {' '.join(state['params'])})' contains '{state_name}' predicate, which is not found in {[p['name'] for p in predicates]}, predicate in state is missused."
+                    f"[ERROR]: In the {state_type} state, '({state_name} {' '.join(state_params)})' "
+                    f"uses predicate '{state_name}', which is not defined in the domain ({predicate_names})."
+                )
+                valid = False
+                continue  # Skip further checks for this state
+
+            # (ii) Check if all parameters exist in the task objects
+            missing_params = [p for p in state_params if p not in objects]
+            if missing_params:
+                for mp in missing_params:
+                    feedback_msgs.append(
+                        f"[ERROR]: In the {state_type} state, '({state_name} {' '.join(state_params)})' "
+                        f"contains parameter '{mp}' not found in task objects {list(objects.keys())}."
+                    )
+                valid = False
+                continue  # Skip type check if parameters are invalid
+
+            # (iii) Check if object types match expected predicate types
+            target_pred = next(p for p in predicates if p["name"] == state_name)
+            expected_types = list(target_pred["params"].values())
+            actual_types = [objects[param] for param in state_params]
+            actual_name_type_pairs = [f"'{param}': '{objects[param]}'" for param in state_params]
+
+            if expected_types != actual_types:
+                feedback_msgs.append(
+                    f"[ERROR]: In the {state_type} state, '({state_name} {' '.join(state_params)})' has mismatched types.\n\n"
+                    f"Declared objects: {[f'{obj_name} - {obj_type}' for obj_name, obj_type in objects.items()]}\n\n"
+                    f"Predicate `{target_pred['clean']}` expects type(s): {expected_types}\n"
+                    f"Parsed line: ({state_name} {' '.join(state_params)}) contains type(s): {actual_types}, where [{', '.join(actual_name_type_pairs)}]\n\n"
+                    f"Revise the state predicates such that their parameter types align with the original predicate definition types."
                 )
                 valid = False
 
-            # (ii) check if object variables in states are found in task object list
-            state_params = state["params"]  # retrieve variables from state
-
-            # loop through each parameter in current state
-            for state_p in state_params:
-
-                matched_params = False
-                for obj_name, obj_type in objects.items():
-                    # check if parameter is found in object names
-                    if state_p == obj_name:
-                        matched_params = True
-
-                if matched_params == False:
-                    feedback_msgs.append(
-                        f"[ERROR]: In the {state_type} state, '({state['name']} {' '.join(state['params'])})' contains parameter '{state_p}' not found in '{objects.keys()}'."
-                    )
-                    valid = False
-
         feedback_msg = (
-            "\n".join(feedback_msgs) if not valid else "[PASS]: all objects are valid."
+            "\n".join(feedback_msgs) if not valid else "[PASS]: All task states are valid."
         )
-
         return valid, feedback_msg
 
+    # ---- TEXT PARSE CHECKS ----
 
-    def validate_header(self, llm_response: str):
+    def validate_header(
+            self, 
+            llm_response: str,
+            headers: list[str] = None
+            ):
         """Checks if domain headers and formatted code block syntax are found in LLM output"""
 
-        for header in ["Parameters", "Preconditions", "Effects", "New Predicates"]:
+        if not headers:
+            headers = ['Action Parameters', 'Action Preconditions', 'Action Effects', 'New Predicates']
+
+        # catches if a header is not present
+        for header in headers:
             if header not in llm_response:
-                feedback_msg = f"[ERROR]: The header `{header}` is missing in the PDDL model. Please include the header `{header}` in the PDDL model."
+                feedback_msg = f"[ERROR]: The header `{header}` is missing in the PDDL model. Please include the header `### {header}` in the PDDL model."
                 return False, feedback_msg
-        for header in ["Parameters", "Preconditions", "Effects"]:
-            if llm_response.split(f"{header}")[1].split("##")[0].count("```\n") < 2:
-                feedback_msg = f'[ERROR]: The header `{header}` is missing in the formalised code block. Please include a "```" section in the {header} section.'
+        
+            # catches if the section does not contain correct code block format
+            if llm_response.split(f"{header}")[1].split("###")[0].count("```\n") < 2:
+                feedback_msg = (
+                    f"[ERROR]: The header `{header}` contains an incorrect formalised code block. Please include the `### {header}` section following by its content enclosed by [```] like:\n\n"
+                    f"### {header}\n"
+                    f"```\n"
+                    f"[CONTENT]\n"
+                    f"```"          
+                )
                 return False, feedback_msg
 
         feedback_msg = "[PASS]: headers are identified properly in LLM output."
@@ -669,14 +823,20 @@ class SyntaxValidator:
 
 
     def validate_unsupported_keywords(
-        self, llm_response: str, unsupported_keywords: list[str]
+        self, 
+        llm_response: str, 
+        unsupported_keywords: list[str] | None = None
     ) -> tuple[bool, str]:
         """Checks whether PDDL model uses unsupported logic keywords"""
+
+        if not unsupported_keywords:
+            feedback_msg = "[PASS]: No unsupported keywords declared."
+            return True, feedback_msg
 
         for key in unsupported_keywords:
             if f"{key}" in llm_response:
                 feedback_msg = (
-                    f"[ERROR]: The precondition or effect contains the keyword {key}."
+                    f"[ERROR]: The PDDL model contains the keyword `{key}`. Revise the model so that it does not use this keyword."
                 )
                 return False, feedback_msg
 
@@ -684,116 +844,32 @@ class SyntaxValidator:
         return True, feedback_msg
 
 
-    def validate_keyword_usage(self, llm_response: str):
-        """Checks if action effects uses unsupported universal condition keywords"""
+    def validate_duplicate_headers(
+        self, 
+        llm_response: str,
+        headers: list[str] = None
+    ) -> tuple[bool, str]:
+        """Checks if the LLM attempts to create a new action (so two or more actions defined in the same response)."""
 
-        if not "Action Effects" in llm_response:
-            feedback_msg = "[PASS]"
-            return True, feedback_msg
-        heading = llm_response.split("Action Effects")[1].split("```\n")[1].strip()
-        for keyword in ["forall", "exists", "if "]:
-            if keyword in heading:
-                feedback_msg = (
-                    f"The keyword `{keyword}` is not supported in the action effects."
-                )
-                return False, feedback_msg
+        if not headers:
+            headers = ['Action Parameters', 'Action Preconditions', 'Action Effects', 'New Predicates']
 
-        feedback_msg = "[PASS]: unsupported keywords are not found in the action effects."
-        return True, feedback_msg
+        invalid = False
+        duplicate_headers = []
 
+        for header in headers:
+            count = llm_response.count(f"### {header}")
+            if count > 1:
+                invalid = True
+                duplicate_headers.append({'header': f'`### {header}`', 'count': count})
 
-    def validate_new_action_creation(self, llm_response: str) -> tuple[bool, str]:
-        """Checks if the LLM attempts to create a new action (so two or more actions defined in the same response)"""
-
-        if (
-            llm_response.count("## Action Parameters") > 1
-            or llm_response.count("## Preconditions") > 1
-            or llm_response.count("## Effects") > 1
-            or llm_response.count("## New Predicates") > 1
-        ):
-            feedback_msg = "It's not possible to create new actions at this time. Please only define the requested action."
-            return False, feedback_msg
-
-        feedback_msg = "[PASS]: no new actions created"
-        return True, feedback_msg
-
-
-    def validate_type(
-            self, 
-            target_type: str, 
-            claimed_type: str, 
-            types: dict[str,str] | list[dict[str,str]] | None = None
-            ) -> tuple[bool, str]:
-        """
-        Check if the claimed_type is valid for the target_type according to the type hierarchy.
-
-        Parameters:
-            - target_type (str): The type that is expected for the parameter (from predicate).
-            - claimed_type (str): The type that is provided in the PDDL.
-            - types (dict[str, str]): A dictionary mapping subtypes to their supertypes.
-
-        Returns:
-            - bool: True if claimed_type is valid, False otherwise.
-        """
-
-        # check if the claimed type matches the target type
-        if claimed_type == target_type:
-            feedback_msg = "[PASS]: claimed type matches target type definition."
-            return True, feedback_msg
-
-        types = format_types(types) # flatten hierarchy
-
-        # extract all types from the keys in the types dictionary
-        all_types = set()
-        for key in types.keys():
-            main_type, *subtype = key.split(" - ")
-            all_types.add(main_type.strip())
-            if subtype:
-                all_types.add(subtype[0].strip())
-             
-        # check if target type is not found in all types
-        if target_type not in all_types:
-            feedback_msg = f"[ERROR]: target type `{target_type}` is not found in :types definition: {all_types}."
-            return False, feedback_msg
-
-        # iterate through the types hierarchy to check if claimed_type is a subtype of target_type
-        current_type = claimed_type   
-        while current_type in all_types:
-            # find the key that starts with the current type
-
-            parent_type_entry = next(
-                (k for k in types.keys() if k.startswith(f"{current_type} - ")), None
+        if invalid:
+            feedback_msg = (
+                "[ERROR]: Detected multiple definitions of the following header(s):\n"
+                + "\n".join(f"- {item['header']} found {item['count']} times" for item in duplicate_headers)
+                + "\n\nEach header section should have a single set of definitions for: "
+                + ", ".join(item['header'] for item in duplicate_headers) + "."
             )
-
-            if parent_type_entry:
-                # extract the parent type from the key
-                super_type = parent_type_entry.split(" - ")[1].strip()
-
-                if super_type == target_type:
-                    feedback_msg = "[PASS]: claimed type matches target type definition."
-                    return True, feedback_msg
-                current_type = super_type
-            else:
-                break
-
-        feedback_msg = f"[ERROR]: claimed type `{claimed_type}` does not match target `{target_type}` or any of its possible sub-types."
-        return False, feedback_msg
-    
-    
-    def validate_format_types(self, types: dict[str,str] | list[dict[str,str]]) -> tuple[bool, str]: 
-        types = format_types(types)
-
-        invalid_types = []
-        for t_name, _ in types.items():
-            if t_name.startswith("?"):
-                invalid_types.append(t_name)
-        
-        if invalid_types:
-            invalid_types_str = "\n".join(invalid_types)
-            feedback_msg = f"[ERROR]: There are type(s) with name(s) that start with character `?`. This is not allowed in PDDL."
-            feedback_msg += f"\n\nRemove `?` from the following types:\n"
-            feedback_msg += f"{invalid_types_str}"
             return False, feedback_msg
-        
-        feedback_msg = "[PASS]: all types are formatted correctly."
-        return True, feedback_msg
+
+        return True, "[PASS]: no duplicate sections created."

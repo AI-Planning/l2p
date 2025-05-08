@@ -253,15 +253,15 @@ For example, **extract_initial_state()** takes the LLM output: ::
 
 And converts it into this: ::
 
-    initial: list[dict[str,str]] = [{'name': 'on_top', 'params': ['blue_block', 'red_block'], 'neg': False}, 
-                                    {'name': 'on_top', 'params': ['red_block', 'yellow_block'], 'neg': False}, 
-                                    {'name': 'on_table', 'params': ['yellow_block'], 'neg': False}, 
-                                    {'name': 'on_table', 'params': ['green_block'], 'neg': False}, 
-                                    {'name': 'clear', 'params': ['yellow_block'], 'neg': False}, 
-                                    {'name': 'clear', 'params': ['green_block'], 'neg': False}, 
-                                    {'name': 'clear', 'params': ['red_block'], 'neg': True}, 
-                                    {'name': 'AND', 'params': [], 'neg': False}, 
-                                    {'name': 'on_top', 'params': ['red_block', 'green_block'], 'neg': False}]
+    initial: list[dict[str,str]] = [
+            {'name': 'on_top', 'params': ['blue_block', 'red_block'], 'neg': False}, 
+            {'name': 'on_top', 'params': ['red_block', 'yellow_block'], 'neg': False}, 
+            {'name': 'on_table', 'params': ['yellow_block'], 'neg': False}, 
+            {'name': 'on_table', 'params': ['green_block'], 'neg': False}, 
+            {'name': 'clear', 'params': ['yellow_block'], 'neg': False}, 
+            {'name': 'clear', 'params': ['green_block'], 'neg': False}, 
+            {'name': 'clear', 'params': ['red_block'], 'neg': True}
+        ]
 
 
 Task Goal States

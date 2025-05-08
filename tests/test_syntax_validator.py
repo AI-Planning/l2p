@@ -5,6 +5,7 @@ class TestSyntaxValidator(unittest.TestCase):
     def setUp(self):
         self.syntax_validator = SyntaxValidator()
 
+
     def test_validate_params(self):
         
         types = {
@@ -479,7 +480,7 @@ class TestSyntaxValidator(unittest.TestCase):
             'table': 'table that blocks sits on'
         }
         
-        flag, msg = self.syntax_validator.validate_usage_predicates(
+        flag, _ = self.syntax_validator.validate_usage_predicates(
             llm_response=llm_response,
             curr_predicates=predicates,
             types=types
@@ -501,27 +502,498 @@ class TestSyntaxValidator(unittest.TestCase):
                     'clean': '(stack ?b - block)'}),
             ]
         
-        flag, msg = self.syntax_validator.validate_usage_predicates(
+        flag, _ = self.syntax_validator.validate_usage_predicates(
             llm_response=llm_response,
             curr_predicates=predicates,
             types=types
         )
         self.assertEqual(flag, False)
         
-        
-        
+
     def test_validate_overflow_predicates(self):
-        pass
+
+        llm_response = textwrap.dedent(
+            """
+            ### Action Parameters
+            ```
+            - ?b1 - block: The block being stacked on top
+            - ?b2 - block: The block being stacked upon
+            - ?a - arm: The arm performing the stacking action
+            ```
+
+            ### Action Preconditions
+            ```
+            (and
+                (holding ?a ?b1) ; The arm is holding the top block
+                (clear ?b2) ; The bottom block is clear
+            )
+            ```
+
+            ### Action Effects
+            ```
+            (and
+                (not (holding ?a ?b1)) ; The arm is no longer holding the top block
+                (on ?b1 ?b2) ; The top block is now on the bottom block
+                (not (clear ?b2)) ; The bottom block is no longer clear
+            )
+            ```
+
+            ### New Predicates
+            ```
+            ```
+            """
+        )
+        
+        # case 1: predicates under limit
+        flag, _ = self.syntax_validator.validate_overflow_predicates(
+            llm_response=llm_response,
+            limit=10)
+        self.assertEqual(flag, True)
+
+        # case 2: precondition predicates exceed limit
+        flag, _ = self.syntax_validator.validate_overflow_predicates(
+            llm_response=llm_response,
+            limit=1)
+        self.assertEqual(flag, False)
+
+        # case 3: effect predicates exceed limit
+        flag, _ = self.syntax_validator.validate_overflow_predicates(
+            llm_response=llm_response,
+            limit=2)
+        self.assertEqual(flag, False)
+        
+
+    def test_validate_task_objects(self):
+        types = {
+            'arm': 'arm for a robot',
+            'block': 'block that can be stacked and unstacked',
+            'table': 'table that blocks sits on'
+        }
+
+        type_hierarchy = [
+            {
+                "arm": "'arm for a robot'",
+                "children": []
+            },
+            {
+                "block": "block that can be stacked and unstacked",
+                "children": [
+                    {
+                        "heavy_block": "a heavy block that cannot be picked up",
+                        "children": []
+                    },
+                    {
+                        "light_block": "a light block that can be picked up",
+                        "children": []
+                    }
+                ]
+            },
+            {
+                "table": "table that blocks sits on",
+                "children": []
+            }
+        ]
+
+        objects = {
+            'blue_block': '', 
+            'red_block': 'block', 
+            'yellow_block': 'block', 
+            'green_block': 'block'
+            }
+
+        # case 1: task objects are assigned correct types
+        flag, _ = self.syntax_validator.validate_task_objects(
+            objects=objects,
+            types=types
+        )
+        self.assertEqual(flag, True)
+
+        objects = {
+            'blue_block': '', 
+            'red_block': 'light_block', 
+            'yellow_block': 'heavy_block', 
+            'green_block': 'block'
+            }
+
+        flag, _ = self.syntax_validator.validate_task_objects(
+            objects=objects,
+            types=type_hierarchy
+        )
+        self.assertEqual(flag, True)
+
+        # extra case: no types assigned to objects
+        objects = {
+            'blue_block': '', 
+            'red_block': '', 
+            'yellow_block': '', 
+            'green_block': ''
+            }
+        flag, _ = self.syntax_validator.validate_task_objects(
+            objects=objects,
+            types=type_hierarchy
+        )
+        self.assertEqual(flag, True)
+
+        # case 2: task object contains type not found in types
+        objects = {
+            'blue_block': '', 
+            'red_block': 'rock', 
+            'yellow_block': 'triangle', 
+            'green_block': 'block'
+            }
+        
+        flag, _ = self.syntax_validator.validate_task_objects(
+            objects=objects,
+            types=types
+        )
+        self.assertEqual(flag, False)
+
+        flag, _ = self.syntax_validator.validate_task_objects(
+            objects=objects,
+            types=type_hierarchy
+        )
+        self.assertEqual(flag, False)
+
+        # case 3: task object has same name as type
+        objects = {
+            'block': '', 
+            'light_block': '', 
+            'table': '', 
+            'arm': ''
+            }
+        flag, _ = self.syntax_validator.validate_task_objects(
+            objects=objects,
+            types=types
+        )
+        self.assertEqual(flag, False)
+
+        flag, _ = self.syntax_validator.validate_task_objects(
+            objects=objects,
+            types=type_hierarchy
+        )
+        self.assertEqual(flag, False)
+
+
     def test_validate_task_states(self):
-        pass
+        initial_states = [
+            {'name': 'on_top', 'params': ['blue_block', 'red_block'], 'neg': False}, 
+            {'name': 'on_top', 'params': ['red_block', 'yellow_block'], 'neg': False}, 
+            {'name': 'on_table', 'params': ['yellow_block'], 'neg': False}, 
+            {'name': 'on_table', 'params': ['green_block'], 'neg': False}, 
+            {'name': 'clear', 'params': ['yellow_block'], 'neg': False}, 
+            {'name': 'clear', 'params': ['green_block'], 'neg': False}, 
+            {'name': 'clear', 'params': ['red_block'], 'neg': True}
+        ]
+
+        objects = {
+            'blue_block': 'block', 
+            'red_block': 'block', 
+            'yellow_block': 'block', 
+            'green_block': 'block'
+            }
+        
+        predicates = [
+            Predicate({'name': 'on_top', 
+                    'desc': 'true if the block ?b1 is on top of the block ?b2', 
+                    'raw': '(on_top ?b1 - block ?b2 - block): true if the block ?b1 is on top of the block ?b2', 
+                    'params': OrderedDict([('?b1', 'block'), ('?b2', 'block')]), 
+                    'clean': '(on_top ?b1 - block ?b2 - block)'}),
+            Predicate({'name': 'on_table', 
+                    'desc': 'true if the block ?b is on table', 
+                    'raw': '(on_table ?b - block): true if the block ?b is on table', 
+                    'params': OrderedDict([('?b', 'block')]), 
+                    'clean': '(on_table ?b - block)'}),
+            Predicate({'name': 'holding', 
+                    'desc': 'true if arm is holding a block', 
+                    'raw': '(holding ?a - arm ?b - block): true if arm is holding a block', 
+                    'params': OrderedDict([('?a', 'arm'), ('?b', 'block')]), 
+                    'clean': '(holding ?a - arm ?b - block)'}),
+            Predicate({'name': 'clear', 
+                    'desc': 'true if a block does not have anything on top of it', 
+                    'raw': '(clear ?b - block): true if a block does not have anything on top of it', 
+                    'params': OrderedDict([('?b', 'block')]), 
+                    'clean': '(clear ?b - block)'}),
+            ]
+
+        # case 1: correct task states, objects, and predicates
+        flag, _ = self.syntax_validator.validate_task_states(
+            states=initial_states,
+            objects=objects,
+            predicates=predicates,
+            state_type="initial",
+        )
+        self.assertEqual(flag, True)
+
+        # case 2: predicates in states not found in predicate definition
+        initial_states = [
+            {'name': 'throw', 'params': ['blue_block', 'red_block'], 'neg': False}, 
+            {'name': 'on', 'params': ['red_block', 'yellow_block'], 'neg': False}, 
+            {'name': 'on_table', 'params': ['yellow_block'], 'neg': False}, 
+        ]
+
+        flag, _ = self.syntax_validator.validate_task_states(
+            states=initial_states,
+            objects=objects,
+            predicates=predicates,
+            state_type="initial",
+        )
+        self.assertEqual(flag, False)
+
+        # case 3: object variables in states are not found in task object list
+        initial_states = [
+            {'name': 'on_top', 'params': ['purple_block', 'red_block'], 'neg': False}, 
+            {'name': 'on_top', 'params': ['red_block', 'arm'], 'neg': False}, 
+        ]
+
+        flag, _ = self.syntax_validator.validate_task_states(
+            states=initial_states,
+            objects=objects,
+            predicates=predicates,
+            state_type="initial",
+        )
+        self.assertEqual(flag, False)
+
+        # case 4: placement of the task predicate parameter types do not align w/ predicate definition parameter types
+        initial_states = [
+            {'name': 'on_top', 'params': ['blue_block', 'red_block'], 'neg': False}, 
+            {'name': 'holding', 'params': ['blue_block', 'red_block'], 'neg': False}, 
+        ]
+
+        objects = {
+            'blue_block': 'block', 
+            'red_block': 'block', 
+            'yellow_block': 'block', 
+            'green_block': 'block',
+            'a': 'arm'
+            }
+
+        flag, _ = self.syntax_validator.validate_task_states(
+            states=initial_states,
+            objects=objects,
+            predicates=predicates,
+            state_type="initial",
+        )
+        self.assertEqual(flag, False)
+
+
     def test_validate_header(self):
-        pass
+
+        # case 1: correct output structure
+        llm_response = textwrap.dedent(
+            """
+            ### Action Parameters
+            ```
+            ```
+
+            ### Action Preconditions
+            ```
+            ```
+
+            ### Action Effects
+            ```
+            ```
+
+            ### New Predicates
+            ```
+            ```
+            """
+        )
+        
+        flag, _ = self.syntax_validator.validate_header(
+            llm_response=llm_response
+        )
+        self.assertEqual(flag, True)
+
+        # case 2: correct output structure (w/ removed headers)
+        llm_response = textwrap.dedent(
+            """
+            ### Action Preconditions
+            ```
+            ```
+
+            ### Action Effects
+            ```
+            ```
+            """
+        )
+        
+        flag, _ = self.syntax_validator.validate_header(
+            llm_response=llm_response,
+            headers=['Action Preconditions', 'Action Effects']
+        )
+        self.assertEqual(flag, True)
+
+        # case 3: header not declared in llm output
+        flag, _ = self.syntax_validator.validate_header(
+            llm_response=llm_response,
+            headers=['Action Parameters', 'Action Preconditions', 'Action Effects']
+        )
+        self.assertEqual(flag, False)
+
+        # case 4: header contains incorrect closing code blocks
+        llm_response = textwrap.dedent(
+            """
+            ### Action Preconditions
+            ```
+
+            ### Action Effects
+            ```
+            ```
+            """
+        )
+        flag, _ = self.syntax_validator.validate_header(
+            llm_response=llm_response,
+            headers=['Action Preconditions', 'Action Effects']
+        )
+        self.assertEqual(flag, False)
+
+
     def test_unsupported_keywords(self):
-        pass
-    def test_validate_keyword_usage(self):
-        pass
-    def test_validate_new_saction_creation(self):
-        pass
+
+        # case 1: llm response does not contain unsupported keywords
+        llm_response = textwrap.dedent(
+            """
+            ### Action Preconditions
+            ```
+            (at ?r ?from)
+            (connected ?from ?to)
+            ```
+
+            ### Action Effects
+            ```
+            (not (at ?r ?from))
+            (at ?r ?to)
+            ```
+            """
+        )
+
+        flag, _ = self.syntax_validator.validate_unsupported_keywords(
+            llm_response=llm_response,
+            unsupported_keywords=['forall', 'when', 'implies']
+        )
+        self.assertEqual(flag, True)
+
+        # case 2: no unsupported keywords declared
+        flag, _ = self.syntax_validator.validate_unsupported_keywords(
+            llm_response=llm_response
+        )
+        self.assertEqual(flag, True)
+
+        # case 3: llm response contains unsupported keywords
+        llm_response = textwrap.dedent(
+            """
+            ### Action Preconditions
+            ```
+            (at ?r ?from)
+            (connected ?from ?to)
+            (forall (?o - obstacle) (not (blocked ?to ?o)))
+            ```
+
+            ### Action Effects
+            ```
+            (not (at ?r ?from))
+            (at ?r ?to)
+            (when (carrying ?r)
+                (update-location ?r ?to)
+            )
+            ```
+            """
+        )
+        
+        flag, _ = self.syntax_validator.validate_unsupported_keywords(
+            llm_response=llm_response,
+            unsupported_keywords=['forall', 'when', 'implies']
+        )
+        self.assertEqual(flag, False)
+
+
+    def test_validate_duplicate_headers(self):
+
+        # case 1: correct llm response containing only 1 declaration per header
+        llm_response = textwrap.dedent(
+            """
+            ### Action Parameters
+            ```
+            ?x - block
+            ?y - block
+            ```
+
+            ### Action Preconditions
+            ```
+            (clear ?x)
+            (clear ?y)
+            (holding ?x)
+            ```
+
+            ### Action Effects
+            ```
+            (not (clear ?y))
+            (not (holding ?x))
+            (clear ?x)
+            (on ?x ?y)
+            (handempty)
+            ```
+
+            ### New Predicates
+            ```
+            (on ?x ?y) - block x is on block y
+            (clear ?x) - block x has nothing on top
+            (holding ?x) - the robot is holding block x
+            (handempty) - the robot's hand is empty
+            ```
+            """
+        )
+        
+        flag, _ = self.syntax_validator.validate_duplicate_headers(
+            llm_response=llm_response
+        )
+        self.assertEqual(flag, True)
+
+        # case 2: duplicate headers in llm response
+        llm_response = textwrap.dedent(
+            """
+            ### Action Parameters
+            ```
+            ?x - block
+            ?y - block
+            ```
+
+            ### Action Parameters
+            ```
+            ?x - block
+            ```
+
+            ### Action Effects
+            ```
+            (not (clear ?y))
+            (not (holding ?x))
+            (clear ?x)
+            (on ?x ?y)
+            (handempty)
+            ```
+
+            ### New Predicates
+            ```
+            (on ?x ?y) - block x is on block y
+            (clear ?x) - block x has nothing on top
+            (holding ?x) - the robot is holding block x
+            (handempty) - the robot's hand is empty
+            ```
+
+            ### New Predicates
+            ```
+            (on ?x ?y) - block x is on block y
+            (handempty) - the robot's hand is empty
+            ```
+            """
+        )
+        
+        flag, _ = self.syntax_validator.validate_duplicate_headers(
+            llm_response=llm_response
+        )
+        self.assertEqual(flag, False)
+
+
     def test_validate_type(self):
 
         # case 1: claimed type matches target type or its sub-types
@@ -598,6 +1070,81 @@ class TestSyntaxValidator(unittest.TestCase):
             )
         self.assertEqual(flag, False)
 
+
+    def test_validate_format_types(self):
+        
+        # case 1: correct types
+        types = {
+            'arm': 'arm for a robot',
+            'block': 'block that can be stacked and unstacked',
+            'table': 'table that blocks sits on'
+        }
+
+        type_hierarchy = [
+            {
+                "arm": "'arm for a robot'",
+                "children": []
+            },
+            {
+                "block": "block that can be stacked and unstacked",
+                "children": [
+                    {
+                        "heavy_block": "a heavy block that cannot be picked up",
+                        "children": []
+                    },
+                    {
+                        "light_block": "a light block that can be picked up",
+                        "children": []
+                    }
+                ]
+            },
+            {
+                "table": "table that blocks sits on",
+                "children": []
+            }
+        ]
+
+        flag, _ = self.syntax_validator.validate_format_types(types=types)
+        self.assertEqual(flag, True)
+        flag, _ = self.syntax_validator.validate_format_types(types=type_hierarchy)
+        self.assertEqual(flag, True)
+
+        # case 2: types contain `?` character
+        types = {
+            '?arm': 'arm for a robot',
+            'block': 'block that can be stacked and unstacked',
+            '?table': 'table that blocks sits on'
+        }
+
+        type_hierarchy = [
+            {
+                "arm": "'arm for a robot'",
+                "children": []
+            },
+            {
+                "block": "block that can be stacked and unstacked",
+                "children": [
+                    {
+                        "?heavy_block": "a heavy block that cannot be picked up",
+                        "children": []
+                    },
+                    {
+                        "?light_block": "a light block that can be picked up",
+                        "children": []
+                    }
+                ]
+            },
+            {
+                "?table": "table that blocks sits on",
+                "children": []
+            }
+        ]
+
+        flag, _ = self.syntax_validator.validate_format_types(types=types)
+        self.assertEqual(flag, False)
+
+        flag, _ = self.syntax_validator.validate_format_types(types=type_hierarchy)
+        self.assertEqual(flag, False)
 
 
 if __name__ == "__main__":
