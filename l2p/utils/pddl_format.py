@@ -115,10 +115,23 @@ def format_types(
     return result
     
     
-def format_types_to_string(types: dict[str, str] | list[dict[str, str]]) -> str:
+def format_types_to_string(
+    types: dict[str, str] | list[dict[str, str]],
+    append_obj_type_to_parent: bool = False # flag for appending `object` type to parent type
+    ) -> str:
     """Formats a type hierarchy (flat or nested) into a PDDL-style string."""
     formatted = format_types(types)
-    lines = [f"{type_name} {desc}" if desc else f"{type_name}" for type_name, desc in formatted.items()]
+
+    # appends `object` to parent type (required for some PDDL parsers)
+    if append_obj_type_to_parent:
+        lines = list()
+        for type_name, desc in formatted.items():
+            if "-" not in type_name:
+                lines.append(f"{type_name} - object {desc}" if desc else f"{type_name} - object")
+            else:
+                lines.append(f"{type_name} {desc}" if desc else type_name)
+    else:
+        lines = [f"{type_name} {desc}" if desc else f"{type_name}" for type_name, desc in formatted.items()]
     return "\n".join(lines)
 
 

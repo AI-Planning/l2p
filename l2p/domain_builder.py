@@ -50,11 +50,11 @@ class DomainBuilder:
         model: BaseLLM,
         domain_desc: str,
         prompt_template: str,
-        types: dict[str, str] = None,
-        max_retries: int = 3,
+        types: dict[str,str] | list[dict[str,str]] | None,
         check_invalid_obj_usage: bool = True,
-        syntax_validator: SyntaxValidator = None
-    ) -> tuple[dict[str, str], str]:
+        syntax_validator: SyntaxValidator = None,
+        max_retries: int = 3,
+    ) -> tuple[dict[str,str], str, tuple[bool, str]]:
         """
         Extracts types with domain given
 
@@ -62,42 +62,59 @@ class DomainBuilder:
             model (BaseLLM): BaseLLM
             domain_desc (str): domain description
             prompt_template (str): prompt template
-            types (dict[str,str]): current types in model
-            max_retries (int): max # of retries if failure occurs
+            types (dict[str,str]): current types in model, defaults to None
+            check_invalid_obj_usage (bool): removes keyword `object` from types, defaults to True
+            syntax_validator (SyntaxValidator): syntax checker for types, defaults to None
+            max_retries (int): max # of retries if failure occurs, defaults to 3
 
         Returns:
-            type_dict (dict[str,str]): dictionary of types with (name:description) pair
-            llm_response (str): the raw string BaseLLM response
+            types (dict[str,str]): dictionary of types with {<name>: <description>} pair
+            llm_output (str): the raw string BaseLLM response
+            validation_info (dict[bool,str]): validation info containing pass flag and error message
         """
 
-        # replace prompt placeholders
-        types_str = pretty_print_dict(types) if types else "No types provided."
-
-        prompt_template = prompt_template.replace("{domain_desc}", domain_desc)
-        prompt_template = prompt_template.replace("{types}", types_str)
+        prompt_data = {
+            "domain_desc": domain_desc,
+            "types": format_types_to_string(types) if types else "No types provided."
+        }
+        
+        prompt = prompt_template.format(**prompt_data)
 
         # iterate through attempts in case of extraction failure
         for attempt in range(max_retries):
             try:
                 model.reset_tokens()
+                llm_output = model.query(prompt=prompt)
 
-                llm_response = model.query(prompt=prompt_template)  # prompt model
+                # parse LLM output into types
+                types = parse_types(llm_output=llm_output)
 
-                # extract respective types from response
-                types = parse_types(llm_response=llm_response)
-                
                 # flag that removes keyword 'object' if detected
                 if check_invalid_obj_usage:
                     if types and "object" in types:
                         del types["object"]
 
-                if types is not None:
-                    return types, llm_response
+                # run syntax validation if applicable
+                validation_info = (True, "All validations passed.")
+                if syntax_validator:
+                    for error_type in syntax_validator.error_types:
+                        validator = getattr(syntax_validator, f"{error_type}", None)
+                        if not callable(validator):
+                            continue
 
+                        # dispatch based on expected arguments
+                        if error_type == "validate_format_types":
+                            validation_info = validator(types)
+                        
+                        if not validation_info[0]:
+                            return types, llm_output, validation_info
+                
+                return types, llm_output, validation_info
+            
             except Exception as e:
                 print(
                     f"Error encountered during attempt {attempt + 1}/{max_retries}: {e}. "
-                    f"\nLLM Output: \n\n{llm_response if 'llm_response' in locals() else 'None'}\n\n Retrying..."
+                    f"\nLLM Output: \n\n{llm_output if 'llm_output' in locals() else 'None'}\n\n Retrying..."
                 )
                 time.sleep(2)  # add a delay before retrying
 
@@ -109,10 +126,11 @@ class DomainBuilder:
         model: BaseLLM,
         domain_desc: str,
         prompt_template: str,
-        types: dict[str, str] | list[dict[str,str]] = None,
+        types: dict[str,str] | list[dict[str,str]] | None,
+        check_invalid_obj_usage: bool = True,
+        syntax_validator: SyntaxValidator = None,
         max_retries: int = 3,
-        check_invalid_obj_usage: bool = True
-    ) -> tuple[dict[str, str], str]:
+    ) -> tuple[list[dict[str,str]], str, tuple[bool,str]]:
         """
         Extracts type hierarchy from types list and domain given
 
@@ -121,30 +139,33 @@ class DomainBuilder:
             domain_desc (str): domain description
             prompt_template (str): prompt template
             types (dict[str,str]): current types in model
+            check_invalid_obj_usage (bool): removes keyword `object` from types, defaults to True
+            syntax_validator (SyntaxValidator): syntax checker for types, defaults to None
             max_retries (int): max # of retries if failure occurs
 
         Returns:
-            type_hierarchy (dict[str,str]): dictionary of type hierarchy
-            llm_response (str): the raw string BaseLLM response
+            type_hierarchy (list[dict[str,str]]): list of dictionaries containing the type hierarchy
+            llm_output (str): the raw string BaseLLM response
+            validation_info (dict[bool,str]): validation info containing pass flag and error message
         """
+        
+        prompt_data = prompt_data = {
+            "domain_desc": domain_desc,
+            "types": format_types_to_string(types) if types else "No types provided."
+        }
 
-        # replace prompt placeholders
-        types_str = pretty_print_dict(types) if types else "No types provided."
-
-        prompt_template = prompt_template.replace("{domain_desc}", domain_desc)
-        prompt_template = prompt_template.replace("{types}", types_str)
+        prompt = prompt_template.format(**prompt_data)
 
         # iterate through attempts in case of extraction failure
         for attempt in range(max_retries):
             try:
-
                 model.reset_tokens()
-
-                llm_response = model.query(prompt=prompt_template)
+                llm_output = model.query(prompt=prompt)
 
                 # extract respective types from response
-                type_hierarchy = parse_type_hierarchy(llm_response=llm_response)
+                type_hierarchy = parse_type_hierarchy(llm_output=llm_output)
 
+                # flag that removes keyword 'object' if detected
                 if type_hierarchy is not None:
                     if check_invalid_obj_usage:
                         # promote children if top-level "object" type exists
@@ -155,18 +176,33 @@ class DomainBuilder:
                                 new_hierarchy.extend(children)
                             else:
                                 new_hierarchy.append(entry)
-                        return new_hierarchy, llm_response
-                    else:
-                        return type_hierarchy, llm_response
+                        type_hierarchy = new_hierarchy
+                
+                # run syntax validation if applicable
+                validation_info = (True, "All validations passed.")
+                if syntax_validator:
+                    for error_type in syntax_validator.error_types:
+                        validator = getattr(syntax_validator, f"{error_type}", None)
+                        if not callable(validator):
+                            continue
+
+                        # dispatch based on expected arguments
+                        if error_type == "validate_format_types":
+                            validation_info = validator(type_hierarchy)
+
+                        if not validation_info[0]:
+                            return type_hierarchy, llm_output, validation_info
+                
+                return type_hierarchy, llm_output, validation_info
 
             except Exception as e:
                 print(
                     f"Error encountered during attempt {attempt + 1}/{max_retries}: {e}. "
-                    f"\nLLM Output: \n\n{llm_response if 'llm_response' in locals() else 'None'}\n\n Retrying..."
+                    f"\nLLM Output: \n\n{llm_output if 'llm_output' in locals() else 'None'}\n\n Retrying..."
                 )
                 time.sleep(2)  # add a delay before retrying
 
-        raise RuntimeError("Max retries exceeded. Failed to extract type hierarchy.")
+        raise RuntimeError("Max retries exceeded. Failed to extract types.")
 
     @require_llm
     def extract_nl_actions(
@@ -191,41 +227,33 @@ class DomainBuilder:
 
         Returns:
             nl_actions (dict[str, str]): a dictionary of extracted actions {action name: action description}
-            llm_response (str): the raw string BaseLLM response
+            llm_output (str): the raw string BaseLLM response
         """
 
-        # replace prompt placeholders
-        types_str = pretty_print_dict(types) if types else "No types provided."
-        nl_actions_str = (
-            "\n".join(f"{name}: {desc}" for name, desc in nl_actions.items())
-            if nl_actions
-            else "No actions provided."
-        )
+        prompt_data = prompt_data = {
+            "domain_desc": domain_desc,
+            "types": format_types_to_string(types) if types else "No types provided.",
+            "nl_actions": "\n".join(f" - {name}: {desc}" for name, desc in nl_actions.items()) if nl_actions else "No actions provided."
+        }
 
-        prompt_template = prompt_template.replace("{domain_desc}", domain_desc)
-        prompt_template = prompt_template.replace("{types}", types_str)
-        prompt_template = prompt_template.replace("{nl_actions}", nl_actions_str)
+        prompt = prompt_template.format(**prompt_data)
 
         # iterate through attempts in case of extraction failure
         for attempt in range(max_retries):
             try:
-
                 model.reset_tokens()
+                llm_output = model.query(prompt=prompt)
 
-                llm_response = model.query(
-                    prompt=prompt_template
-                )  # get BaseLLM llm_response
-
-                # extract respective types from response
-                nl_actions = format_types(llm_response=llm_response)
+                # extract respective nl actions from response
+                nl_actions = parse_types(llm_output=llm_output)
 
                 if nl_actions is not None:
-                    return nl_actions, llm_response
+                    return nl_actions, llm_output
 
             except Exception as e:
                 print(
                     f"Error encountered during attempt {attempt + 1}/{max_retries}: {e}. "
-                    f"\nLLM Output: \n\n{llm_response if 'llm_response' in locals() else 'None'}\n\n Retrying..."
+                    f"\nLLM Output: \n\n{llm_output if 'llm_output' in locals() else 'None'}\n\n Retrying..."
                 )
                 time.sleep(2)  # add a delay before retrying
 
@@ -263,7 +291,7 @@ class DomainBuilder:
         Returns:
             action (Action): constructed action class
             new_predicates (list[Predicate]): a list of new predicates
-            llm_response (str): the raw string BaseLLM response
+            llm_output (str): the raw string BaseLLM response
             validation_info (tuple[bool, str]): validation check information
         """
         
@@ -272,12 +300,13 @@ class DomainBuilder:
             "action_list": "\n".join([f"- {a}" for a in action_list]) if action_list else "No other actions provided.",
             "action_name": action_name,
             "action_desc": action_desc or "No description available.",
-            "types": pretty_print_dict(types) if types else "No types provided.",
+            "types": format_types_to_string(types) if types else "No types provided.",
             "predicates": "\n".join([f"- {pred['clean']}" for pred in predicates]) if predicates else "No predicates provided."
         }
         
         prompt = prompt_template.format(**prompt_data)
         
+        # iterate through attempts in case of extraction failure
         for attempt in range(max_retries):
             try:
                 model.reset_tokens()
@@ -319,12 +348,14 @@ class DomainBuilder:
             except Exception as e:
                 print(
                     f"Error on attempt {attempt + 1}/{max_retries}: {e}\n"
-                    f"LLM Output:\n{llm_output if 'llm_response' in locals() else 'None'}\nRetrying...\n"
+                    f"LLM Output:\n{llm_output if 'llm_output' in locals() else 'None'}\nRetrying...\n"
                 )
                 time.sleep(2)
 
         raise RuntimeError("Max retries exceeded. Failed to extract PDDL action.")
 
+
+    # CURRENTLY EXPERIMENTAL - in principal, this function is practically tasking LLM to generate whole domain actions
     @require_llm
     def extract_pddl_actions(
         self,
@@ -789,6 +820,7 @@ class DomainBuilder:
         predicates: list[Predicate] | None = None,
         actions: list[Action] = [],
         requirements: list[str] = REQUIREMENTS,
+        append_obj_type_to_parent: bool = True
     ) -> str:
         """
         Generates PDDL domain from given information
@@ -808,7 +840,7 @@ class DomainBuilder:
         desc += f"(define (domain {domain_name})\n"
         desc += indent(string=f"(:requirements\n   {' '.join(requirements)})", level=1)
         if types:
-            types_str = format_types_to_string(types)
+            types_str = format_types_to_string(types, append_obj_type_to_parent)
             desc += f"\n\n   (:types \n{indent(string=types_str, level=2)}\n   )"
         if not predicates:
             print("[WARNING]: Domain has no predicates. This may cause planners to reject the domain or behave unexpectedly.")

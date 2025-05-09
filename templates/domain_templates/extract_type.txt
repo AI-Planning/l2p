@@ -1,8 +1,8 @@
-End your final answer starting with "## OUTPUT" and then the Python dictionary pair '{'name':'description'}' as so:
+End your final answer starting with "## OUTPUT" and then the Python dictionary pair '{{'name':'description'}}' as so:
 
 ## OUTPUT
-{
+{{
     "type_1": "description",
     "type_2": "description",
     "type_3": "description",
-}
+}}

@@ -107,11 +107,12 @@ class SyntaxValidator:
 
                 if not any(param_type in t for t in types.keys()):
                     feedback_msg = (
-                        f"[ERROR]: There is an invalid object type `{param_type}` for the parameter `{param_name}` not found in the types {list(types.keys())}. Make sure parameter types align with There is an invalid object type provided types, otherwise just leave parameter untyped."
+                        f"[ERROR]: There is an invalid object type `{param_type}` for the parameter `{param_name}` not found in the types {list(types.keys())}. Parameter types should align with the provided types, otherwise just leave parameter untyped."
                         f"\n\nMake sure each line defines a parameter using the format:"
                         f"\n?<parameter_name> - <type_name>: <description of parameter>"
                         f"\n\nFor example:"
-                        f"\n?c - car: a car that can drive"
+                        f"\n`?c - car: a car that can drive`"
+                        f"\nor `?c: a car that can drive` if not using a type"
                     )
                     return False, feedback_msg
 
@@ -199,9 +200,15 @@ class SyntaxValidator:
         
         if invalid_types:
             invalid_types_str = "\n".join(invalid_types)
-            feedback_msg = f"[ERROR]: There are type(s) with name(s) that start with character `?`. This is not allowed in PDDL."
-            feedback_msg += f"\n\nRemove `?` from the following types:\n"
-            feedback_msg += f"{invalid_types_str}"
+            feedback_msg = (
+                f"[ERROR]: There are type(s) with name(s) that start with character `?`. This is not allowed in PDDL."
+                f"\n\nRemove `?` from the following type(s):\n"
+                f"{invalid_types_str}"
+                f"\n\nMake sure each entry defines a type using the format:"
+                f"\n - <type_name>: <description of type>"
+                f"\n\nFor example:"
+                f"\n - car: a car that can drive"
+                )
             return False, feedback_msg
         
         feedback_msg = "[PASS]: all types are formatted correctly."
@@ -229,16 +236,16 @@ class SyntaxValidator:
 
             for type_key in types.keys():
                 # extract the actual type name, disregarding hierarchical or descriptive parts
-                type_name = type_key.split(" - ")[0].strip().lower()
+                type_name = type_key.split(" - ")[0].strip()
 
                 # check if the predicate name is exactly the same as the type name
-                if pred["name"].lower() == type_name:
+                if pred["name"] == type_name:
                     invalid_predicates.append(pred)
 
         if invalid_predicates:
             feedback_msg = "[ERROR]: The following predicate(s) have the same name(s) as existing object types:"
             for pred_i, pred in enumerate(invalid_predicates):
-                feedback_msg += f"\n{pred_i + 1}. `{pred['name'].lower()}` from {pred['clean']}"
+                feedback_msg += f"\n{pred_i + 1}. `{pred['name']}` from {pred['clean']}"
             feedback_msg += f"\nRename these predicates that are unique from types: {list(types.keys())}"
             return False, feedback_msg
 
@@ -251,11 +258,11 @@ class SyntaxValidator:
     ) -> tuple[bool, str]:
         """Checks if predicates have the same name but different parameters."""
 
-        curr_pred_dict = {pred["name"].lower(): pred for pred in curr_predicates}
+        curr_pred_dict = {pred["name"]: pred for pred in curr_predicates}
 
         duplicated_predicates = list()
         for new_pred in new_predicates:
-            name_lower = new_pred["name"].lower()
+            name_lower = new_pred["name"]
             if name_lower in curr_pred_dict:
                 curr = curr_pred_dict[name_lower]
 
@@ -297,7 +304,7 @@ class SyntaxValidator:
         if types:
             types = format_types(types)
             valid_types = [
-                            type_key.split(" - ")[0].strip().lower()
+                            type_key.split(" - ")[0].strip()
                             for type_key in types.keys()
                         ]
         else:
@@ -347,7 +354,7 @@ class SyntaxValidator:
                         feedback_msg = f"[ERROR]: For PDDL, there is a missing type after the `-` for parameter `{p}` in new predicate `{pred_def}`. Make sure each parameter follows the format `?name - type`."
                         return False, feedback_msg
 
-                    param_obj_type = split_predicate[i + 2].lower()
+                    param_obj_type = split_predicate[i + 2]
 
                     if param_obj_type not in valid_types:
                         all_invalid_params.append((param_obj_type, p, pred_def))
@@ -555,7 +562,7 @@ class SyntaxValidator:
                     f"List of available predicates are:\n"
                     f" - {available_preds}\n\n"
                     f"Parsed line: {f'({i} {action_predicates[i]})'}"
-                    f"\n\nMake sure this predicate is declared in the list of known predicates.\n"
+                    f"\n\nMake sure this predicate is declared in the list of known predicates. If necessary, add a new predicate.\n"
                 )
                 return False, feedback_msg
 
@@ -815,7 +822,13 @@ class SyntaxValidator:
         # catches if a header is not present
         for header in self.headers:
             if header not in llm_response:
-                feedback_msg = f"[ERROR]: The header `{header}` is missing in the PDDL model. Please include the header `### {header}` in the PDDL model."
+                feedback_msg = (
+                    f"[ERROR]: The header `{header}` is missing in the PDDL model. Please include the `### {header}` section following by its content enclosed by [```] like:\n\n"
+                    f"### {header}\n"
+                    f"```\n"
+                    f"[CONTENT]\n"
+                    f"```"    
+                    )
                 return False, feedback_msg
         
             # catches if the section does not contain correct code block format
