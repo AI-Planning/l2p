@@ -12,19 +12,20 @@ import re
 class SyntaxValidator:
     def __init__(
             self, 
+            headers: list[str] | None = None,
             error_types: list[str] | None = None,
             unsupported_keywords: list[str] | None = None
             ) -> None:
 
-        # current [ERROR] types available
+        # default error types for PDDL action extraction
         default_error_types = [
-            "invalid_header",
-            "invalid_keyword_usage",
-            "unsupported_keywords",
-            "invalid_params",
-            "invalid_predicate_name",
-            "invalid_predicate_format",
-            "invalid_predicate_usage",
+            "validate_header",
+            "validate_duplicate_headers",
+            "validate_unsupported_keywords",
+            "validate_params",
+            "validate_types_predicates",
+            "validate_format_predicates",
+            "validate_usage_predicates",
         ]
 
         default_unsupported = [
@@ -32,6 +33,13 @@ class SyntaxValidator:
             "when",
             "exists",
             "implies",
+        ]
+        
+        default_headers = [
+            'Action Parameters', 
+            'Action Preconditions', 
+            'Action Effects', 
+            'New Predicates',
         ]
         
         self.PDDL_KEYWORDS = {
@@ -55,6 +63,7 @@ class SyntaxValidator:
             if unsupported_keywords is None
             else unsupported_keywords
         )
+        self.headers = default_headers if headers is None else headers
 
     # ---- PDDL PARAMETER CHECKS ----
 
@@ -97,9 +106,12 @@ class SyntaxValidator:
             for param_name, param_type in parameters.items():
 
                 if not any(param_type in t for t in types.keys()):
-                    feedback_msg = (f'[ERROR]: There is an invalid object type `{param_type}` for the parameter `{param_name}` '
-                                    f'not found in the types {list(types.keys())}. Make sure parameter types align with '
-                                    'provided types, otherwise just leave parameter untyped.'
+                    feedback_msg = (
+                        f"[ERROR]: There is an invalid object type `{param_type}` for the parameter `{param_name}` not found in the types {list(types.keys())}. Make sure parameter types align with There is an invalid object type provided types, otherwise just leave parameter untyped."
+                        f"\n\nMake sure each line defines a parameter using the format:"
+                        f"\n?<parameter_name> - <type_name>: <description of parameter>"
+                        f"\n\nFor example:"
+                        f"\n?c - car: a car that can drive"
                     )
                     return False, feedback_msg
 
@@ -564,7 +576,10 @@ class SyntaxValidator:
 
         # parse predicates
         new_predicates = parse_new_predicates(llm_response)
-        curr_predicates.extend(new_predicates)
+        if curr_predicates is None:
+            curr_predicates = new_predicates
+        else:
+            curr_predicates.extend(new_predicates)
         curr_predicates = parse_predicates(curr_predicates)
 
         # get action params
@@ -794,21 +809,17 @@ class SyntaxValidator:
     def validate_header(
             self, 
             llm_response: str,
-            headers: list[str] = None
             ):
         """Checks if domain headers and formatted code block syntax are found in LLM output"""
 
-        if not headers:
-            headers = ['Action Parameters', 'Action Preconditions', 'Action Effects', 'New Predicates']
-
         # catches if a header is not present
-        for header in headers:
+        for header in self.headers:
             if header not in llm_response:
                 feedback_msg = f"[ERROR]: The header `{header}` is missing in the PDDL model. Please include the header `### {header}` in the PDDL model."
                 return False, feedback_msg
         
             # catches if the section does not contain correct code block format
-            if llm_response.split(f"{header}")[1].split("###")[0].count("```\n") < 2:
+            if llm_response.split(f"{header}")[1].split("###")[0].count("```") < 2:
                 feedback_msg = (
                     f"[ERROR]: The header `{header}` contains an incorrect formalised code block. Please include the `### {header}` section following by its content enclosed by [```] like:\n\n"
                     f"### {header}\n"
@@ -820,44 +831,18 @@ class SyntaxValidator:
 
         feedback_msg = "[PASS]: headers are identified properly in LLM output."
         return True, feedback_msg
-
-
-    def validate_unsupported_keywords(
-        self, 
-        llm_response: str, 
-        unsupported_keywords: list[str] | None = None
-    ) -> tuple[bool, str]:
-        """Checks whether PDDL model uses unsupported logic keywords"""
-
-        if not unsupported_keywords:
-            feedback_msg = "[PASS]: No unsupported keywords declared."
-            return True, feedback_msg
-
-        for key in unsupported_keywords:
-            if f"{key}" in llm_response:
-                feedback_msg = (
-                    f"[ERROR]: The PDDL model contains the keyword `{key}`. Revise the model so that it does not use this keyword."
-                )
-                return False, feedback_msg
-
-        feedback_msg = "[PASS]: Unsupported keywords not found in PDDL model."
-        return True, feedback_msg
-
-
+    
+    
     def validate_duplicate_headers(
         self, 
         llm_response: str,
-        headers: list[str] = None
     ) -> tuple[bool, str]:
         """Checks if the LLM attempts to create a new action (so two or more actions defined in the same response)."""
-
-        if not headers:
-            headers = ['Action Parameters', 'Action Preconditions', 'Action Effects', 'New Predicates']
 
         invalid = False
         duplicate_headers = []
 
-        for header in headers:
+        for header in self.headers:
             count = llm_response.count(f"### {header}")
             if count > 1:
                 invalid = True
@@ -873,3 +858,24 @@ class SyntaxValidator:
             return False, feedback_msg
 
         return True, "[PASS]: no duplicate sections created."
+
+
+    def validate_unsupported_keywords(
+        self, 
+        llm_response: str
+    ) -> tuple[bool, str]:
+        """Checks whether PDDL model uses unsupported logic keywords"""
+
+        if not self.unsupported_keywords:
+            feedback_msg = "[PASS]: No unsupported keywords declared."
+            return True, feedback_msg
+
+        for key in self.unsupported_keywords:
+            if f"{key}" in llm_response:
+                feedback_msg = (
+                    f"[ERROR]: The PDDL model contains the keyword `{key}`. Revise the model so that it does not use this keyword."
+                )
+                return False, feedback_msg
+
+        feedback_msg = "[PASS]: Unsupported keywords not found in PDDL model."
+        return True, feedback_msg

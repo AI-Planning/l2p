@@ -181,21 +181,21 @@ def parse_predicates(all_predicates):
     return all_predicates
 
 
-def parse_action(llm_response: str, action_name: str) -> Action:
+def parse_action(llm_output: str, action_name: str) -> Action:
     """
     Parse an action from a given LLM output.
 
     Parameters:
-        llm_response (str): The LLM output.
+        llm_output (str): The LLM output.
         action_name (str): The name of the action.
 
     Returns:
         Action: The parsed action.
     """
-    parameters, _ = parse_params(llm_response)
+    parameters, _ = parse_params(llm_output)
     try:
         preconditions = (
-            llm_response.split("Preconditions\n")[1]
+            llm_output.split("Preconditions\n")[1]
             .split("###")[0]
             .split("```")[1]
             .strip(" `\n")
@@ -206,7 +206,7 @@ def parse_action(llm_response: str, action_name: str) -> Action:
         )
     try:
         effects = (
-            llm_response.split("Effects\n")[1]
+            llm_output.split("Effects\n")[1]
             .split("###")[0]
             .split("```")[1]
             .strip(" `\n")
@@ -223,18 +223,18 @@ def parse_action(llm_response: str, action_name: str) -> Action:
     }
 
 
-def parse_objects(llm_response: str) -> dict[str, str]:
+def parse_objects(llm_output: str) -> dict[str, str]:
     """
     Extract objects from LLM response and returns dictionary string pairs object(name, type)
     Parameters:
-        - llm_response (str):
+        - llm_output (str):
         - types (dict[str,str]): WILL BE USED FOR CHECK ERROR RAISES
         - predicates (list[Predicate]): WILL BE USED FOR CHECK ERROR RAISES
     Returns:
         - dict[str,str]: objects
     """
 
-    objects_head = extract_heading(llm_response, "OBJECTS")
+    objects_head = extract_heading(llm_output, "OBJECTS")
     objects_raw = combine_blocks(objects_head)
 
     objects_clean = clear_comments(
@@ -250,17 +250,17 @@ def parse_objects(llm_response: str) -> dict[str, str]:
     return objects
 
 
-def parse_initial(llm_response: str) -> list[dict[str, str]]:
+def parse_initial(llm_output: str) -> list[dict[str, str]]:
     """
     Extracts state (PDDL-init) from LLM response and returns it as a list of dict strings
 
     Parameters:
-        llm_response (str): The LLM output.
+        llm_output (str): The LLM output.
 
     Returns:
         states (list[dict[str,str]]): list of initial states in dictionaries
     """
-    state_head = extract_heading(llm_response, "INITIAL")
+    state_head = extract_heading(llm_output, "INITIAL")
     state_raw = combine_blocks(state_head)
     state_clean = clear_comments(state_raw)
 
@@ -284,17 +284,17 @@ def parse_initial(llm_response: str) -> list[dict[str, str]]:
     return states
 
 
-def parse_goal(llm_response: str) -> list[dict[str, str]]:
+def parse_goal(llm_output: str) -> list[dict[str, str]]:
     """
     Extracts goal (PDDL-goal) from LLM response and returns it as a string
 
     Parameters:
-        llm_response (str): The LLM output.
+        llm_output (str): The LLM output.
 
     Returns:
         states (list[dict[str,str]]): list of goal states in dictionaries
     """
-    goal_head = extract_heading(llm_response, "GOAL")
+    goal_head = extract_heading(llm_output, "GOAL")
 
     if goal_head.count("```") != 2:
         raise ValueError(
@@ -431,12 +431,12 @@ def extract_heading(llm_output: str, heading: str):
     return heading_str
 
 
-def parse_types(llm_response: str) -> Optional[dict[str, str]]:
+def parse_types(llm_output: str) -> Optional[dict[str, str]]:
     """
     Safely extracts and evaluates a dictionary structure from a string (LLM response).
 
     Parameters:
-        llm_response (str): Raw string from the LLM expected to contain a flat dictionary.
+        llm_output (str): Raw string from the LLM expected to contain a flat dictionary.
 
     Returns:
         dict[str, str] | None: Parsed dictionary if valid, else None.
@@ -444,7 +444,7 @@ def parse_types(llm_response: str) -> Optional[dict[str, str]]:
     try:
         # Regex to extract the first dictionary-like structure
         dict_pattern = re.compile(r"{[^{}]*}", re.DOTALL)
-        match = dict_pattern.search(llm_response)
+        match = dict_pattern.search(llm_output)
 
         if not match:
             print("No dictionary found in the LLM response.")
@@ -467,18 +467,18 @@ def parse_types(llm_response: str) -> Optional[dict[str, str]]:
         return None
     
     
-def parse_type_hierarchy(llm_response: str) -> Optional[list[dict[str,str]]]:
+def parse_type_hierarchy(llm_output: str) -> Optional[list[dict[str,str]]]:
     """
     Safely parses LLM response into a list of nested dictionaries representing the type hierarchy.
 
     Parameters:
-        llm_response (str): raw LLM output expected to contain a Python list of dictionaries.
+        llm_output (str): raw LLM output expected to contain a Python list of dictionaries.
 
     Returns:
         list[dict[str,str]] | None: Parsed type hierarchy if valid, else None.
     """
     try:
-        parsed = ast.literal_eval(llm_response)
+        parsed = ast.literal_eval(llm_output)
 
         # Ensure it's a list of dicts with proper structure
         if not isinstance(parsed, list):

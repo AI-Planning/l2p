@@ -817,16 +817,19 @@ class TestSyntaxValidator(unittest.TestCase):
             """
         )
         
+        self.syntax_validator.headers = ['Action Preconditions', 'Action Effects']
+        
         flag, _ = self.syntax_validator.validate_header(
-            llm_response=llm_response,
-            headers=['Action Preconditions', 'Action Effects']
+            llm_response=llm_response
         )
         self.assertEqual(flag, True)
 
         # case 3: header not declared in llm output
+        
+        self.syntax_validator.headers = ['Action Parameters', 'Action Preconditions', 'Action Effects']
+        
         flag, _ = self.syntax_validator.validate_header(
-            llm_response=llm_response,
-            headers=['Action Parameters', 'Action Preconditions', 'Action Effects']
+            llm_response=llm_response
         )
         self.assertEqual(flag, False)
 
@@ -841,9 +844,11 @@ class TestSyntaxValidator(unittest.TestCase):
             ```
             """
         )
+        
+        self.syntax_validator.headers = ['Action Preconditions', 'Action Effects']
+        
         flag, _ = self.syntax_validator.validate_header(
-            llm_response=llm_response,
-            headers=['Action Preconditions', 'Action Effects']
+            llm_response=llm_response
         )
         self.assertEqual(flag, False)
 
@@ -866,14 +871,18 @@ class TestSyntaxValidator(unittest.TestCase):
             ```
             """
         )
+        
+        self.syntax_validator.unsupported_keywords = ['forall', 'when', 'implies']
 
         flag, _ = self.syntax_validator.validate_unsupported_keywords(
-            llm_response=llm_response,
-            unsupported_keywords=['forall', 'when', 'implies']
+            llm_response=llm_response
         )
         self.assertEqual(flag, True)
 
         # case 2: no unsupported keywords declared
+        
+        self.syntax_validator.unsupported_keywords = []
+        
         flag, _ = self.syntax_validator.validate_unsupported_keywords(
             llm_response=llm_response
         )
@@ -900,9 +909,10 @@ class TestSyntaxValidator(unittest.TestCase):
             """
         )
         
+        self.syntax_validator.unsupported_keywords = ['forall', 'when', 'implies']
+        
         flag, _ = self.syntax_validator.validate_unsupported_keywords(
-            llm_response=llm_response,
-            unsupported_keywords=['forall', 'when', 'implies']
+            llm_response=llm_response
         )
         self.assertEqual(flag, False)
 
@@ -943,6 +953,8 @@ class TestSyntaxValidator(unittest.TestCase):
             ```
             """
         )
+        
+        self.syntax_validator.headers = ['Action Parameters', 'Action Preconditions', 'Action Effects', 'New Predicates']
         
         flag, _ = self.syntax_validator.validate_duplicate_headers(
             llm_response=llm_response
