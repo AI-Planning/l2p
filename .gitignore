@@ -164,8 +164,7 @@ tests/main.py
 tests/parse.py
 data/
 tests/tests.py
-templates/domain_templates/temp_feedback.txt
-templates/domain_templates/temp.txt
+templates/domain_templates/temp/
 
 # paper reconstructions to ignore
 paper_reconstructions/llm+dp/

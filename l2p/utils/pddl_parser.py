@@ -47,23 +47,42 @@ def parse_params(llm_output):
     )[0]
     params_str = combine_blocks(params_heading)
     params_raw = []
+    
     for line in params_str.split("\n"):
-        if line.strip() == "" or ("." not in line and not line.strip().startswith("-")):
-            print(
-                f"[WARNING] checking param object types - empty line or not a valid line: '{line}'"
-            )
+        line = line.strip()
+        if not line:  # skip empty lines
             continue
-        if not (line.split(".")[0].strip().isdigit() or line.startswith("-")):
-            print(f"[WARNING] checking param object types - not a valid line: '{line}'")
-            continue
+
+        if line.startswith("-"):
+            line = line[1:].strip()  # remove the dash and clean up
+            
+        if not line.startswith("?"):
+            print(f"[WARNING] Invalid parameter line - must start with '?': '{line}'")
+            
         try:
-            params_raw.append(line.strip())
-            p_info = [e for e in line.split(":")[0].split(" ") if e != ""]
-            param_name, param_type = p_info[1].strip(" `"), p_info[3].strip(" `")
+            params_raw.append(line)
+            # Split into param name and type/description
+            parts = line.split(":")
+            if len(parts) < 2:
+                print(f"[WARNING] Missing colon in parameter line: '{line}'")
+                continue
+                
+            left_side = parts[0].strip()
+            param_parts = [p.strip() for p in left_side.split("-")]
+            
+            param_name = param_parts[0].strip(" `")
+            if len(param_parts) == 2 and param_parts[1]:
+                param_type = param_parts[1].strip(" `")
+            else:
+                print(f"[WARNING] Invalid parameter format: '{line}'. Defaulting to no type.")
+                param_type = ""  # no type provided
+
             params_info[param_name] = param_type
-        except Exception:
-            print(f"[WARNING] checking param object types - fail to parse: {line}")
-            break
+            
+        except Exception as e:
+            print(f"[WARNING] Failed to parse parameter line: '{line}' - {str(e)}")
+            continue
+            
     return params_info, params_raw
 
 
@@ -86,71 +105,82 @@ def parse_new_predicates(llm_output) -> list[Predicate]:
     predicate_output = combine_blocks(predicate_heading)
 
     for p_line in predicate_output.split("\n"):
-        if ("." not in p_line or not p_line.split(".")[0].strip().isdigit()) and not (
-            p_line.startswith("-") or p_line.startswith("(")
-        ):
-            if len(p_line.strip()) > 0:
+        p_line = p_line.strip()
+        if not p_line or p_line.startswith("```"):
+            continue  # skip empty lines and code block markers
+
+        # Skip lines that don't look like predicate definitions
+        if not (p_line.startswith("-") or p_line.startswith("(")):
+            if len(p_line) > 0:
                 print(f'[WARNING] unable to parse the line: "{p_line}"')
             continue
-        predicate_info = p_line.split(": ")[0].strip(" 1234567890.(-)`").split(" ")
-        predicate_name = predicate_info[0]
-        predicate_desc = p_line.split(": ")[1].strip() if ": " in p_line else ""
 
-        # get the predicate type info
-        if len(predicate_info) > 1:
-            predicate_type_info = predicate_info[1:]
-            predicate_type_info = [
-                l.strip(" ()`") for l in predicate_type_info if l.strip(" ()`")
-            ]
+        # Extract predicate signature and description
+        if ": " in p_line:
+            pred_part, desc = p_line.split(": ", 1)
+            predicate_desc = desc.strip().strip("'\"")
         else:
-            predicate_type_info = []
+            pred_part = p_line
+            predicate_desc = ""
+
+        # Clean the predicate signature
+        pred_part = pred_part.strip("- ()").strip()
+        
+        # Split into name and parameters
+        parts = pred_part.split()
+        if not parts:
+            continue
+            
+        predicate_name = parts[0]
+        param_parts = parts[1:]
+        
         params = OrderedDict()
-        next_is_type = False
-        upcoming_params = []
-
-        for p in predicate_type_info:
-            if next_is_type:
-                if p.startswith("?"):
-                    print(
-                        f"[WARNING] `{p}` is not a valid type for a variable, but it is being treated as one. Should be checked by syntax check later."
-                    )
-                for up in upcoming_params:
-                    params[up] = p
-                next_is_type = False
-                upcoming_params = []
-            elif p == "-":
-                next_is_type = True
-            elif p.startswith("?"):
-                upcoming_params.append(p)  # the next type will be for this variable
+        current_param = None
+        
+        i = 0
+        while i < len(param_parts):
+            part = param_parts[i]
+            if part.startswith("?"):
+                # Found a parameter
+                current_param = part
+                params[current_param] = ""  # Default to untyped
+                i += 1
+            elif part == "-":
+                # Found type indicator
+                if current_param is None:
+                    print(f"[WARNING] Found type indicator without parameter in: {p_line}")
+                    i += 1
+                    continue
+                if i + 1 < len(param_parts):
+                    params[current_param] = param_parts[i+1]
+                    i += 2
+                else:
+                    print(f"[WARNING] Missing type after '-' in: {p_line}")
+                    i += 1
             else:
-                print(
-                    f"[WARNING] `{p}` is not corrrectly formatted. Assuming it's a variable name."
-                )
-                upcoming_params.append(f"?{p}")
-        if next_is_type:
-            print(
-                f"[WARNING] The last type is not specified for `{p_line}`. Undefined are discarded."
-            )
-        if len(upcoming_params) > 0:
-            print(
-                f"[WARNING] The last {len(upcoming_params)} is not followed by a type name for {upcoming_params}. These are discarded"
-            )
+                # Might be a typeless parameter (accept it with warning)
+                print(f"[WARNING] Assuming '{part}' is an untyped parameter in: {p_line}")
+                current_param = f"?{part.lstrip('?')}"
+                params[current_param] = ""
+                i += 1
 
-        # generate a clean version of the predicate
-        clean = f"({predicate_name} {' '.join([f'{k} - {v}' for k, v in params.items()])})"
+        # Generate clean PDDL representation
+        clean_params = []
+        for param, type_ in params.items():
+            if type_:
+                clean_params.append(f"{param} - {type_}")
+            else:
+                clean_params.append(param)
+        clean = f"({predicate_name} {' '.join(clean_params)})"
 
-        # drop the index/dot
-        p_line = p_line.strip(" 1234567890.-`")
-        new_predicates.append(
-            {
-                "name": predicate_name,
-                "desc": predicate_desc,
-                "raw": p_line,
-                "params": params,
-                "clean": clean,
-            }
-        )
-
+        new_predicates.append({
+            "name": predicate_name,
+            "desc": predicate_desc,
+            "raw": p_line,
+            "params": params,
+            "clean": clean,
+        })
+    
     return new_predicates
 
 
@@ -221,7 +251,40 @@ def parse_action(llm_output: str, action_name: str) -> Action:
         "preconditions": preconditions,
         "effects": effects,
     }
+    
 
+def parse_preconditions(llm_output: str) -> str:
+    """Parses precondition string from LLM output"""
+    try:
+        preconditions = (
+            llm_output.split("Preconditions\n")[1]
+            .split("##")[0]
+            .split("```")[1]
+            .strip(" `\n")
+        )
+        
+        return preconditions
+    except:
+        raise Exception(
+            "Could not find the 'Preconditions' section in the output. Provide the entire response, including all headings even if some are unchanged."
+        )
+        
+        
+def parse_effects(llm_output: str) -> str:
+    """Parses effect string from LLM output"""
+    try:
+        effects = (
+                    llm_output.split("Effects\n")[1]
+                    .split("##")[0]
+                    .split("```")[1]
+                    .strip(" `\n")
+                )
+        
+        return effects
+    except:
+        raise Exception(
+            "Could not find the 'Preconditions' section in the output. Provide the entire response, including all headings even if some are unchanged."
+        )
 
 def parse_objects(llm_output: str) -> dict[str, str]:
     """

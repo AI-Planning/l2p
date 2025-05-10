@@ -1,11 +1,28 @@
 """
-This file contains collection of functions PDDL syntax validations
+This file contains collection of functions PDDL syntax validations. Users MUST specify what validation checker
+is being used in `error_types` when using an extraction function found in DomainBuilder/TaskBuilder class.
+
+For instance:
+    syntax_validator = SyntaxValidator()
+
+    self.syntax_validator.error_types = [
+                "validate_header",
+                "validate_duplicate_headers",
+                "validate_unsupported_keywords",
+                "validate_params",
+                "validate_types_predicates",
+                "validate_format_predicates",
+                "validate_usage_predicates",
+            ]
+
+Is supported in:
+    DomainBuilder.extract_pddl_action(**kwargs, syntax_validator)
 """
 
 from collections import OrderedDict
 from .pddl_parser import parse_params, parse_new_predicates, parse_predicates
 from .pddl_types import Predicate
-from .pddl_format import format_types
+from .pddl_format import format_types, remove_comments
 import re
 
 
@@ -17,22 +34,10 @@ class SyntaxValidator:
             unsupported_keywords: list[str] | None = None
             ) -> None:
 
-        # default error types for PDDL action extraction
-        default_error_types = [
-            "validate_header",
-            "validate_duplicate_headers",
-            "validate_unsupported_keywords",
-            "validate_params",
-            "validate_types_predicates",
-            "validate_format_predicates",
-            "validate_usage_predicates",
-        ]
-
         default_unsupported = [
-            "forall",
-            "when",
-            "exists",
-            "implies",
+            "forall", "when",
+            "exists", "implies",
+            "pddl", "lisp", "python"
         ]
         
         default_headers = [
@@ -43,21 +48,14 @@ class SyntaxValidator:
         ]
         
         self.PDDL_KEYWORDS = {
-            # Logical keywords
             "and", "or", "not", "when", "imply",
             "exists", "forall", "either",
-
-            # Assignment operators
             "increase", "decrease", "assign", "scale-up", "scale-down",
-
-            # Relational operators
             "=", "<", ">", "<=", ">=",
-
-            # Type and metric-related
             "number", "object", "total-cost",
         }
         
-        self.error_types = default_error_types if error_types is None else error_types
+        self.error_types = error_types
         self.unsupported_keywords = (
             default_unsupported
             if unsupported_keywords is None
@@ -84,6 +82,21 @@ class SyntaxValidator:
             feedback_msg = (
                 f'[ERROR]: Character `?` is not found in parameter(s) `{invalid_param_names}` '
                 'Please insert `?` in front of the parameter names (i.e. ?boat - vehicle)'
+            )
+            return False, feedback_msg
+        
+        # catch if dash is used but type is missing
+        missing_type_after_dash = list()
+        for param_name, param_type in parameters.items():
+            if "-" in param_name:
+                parts = param_name.split("-")
+                if len(parts) < 2 or parts[1].strip() == "":
+                    missing_type_after_dash.append(param_name)
+        
+        if missing_type_after_dash:
+            feedback_msg = (
+                f"[ERROR]: One or more parameters use `-` but do not specify a type: {missing_type_after_dash}. "
+                "Each parameter using `-` must be followed by a valid type (e.g., `?c - car`)."
             )
             return False, feedback_msg
 
@@ -325,40 +338,43 @@ class SyntaxValidator:
 
 
     def validate_duplicate_predicates(
-        self, curr_predicates: list[Predicate], new_predicates: list[Predicate]
+        self, 
+        curr_predicates: list[Predicate] | None = None, 
+        new_predicates: list[Predicate] | None = None
     ) -> tuple[bool, str]:
         """Checks if predicates have the same name but different parameters."""
+        
+        if curr_predicates:
+            curr_pred_dict = {pred["name"]: pred for pred in curr_predicates}
 
-        curr_pred_dict = {pred["name"]: pred for pred in curr_predicates}
+            duplicated_predicates = list()
+            for new_pred in new_predicates:
+                name_lower = new_pred["name"]
+                if name_lower in curr_pred_dict:
+                    curr = curr_pred_dict[name_lower]
 
-        duplicated_predicates = list()
-        for new_pred in new_predicates:
-            name_lower = new_pred["name"]
-            if name_lower in curr_pred_dict:
-                curr = curr_pred_dict[name_lower]
+                    if len(curr["params"]) != len(new_pred["params"]) or any(
+                        t1 != t2 for t1, t2 in zip(curr["params"], new_pred["params"])
+                    ):
+                        duplicated_predicates.append(
+                            (new_pred["raw"], curr["raw"])
+                        )
 
-                if len(curr["params"]) != len(new_pred["params"]) or any(
-                    t1 != t2 for t1, t2 in zip(curr["params"], new_pred["params"])
-                ):
-                    duplicated_predicates.append(
-                        (new_pred["raw"], curr["raw"])
+            if duplicated_predicates:
+                feedback_msg = "[ERROR]: Duplicate predicate name(s) found with mismatched parameters.\n"
+                feedback_msg += "You have defined predicates with the same name as existing ones but with different parameters, which is not allowed.\n\n"
+                feedback_msg += "Conflicting predicate definitions:\n"
+
+                for i, (new_pred, existing_pred) in enumerate(duplicated_predicates, 1):
+                    feedback_msg += (
+                        f"{i}. New: {new_pred.replace(':', ';')}\n"
+                        f"   Conflicts with existing: {existing_pred.replace(':', ';')}\n"
                     )
 
-        if duplicated_predicates:
-            feedback_msg = "[ERROR]: Duplicate predicate name(s) found with mismatched parameters.\n"
-            feedback_msg += "You have defined predicates with the same name as existing ones but with different parameters, which is not allowed.\n\n"
-            feedback_msg += "Conflicting predicate definitions:\n"
+                feedback_msg += "\n\nIf you're trying to use the same concept, ensure the parameters match the existing definition exactly.\n"
+                feedback_msg += "If this is a new concept, use a different predicate name to avoid confusion.\n"
 
-            for i, (new_pred, existing_pred) in enumerate(duplicated_predicates, 1):
-                feedback_msg += (
-                    f"{i}. New: {new_pred.replace(':', ';')}\n"
-                    f"   Conflicts with existing: {existing_pred.replace(':', ';')}\n"
-                )
-
-            feedback_msg += "\n\nIf you're trying to use the same concept, ensure the parameters match the existing definition exactly.\n"
-            feedback_msg += "If this is a new concept, use a different predicate name to avoid confusion.\n"
-
-            return False, feedback_msg
+                return False, feedback_msg
 
         return True, "[PASS]: All predicates are uniquely named and consistently defined."
 
@@ -384,7 +400,7 @@ class SyntaxValidator:
         all_invalid_params = []
 
         for pred in predicates:
-            pred_def = pred["raw"].split(": ")[0]
+            pred_def = pred["clean"]
             pred_def = pred_def.strip(" ()`")  # discard parentheses and similar
             
             # check if predicate name declared
@@ -453,7 +469,7 @@ class SyntaxValidator:
         self,
         pddl: str,
         predicates: list[Predicate],
-        action_params: list[str],
+        action_params: OrderedDict,
         types: dict[str, str] | list[dict[str,str]] | None = None,
         part="preconditions",
     ) -> tuple[bool, str]:
@@ -470,6 +486,9 @@ class SyntaxValidator:
                 if _num not in (11, 12, 13)
                 else "th"
             )
+            
+        # remove all comments
+        pddl = remove_comments(pddl)
 
         pred_names = {predicates[i]["name"]: i for i in range(len(predicates))}
         pddl_elems = [e for e in pddl.replace("(", " ( ").replace(")", " ) ").split() if e != ""]
@@ -526,26 +545,28 @@ class SyntaxValidator:
 
                     if n_expected_param != n_actual_param:
                         feedback_msg = (
-                            f"[ERROR]: There is a syntax mistake in the {part}.\n"
+                            f"[ERROR]: There is a syntax mistake in the {part} section.\n"
                             f"Predicate `{target_pred_info['clean']}` expects {n_expected_param} parameter variable(s), "
                             f"but found {n_actual_param}.\n\n"
-                            f"Parsed line: {curr_pred_line}\n"
-                            f"Extracted variables: {curr_pred_params}"
+                            f"Parsed line: {curr_pred_line}"
                             f"\n\nPossible causes:"
                             f"\n(1) Missing variable(s). Example: `(drive ?c)` has only 1 variable, but should be `(drive ?c ?from)` "
                             f"to match the definition `(drive ?c - car ?from - location)`."
-                            f"\n(2) Object types included incorrectly. Example: `{part}` predicate `(drive ?c ?from)` is correct, "
-                            f"but `(drive ?c - car ?from - location)` is incorrect."
+                            f"\n(2) Object types are included in the {part} section incorrectly."
+                            f"\n\nFor example, given the original predicate definition `(drive ?v - vehicle ?l - location)`:"
+                            f"\nPredicates declared in the {part}:"
+                            f"\n - `(drive ?car ?from)` is correct, "
+                            f"\n - `(drive ?car - vehicle ?from - location)` is incorrect."
                         )
 
                         return False, feedback_msg
 
                     # --- (ii) Unknown parameter check ---
                     for curr_param in curr_pred_params:
-                        if curr_param not in action_params[0]:
+                        if curr_param not in action_params:
                             feedback_msg = (
                                 f"[ERROR]: A predicate in {part} contains parameter variable(s) not found in the action parameter list: "
-                                f"{list(action_params[0].keys())}\n\n"
+                                f"{list(action_params.keys())}\n\n"
                                 f"Parsed line: {curr_pred_line}\n"
                                 f"Unknown variable: {curr_param}"
                                 f"\n\nPossible solutions:"
@@ -557,12 +578,12 @@ class SyntaxValidator:
 
                     # --- (iii) Type mismatch check ---
                     if (types is None or len(types) == 0) and (
-                    any(target_pred_info["params"].values()) or any(action_params[0].values())
+                    any(target_pred_info["params"].values()) or any(action_params.values())
                     ):
                         source_of_types = []
                         if any(target_pred_info["params"].values()):
                             source_of_types.append(f"the predicate(s)")
-                        if any(action_params[0].values()):
+                        if any(action_params.values()):
                             source_of_types.append(f"the action parameter list")
 
                         type_sources = " and ".join(source_of_types)
@@ -577,7 +598,7 @@ class SyntaxValidator:
                         if predicates_with_types:
                             feedback_msg += f"Predicates declared with types: {', '.join(predicates_with_types)}\n"
 
-                        violated_params = [f"{k} - {v}" for k, v in action_params[0].items() if v]
+                        violated_params = [f"{k} - {v}" for k, v in action_params.items() if v]
                         if violated_params:
                             for i in violated_params:
                                 feedback_msg += f"Action parameter with types: {i}\n"
@@ -594,14 +615,14 @@ class SyntaxValidator:
 
                     for param_idx, target_type in enumerate(target_param_types):
                         curr_param = curr_pred_params[param_idx]
-                        claimed_type = action_params[0][curr_param]
+                        claimed_type = action_params[curr_param]
                         flag, _ = self.validate_type(target_type, claimed_type, types)
 
                         if not flag:
                             param_number = param_idx + 1
                             ordinal_suffix = get_ordinal_suffix(param_number)
                             parsed_vars = [
-                                f"{param} - {action_params[0][param]}"
+                                f"{param} - {action_params[param]}"
                                 for param in curr_pred_params
                             ]
                             pred_name = target_pred_info["name"]
@@ -670,7 +691,7 @@ class SyntaxValidator:
         )
 
         validation_info = self.validate_pddl_usage_predicates(
-            precond_str, curr_predicates, params_info, types, part="preconditions"
+            precond_str, curr_predicates, params_info[0], types, part="preconditions"
         )
         if not validation_info[0]:
             return validation_info
@@ -681,7 +702,7 @@ class SyntaxValidator:
         eff_str = llm_response.split("Effects")[1].split("```\n")[1].strip()
         eff_str = eff_str.replace("\n", " ").replace("(", " ( ").replace(")", " ) ")
         return self.validate_pddl_usage_predicates(
-            eff_str, curr_predicates, params_info, types, part="effects"
+            eff_str, curr_predicates, params_info[0], types, part="effects"
         )
 
 
@@ -909,7 +930,8 @@ class SyntaxValidator:
                     f"### {header}\n"
                     f"```\n"
                     f"[CONTENT]\n"
-                    f"```"          
+                    f"```"
+                    f"\n\n Make sure the header is only stated once in your response."          
                 )
                 return False, feedback_msg
 
@@ -936,7 +958,7 @@ class SyntaxValidator:
             feedback_msg = (
                 "[ERROR]: Detected multiple definitions of the following header(s):\n"
                 + "\n".join(f"- {item['header']} found {item['count']} times" for item in duplicate_headers)
-                + "\n\nEach header section should have a single set of definitions for: "
+                + "\n\nEach header section should only be declared once in your response for: "
                 + ", ".join(item['header'] for item in duplicate_headers) + "."
             )
             return False, feedback_msg

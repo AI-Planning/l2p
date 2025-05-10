@@ -2,8 +2,8 @@
 This file contains collection of functions for formatting Python PDDL components into PDDL format strings.
 """
 
-import json
-from collections import defaultdict
+import json, re
+from collections import defaultdict, OrderedDict
 from .pddl_types import Predicate, Action
 
 def indent(string: str, level: int = 2):
@@ -52,6 +52,25 @@ def format_action_params(action: Action) -> str:
     """Helper function to format action parameters into a PDDL-style string."""
     grouped_params = defaultdict(list)
     for name, type_ in action["params"].items():
+        # ensure name starts with '?'
+        name = name if name.startswith("?") else f"?{name}"
+        clean_type = type_.strip() if type_ else None
+        grouped_params[clean_type].append(name)
+
+    param_parts = []
+    for type_, names in grouped_params.items():
+        if type_ is None:
+            param_parts.append(" ".join(names))  # untyped parameters
+        else:
+            param_parts.append(f"{' '.join(names)} - {type_}")
+
+    return " ".join(param_parts)
+
+
+def format_params(parameters: OrderedDict) -> str:
+    """Helper function to format parameters (as its type) into a PDDL-style string."""
+    grouped_params = defaultdict(list)
+    for name, type_ in parameters.items():
         # ensure name starts with '?'
         name = name if name.startswith("?") else f"?{name}"
         clean_type = type_.strip() if type_ else None
@@ -123,15 +142,35 @@ def format_types_to_string(
     formatted = format_types(types)
 
     # appends `object` to parent type (required for some PDDL parsers)
-    if append_obj_type_to_parent:
-        lines = list()
-        for type_name, desc in formatted.items():
-            if "-" not in type_name:
-                lines.append(f"{type_name} - object {desc}" if desc else f"{type_name} - object")
-            else:
-                lines.append(f"{type_name} {desc}" if desc else type_name)
-    else:
-        lines = [f"{type_name} {desc}" if desc else f"{type_name}" for type_name, desc in formatted.items()]
+    type_groups = {}
+    for type_name, desc in formatted.items():
+        if " - " in type_name:
+            type_part, parent_part = type_name.split(" - ")
+            parent = parent_part.strip()
+            type_part = type_part.strip()
+        else:
+            parent = "object" if append_obj_type_to_parent else None
+            type_part = type_name.strip()
+        
+        if parent:
+            if parent not in type_groups:
+                type_groups[parent] = []
+            type_groups[parent].append(type_part)
+    
+    # Build the output lines
+    lines = []
+    
+    # Handle top-level objects first
+    if "object" in type_groups:
+        top_level_types = " ".join(sorted(type_groups["object"]))
+        lines.append(f"{top_level_types} - object")
+        del type_groups["object"]
+    
+    # Handle other groups
+    for parent, child_types in sorted(type_groups.items()):
+        child_line = " ".join(sorted(child_types))
+        lines.append(f"{child_line} - {parent}")
+    
     return "\n".join(lines)
 
 
@@ -198,3 +237,19 @@ def format_goal(goal_states: list[dict[str, str]]) -> str:
     goal_states_str += ")"
 
     return goal_states_str
+
+def remove_comments(pddl_str):
+    # purge comments from the given string
+    while True:
+        match = re.search(r";(.*)\n", pddl_str)
+        if match is None:
+            break  # Changed from return to break to handle newlines after
+        start, end = match.start(), match.end()
+        pddl_str = pddl_str[:start]+pddl_str[end-1:]
+    
+    # First remove empty lines that only contain whitespace
+    pddl_str = re.sub(r'\n\s+\n', '\n\n', pddl_str)
+    # Then remove consecutive newlines (more than 2) with just 2 newlines
+    pddl_str = re.sub(r'\n{2,}', '\n\n', pddl_str)
+    
+    return pddl_str

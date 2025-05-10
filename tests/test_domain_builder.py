@@ -150,6 +150,15 @@ class TestDomainBuilder(unittest.TestCase):
         pass
 
     def test_extract_parameters(self):
+        
+        """
+        ### Action Parameters
+        ```
+        - ?b1 - block: the block that is being stacked on top
+        - ?b2 - block: the block that is being stacked upon
+        - ?a - arm: the arm of the robot performing the action
+        ```
+        """
         pass
 
     def test_extract_preconditions(self):

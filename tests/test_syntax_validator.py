@@ -285,7 +285,7 @@ class TestSyntaxValidator(unittest.TestCase):
         flag, _ = self.syntax_validator.validate_pddl_usage_predicates(
             pddl=precond_str,
             predicates=predicates,
-            action_params=params_info,
+            action_params=params_info[0],
             types=types,
             part="preconditions"
         )
@@ -296,7 +296,7 @@ class TestSyntaxValidator(unittest.TestCase):
         flag, _ = self.syntax_validator.validate_pddl_usage_predicates(
             pddl=precond_str,
             predicates=predicates,
-            action_params=params_info,
+            action_params=params_info[0],
             types=types,
             part="preconditions"
         )
@@ -307,7 +307,7 @@ class TestSyntaxValidator(unittest.TestCase):
         flag, _ = self.syntax_validator.validate_pddl_usage_predicates(
             pddl=precond_str,
             predicates=predicates,
-            action_params=params_info,
+            action_params=params_info[0],
             types=types,
             part="preconditions"
         )
@@ -319,7 +319,7 @@ class TestSyntaxValidator(unittest.TestCase):
         flag, _ = self.syntax_validator.validate_pddl_usage_predicates(
             pddl=precond_str,
             predicates=predicates,
-            action_params=params_info,
+            action_params=params_info[0],
             types=types,
             part="preconditions"
         )
@@ -337,7 +337,7 @@ class TestSyntaxValidator(unittest.TestCase):
         flag, _ = self.syntax_validator.validate_pddl_usage_predicates(
             pddl=precond_str,
             predicates=predicates,
-            action_params=params_info,
+            action_params=params_info[0],
             types=types,
             part="preconditions"
         )
@@ -391,7 +391,7 @@ class TestSyntaxValidator(unittest.TestCase):
         flag, _ = self.syntax_validator.validate_pddl_usage_predicates(
             pddl=precond_str,
             predicates=predicates,
-            action_params=params_info,
+            action_params=params_info[0],
             types=types,
             part="preconditions"
         )
@@ -400,7 +400,7 @@ class TestSyntaxValidator(unittest.TestCase):
         flag, _ = self.syntax_validator.validate_pddl_usage_predicates(
             pddl=precond_str,
             predicates=predicates_with_types,
-            action_params=params_info,
+            action_params=params_info[0],
             types=types,
             part="preconditions"
         )
@@ -414,7 +414,7 @@ class TestSyntaxValidator(unittest.TestCase):
         flag, _ = self.syntax_validator.validate_pddl_usage_predicates(
             pddl=precond_str,
             predicates=predicates_with_types,
-            action_params=params_info,
+            action_params=params_info[0],
             types=types,
             part="preconditions"
         )
@@ -1253,7 +1253,6 @@ class TestSyntaxValidator(unittest.TestCase):
         ]
         
         flag, msg = self.syntax_validator.validate_cyclic_types(type_hierarchy)
-        print(msg)
         self.assertEqual(flag, False)
         
         # case 3: type hierarchy is cyclic in its parent types
@@ -1279,7 +1278,6 @@ class TestSyntaxValidator(unittest.TestCase):
         ]
         
         flag, msg = self.syntax_validator.validate_cyclic_types(type_hierarchy)
-        print(msg)
         self.assertEqual(flag, False)
         
         

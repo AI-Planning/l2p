@@ -284,7 +284,7 @@ class DomainBuilder:
             prompt_template (str): action construction prompt
             action_name (str): action name
             action_desc (str): action description, defaults to None
-            action_list (dict[str,str]): dictionary of other actions to be translated, defaults to None
+            action_list (list[str]): list of other actions to be translated, defaults to None
             predicates (list[Predicate]): list of predicates in current model, defaults to None
             types (dict[str,str] | list[dict[str,str]]): current types in model, defaults to None
             syntax_validator (SyntaxValidator): custom syntax validator, defaults to None
@@ -303,7 +303,7 @@ class DomainBuilder:
             "action_name": action_name,
             "action_desc": action_desc or "No description available.",
             "types": format_types_to_string(types) if types else "No types provided.",
-            "predicates": "\n".join([f"- {pred['clean']}" for pred in predicates]) if predicates else "No predicates provided."
+            "predicates": "\n".join([f"- {pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
         }
         
         prompt = prompt_template.format(**prompt_data)
@@ -335,6 +335,8 @@ class DomainBuilder:
                             validation_info = validator(llm_output)
                         elif error_type == "validate_params":
                             validation_info = validator(action["params"], types)
+                        elif error_type == "validate_duplicate_predicates":
+                            validation_info == validator(predicates, new_predicates)
                         elif error_type == "validate_types_predicates":
                             validation_info = validator(new_predicates, types)
                         elif error_type == "validate_format_predicates":
@@ -356,17 +358,17 @@ class DomainBuilder:
 
         raise RuntimeError("Max retries exceeded. Failed to extract PDDL action.")
 
-
-    # CURRENTLY EXPERIMENTAL - in principal, this function is practically tasking LLM to generate whole domain actions
+    # CURRENTLY EXPERIMENTAL
     @require_llm
     def extract_pddl_actions(
         self,
         model: BaseLLM,
         domain_desc: str,
         prompt_template: str,
-        nl_actions: dict[str, str] = None,
+        action_list: list[str] = None,
         predicates: list[Predicate] = None,
         types: dict[str, str] | list[dict[str,str]] = None,
+        max_retries: int = 3
     ) -> tuple[list[Action], list[Predicate], str]:
         """
         Extract all actions from a given action description using BaseLLM
@@ -375,71 +377,78 @@ class DomainBuilder:
             model (BaseLLM): BaseLLM
             domain_desc (str): domain description
             prompt_template (str): action construction prompt
-            nl_actions (dict[str, str]): NL actions currently in model
+            action_list (list[str]): list of other actions to be translated, defaults to None
             predicates (list[Predicate]): list of predicates
             types (dict[str,str]): current types in model
+            max_retries (int): max # of retries if failure occurs
 
         Returns:
             action (Action): constructed action class
             new_predicates (list[Predicate]): a list of new predicates
-            llm_response (str): the raw string BaseLLM response
+            llm_output (str): the raw string BaseLLM response
         """
+        
+        prompt_data = {
+            "domain_desc": domain_desc,
+            "action_list": "\n".join([f"- {a}" for a in action_list]) if action_list else "No other actions provided.",
+            "types": format_types_to_string(types) if types else "No types provided.",
+            "predicates": "\n".join([f"- {pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
+        }
+        
+        prompt = prompt_template.format(**prompt_data)
+        
+        # iterate through attempts in case of extraction failure
+        for attempt in range(max_retries):
+            try:
+                model.reset_tokens()
 
-        model.reset_tokens()
+                llm_output = model.query(prompt=prompt)
 
-        # replace prompt placeholders
-        types_str = pretty_print_dict(types) if types else "No types provided."
-        predicates_str = (
-            pretty_print_predicates(predicates) if predicates else "No predicates provided."
-        )
-        nl_actions_str = (
-            pretty_print_dict(nl_actions) if nl_actions else "No actions provided."
-        )
+                # extract respective types from response
+                raw_actions = llm_output.split("## NEXT ACTION")
 
-        prompt_template = prompt_template.replace("{domain_desc}", domain_desc)
-        prompt_template = prompt_template.replace("{types}", types_str)
-        prompt_template = prompt_template.replace("{predicates}", predicates_str)
-        prompt_template = prompt_template.replace("{nl_actions}", nl_actions_str)
+                actions = []
+                for i in raw_actions:
+                    # define the regex patterns
+                    action_pattern = re.compile(r"\[([^\]]+)\]")
+                    rest_of_string_pattern = re.compile(r"\[([^\]]+)\](.*)", re.DOTALL)
 
-        llm_response = model.query(prompt=prompt_template)
+                    # search for the action name
+                    action_match = action_pattern.search(i)
+                    action_name = action_match.group(1) if action_match else None
 
-        # extract respective types from response
-        raw_actions = llm_response.split("## NEXT ACTION")
+                    # extract the rest of the string
+                    rest_match = rest_of_string_pattern.search(i)
+                    rest_of_string = rest_match.group(2).strip() if rest_match else None
 
-        actions = []
-        for i in raw_actions:
-            # define the regex patterns
-            action_pattern = re.compile(r"\[([^\]]+)\]")
-            rest_of_string_pattern = re.compile(r"\[([^\]]+)\](.*)", re.DOTALL)
+                    actions.append(
+                        parse_action(llm_output=rest_of_string, action_name=action_name)
+                    )
 
-            # search for the action name
-            action_match = action_pattern.search(i)
-            action_name = action_match.group(1) if action_match else None
+                # if user queries predicate creation via BaseLLM
+                try:
+                    new_predicates = parse_new_predicates(llm_output)
 
-            # extract the rest of the string
-            rest_match = rest_of_string_pattern.search(i)
-            rest_of_string = rest_match.group(2).strip() if rest_match else None
+                    if predicates:
+                        new_predicates = [
+                            pred
+                            for pred in new_predicates
+                            if pred["name"] not in [p["name"] for p in predicates]
+                        ]  # remove re-defined predicates
+                except Exception as e:
+                    print(f"No new predicates: {e}")
+                    new_predicates = None
 
-            actions.append(
-                parse_action(llm_response=rest_of_string, action_name=action_name)
-            )
+                return actions, new_predicates, llm_output
+            
+            except Exception as e:
+                print(
+                    f"Error on attempt {attempt + 1}/{max_retries}: {e}\n"
+                    f"LLM Output:\n{llm_output if 'llm_output' in locals() else 'None'}\nRetrying...\n"
+                )
+                time.sleep(2)
 
-        # if user queries predicate creation via BaseLLM
-        try:
-            new_predicates = parse_new_predicates(llm_response)
-
-            if predicates:
-                new_predicates = [
-                    pred
-                    for pred in new_predicates
-                    if pred["name"] not in [p["name"] for p in predicates]
-                ]  # remove re-defined predicates
-        except Exception as e:
-            # Log or print the exception if needed
-            print(f"No new predicates: {e}")
-            new_predicates = None
-
-        return actions, new_predicates, llm_response
+        raise RuntimeError("Max retries exceeded. Failed to extract PDDL action.")
 
     @require_llm
     def extract_parameters(
@@ -448,10 +457,11 @@ class DomainBuilder:
         domain_desc: str,
         prompt_template: str,
         action_name: str,
-        action_desc: str,
-        types: dict[str, str] | list[dict[str,str]] = None,
+        action_desc: str = None,
+        types: dict[str, str] | list[dict[str,str]] | None = None,
+        syntax_validator: SyntaxValidator = None,
         max_retries: int = 3,
-    ) -> tuple[OrderedDict, list, str]:
+    ) -> tuple[OrderedDict, list, str, tuple[bool, str]]:
         """
         Extracts parameters from single action description via BaseLLM
 
@@ -460,40 +470,63 @@ class DomainBuilder:
             domain_desc (str): domain description
             prompt_template (str): prompt template
             action_name (str): action name
-            action_desc (str): action description
-            types (dict[str,str]): current types in model
+            action_desc (str): action description, defaults to None
+            types (dict[str,str] | list(dict[str,str])): current types in model, defaults to None
+            syntax_validator (SyntaxValidator): syntax checker for params, defaults to None
             max_retries (int): max # of retries if failure occurs
 
         Returns:
             param (OrderedDict): ordered list of parameters
             param_raw (list()): list of raw parameters
-            llm_response (str): the raw string BaseLLM response
+            llm_output (str): the raw string BaseLLM response
+            validation_info (dict[bool,str]): validation info containing pass flag and error message
         """
-
-        # replace prompt placeholders
-        types_str = pretty_print_dict(types) if types else "No types provided."
-
-        prompt_template = prompt_template.replace("{domain_desc}", domain_desc)
-        prompt_template = prompt_template.replace("{action_name}", action_name)
-        prompt_template = prompt_template.replace("{action_desc}", action_desc)
-        prompt_template = prompt_template.replace("{types}", types_str)
+        
+        prompt_data = {
+            "domain_desc": domain_desc,
+            "action_name": action_name,
+            "action_desc": action_desc or "No description available.",
+            "types": format_types_to_string(types) if types else "No types provided."
+        }
+        
+        prompt = prompt_template.format(**prompt_data)
 
         # iterate through attempts in case of extraction failure
         for attempt in range(max_retries):
             try:
                 model.reset_tokens()
-
-                llm_response = model.query(prompt=prompt_template)  # get BaseLLM response
+                llm_output = model.query(prompt=prompt)  # get BaseLLM response
 
                 # extract respective types from response
-                param, param_raw = parse_params(llm_output=llm_response)
+                param, param_raw = parse_params(llm_output=llm_output)
+                
+                # run syntax validation if applicable
+                validation_info = (True, "All validations passed.")
+                if syntax_validator:
+                    for error_type in syntax_validator.error_types:
+                        validator = getattr(syntax_validator, f"{error_type}", None)
+                        if not callable(validator):
+                            continue
+                        
+                        # dispatch based on expected arguments
+                        if error_type == "validate_header":
+                            validation_info = validator(llm_output)
+                        elif error_type == "validate_duplicate_headers":
+                            validation_info = validator(llm_output)
+                        elif error_type == "validate_unsupported_keywords":
+                            validation_info = validator(param_raw)
+                        elif error_type == "validate_params":
+                            validation_info = validator(param, types)
+                            
+                        if not validation_info[0]:
+                            return param, param_raw, llm_output, validation_info
 
-                return param, param_raw, llm_response
+                return param, param_raw, llm_output, validation_info
 
             except Exception as e:
                 print(
                     f"Error encountered during attempt {attempt + 1}/{max_retries}: {e}. "
-                    f"\nLLM Output: \n\n{llm_response if 'llm_response' in locals() else 'None'}\n\n Retrying..."
+                    f"\nLLM Output: \n\n{llm_output if 'llm_output' in locals() else 'None'}\n\n Retrying..."
                 )
                 time.sleep(2)  # add a delay before retrying
 
@@ -506,11 +539,13 @@ class DomainBuilder:
         domain_desc: str,
         prompt_template: str,
         action_name: str,
-        action_desc: str,
-        params: list[str] = None,
+        action_desc: str = None,
+        params: OrderedDict = None,
+        types: dict[str, str] | list[dict[str,str]] | None = None,
         predicates: list[Predicate] = None,
+        syntax_validator: SyntaxValidator = None,
         max_retries: int = 3,
-    ) -> tuple[str, list[Predicate], str]:
+    ) -> tuple[str, list[Predicate], str, tuple[bool,str]]:
         """
         Extracts preconditions from single action description via BaseLLM
 
@@ -519,51 +554,72 @@ class DomainBuilder:
             domain_desc (str): domain description
             prompt_template (str): prompt template
             action_name (str): action name
-            action_desc (str): action description
-            params (list[str]): list of parameters from action
-            predicates (list[Predicate]): list of current predicates in model
+            action_desc (str): action description, defaults to None
+            params (list[str]): list of parameters from action, defaults to None
+            types (dict[str,str] | list(dict[str,str])): current types in model, defaults to None
+            predicates (list[Predicate]): list of current predicates in model, defaults to None
+            syntax_validator (SyntaxValidator): syntax checker for preconditions, defaults to None
             max_retries (int): max # of retries if failure occurs
 
         Returns:
             preconditions (str): PDDL format of preconditions
             new_predicates (list[Predicate]): a list of new predicates
             llm_response (str): the raw string BaseLLM response
+            validation_info (dict[bool,str]): validation info containing pass flag and error message
         """
-
-        # replace prompt placeholders
-        predicates_str = (
-            pretty_print_predicates(predicates) if predicates else "No predicates provided."
-        )
-        params_str = "\n".join(params) if params else "No parameters provided."
-
-        prompt_template = prompt_template.replace("{domain_desc}", domain_desc)
-        prompt_template = prompt_template.replace("{action_name}", action_name)
-        prompt_template = prompt_template.replace("{action_desc}", action_desc)
-        prompt_template = prompt_template.replace("{parameters}", params_str)
-        prompt_template = prompt_template.replace("{predicates}", predicates_str)
+        
+        prompt_data = {
+            "domain_desc": domain_desc,
+            "action_name": action_name,
+            "action_desc": action_desc or "No description available.",
+            "parameters": format_params(params) if params else "No parameters provided.",
+            "types": format_types_to_string(types) if types else "No types provided.",
+            "predicates": "\n".join([f"- {pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
+        }
+        
+        prompt = prompt_template.format(**prompt_data)
 
         # iterate through attempts in case of extraction failure
         for attempt in range(max_retries):
             try:
                 model.reset_tokens()
-
-                llm_response = model.query(prompt=prompt_template)  # get BaseLLM response
+                llm_output = model.query(prompt=prompt)  # get BaseLLM response
 
                 # extract respective types from response
-                preconditions = (
-                    llm_response.split("Preconditions\n")[1]
-                    .split("##")[0]
-                    .split("```")[1]
-                    .strip(" `\n")
-                )
-                new_predicates = parse_new_predicates(llm_output=llm_response)
+                preconditions = parse_preconditions(llm_output=llm_output)
+                new_predicates = parse_new_predicates(llm_output=llm_output)
+                
+                # run syntax validation if applicable
+                validation_info = (True, "All validations passed.")
+                if syntax_validator:
+                    for error_type in syntax_validator.error_types:
+                        validator = getattr(syntax_validator, f"{error_type}", None)
+                        if not callable(validator):
+                            continue
+                        
+                        # dispatch based on expected arguments
+                        if error_type == "validate_header":
+                            validation_info = validator(llm_output)
+                        elif error_type == "validate_duplicate_headers":
+                            validation_info = validator(llm_output)
+                        elif error_type == "validate_unsupported_keywords":
+                            validation_info = validator(preconditions)
+                        elif error_type == "validate_duplicate_predicates":
+                            validation_info == validator(predicates, new_predicates)
+                        elif error_type == "validate_pddl_usage_predicates":
+                            all_predicates = predicates
+                            all_predicates.extend(new_predicates)
+                            validation_info = validator(preconditions, all_predicates, params, types, "preconditions")
+                            
+                        if not validation_info[0]:
+                            return preconditions, new_predicates, llm_output, validation_info
 
-                return preconditions, new_predicates, llm_response
+                return preconditions, new_predicates, llm_output, validation_info
 
             except Exception as e:
                 print(
                     f"Error encountered during attempt {attempt + 1}/{max_retries}: {e}. "
-                    f"\nLLM Output: \n\n{llm_response if 'llm_response' in locals() else 'None'}\n\n Retrying..."
+                    f"\nLLM Output: \n\n{llm_output if 'llm_output' in locals() else 'None'}\n\n Retrying..."
                 )
                 time.sleep(2)  # add a delay before retrying
 
@@ -576,12 +632,14 @@ class DomainBuilder:
         domain_desc: str,
         prompt_template: str,
         action_name: str,
-        action_desc: str,
-        params: list[str] = None,
-        precondition: str = None,
+        action_desc: str = None,
+        params: OrderedDict = None,
+        types: dict[str,str] | list[dict[str,str]] | None = None,
+        preconditions: str = None,
         predicates: list[Predicate] = None,
+        syntax_validator: SyntaxValidator = None,
         max_retries: int = 3,
-    ) -> tuple[str, list[Predicate], str]:
+    ) -> tuple[str, list[Predicate], str, tuple[bool,str]]:
         """
         Extracts effects from single action description via BaseLLM
 
@@ -590,10 +648,12 @@ class DomainBuilder:
             domain_desc (str): domain description
             prompt_template (str): prompt template
             action_name (str): action name
-            action_desc (str): action description
-            params (list[str]): list of parameters from action
-            precondition (str): PDDL format of preconditions
-            predicates (list[Predicate]): list of current predicates in model
+            action_desc (str): action description, defaults to None
+            params (list[str]): list of parameters from action, defaults to None
+            types (dict[str,str] | list(dict[str,str])): current types in model, defaults to None
+            precondition (str): PDDL format of preconditions, defaults to None
+            predicates (list[Predicate]): list of current predicates in model, defaults to None
+            syntax_validator (SyntaxValidator): syntax checker for effects, defaults to None
             max_retries (int): max # of retries if failure occurs
 
         Returns:
@@ -601,42 +661,60 @@ class DomainBuilder:
             new_predicates (list[Predicate]): a list of new predicates
             llm_response (str): the raw string BaseLLM response
         """
-
-        # replace prompt placeholders
-        predicates_str = (
-            pretty_print_predicates(predicates) if predicates else "No predicates provided."
-        )
-        params_str = "\n".join(params) if params else "No parameters provided."
-
-        prompt_template = prompt_template.replace("{domain_desc}", domain_desc)
-        prompt_template = prompt_template.replace("{action_name}", action_name)
-        prompt_template = prompt_template.replace("{action_desc}", action_desc)
-        prompt_template = prompt_template.replace("{parameters}", params_str)
-        prompt_template = prompt_template.replace("{preconditions}", precondition)
-        prompt_template = prompt_template.replace("{predicates}", predicates_str)
+        
+        prompt_data = {
+            "domain_desc": domain_desc,
+            "action_name": action_name,
+            "action_desc": action_desc or "No description available.",
+            "parameters": format_params(params) if params else "No parameters provided.",
+            "types": format_types_to_string(types) if types else "No types provided.",
+            "predicates": "\n".join([f"- {pred['raw']}" for pred in predicates]) if predicates else "No predicates provided.",
+            "preconditions": preconditions or "No precondition provided."
+        }
+        
+        prompt = prompt_template.format(**prompt_data)
 
         # iterate through attempts in case of extraction failure
         for attempt in range(max_retries):
             try:
                 model.reset_tokens()
-
-                llm_response = model.query(prompt=prompt_template)  # get BaseLLM response
+                llm_output = model.query(prompt=prompt)  # get BaseLLM response
 
                 # extract respective types from response
-                effects = (
-                    llm_response.split("Effects\n")[1]
-                    .split("##")[0]
-                    .split("```")[1]
-                    .strip(" `\n")
-                )
-                new_predicates = parse_new_predicates(llm_output=llm_response)
+                effects = parse_effects(llm_output=llm_output)
+                new_predicates = parse_new_predicates(llm_output=llm_output)
+                
+                # run syntax validation if applicable
+                validation_info = (True, "All validations passed.")
+                if syntax_validator:
+                    for error_type in syntax_validator.error_types:
+                        validator = getattr(syntax_validator, f"{error_type}", None)
+                        if not callable(validator):
+                            continue
+                        
+                        # dispatch based on expected arguments
+                        if error_type == "validate_header":
+                            validation_info = validator(llm_output)
+                        elif error_type == "validate_duplicate_headers":
+                            validation_info = validator(llm_output)
+                        elif error_type == "validate_unsupported_keywords":
+                            validation_info = validator(preconditions)
+                        elif error_type == "validate_duplicate_predicates":
+                            validation_info == validator(predicates, new_predicates)
+                        elif error_type == "validate_pddl_usage_predicates":
+                            all_predicates = predicates
+                            all_predicates.extend(new_predicates)
+                            validation_info = validator(effects, all_predicates, params, types, "effects")
+                            
+                        if not validation_info[0]:
+                            return effects, new_predicates, llm_output, validation_info
 
-                return effects, new_predicates, llm_response
+                return effects, new_predicates, llm_output, validation_info
 
             except Exception as e:
                 print(
                     f"Error encountered during attempt {attempt + 1}/{max_retries}: {e}. "
-                    f"\nLLM Output: \n\n{llm_response if 'llm_response' in locals() else 'None'}\n\n Retrying..."
+                    f"\nLLM Output: \n\n{llm_output if 'llm_output' in locals() else 'None'}\n\n Retrying..."
                 )
                 time.sleep(2)  # add a delay before retrying
 
@@ -650,9 +728,9 @@ class DomainBuilder:
         prompt_template: str,
         types: dict[str, str] | list[dict[str,str]] = None,
         predicates: list[Predicate] = None,
-        nl_actions: dict[str, str] = None,
+        syntax_validator: SyntaxValidator = None,
         max_retries: int = 3,
-    ) -> tuple[list[Predicate], str]:
+    ) -> tuple[list[Predicate], str, tuple[bool, str]]:
         """
         Extracts predicates via BaseLLM
 
@@ -662,46 +740,57 @@ class DomainBuilder:
             prompt_template (str): prompt template
             types (dict[str,str]): current types in model
             predicates (list[Predicate]): list of current predicates in model
-            nl_actions (dict[str, str]): NL actions currently in model
+            syntax_validator (SyntaxValidator): custom syntax validator, defaults to None
             max_retries (int): max # of retries if failure occurs
 
         Returns:
             new_predicates (list[Predicate]): a list of new predicates
             llm_response (str): the raw string BaseLLM response
+            validation_info (tuple[bool, str]): validation check information
         """
-
-        # replace prompt placeholders
-        types_str = pretty_print_dict(types) if types else "No types provided."
-        predicates_str = (
-            pretty_print_predicates(predicates) if predicates else "No predicates provided."
-        )
-        nl_actions_str = (
-            "\n".join(f"{name}: {desc}" for name, desc in nl_actions.items())
-            if nl_actions
-            else "No actions provided."
-        )
-
-        prompt_template = prompt_template.replace("{domain_desc}", domain_desc)
-        prompt_template = prompt_template.replace("{types}", types_str)
-        prompt_template = prompt_template.replace("{predicates}", predicates_str)
-        prompt_template = prompt_template.replace("{nl_actions}", nl_actions_str)
+        
+        prompt_data = {
+            "domain_desc": domain_desc,
+            "types": format_types_to_string(types) if types else "No types provided.",
+            "predicates": "\n".join([f"- {pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
+        }
+        
+        prompt = prompt_template.format(**prompt_data)
 
         # iterate through attempts in case of extraction failure
         for attempt in range(max_retries):
             try:
                 model.reset_tokens()
-
-                llm_response = model.query(prompt=prompt_template)  # prompt model
+                llm_output = model.query(prompt=prompt)  # prompt model
 
                 # extract respective types from response
-                new_predicates = parse_new_predicates(llm_output=llm_response)
+                new_predicates = parse_new_predicates(llm_output=llm_output)
+                
+                # run syntax validation if applicable
+                validation_info = (True, "All validations passed.")
+                if syntax_validator:
+                    for error_type in syntax_validator.error_types:
+                        validator = getattr(syntax_validator, f"{error_type}", None)
+                        if not callable(validator):
+                            continue
+                        
+                        # dispatch based on expected arguments
+                        if error_type == "validate_types_predicates":
+                            validation_info = validator(new_predicates, types)
+                        elif error_type == "validate_format_predicates":
+                            validation_info = validator(new_predicates, types)
+                        elif error_type == "validate_duplicate_predicates":
+                            validation_info = validator(predicates, new_predicates)
+                        
+                        if not validation_info[0]:
+                            return new_predicates, llm_output, validation_info
 
-                return new_predicates, llm_response
+                return new_predicates, llm_output, validation_info
 
             except Exception as e:
                 print(
                     f"Error encountered during attempt {attempt + 1}/{max_retries}: {e}. "
-                    f"\nLLM Output: \n\n{llm_response if 'llm_response' in locals() else 'None'}\n\n Retrying..."
+                    f"\nLLM Output: \n\n{llm_output if 'llm_output' in locals() else 'None'}\n\n Retrying..."
                 )
                 time.sleep(2)  # add a delay before retrying
 
