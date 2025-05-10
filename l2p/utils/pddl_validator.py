@@ -214,6 +214,77 @@ class SyntaxValidator:
         feedback_msg = "[PASS]: all types are formatted correctly."
         return True, feedback_msg
     
+    
+    def validate_cyclic_types(
+        self,
+        types: dict[str,str] | list[dict[str,str]] | None = None,
+    ) -> tuple[bool, str]:
+        """Checks if the types given contain an invalid cyclic hierarchy."""
+        
+        def visit_type(node, visited, path, all_types):
+            """Traverses the type hierarchy and check for cycles."""
+
+            node_key = next(iter(node))  # get first type
+            
+            # if already visited this type, it indicates a cycle
+            if node_key in visited:
+                cycle_path = ' -> '.join(path[path.index(node_key):] + [node_key])
+                violated_type = node_key  # type that caused the cycle
+                return False, cycle_path, violated_type
+            
+            # mark the current type as visited in this traversal path
+            visited.add(node_key)
+            path.append(node_key)
+            
+            # visit all children of the current node
+            if "children" in node:
+                for child in node["children"]:
+                    result, cycle, violated_type = visit_type(child, visited, path, all_types)
+                    if not result:
+                        return result, cycle, violated_type
+            
+            # also check if type appears elsewhere in the hierarchy with children
+            for other_type in all_types:
+                other_key = next(iter(other_type))
+                if other_key == node_key and "children" in other_type and other_type["children"]:
+                    for child in other_type["children"]:
+                        result, cycle, violated_type = visit_type(child, visited, path, all_types)
+                        if not result:
+                            return result, cycle, violated_type
+            
+            # remove the type from the visited once its children are processed
+            visited.remove(node_key)
+            path.pop()
+            return True, "", ""
+        
+        # if no types are provided, return invalid
+        if types is None:
+            return False, "No types provided."
+
+        if isinstance(types, dict):
+            types = [{k: v} for k, v in types.items()]
+        
+        # iterate over all the top-level types
+        for type_node in types:
+            visited = set()
+            path = []  # This will keep track of the current path
+            result, cycle, violated_type = visit_type(type_node, visited, path, types)
+            if not result:
+                feedback_msg = (
+                    f"[ERROR]: Circular dependency detected in the type hierarchy: {cycle}"
+                    f"\n\nThis means the type '{violated_type}' indirectly inherits from itself through the chain:"
+                    f"\n - Starts with: '{path[0]}'"
+                    f"\n - Leads back to: '{violated_type}' via: {cycle}"
+                    f"\n\nThis creates an infinite loop in the type system where '{violated_type}' cannot be properly defined because its parent eventually depends on itself"
+                    f"\n\nPossible Solutions:"
+                    f"\n(1) Remove or modify one of the relationships in the cycle"
+                    f"\n(2) Consider flattening your hierarchy if circular references are needed"
+                )
+                return False, feedback_msg
+
+        feedback_msg = "[PASS]: Type hierarchy is valid."
+        return True, feedback_msg
+    
 
     # ---- PDDL PREDICATE CHECKS ----
 

@@ -1159,5 +1159,130 @@ class TestSyntaxValidator(unittest.TestCase):
         self.assertEqual(flag, False)
 
 
+    def test_validate_cyclic_types(self):
+        
+        # case 1: type_hierarchy is acyclic
+        type_hierarchy = [
+            {
+                "block": "",
+                "children": [
+                    {
+                        "light_block": "",
+                        "children": []
+                    },
+                    {
+                        "heavy_block": "",
+                        "children": []
+                    },
+                ]
+            },
+            {
+                "arm": "",
+                "children": [
+                    {
+                        "robot_arm": "",
+                        "children": [
+                            {
+                                "little_arm": "",
+                                "children": []
+                            },
+                            {
+                                "big_arm": "",
+                                "children": []
+                            }
+                        ]
+                    },
+                ]
+            },
+        ]
+        
+        types = {
+            'arm': 'arm for a robot',
+            'block': 'block that can be stacked and unstacked',
+            'table': 'table that blocks sits on',
+        }
+        
+        flag, msg = self.syntax_validator.validate_cyclic_types(type_hierarchy)
+        self.assertEqual(flag, True)
+
+        flag, msg = self.syntax_validator.validate_cyclic_types(types)
+        self.assertEqual(flag, True)
+        
+        # case 2: type hierarchy is cyclic within its branches
+        type_hierarchy = [
+            {
+                "block": "",
+                "children": [
+                    {
+                        "light_block": "",
+                        "children": []
+                    },
+                    {
+                        "heavy_block": "",
+                        "children": []
+                    },
+                ]
+            },
+            {
+                "arm": "",
+                "children": [
+                    {
+                        "robot_arm": "",
+                        "children": [
+                            {
+                                "little_arm": "",
+                                "children": [
+                                    {
+                                        "arm": "",
+                                        "children": ""
+                                    }
+                                ]
+                            },
+                            {
+                                "big_arm": "",
+                                "children": []
+                            }
+                        ]
+                    },
+                ]
+            },
+            {
+                "table": "",
+                "children": []
+            },
+        ]
+        
+        flag, msg = self.syntax_validator.validate_cyclic_types(type_hierarchy)
+        print(msg)
+        self.assertEqual(flag, False)
+        
+        # case 3: type hierarchy is cyclic in its parent types
+        type_hierarchy = [
+            {
+                "block": "",
+                "children": [
+                    {
+                        "arm": "",
+                        "children": []
+                    },
+                ]
+            },
+            {
+                "arm": "",
+                "children": [
+                    {
+                        "block": "",
+                        "children": []
+                    },
+                ]
+            }
+        ]
+        
+        flag, msg = self.syntax_validator.validate_cyclic_types(type_hierarchy)
+        print(msg)
+        self.assertEqual(flag, False)
+        
+        
+
 if __name__ == "__main__":
     unittest.main()

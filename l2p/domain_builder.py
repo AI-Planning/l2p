@@ -189,6 +189,8 @@ class DomainBuilder:
                         # dispatch based on expected arguments
                         if error_type == "validate_format_types":
                             validation_info = validator(type_hierarchy)
+                        elif error_type == "validate_cyclic_types":
+                            validation_info = validator(type_hierarchy)
 
                         if not validation_info[0]:
                             return type_hierarchy, llm_output, validation_info
