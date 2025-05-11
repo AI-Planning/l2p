@@ -358,7 +358,7 @@ class DomainBuilder:
 
         raise RuntimeError("Max retries exceeded. Failed to extract PDDL action.")
 
-    # CURRENTLY EXPERIMENTAL
+    # NOTE: This function is experimental and may be subject to change in future versions.
     @require_llm
     def extract_pddl_actions(
         self,

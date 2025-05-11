@@ -2,9 +2,8 @@ import unittest, textwrap
 from collections import OrderedDict
 from l2p.domain_builder import DomainBuilder
 from l2p.utils.pddl_validator import SyntaxValidator
-from l2p.utils.pddl_parser import load_file
-from .mock_llm import MockLLM
 from l2p.utils.pddl_types import Predicate
+from .mock_llm import MockLLM
 
 
 class TestDomainBuilder(unittest.TestCase):

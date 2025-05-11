@@ -35,10 +35,11 @@ class TaskBuilder:
         model: BaseLLM,
         problem_desc: str,
         prompt_template: str,
-        types: dict[str, str] = None,
+        types: dict[str, str] | list[dict[str,str]] | None = None,
         predicates: list[Predicate] = None,
+        syntax_validator: SyntaxValidator = None,
         max_retries: int = 3,
-    ) -> tuple[dict[str, str], str]:
+    ) -> tuple[dict[str, str], str, tuple[bool, str]]:
         """
         Extracts objects with given predicates in current model
 
@@ -56,35 +57,46 @@ class TaskBuilder:
             llm_response (str): the raw string BaseLLM response
         """
 
-        # replace prompt placeholders
-        predicate_str = (
-            "\n".join([f"- {pred['name']}: {pred['desc']}" for pred in predicates])
-            if predicates
-            else "No predicates provided."
-        )
-        types_str = "\n".join(types) if types else "No types provided."
-
-        prompt_template = prompt_template.replace("{types}", types_str)
-        prompt_template = prompt_template.replace("{predicates}", predicate_str)
-        prompt_template = prompt_template.replace("{problem_desc}", problem_desc)
+        prompt_data = {
+            "problem_desc": problem_desc,
+            "types": format_types_to_string(types) if types else "No types provided.",
+            "predicates": "\n".join([f"- {pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
+        }
+        
+        prompt = prompt_template.format(**prompt_data)
 
         # iterate through attempts in case of extraction failure
         for attempt in range(max_retries):
             try:
                 model.reset_tokens()
-
-                llm_response = model.query(prompt=prompt_template)  # get BaseLLM response
+                llm_output = model.query(prompt=prompt)  # get BaseLLM response
 
                 # extract respective types from response
-                objects = parse_objects(llm_response)
+                objects = parse_objects(llm_output=llm_output)
 
-                return objects, llm_response
+                # run syntax validation if applicable
+                validation_info = (True, "All validations passed.")
+                if syntax_validator:
+                    for error_type in syntax_validator.error_types:
+                        validator = getattr(syntax_validator, f"{error_type}", None)
+                        if not callable(validator):
+                            continue
+                        
+                        # dispatch based on expected arguments
+                        if error_type == "validate_task_objects":
+                            validation_info = validator(objects, types)
+                        
+                        if not validation_info[0]:
+                            return objects, llm_output, validation_info
+
+                return objects, llm_output, validation_info
 
             except Exception as e:
                 print(
-                    f"Error encountered: {e}. Retrying {attempt + 1}/{max_retries}..."
+                    f"Error on attempt {attempt + 1}/{max_retries}: {e}\n"
+                    f"LLM Output:\n{llm_output if 'llm_output' in locals() else 'None'}\nRetrying...\n"
                 )
-                time.sleep(2)  # add a delay before retrying
+                time.sleep(2)
 
         raise RuntimeError("Max retries exceeded. Failed to extract objects.")
 
@@ -94,13 +106,14 @@ class TaskBuilder:
         model: BaseLLM,
         problem_desc: str,
         prompt_template: str,
-        types: dict[str, str] = None,
+        types: dict[str, str] | list[dict[str,str]] | None = None,
         predicates: list[Predicate] = None,
         objects: dict[str, str] = None,
         initial: list[dict[str, str]] = None,
         goal: list[dict[str, str]] = None,
+        syntax_validator: SyntaxValidator = None,
         max_retries: int = 3,
-    ) -> tuple[list[dict[str, str]], str]:
+    ) -> tuple[list[dict[str, str]], str, tuple[bool, str]]:
         """
         Extracts initial states with given predicates, objects, and states in current model
 
@@ -121,43 +134,49 @@ class TaskBuilder:
             llm_response (str): the raw string BaseLLM response
         """
 
-        # replace prompt placeholders
-        predicate_str = (
-            format_predicates(predicates) if predicates else "No predicates provided."
-        )
-        types_str = "\n".join(types) if types else "No types provided."
-        objects_str = (
-            format_objects(objects) if objects else "No objects provided."
-        )
-        initial_str = (
-            format_initial(initial) if initial else "No initial state provided."
-        )
-        goal_str = format_goal(goal) if goal else "No goal state provided."
-
-        prompt_template = prompt_template.replace("{types}", types_str)
-        prompt_template = prompt_template.replace("{predicates}", predicate_str)
-        prompt_template = prompt_template.replace("{objects}", objects_str)
-        prompt_template = prompt_template.replace("{initial_state}", initial_str)
-        prompt_template = prompt_template.replace("{goal_state}", goal_str)
-        prompt_template = prompt_template.replace("{problem_desc}", problem_desc)
+        prompt_data = {
+            "problem_desc": problem_desc,
+            "types": format_types_to_string(types) if types else "No types provided.",
+            "predicates": "\n".join([f"- {pred['raw']}" for pred in predicates]) if predicates else "No predicates provided.",
+            "objects": format_objects(objects) if objects else "No objects provided.",
+            "initial_state": format_initial(initial) if initial else "No initial state provided.",
+            "goal_state": format_goal(goal) if goal else "No goal state provided."
+        }
+        
+        prompt = prompt_template.format(**prompt_data)
 
         # iterate through attempts in case of extraction failure
         for attempt in range(max_retries):
             try:
                 model.reset_tokens()
-
-                llm_response = model.query(prompt=prompt_template)
+                llm_output = model.query(prompt=prompt)
 
                 # extract respective types from response
-                initial = parse_initial(llm_response)
+                initial = parse_initial(llm_output=llm_output)
 
-                return initial, llm_response
+                # run syntax validation if applicable
+                validation_info = (True, "All validations passed.")
+                if syntax_validator:
+                    for error_type in syntax_validator.error_types:
+                        validator = getattr(syntax_validator, f"{error_type}", None)
+                        if not callable(validator):
+                            continue
+                        
+                        # dispatch based on expected arguments
+                        if error_type == "validate_task_states":
+                            validation_info = validator(initial, objects, predicates, "initial")
+                        
+                        if not validation_info[0]:
+                            return initial, llm_output, validation_info
+
+                return initial, llm_output, validation_info
 
             except Exception as e:
                 print(
-                    f"Error encountered: {e}. Retrying {attempt + 1}/{max_retries}..."
+                    f"Error on attempt {attempt + 1}/{max_retries}: {e}\n"
+                    f"LLM Output:\n{llm_output if 'llm_output' in locals() else 'None'}\nRetrying...\n"
                 )
-                time.sleep(2)  # add a delay before retrying
+                time.sleep(2)
 
         raise RuntimeError("Max retries exceeded. Failed to extract initial states.")
 
@@ -167,11 +186,12 @@ class TaskBuilder:
         model: BaseLLM,
         problem_desc: str,
         prompt_template: str,
-        types: dict[str, str] = None,
+        types: dict[str, str] | list[dict[str,str]] | None = None,
         predicates: list[Predicate] = None,
         objects: dict[str, str] = None,
         initial: list[dict[str, str]] = None,
         goal: list[dict[str, str]] = None,
+        syntax_validator: SyntaxValidator = None,
         max_retries: int = 3,
     ) -> tuple[list[dict[str, str]], str]:
         """
@@ -194,43 +214,49 @@ class TaskBuilder:
             llm_response (str): the raw string BaseLLM response
         """
 
-        # replace prompt placeholders
-        predicate_str = (
-            format_predicates(predicates) if predicates else "No predicates provided."
-        )
-        types_str = "\n".join(types) if types else "No types provided."
-        objects_str = (
-            format_objects(objects) if objects else "No objects provided."
-        )
-        initial_str = (
-            format_initial(initial) if initial else "No initial state provided."
-        )
-        goal_str = format_goal(goal) if goal else "No goal state provided."
-
-        prompt_template = prompt_template.replace("{types}", types_str)
-        prompt_template = prompt_template.replace("{predicates}", predicate_str)
-        prompt_template = prompt_template.replace("{objects}", objects_str)
-        prompt_template = prompt_template.replace("{initial_state}", initial_str)
-        prompt_template = prompt_template.replace("{goal_state}", goal_str)
-        prompt_template = prompt_template.replace("{problem_desc}", problem_desc)
+        prompt_data = {
+            "problem_desc": problem_desc,
+            "types": format_types_to_string(types) if types else "No types provided.",
+            "predicates": "\n".join([f"- {pred['raw']}" for pred in predicates]) if predicates else "No predicates provided.",
+            "objects": format_objects(objects) if objects else "No objects provided.",
+            "initial_state": format_initial(initial) if initial else "No initial state provided.",
+            "goal_state": format_goal(goal) if goal else "No goal state provided."
+        }
+        
+        prompt = prompt_template.format(**prompt_data)
 
         # iterate through attempts in case of extraction failure
         for attempt in range(max_retries):
             try:
                 model.reset_tokens()
-
-                llm_response = model.query(prompt=prompt_template)
+                llm_output = model.query(prompt=prompt)
 
                 # extract respective types from response
-                goal = parse_goal(llm_response)
+                goal = parse_goal(llm_output=llm_output)
 
-                return goal, llm_response
+                # run syntax validation if applicable
+                validation_info = (True, "All validations passed.")
+                if syntax_validator:
+                    for error_type in syntax_validator.error_types:
+                        validator = getattr(syntax_validator, f"{error_type}", None)
+                        if not callable(validator):
+                            continue
+                        
+                        # dispatch based on expected arguments
+                        if error_type == "validate_task_states":
+                            validation_info = validator(goal, objects, predicates, "goal")
+                        
+                        if not validation_info[0]:
+                            return goal, llm_output, validation_info
+
+                return goal, llm_output, validation_info
 
             except Exception as e:
                 print(
-                    f"Error encountered: {e}. Retrying {attempt + 1}/{max_retries}..."
+                    f"Error on attempt {attempt + 1}/{max_retries}: {e}\n"
+                    f"LLM Output:\n{llm_output if 'llm_output' in locals() else 'None'}\nRetrying...\n"
                 )
-                time.sleep(2)  # add a delay before retrying
+                time.sleep(2)
 
         raise RuntimeError("Max retries exceeded. Failed to extract goal states.")
 
@@ -242,9 +268,13 @@ class TaskBuilder:
         prompt_template: str,
         types: dict[str, str] = None,
         predicates: list[Predicate] = None,
-        actions: list[Action] = None,
+        syntax_validator: SyntaxValidator = None,
         max_retries: int = 3,
-    ) -> tuple[dict[str, str], list[dict[str, str]], list[dict[str, str]], str]:
+    ) -> tuple[
+            dict[str, str], 
+            list[dict[str, str]], 
+            list[dict[str, str]], 
+            str, tuple[bool, str]]:
         """
         Extracts whole task specification in current model
 
@@ -255,7 +285,6 @@ class TaskBuilder:
             prompt_template (str): prompt template class
             types (dict[str,str]): current types in model
             predicates (list[Predicate]): current list of predicates in model
-            actions (list[Action]): current list of Action instances in model
             max_retries (int): max # of retries if failure occurs
 
         Returns:
@@ -265,41 +294,52 @@ class TaskBuilder:
             llm_response (str): the raw string BaseLLM response
         """
 
-        model.reset_tokens()
-
-        # replace prompt placeholders
-        predicate_str = (
-            format_predicates(predicates) if predicates else "No predicates provided."
-        )
-        types_str = "\n".join(types) if types else "No types provided."
-        action_str = (
-            format_actions(actions=actions) if actions else "No actions provided."
-        )
-
-        prompt_template = prompt_template.replace("{types}", types_str)
-        prompt_template = prompt_template.replace("{predicates}", predicate_str)
-        prompt_template = prompt_template.replace("{actions}", action_str)
-        prompt_template = prompt_template.replace("{problem_desc}", problem_desc)
+        prompt_data = {
+            "problem_desc": problem_desc,
+            "types": format_types_to_string(types) if types else "No types provided.",
+            "predicates": "\n".join([f"- {pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
+        }
+        
+        prompt = prompt_template.format(**prompt_data)
 
         # iterate through attempts in case of extraction failure
         for attempt in range(max_retries):
             try:
                 model.reset_tokens()
-
-                llm_response = model.query(prompt=prompt_template)
+                llm_output = model.query(prompt=prompt)
 
                 # extract respective types from response
-                objects = parse_objects(llm_response)
-                initial = parse_initial(llm_response)
-                goal = parse_goal(llm_response)
+                objects = parse_objects(llm_output=llm_output)
+                initial = parse_initial(llm_output=llm_output)
+                goal = parse_goal(llm_output=llm_output)
 
-                return objects, initial, goal, llm_response
+                # run syntax validation if applicable
+                validation_info = (True, "All validations passed.")
+                if syntax_validator:
+                    for error_type in syntax_validator.error_types:
+                        validator = getattr(syntax_validator, f"{error_type}", None)
+                        if not callable(validator):
+                            continue
+                        
+                        # dispatch based on expected arguments
+                        if error_type == "validate_task_objects":
+                            validation_info = validator(objects, types)
+                        elif error_type == "validate_task_states":
+                            validation_info = validator(initial, objects, predicates, "initial")
+                            if validation_info[0]:
+                                validation_info = validator(goal, objects, predicates, "goal")
+                        
+                        if not validation_info[0]:
+                            return objects, initial, goal, llm_output, validation_info
+
+                return objects, initial, goal, llm_output, validation_info
 
             except Exception as e:
                 print(
-                    f"Error encountered: {e}. Retrying {attempt + 1}/{max_retries}..."
+                    f"Error on attempt {attempt + 1}/{max_retries}: {e}\n"
+                    f"LLM Output:\n{llm_output if 'llm_output' in locals() else 'None'}\nRetrying...\n"
                 )
-                time.sleep(2)  # add a delay before retrying
+                time.sleep(2)
 
         raise RuntimeError("Max retries exceeded. Failed to extract task.")
 
