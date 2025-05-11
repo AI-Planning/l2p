@@ -50,7 +50,7 @@ class DomainBuilder:
         model: BaseLLM,
         domain_desc: str,
         prompt_template: str,
-        types: dict[str,str] | list[dict[str,str]] | None,
+        types: dict[str,str] | list[dict[str,str]] | None = None,
         check_invalid_obj_usage: bool = True,
         syntax_validator: SyntaxValidator = None,
         max_retries: int = 3,
@@ -126,7 +126,7 @@ class DomainBuilder:
         model: BaseLLM,
         domain_desc: str,
         prompt_template: str,
-        types: dict[str,str] | list[dict[str,str]] | None,
+        types: dict[str,str] | list[dict[str,str]] | None = None,
         check_invalid_obj_usage: bool = True,
         syntax_validator: SyntaxValidator = None,
         max_retries: int = 3,
@@ -544,6 +544,7 @@ class DomainBuilder:
         types: dict[str, str] | list[dict[str,str]] | None = None,
         predicates: list[Predicate] = None,
         syntax_validator: SyntaxValidator = None,
+        parse_predicates: bool = True,
         max_retries: int = 3,
     ) -> tuple[str, list[Predicate], str, tuple[bool,str]]:
         """
@@ -585,10 +586,14 @@ class DomainBuilder:
                 model.reset_tokens()
                 llm_output = model.query(prompt=prompt)  # get BaseLLM response
 
-                # extract respective types from response
+                # extract respective preconditions from response
                 preconditions = parse_preconditions(llm_output=llm_output)
-                new_predicates = parse_new_predicates(llm_output=llm_output)
-                
+
+                if parse_predicates:
+                    new_predicates = parse_new_predicates(llm_output=llm_output)
+                else:
+                    new_predicates = None
+
                 # run syntax validation if applicable
                 validation_info = (True, "All validations passed.")
                 if syntax_validator:
@@ -638,6 +643,7 @@ class DomainBuilder:
         preconditions: str = None,
         predicates: list[Predicate] = None,
         syntax_validator: SyntaxValidator = None,
+        parse_predicates: bool = True,
         max_retries: int = 3,
     ) -> tuple[str, list[Predicate], str, tuple[bool,str]]:
         """
@@ -680,9 +686,13 @@ class DomainBuilder:
                 model.reset_tokens()
                 llm_output = model.query(prompt=prompt)  # get BaseLLM response
 
-                # extract respective types from response
+                # extract respective effects from response
                 effects = parse_effects(llm_output=llm_output)
-                new_predicates = parse_new_predicates(llm_output=llm_output)
+                
+                if parse_predicates:
+                    new_predicates = parse_new_predicates(llm_output=llm_output)
+                else:
+                    new_predicates = None
                 
                 # run syntax validation if applicable
                 validation_info = (True, "All validations passed.")
@@ -698,7 +708,7 @@ class DomainBuilder:
                         elif error_type == "validate_duplicate_headers":
                             validation_info = validator(llm_output)
                         elif error_type == "validate_unsupported_keywords":
-                            validation_info = validator(preconditions)
+                            validation_info = validator(effects)
                         elif error_type == "validate_duplicate_predicates":
                             validation_info == validator(predicates, new_predicates)
                         elif error_type == "validate_pddl_usage_predicates":
@@ -919,7 +929,7 @@ class DomainBuilder:
         Args:
             domain_name (str): domain name
             types (str | None): domain types
-            predicates (str | None): domain predicates
+            predicates (list[Predicate] | None): domain predicates
             actions (list[Action]): domain actions
             requirements (list[str]): domain requirements
 

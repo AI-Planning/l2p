@@ -115,7 +115,7 @@ def parse_new_predicates(llm_output) -> list[Predicate]:
                 print(f'[WARNING] unable to parse the line: "{p_line}"')
             continue
 
-        # Extract predicate signature and description
+        # extract predicate signature and description
         if ": " in p_line:
             pred_part, desc = p_line.split(": ", 1)
             predicate_desc = desc.strip().strip("'\"")
@@ -123,10 +123,10 @@ def parse_new_predicates(llm_output) -> list[Predicate]:
             pred_part = p_line
             predicate_desc = ""
 
-        # Clean the predicate signature
+        # clean the predicate signature
         pred_part = pred_part.strip("- ()").strip()
         
-        # Split into name and parameters
+        # split into name and parameters
         parts = pred_part.split()
         if not parts:
             continue
@@ -158,7 +158,7 @@ def parse_new_predicates(llm_output) -> list[Predicate]:
                     print(f"[WARNING] Missing type after '-' in: {p_line}")
                     i += 1
             else:
-                # Might be a typeless parameter (accept it with warning)
+                # might be a typeless parameter (accept it with warning)
                 print(f"[WARNING] Assuming '{part}' is an untyped parameter in: {p_line}")
                 current_param = f"?{part.lstrip('?')}"
                 params[current_param] = ""

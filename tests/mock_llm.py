@@ -1,18 +1,17 @@
-class MockLLM:
-    def __init__(self, responses):
+from l2p.llm.base import BaseLLM
+
+class MockLLM(BaseLLM):
+    def __init__(self):
         """
         Initialize with a list of responses to simulate the LLM's outputs.
         """
-        self.responses = responses
-        self.current_index = 0
+        self.output = ""
 
-    def query(self, prompt: str = None):
+    def query(self, prompt: str):
         """
         Simulates the LLM query response.
         """
-        response = self.responses[self.current_index]
-        self.current_index += 1
-        return response
+        return self.output
 
     def reset_tokens(self):
         """
