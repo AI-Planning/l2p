@@ -33,10 +33,18 @@ def action_desc(action: Action) -> str:
     """Helper function to format individual action descriptions"""
     param_str = format_action_params(action)
     
+    preconditions = "\n".join(
+        line for line in action['preconditions'].splitlines() if line.strip()
+    )
+    
+    effects = "\n".join(
+        line for line in action['effects'].splitlines() if line.strip()
+    )
+    
     desc = f"(:action {action['name']}\n"
     desc += f"   :parameters (\n{indent(string=param_str, level=2)}\n   )\n"
-    desc += f"   :precondition\n{indent(string=action['preconditions'], level=2)}\n"
-    desc += f"   :effect\n{indent(string=action['effects'], level=2)}\n"
+    desc += f"   :precondition\n{indent(string=preconditions, level=2)}\n"
+    desc += f"   :effect\n{indent(string=effects, level=2)}\n"
     desc += ")"
     return desc
 
@@ -162,8 +170,12 @@ def format_types_to_string(
     
     # Handle top-level objects first
     if "object" in type_groups:
-        top_level_types = " ".join(sorted(type_groups["object"]))
-        lines.append(f"{top_level_types} - object")
+        top_level_types = sorted(t for t in type_groups["object"] if t != "object")
+        if top_level_types:
+            if append_obj_type_to_parent:
+                lines.append(f"{' '.join(top_level_types)} - object")
+            else:
+                lines.append(f"{' '.join(top_level_types)}")
         del type_groups["object"]
     
     # Handle other groups
@@ -183,20 +195,6 @@ def format_predicates(predicates: list[Predicate]) -> str:
             unique[key] = pred["clean"].replace(":", " ; ")
 
     return "\n".join(unique.values())
-
-
-def format_action(self, actions: list[Action]) -> str:
-    desc = ""
-    for action in actions:
-        param_str = "\n".join(
-            [f"{name} - {type}" for name, type in action["params"].items()]
-        )  # name includes ?
-        desc += f"(:action {action['name']}\n"
-        desc += f"   :parameters (\n{indent(param_str,2)}\n   )\n"
-        desc += f"   :precondition\n{indent(action['preconditions'],2)}\n"
-        desc += f"   :effect\n{indent(action['effects'],2)}\n"
-        desc += ")\n"
-    return desc
 
 
 def format_objects(objects: dict[str, str]) -> str:
