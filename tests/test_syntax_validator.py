@@ -672,6 +672,25 @@ class TestSyntaxValidator(unittest.TestCase):
             types=type_hierarchy
         )
         self.assertEqual(flag, False)
+        
+        # case 4: no types
+        flag, _ = self.syntax_validator.validate_task_objects(
+            objects=objects
+        )
+        self.assertEqual(flag, True)
+        
+        objects = {
+            'blue_block': '', 
+            'red_block': 'rock', 
+            'yellow_block': 'triangle', 
+            'green_block': 'block'
+            }
+        
+        flag, s = self.syntax_validator.validate_task_objects(
+            objects=objects
+        )
+        self.assertEqual(flag, False)
+        
 
 
     def test_validate_task_states(self):

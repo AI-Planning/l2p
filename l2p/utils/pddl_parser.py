@@ -5,6 +5,7 @@ This file contains collection of functions for extracting/parsing information fr
 from pddl.formatter import domain_to_string, problem_to_string
 from pddl import parse_domain, parse_problem
 from .pddl_types import Action, Predicate
+from .pddl_format import remove_comments
 from collections import OrderedDict
 from copy import deepcopy
 from typing import Optional
@@ -312,7 +313,6 @@ def parse_objects(llm_output: str) -> dict[str, str]:
 
     return objects
 
-
 def parse_initial(llm_output: str) -> list[dict[str, str]]:
     """
     Extracts state (PDDL-init) from LLM response and returns it as a list of dict strings
@@ -346,7 +346,6 @@ def parse_initial(llm_output: str) -> list[dict[str, str]]:
 
     return states
 
-
 def parse_goal(llm_output: str) -> list[dict[str, str]]:
     """
     Extracts goal (PDDL-goal) from LLM response and returns it as a string
@@ -375,13 +374,13 @@ def parse_goal(llm_output: str) -> list[dict[str, str]]:
     goal = []
     for line in goal_pure.split("\n"):
         line = line.strip(" ()")
-        if not line:  # Skip empty lines
+        if not line:  # skip empty lines
             continue
         name = line.split(" ")[0]
         params = line.split(" ")[1:] if len(line.split(" ")) > 1 else []
         goal.append({"name": name, "params": params})
 
-    return goal  # Since the goal uses `and` and `not` recombining it is difficult
+    return goal 
 
 
 def prune_types(
@@ -589,6 +588,60 @@ def combine_blocks(heading_str: str):
     return combined.replace(
         "\n\n", "\n"
     ).strip()  # remove leading/trailing whitespace and internal empty lines
+    
+    
+def parse_pddl(pddl_str: str) -> list:
+        """
+        Simplified PDDL parser that converts the string into a nested list structure.
+        """
+        import re
+        
+        # Tokenize the string
+        tokens = re.sub(r'([()])', r' \1 ', pddl_str).split()
+        stack = []
+        current = []
+        
+        for token in tokens:
+            if token == '(':
+                stack.append(current)
+                current = []
+            elif token == ')':
+                if stack:
+                    parent = stack.pop()
+                    parent.append(current)
+                    current = parent
+            else:
+                current.append(token)
+        
+        if len(current) != 1:
+            raise ValueError("Malformed PDDL expression")
+        
+        nested_pddl = concatenate_strings(current[0])
+        return nested_pddl
+    
+def concatenate_strings(nested_list):
+    """Helper function that concatenates strings within a list together."""
+    if not isinstance(nested_list, list):
+        return nested_list
+    
+    new_list = []
+    i = 0
+    while i < len(nested_list):
+        current = nested_list[i]
+        if isinstance(current, str):
+            # Start collecting consecutive strings
+            concatenated = current
+            j = i + 1
+            while j < len(nested_list) and isinstance(nested_list[j], str):
+                concatenated += ' ' + nested_list[j]
+                j += 1
+            new_list.append(concatenated)
+            i = j
+        else:
+            # Recurse for sublists
+            new_list.append(concatenate_strings(current))
+            i += 1
+    return new_list
 
 
 def check_parse_domain(file_path: str):

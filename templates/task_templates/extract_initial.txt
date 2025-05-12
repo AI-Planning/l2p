@@ -2,7 +2,7 @@ End your final answer starting with "### INITIAL" containg the predicates with '
 
 ### INITIAL
 ```
-(predicate_name object1 object2) ; comment for initial state predicate 1
-(predicate_name object3 object4) ; comment for initial state predicate 2
-(predicate_name object5) ; comment for initial state predicate 3
+(<predicate_name> <object1> <object2>) ; comment for initial state predicate 1
+(<predicate_name> <object3> <object4>) ; comment for initial state predicate 2
+(<predicate_name> <object5>) ; comment for initial state predicate 3
 ```

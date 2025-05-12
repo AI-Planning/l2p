@@ -20,11 +20,12 @@ Is supported in:
 """
 
 from collections import OrderedDict
-from .pddl_parser import parse_params, parse_new_predicates, parse_predicates
+from .pddl_parser import parse_params, parse_new_predicates, parse_predicates, parse_pddl
 from .pddl_types import Predicate
 from .pddl_format import format_types, remove_comments
 import re
 
+from typing import List, OrderedDict, Tuple, Union, Optional, Dict
 
 class SyntaxValidator:
     def __init__(
@@ -50,9 +51,9 @@ class SyntaxValidator:
         self.PDDL_KEYWORDS = {
             "and", "or", "not", "when", "imply",
             "exists", "forall", "either",
-            "increase", "decrease", "assign", "scale-up", "scale-down",
-            "=", "<", ">", "<=", ">=",
-            "number", "object", "total-cost",
+            # "increase", "decrease", "assign", "scale-up", "scale-down",
+            # "=", "<", ">", "<=", ">=",
+            # "number", "object", "total-cost",
         }
         
         self.error_types = error_types
@@ -470,15 +471,16 @@ class SyntaxValidator:
         pddl: str,
         predicates: list[Predicate],
         action_params: OrderedDict,
-        types: dict[str, str] | list[dict[str,str]] | None = None,
+        types: dict[str, str] | list[dict[str, str]] | None = None,
         part="preconditions",
     ) -> tuple[bool, str]:
         """
-        This function checks three types of errors:
-            - (i) check if the num of params given matches the num of params in predicate definition
-            - (ii) check if there is any param that is not listed under `Action Parameters`
-            - (iii) check if the param type matches that in the predicate definition
+        Validates predicates in nested PDDL list format.
         """
+        
+        pddl = remove_comments(pddl)
+        pddl = parse_pddl(pddl)
+        pred_index = {pred["name"]: pred for pred in predicates}
 
         def get_ordinal_suffix(_num):
             return (
@@ -486,180 +488,132 @@ class SyntaxValidator:
                 if _num not in (11, 12, 13)
                 else "th"
             )
+
+        def traverse(node, scoped_params):
+            if isinstance(node, str):
+                return True, "[PASS]"
+
+            if not isinstance(node, list) or len(node) == 0:
+                return True, "[PASS]"
+
+            keyword = node[0].lower()
+
+            # Logical connectives
+            if keyword in {"and", "or", "not", "implies"}:
+                children = node[1:] if keyword != "not" else [node[1]]
+                for child in children:
+                    valid, msg = traverse(child, scoped_params)
+                    if not valid:
+                        return False, msg
+                return True, "[PASS]"
+
+            # Quantifiers
+            if keyword in {"forall", "exists"}:
+                if len(node) != 3:
+                    return False, f"[ERROR]: Malformed quantifier in {part}: {node}"
+                
+                param_spec = node[1]  # e.g., ['?b - box']
+                body = node[2]
+
+                new_scope = scoped_params.copy()
+
+                if isinstance(param_spec[0], list):  # e.g., [['?x - block'], ['?y - block']]
+                    for spec in param_spec:                        
+                        var = spec[0]
+                        _type = spec[2] if len(spec) >= 3 and spec[1] == "-" else ""
+                        new_scope[var] = _type
+                else:  # e.g., ['?x - block']
+                    param_spec = param_spec[0].split(" ")
+                    var = param_spec[0]
+                    _type = param_spec[2] if len(param_spec) >= 3 and param_spec[1] == "-" else ""
+                    
+                    new_scope[var] = _type
+
+                return traverse(body, new_scope)
             
-        # remove all comments
-        pddl = remove_comments(pddl)
-
-        pred_names = {predicates[i]["name"]: i for i in range(len(predicates))}
-        pddl_elems = [e for e in pddl.replace("(", " ( ").replace(")", " ) ").split() if e != ""]
-        idx = 0
-                
-        action_predicates = dict()
-
-        while idx < len(pddl_elems):
-            if pddl_elems[idx] == "(" and idx + 1 < len(pddl_elems):
-                pred_candidate = pddl_elems[idx + 1]
-                
-                # put predicate name into list
-                if pred_candidate not in self.PDDL_KEYWORDS and pred_candidate not in {"(", ")"}:
-                    
-                    orig_idx = idx
-                    curr_pred_tokens = []
-                    idx += 2
-                    
-                    while idx < len(pddl_elems):
-                        token = pddl_elems[idx]
-                        if token == ")":
-                            break
-                        curr_pred_tokens.append(token)
-                        idx += 1
-                        
-                    action_predicates[pred_candidate] = f"{' '.join(curr_pred_tokens)}"
-                    idx = orig_idx
-                
-                if pred_candidate in pred_names:
-                    curr_pred_name = pred_candidate
-                    target_pred_info = predicates[pred_names[curr_pred_name]]
-                    
-                    curr_pred_tokens = []
-                    idx += 2
-
-                    # Collect predicate parameters until closing ')'
-                    while idx < len(pddl_elems):
-                        token = pddl_elems[idx]
-                        if token == ")":
-                            break
-                        curr_pred_tokens.append(token)
-                        idx += 1
-
-                    curr_pred_line = f"({curr_pred_name} {' '.join(curr_pred_tokens)})"
-                    
-
-                    # Clean out comments if any (denoted by ';')
-                    raw_param_str = " ".join(curr_pred_tokens).split(";")[0].strip()
-                    curr_pred_params = raw_param_str.split()
-
-                    # --- (i) Parameter count check ---
-                    n_expected_param = len(target_pred_info["params"])
-                    n_actual_param = len(curr_pred_params)
-
-                    if n_expected_param != n_actual_param:
-                        feedback_msg = (
-                            f"[ERROR]: There is a syntax mistake in the {part} section.\n"
-                            f"Predicate `{target_pred_info['clean']}` expects {n_expected_param} parameter variable(s), "
-                            f"but found {n_actual_param}.\n\n"
-                            f"Parsed line: {curr_pred_line}"
-                            f"\n\nPossible causes:"
-                            f"\n(1) Missing variable(s). Example: `(drive ?c)` has only 1 variable, but should be `(drive ?c ?from)` "
-                            f"to match the definition `(drive ?c - car ?from - location)`."
-                            f"\n(2) Object types are included in the {part} section incorrectly."
-                            f"\n\nFor example, given the original predicate definition `(drive ?v - vehicle ?l - location)`:"
-                            f"\nPredicates declared in the {part}:"
-                            f"\n - `(drive ?car ?from)` is correct, "
-                            f"\n - `(drive ?car - vehicle ?from - location)` is incorrect."
-                        )
-
-                        return False, feedback_msg
-
-                    # --- (ii) Unknown parameter check ---
-                    for curr_param in curr_pred_params:
-                        if curr_param not in action_params:
-                            feedback_msg = (
-                                f"[ERROR]: A predicate in {part} contains parameter variable(s) not found in the action parameter list: "
-                                f"{list(action_params.keys())}\n\n"
-                                f"Parsed line: {curr_pred_line}\n"
-                                f"Unknown variable: {curr_param}"
-                                f"\n\nPossible solutions:"
-                                f"\n(1) Ensure that the variables used in the predicate match those defined in the action's parameter list."
-                                f"\n(2) If needed, update the action's parameter list and their types to reflect the correct requirements for the action."
-                            )
-
-                            return False, feedback_msg
-
-                    # --- (iii) Type mismatch check ---
-                    if (types is None or len(types) == 0) and (
-                    any(target_pred_info["params"].values()) or any(action_params.values())
-                    ):
-                        source_of_types = []
-                        if any(target_pred_info["params"].values()):
-                            source_of_types.append(f"the predicate(s)")
-                        if any(action_params.values()):
-                            source_of_types.append(f"the action parameter list")
-
-                        type_sources = " and ".join(source_of_types)
-
-                        feedback_msg = f"[ERROR]: Type information is declared in {type_sources}, but the `types` dictionary is empty or undefined.\n\n"
-
-                        # collect all predicates that contain types
-                        predicates_with_types = [
-                            pred["clean"] for pred in predicates if any(pred["params"].values())
-                        ]
-                        
-                        if predicates_with_types:
-                            feedback_msg += f"Predicates declared with types: {', '.join(predicates_with_types)}\n"
-
-                        violated_params = [f"{k} - {v}" for k, v in action_params.items() if v]
-                        if violated_params:
-                            for i in violated_params:
-                                feedback_msg += f"Action parameter with types: {i}\n"
-                                
-                        feedback_msg += (
-                            f"\nTo resolve this, either:\n"
-                            f"1. Remove type annotations from {type_sources} if type checking is not required.\n"
-                            f"2. Provide a valid `types` dictionary that defines the available types.\n"
-                        )
-
-                        return False, feedback_msg
-                    
-                    target_param_types = list(target_pred_info["params"].values())
-
-                    for param_idx, target_type in enumerate(target_param_types):
-                        curr_param = curr_pred_params[param_idx]
-                        claimed_type = action_params[curr_param]
-                        flag, _ = self.validate_type(target_type, claimed_type, types)
-
-                        if not flag:
-                            param_number = param_idx + 1
-                            ordinal_suffix = get_ordinal_suffix(param_number)
-                            parsed_vars = [
-                                f"{param} - {action_params[param]}"
-                                for param in curr_pred_params
-                            ]
-                            pred_name = target_pred_info["name"]
-                            clean_pred = target_pred_info["clean"]
-
-                            feedback_msg = (
-                                f"[ERROR]: There is a syntax mistake in the {part}.\n"
-                                f"- The {param_number}{ordinal_suffix} parameter of predicate `{clean_pred}` should be of type `{target_type}`,\n"
-                                f"  but `{claimed_type}` was provided in `{curr_pred_line}`.\n"
-                                f"- According to the action's parameter list, `{curr_param}` is of type `{claimed_type}`.\n\n"
-                                f"Parsed line: {curr_pred_line}\n"
-                                f"Extracted variables and types: {parsed_vars}\n\n"
-                                f"Expected types for predicate `{pred_name}`: {target_param_types}\n\n"
-                                f"Possible solutions:"
-                                f"\n(1) Correct the variable used in the predicate to match the expected type."
-                                f"\n(2) Update the action's parameter list if the type assignment is incorrect."
-                            )
-                            return False, feedback_msg
-
-            # move to next token
-            idx += 1
+            # Predicate
+            pred_ = keyword
+            pred_name = pred_.split(" ")[0]
+            pred_args = node[0].split(" ")[1:]
             
-        available_preds = "\n - ".join([i['raw'] for i in predicates])
+            if pred_name == "=":
+                if len(pred_args) != 2:
+                    return (
+                        False,
+                        f"[ERROR]: Equality statement `=` in {part} must have exactly two arguments.\nParsed line: {node}"
+                    )
+                for var in node[1:]:
+                    if var not in scoped_params:
+                        return (
+                            False,
+                            f"[ERROR]: Variable `{var}` in equality test not found in scope.\nParsed line: {node}"
+                        )
+                return True, "[PASS]"
 
-        for i in action_predicates.keys():
-            if i not in pred_names.keys():
-                feedback_msg = (
-                    f"[ERROR]: Undeclared predicate `{i}` found in {part}.\n"
-                    f"List of available predicates are:\n"
-                    f" - {available_preds}\n\n"
-                    f"Parsed line: {f'({i} {action_predicates[i]})'}"
-                    f"\n\nMake sure this predicate is declared in the list of known predicates. If necessary, add a new predicate.\n"
+            if pred_name not in pred_index:
+                available_preds = "\n - " + "\n - ".join([p["raw"] for p in predicates])
+                return (
+                    False,
+                    f"[ERROR]: Undeclared predicate `({pred_}` found in {part}.\n"
+                    f"List of available predicates are:{available_preds}\n\n"
+                    f"Parsed line: {node}\n"
                 )
-                return False, feedback_msg
 
-        feedback_msg = "[PASS]: all correct use of predicates."
-        return True, feedback_msg
+            target_pred = pred_index[pred_name]
+            expected_args = list(target_pred["params"].keys())
+            expected_types = list(target_pred["params"].values())
+
+            # (i) Arity check
+            if len(pred_args) != len(expected_args):
+                return (
+                    False,
+                    f"[ERROR]: Predicate `{target_pred['clean']}` expects {len(expected_args)} parameter(s), "
+                    f"but found {len(pred_args)} in {part}.\nParsed line: {node}"
+                )
+
+            for i, param in enumerate(pred_args):
+                if param not in scoped_params:
+                    return (
+                        False,
+                        f"[ERROR]: Parameter `{param}` in predicate `{pred_name}` not found in scope.\n"
+                        f"Available variables: {list(scoped_params.keys())}\nParsed line: {node}\n\n"
+                        f"Possible solutions:\n"
+                        f"(1) Make sure the parameter variable being used is found in the available parameter variables list.\n"
+                        f"(2) Make sure that variable is assigned the correct type for use in predicate `{pred_name}`."
+                        
+                    )
+
+                # (iii) Type check
+                expected_type = expected_types[i]
+                actual_type = scoped_params[param]
+
+                # Type mismatch only if both are defined
+                if expected_type and actual_type:
+                    if (types is None or len(types) == 0):
+                        return (
+                            False,
+                            f"[ERROR]: Types are declared in the {part} predicates, but list of available types are empty.\n"
+                            f"Remove all types from predicates."
+                        )
+                    flag, _ = self.validate_type(expected_type, actual_type, types)
+                    if not flag:
+                        param_number = i + 1
+                        ordinal_suffix = get_ordinal_suffix(param_number)
+                        violating_var = node[0].split(" ")[param_number]
+                        return (
+                            False,
+                            f"[ERROR]: The {param_number}{ordinal_suffix} parameter of `{target_pred['clean']}` "
+                            f"should be of type `{expected_type}`, but type `{actual_type}` was assigned to `{violating_var}` "
+                            f"in predicate: ({node[0]})\n\n"
+                            f"Possible solutions:\n"
+                            f"(1) Make sure variable `{violating_var}` is assigned the correct type for use in predicate `{pred_name}`\n"
+                            f"(2) If `{violating_var}` was recently introduced (i.e. forall quantifier), make sure the variable in that declaration line is assigned the correct type"
+                        )
+
+            return True, "[PASS]"
+
+        # Start traversal with base action parameters
+        return traverse(pddl, scoped_params=action_params.copy())
 
 
     def validate_usage_predicates(
@@ -818,8 +772,10 @@ class SyntaxValidator:
                 continue
 
             if not obj_type_found:
+                message = f"not found in types: {list(type_keys)}" if type_keys else "but there are no types declared."
                 feedback_msgs.append(
-                    f"[ERROR]: Object variable '{obj_name}' has an invalid type '{obj_type}' not found in types: {list(type_keys)}\n"
+                    f"[ERROR]: Object variable '{obj_name}' has an invalid type '{obj_type}' {message}\n"
+                    f"If an object variable requires a type, it must be assigned to the given types. If there are no types, leave object variable untyped.\n\n"
                     f"Parsed line: ({obj_name} - {obj_type})\n"
                 )
                 valid = False

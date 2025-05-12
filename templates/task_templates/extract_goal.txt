@@ -2,9 +2,7 @@ End your final answer starting with "### GOAL" containg the predicates with ''' 
 
 ### GOAL
 ```
-(and
-   (predicate_name object) ; comment
-)
+(<predicate_name> <object1> <object2>) ; comment for goal state predicate 1
+(<predicate_name> <object3> <object4>) ; comment for goal state predicate 2
+(<predicate_name> <object5>) ; comment for goal state predicate 3
 ```
-
-Even if there is one goal state, it must contain the PDDL 'and' syntax

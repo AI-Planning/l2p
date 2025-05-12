@@ -785,7 +785,13 @@ class DomainBuilder:
                             continue
                         
                         # dispatch based on expected arguments
-                        if error_type == "validate_types_predicates":
+                        if error_type == "validate_header":
+                            validation_info = validator(llm_output)
+                        elif error_type == "validate_duplicate_headers":
+                            validation_info = validator(llm_output)
+                        elif error_type == "validate_unsupported_keywords":
+                            validation_info = validator(llm_output)
+                        elif error_type == "validate_types_predicates":
                             validation_info = validator(new_predicates, types)
                         elif error_type == "validate_format_predicates":
                             validation_info = validator(new_predicates, types)

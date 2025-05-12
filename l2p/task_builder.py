@@ -83,7 +83,13 @@ class TaskBuilder:
                             continue
                         
                         # dispatch based on expected arguments
-                        if error_type == "validate_task_objects":
+                        if error_type == "validate_header":
+                            validation_info = validator(llm_output)
+                        elif error_type == "validate_duplicate_headers":
+                            validation_info = validator(llm_output)
+                        elif error_type == "validate_unsupported_keywords":
+                            validation_info = validator(llm_output)
+                        elif error_type == "validate_task_objects":
                             validation_info = validator(objects, types)
                         
                         if not validation_info[0]:
@@ -163,7 +169,13 @@ class TaskBuilder:
                             continue
                         
                         # dispatch based on expected arguments
-                        if error_type == "validate_task_states":
+                        if error_type == "validate_header":
+                            validation_info = validator(llm_output)
+                        elif error_type == "validate_duplicate_headers":
+                            validation_info = validator(llm_output)
+                        elif error_type == "validate_unsupported_keywords":
+                            validation_info = validator(llm_output)
+                        elif error_type == "validate_task_states":
                             validation_info = validator(initial, objects, predicates, "initial")
                         
                         if not validation_info[0]:
@@ -243,7 +255,13 @@ class TaskBuilder:
                             continue
                         
                         # dispatch based on expected arguments
-                        if error_type == "validate_task_states":
+                        if error_type == "validate_header":
+                            validation_info = validator(llm_output)
+                        elif error_type == "validate_duplicate_headers":
+                            validation_info = validator(llm_output)
+                        elif error_type == "validate_unsupported_keywords":
+                            validation_info = validator(llm_output)
+                        elif error_type == "validate_task_states":
                             validation_info = validator(goal, objects, predicates, "goal")
                         
                         if not validation_info[0]:
@@ -322,7 +340,13 @@ class TaskBuilder:
                             continue
                         
                         # dispatch based on expected arguments
-                        if error_type == "validate_task_objects":
+                        if error_type == "validate_header":
+                            validation_info = validator(llm_output)
+                        elif error_type == "validate_duplicate_headers":
+                            validation_info = validator(llm_output)
+                        elif error_type == "validate_unsupported_keywords":
+                            validation_info = validator(llm_output)
+                        elif error_type == "validate_task_objects":
                             validation_info = validator(objects, types)
                         elif error_type == "validate_task_states":
                             validation_info = validator(initial, objects, predicates, "initial")

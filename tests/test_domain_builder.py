@@ -5,12 +5,14 @@ from l2p.utils.pddl_validator import SyntaxValidator
 from l2p.utils.pddl_types import Predicate
 from .mock_llm import MockLLM
 
-
 class TestDomainBuilder(unittest.TestCase):
     def setUp(self):
         self.domain_builder = DomainBuilder()
         self.syntax_validator = SyntaxValidator()
         self.mock_llm = MockLLM()
+        
+    def normalize(self, string):
+        return "\n".join(line.strip() for line in textwrap.dedent(string).strip().splitlines())
 
     def test_extract_types(self):
 
@@ -346,7 +348,7 @@ class TestDomainBuilder(unittest.TestCase):
             parse_predicates=False
         )
 
-        self.assertEqual(exp_effects.strip(), effects.strip())
+        self.assertEqual(self.normalize(exp_effects),self.normalize(effects))
         self.assertEqual(validation_info[0], True)
 
 
@@ -419,9 +421,6 @@ class TestDomainBuilder(unittest.TestCase):
 
 
     def test_generate_domain(self):
-
-        def normalize(s):
-            return "\n".join(line.strip() for line in textwrap.dedent(s).strip().splitlines())
 
         domain = "test_domain"
         
@@ -506,7 +505,7 @@ class TestDomainBuilder(unittest.TestCase):
             requirements=requirements,
         )
 
-        self.assertEqual(normalize(result), normalize(expected_output))
+        self.assertEqual(self.normalize(result), self.normalize(expected_output))
 
 
 if __name__ == "__main__":

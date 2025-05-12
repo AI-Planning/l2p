@@ -239,17 +239,18 @@ def format_goal(goal_states: list[dict[str, str]]) -> str:
     return goal_states_str
 
 def remove_comments(pddl_str):
-    # purge comments from the given string
+    # Remove all semicolon-style comments (from ';' to the end of the line)
     while True:
-        match = re.search(r";(.*)\n", pddl_str)
+        match = re.search(r";[^\n]*\n", pddl_str)
         if match is None:
-            break  # Changed from return to break to handle newlines after
+            break
         start, end = match.start(), match.end()
-        pddl_str = pddl_str[:start]+pddl_str[end-1:]
-    
-    # First remove empty lines that only contain whitespace
-    pddl_str = re.sub(r'\n\s+\n', '\n\n', pddl_str)
-    # Then remove consecutive newlines (more than 2) with just 2 newlines
+        pddl_str = pddl_str[:start] + pddl_str[end:]
+
+    # Remove lines that contain only whitespace
+    pddl_str = re.sub(r'^[ \t]*\n', '', pddl_str, flags=re.MULTILINE)
+
+    # Replace multiple consecutive newlines with just two
     pddl_str = re.sub(r'\n{2,}', '\n\n', pddl_str)
-    
+
     return pddl_str
