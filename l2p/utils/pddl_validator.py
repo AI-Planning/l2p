@@ -499,7 +499,7 @@ class SyntaxValidator:
             keyword = node[0].lower()
 
             # Logical connectives
-            if keyword in {"and", "or", "not", "implies"}:
+            if keyword in {"and", "or", "not", "imply"}:
                 children = node[1:] if keyword != "not" else [node[1]]
                 for child in children:
                     valid, msg = traverse(child, scoped_params)
@@ -531,7 +531,7 @@ class SyntaxValidator:
 
                 return traverse(body, new_scope)
             
-            # Predicate
+            # retrieve predicate
             pred_ = keyword
             pred_name = pred_.split(" ")[0]
             pred_args = node[0].split(" ")[1:]
@@ -542,11 +542,14 @@ class SyntaxValidator:
                         False,
                         f"[ERROR]: Equality statement `=` in {part} must have exactly two arguments.\nParsed line: {node}"
                     )
-                for var in node[1:]:
+                for var in node[0].split(" ")[1:]:
                     if var not in scoped_params:
                         return (
                             False,
-                            f"[ERROR]: Variable `{var}` in equality test not found in scope.\nParsed line: {node}"
+                            f"[ERROR]: Variable `{var}` in for equality statement not found in scope:\n"
+                            f"Scoped parameters: {list(scoped_params.keys())}\n"
+                            f"\nParsed line: ({node[0]})\n\n"
+                            f"Make sure variables are being used are found in parameter scope."
                         )
                 return True, "[PASS]"
 
@@ -554,9 +557,8 @@ class SyntaxValidator:
                 available_preds = "\n - " + "\n - ".join([p["raw"] for p in predicates])
                 return (
                     False,
-                    f"[ERROR]: Undeclared predicate `({pred_}` found in {part}.\n"
-                    f"List of available predicates are:{available_preds}\n\n"
-                    f"Parsed line: {node}\n"
+                    f"[ERROR]: Undeclared predicate `({pred_})` found in {part}.\n"
+                    f"List of available predicates are:{available_preds}"
                 )
 
             target_pred = pred_index[pred_name]
@@ -568,7 +570,9 @@ class SyntaxValidator:
                 return (
                     False,
                     f"[ERROR]: Predicate `{target_pred['clean']}` expects {len(expected_args)} parameter(s), "
-                    f"but found {len(pred_args)} in {part}.\nParsed line: {node}"
+                    f"but found {len(pred_args)} in {part}.\nParsed line: ({node[0]})\n\n"
+                    f"Possible solutions:\n"
+                    f"(1) Make sure that a predicate used in the action does not include the parameter's variable type. For instance: (drive ?c) is correct, but (drive ?c - car) is not."
                 )
 
             for i, param in enumerate(pred_args):
@@ -576,7 +580,7 @@ class SyntaxValidator:
                     return (
                         False,
                         f"[ERROR]: Parameter `{param}` in predicate `{pred_name}` not found in scope.\n"
-                        f"Available variables: {list(scoped_params.keys())}\nParsed line: {node}\n\n"
+                        f"Available variables: {list(scoped_params.keys())}\nParsed line: ({node[0]})\n\n"
                         f"Possible solutions:\n"
                         f"(1) Make sure the parameter variable being used is found in the available parameter variables list.\n"
                         f"(2) Make sure that variable is assigned the correct type for use in predicate `{pred_name}`."
@@ -587,7 +591,7 @@ class SyntaxValidator:
                 expected_type = expected_types[i]
                 actual_type = scoped_params[param]
 
-                # Type mismatch only if both are defined
+                # type mismatch only if both are defined
                 if expected_type and actual_type:
                     if (types is None or len(types) == 0):
                         return (
@@ -612,7 +616,7 @@ class SyntaxValidator:
 
             return True, "[PASS]"
 
-        # Start traversal with base action parameters
+        # start traversal with base action parameters
         return traverse(pddl, scoped_params=action_params.copy())
 
 
