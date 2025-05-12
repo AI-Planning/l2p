@@ -21,7 +21,7 @@ Is supported in:
 
 from collections import OrderedDict
 from .pddl_parser import parse_params, parse_new_predicates, parse_predicates, parse_pddl
-from .pddl_types import Predicate
+from .pddl_types import Predicate, Function
 from .pddl_format import format_types, remove_comments
 import re
 
@@ -796,6 +796,7 @@ class SyntaxValidator:
         states: list[dict[str, str]],
         objects: dict[str, str],
         predicates: list[Predicate],
+        functions: list[Function] | None = None,
         state_type: str = "initial",
     ) -> tuple[bool, str]:
         """
@@ -818,45 +819,93 @@ class SyntaxValidator:
         feedback_msgs = []
 
         for state in states:
-            state_name = state["name"]
-            state_params = state["params"]
+            
+            # new check: function states
+            state_name = state.get("func_name", None)
+            if state_name:
+                state_params = state["params"]
+                state_val = state["value"]
+                state_op = state["op"]
 
-            # (i) Check if predicate name exists in domain predicates
-            predicate_names = [p["name"] for p in predicates]
-            if state_name not in predicate_names:
-                feedback_msgs.append(
-                    f"[ERROR]: In the {state_type} state, '({state_name} {' '.join(state_params)})' "
-                    f"uses predicate '{state_name}', which is not defined in the domain ({predicate_names})."
-                )
-                valid = False
-                continue  # Skip further checks for this state
+                # (i) check if function name exists in domain functions
+                if not functions: functions = []
+                function_names = [f["name"] for f in functions]
+                if state_name not in function_names:
+                    feedback_msgs.append(
+                        f"[ERROR]: In the {state_type} state, '({state_op} ({state_name} {' '.join(state_params)}) {state_val})' "
+                        f"uses function '{state_name}', which is not defined in the domain: {function_names if functions else "No functions provided"}.\n\n"
+                        f"If there are no functions, do not include this state."
+                    )
+                    valid = False
+                    continue
 
-            # (ii) Check if all parameters exist in the task objects
-            missing_params = [p for p in state_params if p not in objects]
-            if missing_params:
-                for mp in missing_params:
+                # (ii) Check if all parameters exist in the task objects
+                missing_params = [p for p in state_params if p not in objects]
+                if missing_params:
+                    for mp in missing_params:
+                        feedback_msgs.append(
+                            f"[ERROR]: In the {state_type} state, '({state_name} {' '.join(state_params)})' "
+                            f"contains parameter '{mp}' not found in task objects {list(objects.keys())}."
+                        )
+                    valid = False
+                    continue  # Skip type check if parameters are invalid
+
+                # (iii) Check if object types match expected predicate types
+                target_func = next(p for p in functions if p["name"] == state_name)
+                expected_types = list(target_func["params"].values())
+                actual_types = [objects[param] for param in state_params]
+                actual_name_type_pairs = [f"'{param}': '{objects[param]}'" for param in state_params]
+
+                if expected_types != actual_types:
+                    feedback_msgs.append(
+                        f"[ERROR]: In the {state_type} state, '({state_op} ({state_name} {' '.join(state_params)}) {state_val})' has mismatched types.\n\n"
+                        f"Declared objects: {[f'{obj_name} - {obj_type}' for obj_name, obj_type in objects.items()]}\n\n"
+                        f"Function `{target_pred['clean']}` expects type(s): {expected_types}\n"
+                        f"Parsed line: ({state_op} ({state_name} {' '.join(state_params)}) {state_val}) contains type(s): {actual_types}, where [{', '.join(actual_name_type_pairs)}]\n\n"
+                        f"Revise the state such that their parameter types align with the original function definition types."
+                    )
+                    valid = False
+
+            else:
+                state_name = state["pred_name"]
+                state_params = state["params"]
+
+                # (i) Check if predicate name exists in domain predicates
+                predicate_names = [p["name"] for p in predicates]
+                if state_name not in predicate_names:
                     feedback_msgs.append(
                         f"[ERROR]: In the {state_type} state, '({state_name} {' '.join(state_params)})' "
-                        f"contains parameter '{mp}' not found in task objects {list(objects.keys())}."
+                        f"uses predicate '{state_name}', which is not defined in the domain ({predicate_names})."
                     )
-                valid = False
-                continue  # Skip type check if parameters are invalid
+                    valid = False
+                    continue  # Skip further checks for this state
 
-            # (iii) Check if object types match expected predicate types
-            target_pred = next(p for p in predicates if p["name"] == state_name)
-            expected_types = list(target_pred["params"].values())
-            actual_types = [objects[param] for param in state_params]
-            actual_name_type_pairs = [f"'{param}': '{objects[param]}'" for param in state_params]
+                # (ii) Check if all parameters exist in the task objects
+                missing_params = [p for p in state_params if p not in objects]
+                if missing_params:
+                    for mp in missing_params:
+                        feedback_msgs.append(
+                            f"[ERROR]: In the {state_type} state, '({state_name} {' '.join(state_params)})' "
+                            f"contains parameter '{mp}' not found in task objects {list(objects.keys())}."
+                        )
+                    valid = False
+                    continue  # Skip type check if parameters are invalid
 
-            if expected_types != actual_types:
-                feedback_msgs.append(
-                    f"[ERROR]: In the {state_type} state, '({state_name} {' '.join(state_params)})' has mismatched types.\n\n"
-                    f"Declared objects: {[f'{obj_name} - {obj_type}' for obj_name, obj_type in objects.items()]}\n\n"
-                    f"Predicate `{target_pred['clean']}` expects type(s): {expected_types}\n"
-                    f"Parsed line: ({state_name} {' '.join(state_params)}) contains type(s): {actual_types}, where [{', '.join(actual_name_type_pairs)}]\n\n"
-                    f"Revise the state predicates such that their parameter types align with the original predicate definition types."
-                )
-                valid = False
+                # (iii) Check if object types match expected predicate types
+                target_pred = next(p for p in predicates if p["name"] == state_name)
+                expected_types = list(target_pred["params"].values())
+                actual_types = [objects[param] for param in state_params]
+                actual_name_type_pairs = [f"'{param}': '{objects[param]}'" for param in state_params]
+
+                if expected_types != actual_types:
+                    feedback_msgs.append(
+                        f"[ERROR]: In the {state_type} state, '({state_name} {' '.join(state_params)})' has mismatched types.\n\n"
+                        f"Declared objects: {[f'{obj_name} - {obj_type}' for obj_name, obj_type in objects.items()]}\n\n"
+                        f"Predicate `{target_pred['clean']}` expects type(s): {expected_types}\n"
+                        f"Parsed line: ({state_name} {' '.join(state_params)}) contains type(s): {actual_types}, where [{', '.join(actual_name_type_pairs)}]\n\n"
+                        f"Revise the state predicates such that their parameter types align with the original predicate definition types."
+                    )
+                    valid = False
 
         feedback_msg = (
             "\n".join(feedback_msgs) if not valid else "[PASS]: All task states are valid."

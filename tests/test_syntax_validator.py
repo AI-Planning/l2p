@@ -5,7 +5,6 @@ class TestSyntaxValidator(unittest.TestCase):
     def setUp(self):
         self.syntax_validator = SyntaxValidator()
 
-
     def test_validate_params(self):
         
         types = {
@@ -38,7 +37,6 @@ class TestSyntaxValidator(unittest.TestCase):
         flag, _ = self.syntax_validator.validate_params(parameters=missing_char_params, types=types)
         self.assertEqual(flag, False)
 
-    
     def test_validate_types_predicates(self):
 
         types = {
@@ -83,8 +81,7 @@ class TestSyntaxValidator(unittest.TestCase):
         
         flag, _ = self.syntax_validator.validate_types_predicates(predicates=incorrect_predicates, types=types)
         self.assertEqual(flag, False)
-        
-    
+            
     def test_validate_duplicate_predicates(self):
 
         # case 1: duplicate predicate names but same parameters (identical predicates)
@@ -134,7 +131,6 @@ class TestSyntaxValidator(unittest.TestCase):
         ]
         flag, _ = self.syntax_validator.validate_duplicate_predicates(curr_predicates=predicates_1, new_predicates=predicates_4)
         self.assertEqual(flag, True)
-
 
     def test_validate_format_predicate(self):
         
@@ -247,7 +243,6 @@ class TestSyntaxValidator(unittest.TestCase):
         # no types exist
         flag, _ = self.syntax_validator.validate_format_predicates(predicates=pred_incorrect_param_type)
         self.assertEqual(flag, False)
-
 
     def test_validate_pddl_usage_predicates(self):
 
@@ -420,7 +415,6 @@ class TestSyntaxValidator(unittest.TestCase):
         )
         self.assertEqual(flag, False)
 
-
     def test_validate_usage_predicates(self):
         
         llm_response = textwrap.dedent(
@@ -509,7 +503,6 @@ class TestSyntaxValidator(unittest.TestCase):
         )
         self.assertEqual(flag, False)
         
-
     def test_validate_overflow_predicates(self):
 
         llm_response = textwrap.dedent(
@@ -562,7 +555,6 @@ class TestSyntaxValidator(unittest.TestCase):
             limit=2)
         self.assertEqual(flag, False)
         
-
     def test_validate_task_objects(self):
         types = {
             'arm': 'arm for a robot',
@@ -691,17 +683,16 @@ class TestSyntaxValidator(unittest.TestCase):
         )
         self.assertEqual(flag, False)
         
-
-
     def test_validate_task_states(self):
         initial_states = [
-            {'name': 'on_top', 'params': ['blue_block', 'red_block'], 'neg': False}, 
-            {'name': 'on_top', 'params': ['red_block', 'yellow_block'], 'neg': False}, 
-            {'name': 'on_table', 'params': ['yellow_block'], 'neg': False}, 
-            {'name': 'on_table', 'params': ['green_block'], 'neg': False}, 
-            {'name': 'clear', 'params': ['yellow_block'], 'neg': False}, 
-            {'name': 'clear', 'params': ['green_block'], 'neg': False}, 
-            {'name': 'clear', 'params': ['red_block'], 'neg': True}
+            {'pred_name': 'on_top', 'params': ['blue_block', 'red_block'], 'neg': False}, 
+            {'pred_name': 'on_top', 'params': ['red_block', 'yellow_block'], 'neg': False}, 
+            {'pred_name': 'on_table', 'params': ['yellow_block'], 'neg': False}, 
+            {'pred_name': 'on_table', 'params': ['green_block'], 'neg': False}, 
+            {'pred_name': 'clear', 'params': ['yellow_block'], 'neg': False}, 
+            {'pred_name': 'clear', 'params': ['green_block'], 'neg': False}, 
+            {'pred_name': 'clear', 'params': ['red_block'], 'neg': True},
+            # {'func_name': 'weight', 'params': ['blue_block'], 'value': 100, 'op': '='}
         ]
 
         objects = {
@@ -745,9 +736,9 @@ class TestSyntaxValidator(unittest.TestCase):
 
         # case 2: predicates in states not found in predicate definition
         initial_states = [
-            {'name': 'throw', 'params': ['blue_block', 'red_block'], 'neg': False}, 
-            {'name': 'on', 'params': ['red_block', 'yellow_block'], 'neg': False}, 
-            {'name': 'on_table', 'params': ['yellow_block'], 'neg': False}, 
+            {'pred_name': 'throw', 'params': ['blue_block', 'red_block'], 'neg': False}, 
+            {'pred_name': 'on', 'params': ['red_block', 'yellow_block'], 'neg': False}, 
+            {'pred_name': 'on_table', 'params': ['yellow_block'], 'neg': False}, 
         ]
 
         flag, _ = self.syntax_validator.validate_task_states(
@@ -760,8 +751,8 @@ class TestSyntaxValidator(unittest.TestCase):
 
         # case 3: object variables in states are not found in task object list
         initial_states = [
-            {'name': 'on_top', 'params': ['purple_block', 'red_block'], 'neg': False}, 
-            {'name': 'on_top', 'params': ['red_block', 'arm'], 'neg': False}, 
+            {'pred_name': 'on_top', 'params': ['purple_block', 'red_block'], 'neg': False}, 
+            {'pred_name': 'on_top', 'params': ['red_block', 'arm'], 'neg': False}, 
         ]
 
         flag, _ = self.syntax_validator.validate_task_states(
@@ -774,8 +765,8 @@ class TestSyntaxValidator(unittest.TestCase):
 
         # case 4: placement of the task predicate parameter types do not align w/ predicate definition parameter types
         initial_states = [
-            {'name': 'on_top', 'params': ['blue_block', 'red_block'], 'neg': False}, 
-            {'name': 'holding', 'params': ['blue_block', 'red_block'], 'neg': False}, 
+            {'pred_name': 'on_top', 'params': ['blue_block', 'red_block'], 'neg': False}, 
+            {'pred_name': 'holding', 'params': ['blue_block', 'red_block'], 'neg': False}, 
         ]
 
         objects = {
@@ -793,7 +784,6 @@ class TestSyntaxValidator(unittest.TestCase):
             state_type="initial",
         )
         self.assertEqual(flag, False)
-
 
     def test_validate_header(self):
 
@@ -871,7 +861,6 @@ class TestSyntaxValidator(unittest.TestCase):
         )
         self.assertEqual(flag, False)
 
-
     def test_unsupported_keywords(self):
 
         # case 1: llm response does not contain unsupported keywords
@@ -934,7 +923,6 @@ class TestSyntaxValidator(unittest.TestCase):
             llm_response=llm_response
         )
         self.assertEqual(flag, False)
-
 
     def test_validate_duplicate_headers(self):
 
@@ -1024,7 +1012,6 @@ class TestSyntaxValidator(unittest.TestCase):
         )
         self.assertEqual(flag, False)
 
-
     def test_validate_type(self):
 
         # case 1: claimed type matches target type or its sub-types
@@ -1101,7 +1088,6 @@ class TestSyntaxValidator(unittest.TestCase):
             )
         self.assertEqual(flag, False)
 
-
     def test_validate_format_types(self):
         
         # case 1: correct types
@@ -1176,7 +1162,6 @@ class TestSyntaxValidator(unittest.TestCase):
 
         flag, _ = self.syntax_validator.validate_format_types(types=type_hierarchy)
         self.assertEqual(flag, False)
-
 
     def test_validate_cyclic_types(self):
         

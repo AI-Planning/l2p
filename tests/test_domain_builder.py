@@ -44,7 +44,6 @@ class TestDomainBuilder(unittest.TestCase):
         self.assertEqual(expected_types, types)
         self.assertEqual(validation_info[0], True)
 
-
     def test_extract_type_hierarchy(self):
         self.syntax_validator.error_types = ['validate_format_types', 'validate_cyclic_types']
         self.mock_llm.output = textwrap.dedent(
@@ -92,7 +91,6 @@ class TestDomainBuilder(unittest.TestCase):
 
         self.assertEqual(expected_types, types)
         self.assertEqual(validation_info[0], True)
-
 
     def test_extract_pddl_action(self):
 
@@ -187,7 +185,6 @@ class TestDomainBuilder(unittest.TestCase):
         self.assertEqual(exp_predicates, new_predicates)
         self.assertEqual(validation_info[0], True)
 
-
     def test_extract_parameters(self):
 
         self.syntax_validator.headers = ['Action Parameters']
@@ -230,7 +227,6 @@ class TestDomainBuilder(unittest.TestCase):
 
         self.assertEqual(exp_params, params)
         self.assertEqual(validation_info[0], True)
-
 
     def test_extract_preconditions(self):
         self.syntax_validator.headers = ['Action Preconditions']
@@ -285,7 +281,6 @@ class TestDomainBuilder(unittest.TestCase):
 
         self.assertEqual(exp_preconditions.strip(), preconditions.strip())
         self.assertEqual(validation_info[0], True)
-
 
     def test_extract_effects(self):
         self.syntax_validator.headers = ['Action Effects']
@@ -350,7 +345,6 @@ class TestDomainBuilder(unittest.TestCase):
 
         self.assertEqual(self.normalize(exp_effects),self.normalize(effects))
         self.assertEqual(validation_info[0], True)
-
 
     def test_extract_predicates(self):
         self.syntax_validator.headers = ['New Predicates']
@@ -418,7 +412,6 @@ class TestDomainBuilder(unittest.TestCase):
 
         self.assertCountEqual(exp_predicates, predicates)
         self.assertEqual(validation_info[0], True)
-
 
     def test_generate_domain(self):
 

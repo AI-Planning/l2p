@@ -49,7 +49,6 @@ class TestTaskBuilder(unittest.TestCase):
         self.assertEqual(validation_info[0], True)
         self.assertEqual(exp_objects, objects)
 
-
     def test_extract_initial_state(self):
 
         self.syntax_validator.headers = ['INITIAL']
@@ -112,7 +111,6 @@ class TestTaskBuilder(unittest.TestCase):
         
         self.assertEqual(validation_info[0], True)
         self.assertEqual(exp_initial, initial)
-
 
     def test_extract_task(self):
         self.syntax_validator.headers = ['INITIAL']

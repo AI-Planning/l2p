@@ -28,6 +28,11 @@ class Action(TypedDict):
     effects: str
 
 
+class Function(TypedDict):
+    name: str
+    params: ParameterList
+    
+
 # Domain details data class including predicates and actions
 @dataclass
 class DomainDetails:

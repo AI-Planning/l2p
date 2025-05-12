@@ -5,7 +5,6 @@ This file contains collection of functions for extracting/parsing information fr
 from pddl.formatter import domain_to_string, problem_to_string
 from pddl import parse_domain, parse_problem
 from .pddl_types import Action, Predicate
-from .pddl_format import remove_comments
 from collections import OrderedDict
 from copy import deepcopy
 from typing import Optional
@@ -298,7 +297,7 @@ def parse_objects(llm_output: str) -> dict[str, str]:
         - dict[str,str]: objects
     """
 
-    objects_head = extract_heading(llm_output, "OBJECTS")
+    objects_head = parse_heading(llm_output, "OBJECTS")
     objects_raw = combine_blocks(objects_head)
 
     objects_clean = clear_comments(
@@ -323,26 +322,30 @@ def parse_initial(llm_output: str) -> list[dict[str, str]]:
     Returns:
         states (list[dict[str,str]]): list of initial states in dictionaries
     """
-    state_head = extract_heading(llm_output, "INITIAL")
+    state_head = parse_heading(llm_output, "INITIAL")
     state_raw = combine_blocks(state_head)
     state_clean = clear_comments(state_raw)
+    states_parsed = parse_pddl(f"({state_clean})")
 
     states = []
-    for line in state_clean.split("\n"):
-        line = line.strip("- `()")
-        if not line:  # Skip empty lines
-            continue
-        name = line.split(" ")[0]
-        if name == "not":
-            neg = True
-            name = line.split(" ")[1].strip(
-                "()"
-            )  # Remove the `not` and the parentheses
-            params = line.split(" ")[2:]
-        else:
-            neg = False
-            params = line.split(" ")[1:] if len(line.split(" ")) > 1 else []
-        states.append({"name": name, "params": params, "neg": neg})
+    for line in states_parsed:
+        # only parse lines
+        if isinstance(line, list):
+            name = line[0]
+            # if comparsion operator
+            if name == "=":
+                name = line[1][0].split(" ")[0] # retrieve function name
+                params = line[1][0].split(" ")[1:]
+                value = line[2]
+                states.append({"func_name": name, "params": params, "value": value, "op": "="})
+                continue
+            if name == "not":
+                name = line[1][0].split(" ")[0] # retrieve function name
+                params = line[1][0].split(" ")
+                neg = True
+            else:
+                neg = False
+            states.append({"pred_name": name, "params": params, "neg": neg})
 
     return states
 
@@ -356,7 +359,7 @@ def parse_goal(llm_output: str) -> list[dict[str, str]]:
     Returns:
         states (list[dict[str,str]]): list of goal states in dictionaries
     """
-    goal_head = extract_heading(llm_output, "GOAL")
+    goal_head = parse_heading(llm_output, "GOAL")
 
     if goal_head.count("```") != 2:
         raise ValueError(
@@ -478,7 +481,7 @@ def prune_predicates(
     return used_predicates
 
 
-def extract_heading(llm_output: str, heading: str):
+def parse_heading(llm_output: str, heading: str):
     """Extract the text between the heading and the next second level heading in the LLM output."""
     if heading not in llm_output:
         print("#" * 10, "LLM Output", "#" * 10)
