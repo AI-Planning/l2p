@@ -322,32 +322,17 @@ def parse_initial(llm_output: str) -> list[dict[str, str]]:
     Returns:
         states (list[dict[str,str]]): list of initial states in dictionaries
     """
-    state_head = parse_heading(llm_output, "INITIAL")
-    state_raw = combine_blocks(state_head)
-    state_clean = clear_comments(state_raw)
-    states_parsed = parse_pddl(f"({state_clean})")
+    initial_head = parse_heading(llm_output, "INITIAL")
+    if initial_head.count("```") != 2:
+        raise ValueError(
+            "Could not find exactly one block in the initial section enclosed by [```, ```] of the LLM output. The initial states have to be specified in a single block Likely this is caused by a too long response and limited context length. If so, try to shorten the message and exclude objects which aren't needed for the task."
+        )
 
-    states = []
-    for line in states_parsed:
-        # only parse lines
-        if isinstance(line, list):
-            name = line[0]
-            # if comparsion operator
-            if name == "=":
-                name = line[1][0].split(" ")[0] # retrieve function name
-                params = line[1][0].split(" ")[1:]
-                value = line[2]
-                states.append({"func_name": name, "params": params, "value": value, "op": "="})
-                continue
-            if name == "not":
-                name = line[1][0].split(" ")[0] # retrieve function name
-                params = line[1][0].split(" ")
-                neg = True
-            else:
-                neg = False
-            states.append({"pred_name": name, "params": params, "neg": neg})
+    initial_raw = combine_blocks(initial_head)
+    initial_clean = clear_comments(initial_raw)
+    initial_parsed = parse_pddl(f"({initial_clean})")
 
-    return states
+    return parse_task_states(initial_parsed)
 
 def parse_goal(llm_output: str) -> list[dict[str, str]]:
     """
@@ -360,30 +345,43 @@ def parse_goal(llm_output: str) -> list[dict[str, str]]:
         states (list[dict[str,str]]): list of goal states in dictionaries
     """
     goal_head = parse_heading(llm_output, "GOAL")
-
     if goal_head.count("```") != 2:
         raise ValueError(
-            "Could not find exactly one block in the goal section of the LLM output. The goal has to be specified in a single block and as valid PDDL using the `and` and `not` operators. Likely this is caused by a too long response and limited context length. If so, try to shorten the message and exclude objects which aren't needed for the task."
+            "Could not find exactly one block in the goal section enclosed by [```, ```] of the LLM output. The goal states have to be specified in a single block Likely this is caused by a too long response and limited context length. If so, try to shorten the message and exclude objects which aren't needed for the task."
         )
-    goal_raw = goal_head.split("```")[1].strip()  # Only a single block in the goal
+
+    goal_raw = combine_blocks(goal_head)
     goal_clean = clear_comments(goal_raw)
+    goal_parsed = parse_pddl(f"({goal_clean})")
 
-    goal_pure = (
-        goal_clean.replace("and", "")
-        .replace("AND", "")
-        .replace("not", "")
-        .replace("NOT", "")
-    )
-    goal = []
-    for line in goal_pure.split("\n"):
-        line = line.strip(" ()")
-        if not line:  # skip empty lines
-            continue
-        name = line.split(" ")[0]
-        params = line.split(" ")[1:] if len(line.split(" ")) > 1 else []
-        goal.append({"name": name, "params": params})
+    return parse_task_states(goal_parsed)
 
-    return goal 
+def parse_task_states(parsed_states: list) -> list[dict]:
+    states = []
+    for line in parsed_states:
+
+        # only parse lines
+        if isinstance(line, list):
+            name = line[0].split(" ")[0]
+
+            # if comparsion operator
+            if name in ["=", ">", "<", ">=", "<="]:
+                op = name
+                name = line[1][0].split(" ")[0] # retrieve function name
+                params = line[1][0].split(" ")[1:]
+                value = line[2]
+                states.append({"func_name": name, "params": params, "value": value, "op": op})
+                continue
+            if name == "not":
+                name = line[1][0].split(" ")[0] # retrieve function name
+                params = line[1][0].split(" ")
+                neg = True
+            else:
+                neg = False
+                params = line[0].split(" ")[1:]
+            states.append({"pred_name": name, "params": params, "neg": neg})
+
+    return states
 
 
 def prune_types(

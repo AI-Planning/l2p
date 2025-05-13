@@ -1,4 +1,4 @@
-End your final answer starting with "### OBJECTS" containg the object types with ''' ''' comment blocks in PDDL as so:
+End your final answer starting with "### OBJECTS" containing the object types within the ``` ``` comment blocks in PDDL as so:
 
 ### OBJECTS
 ```
@@ -6,3 +6,5 @@ object1 - type_1
 object2 - type_2
 object3 - type_1
 ```
+
+Each object must be declared separately with their type and not grouped - even if objects share the same type.

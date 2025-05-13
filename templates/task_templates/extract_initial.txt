@@ -1,8 +1,9 @@
-End your final answer starting with "### INITIAL" containg the predicates with ''' ''' comment blocks in PDDL as so:
+End your final answer starting with "### INITIAL" containing the predicates/numeric fluent statements within the ``` ``` comment blocks in PDDL as so:
 
 ### INITIAL
 ```
 (<predicate_name> <object1> <object2>) ; comment for initial state predicate 1
 (<predicate_name> <object3> <object4>) ; comment for initial state predicate 2
 (<predicate_name> <object5>) ; comment for initial state predicate 3
+(= (<function_name> <object6>) <value>) ; comment for a numeric assignment
 ```

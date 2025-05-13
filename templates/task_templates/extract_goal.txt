@@ -1,8 +1,9 @@
-End your final answer starting with "### GOAL" containg the predicates with ''' ''' comment blocks in PDDL as so:
+End your final answer starting with "### GOAL" containing the predicates/numeric fluent statements with ``` ``` comment blocks in PDDL as so:
 
 ### GOAL
 ```
 (<predicate_name> <object1> <object2>) ; comment for goal state predicate 1
 (<predicate_name> <object3> <object4>) ; comment for goal state predicate 2
 (<predicate_name> <object5>) ; comment for goal state predicate 3
+(<operator> (<function_name> <object6>) <value>) ; comment for a numeric assignment
 ```

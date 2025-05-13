@@ -488,6 +488,32 @@ class SyntaxValidator:
                 if _num not in (11, 12, 13)
                 else "th"
             )
+        
+        def split_var_type_pairs(raw_list):
+            if not raw_list:
+                return []
+
+            tokens = raw_list[0].split()
+            result = []
+            i = 0
+
+            while i < len(tokens):
+                if i + 1 < len(tokens) and tokens[i+1] == '-':
+                    # Handle typed variables (e.g., ?x - type)
+                    if i + 2 < len(tokens):
+                        var = tokens[i]
+                        typ = tokens[i+2]
+                        result.append(f"{var} - {typ}")
+                        i += 3
+                    else:
+                        raise ValueError(f"Malformed type declaration near: {tokens[i:]}")
+                else:
+                    # Untyped variable
+                    result.append(tokens[i])
+                    i += 1
+
+            return result
+
 
         def traverse(node, scoped_params):
             if isinstance(node, str):
@@ -498,7 +524,7 @@ class SyntaxValidator:
 
             keyword = node[0].lower()
 
-            # Logical connectives
+            # logical connectives
             if keyword in {"and", "or", "not", "imply"}:
                 children = node[1:] if keyword != "not" else [node[1]]
                 for child in children:
@@ -507,27 +533,51 @@ class SyntaxValidator:
                         return False, msg
                 return True, "[PASS]"
 
-            # Quantifiers
+            # quantifiers
             if keyword in {"forall", "exists"}:
                 if len(node) != 3:
                     return False, f"[ERROR]: Malformed quantifier in {part}: {node}"
                 
                 param_spec = node[1]  # e.g., ['?b - box']
+                param_spec = split_var_type_pairs(param_spec)
                 body = node[2]
 
                 new_scope = scoped_params.copy()
 
-                if isinstance(param_spec[0], list):  # e.g., [['?x - block'], ['?y - block']]
-                    for spec in param_spec:                        
-                        var = spec[0]
-                        _type = spec[2] if len(spec) >= 3 and spec[1] == "-" else ""
-                        new_scope[var] = _type
-                else:  # e.g., ['?x - block']
-                    param_spec = param_spec[0].split(" ")
-                    var = param_spec[0]
-                    _type = param_spec[2] if len(param_spec) >= 3 and param_spec[1] == "-" else ""
-                    
+                for spec in param_spec:        
+                    spec = spec.split(" ")
+                    var = spec[0]
+                    _type = spec[2] if len(spec) >= 3 and spec[1] == "-" else ""
+
+                    if not _type:
+                        return (
+                            False,
+                            f"[ERROR]: Logical connective `{keyword}` assigns variable `{var}` with no type. Revise this so a variable contains a type.\n\nParsed line: ({keyword} ({" ".join(param_spec)}))"
+                        )
+                    if _type not in types:
+                        return (
+                            False, 
+                            f"[ERROR]: Logical connective `{keyword}` introduces type `{_type}` not found in list of declared types: {list(types.keys())}.\n\nParsed line: ({keyword} ({" ".join(param_spec)}))"
+                        )
+
                     new_scope[var] = _type
+                # else:  # e.g., ['?x - block']
+                #     param_spec = param_spec[0].split(" ")
+                #     var = param_spec[0]
+                #     _type = param_spec[2] if len(param_spec) >= 3 and param_spec[1] == "-" else ""
+
+                #     if not _type:
+                #             return (
+                #                 False,
+                #                 f"[ERROR]: Logical connective `{keyword}` assigns variable `{var}` with no type. Revise this so a variable contains a type.\n\nParsed line: ({keyword} ({" ".join(param_spec)}))"
+                #             )
+                #     if _type not in types:
+                #             return (
+                #                 False, 
+                #                 f"[ERROR]: Logical connective `{keyword}` introduces type `{_type}` not found in list of declared types: {list(types.keys())}.\n\nParsed line: ({" ".join(param_spec)})"
+                #             )
+                    
+                #     new_scope[var] = _type
 
                 return traverse(body, new_scope)
             
@@ -536,18 +586,20 @@ class SyntaxValidator:
             pred_name = pred_.split(" ")[0]
             pred_args = node[0].split(" ")[1:]
             
-            if pred_name == "=":
+            if pred_name in ["=", ">", "<", ">=", "<="]:
+                op = pred_name
+
                 if len(pred_args) != 2:
                     return (
                         False,
-                        f"[ERROR]: Equality statement `=` in {part} must have exactly two arguments.\nParsed line: {node}"
+                        f"[ERROR]: Operator statement `{op}` in {part} must have exactly two arguments.\nParsed line: {node}"
                     )
                 for var in node[0].split(" ")[1:]:
-                    if var not in scoped_params:
+                    if var not in scoped_params and not var.isdigit():
                         return (
                             False,
-                            f"[ERROR]: Variable `{var}` in for equality statement not found in scope:\n"
-                            f"Scoped parameters: {list(scoped_params.keys())}\n"
+                            f"[ERROR]: Variable `{var}` used for `{op}` statement not found in scope:\n"
+                            f"Scope parameters available: {list(scoped_params.keys())}\n"
                             f"\nParsed line: ({node[0]})\n\n"
                             f"Make sure variables are being used are found in parameter scope."
                         )

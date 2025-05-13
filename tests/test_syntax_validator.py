@@ -431,6 +431,10 @@ class TestSyntaxValidator(unittest.TestCase):
             (and
                 (holding ?a ?b1) ; The arm is holding the top block
                 (clear ?b2) ; The bottom block is clear
+                (= ?b1 200)
+                (forall (?box - block ?box2 - arm)
+                    (clear ?box)
+                )
             )
             ```
 
@@ -474,11 +478,14 @@ class TestSyntaxValidator(unittest.TestCase):
             'table': 'table that blocks sits on'
         }
         
-        flag, _ = self.syntax_validator.validate_usage_predicates(
+        flag, msg = self.syntax_validator.validate_usage_predicates(
             llm_response=llm_response,
             curr_predicates=predicates,
             types=types
         )
+
+        print(msg)
+
         self.assertEqual(flag, True)
         
         # case 2: predicate declared in pddl but not in definition

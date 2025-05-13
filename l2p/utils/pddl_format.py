@@ -205,13 +205,24 @@ def format_objects(objects: dict[str, str]) -> str:
 
 def format_initial(initial_states: list[dict[str, str]]) -> str:
     """Formats task initial states into a PDDL-style string."""
-    inner_str = [
-        f"({state['name']} {' '.join(state['params'])})" for state in initial_states
-    ]  # The main part of each predicate
-    full_str = [
-        f"(not {inner})" if state["neg"] else inner
-        for state, inner in zip(initial_states, inner_str)
-    ]  # add `not` if needed
+
+    full_str = []
+
+    for state in initial_states:
+        # if function statement
+        if state.get("func_name"):
+            full_str.append(
+                f"({state["op"]} ({state['func_name']} {' '.join(state['params'])}) {state['value']})"
+            )
+        # if predicate statement
+        elif state.get("pred_name"):
+
+            inner_str = f"({state['pred_name']} {' '.join(state['params'])})"
+
+            full_str.append(
+                f"(not {inner_str})" if state["neg"] else inner_str
+              )
+
     initial_states_str = "\n".join(
         full_str
     )  # combine the states into a single string
@@ -221,18 +232,26 @@ def format_initial(initial_states: list[dict[str, str]]) -> str:
 
 def format_goal(goal_states: list[dict[str, str]]) -> str:
     """Formats task goal states into a PDDL-style string."""
-    goal_states_str = "(AND \n"
+    full_str = []
 
-    # loop through each dictionary in the list
-    for item in goal_states:
-        # extract the name and parameters from the dictionary
-        name = item["name"]
-        params = " ".join(item["params"])
-        goal_states_str += (
-            f"   ({name} {params}) \n"  # append the predicate in the desired format
-        )
+    for state in goal_states:
+         # if function statement
+        if state.get("func_name"):
+            full_str.append(
+                f"({state["op"]} ({state['func_name']} {' '.join(state['params'])}) {state['value']})"
+            )
+        # if predicate statement
+        elif state.get("pred_name"):
+            inner_str = f"({state['pred_name']} {' '.join(state['params'])})"
+            full_str.append(
+                f"(not {inner_str})" if state["neg"] else inner_str
+              )
+        
+        goal_states_str = "\n".join(
+        full_str
+    )  # combine the states into a single string
 
-    goal_states_str += ")"
+    goal_states_str = f"(and \n{indent(goal_states_str, 1)}\n)"
 
     return goal_states_str
 
