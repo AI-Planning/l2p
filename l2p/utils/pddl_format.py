@@ -211,8 +211,9 @@ def format_initial(initial_states: list[dict[str, str]]) -> str:
     for state in initial_states:
         # if function statement
         if state.get("func_name"):
+            state_op, state_func, state_params, state_value = state["op"], state['func_name'], ' '.join(state['params']), state['value']
             full_str.append(
-                f"({state["op"]} ({state['func_name']} {' '.join(state['params'])}) {state['value']})"
+                f"({state_op} ({state_func} {state_params}) {state_value})"
             )
         # if predicate statement
         elif state.get("pred_name"):
@@ -237,8 +238,9 @@ def format_goal(goal_states: list[dict[str, str]]) -> str:
     for state in goal_states:
          # if function statement
         if state.get("func_name"):
+            state_op, state_func, state_params, state_value = state["op"], state['func_name'], ' '.join(state['params']), state['value']
             full_str.append(
-                f"({state["op"]} ({state['func_name']} {' '.join(state['params'])}) {state['value']})"
+                f"({state_op} ({state_func} {state_params}) {state_value})"
             )
         # if predicate statement
         elif state.get("pred_name"):

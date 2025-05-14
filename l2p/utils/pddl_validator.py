@@ -25,15 +25,17 @@ from .pddl_types import Predicate, Function
 from .pddl_format import format_types, remove_comments, format_pddl_expr
 import re
 
-NUMERIC_OPERATORS = {"+", "-", "/", "*"}
-COMPARISON_OPERATORS = {"=", ">", "<", ">=", "<="}
 LOGICAL_CONNECTIVES = {"and", "not", "or"}
 QUANTIFIERS = {"forall", "exists"}
 CONDITIONAL_EFFECTS = {"when"}
 
+NUMERIC_OPERATORS = {"+", "-", "/", "*"}
+COMPARISON_OPERATORS = {"=", ">", "<", ">=", "<="}
 ASSIGNMENT_OPERATORS = {"assign", "increase", "decrease", "scale-up", "scale-down"}
+
+# TODO: implement preferences and temporal features
 TEMPORAL_KEYWORDS = {"at", "over", "start", "end"}
-PREFERENCE_KEYWORDS = {"preference", "always", "sometime", "within", "at-most-once", "sometime-before", "sometime-after"}
+PREFERENCE_KEYWORDS = {"sometime-after", "sometime-before", "always-within", "hold-during", "hold-after", "at end"}
 
 
 class SyntaxValidator:
@@ -480,6 +482,7 @@ class SyntaxValidator:
         pddl: str,
         predicates: list[Predicate],
         action_params: OrderedDict,
+        functions: list[Function] | None = None,
         types: dict[str, str] | list[dict[str, str]] | None = None,
         part="preconditions",
     ) -> tuple[bool, str]:
@@ -487,25 +490,23 @@ class SyntaxValidator:
         Validates predicates in nested PDDL list format.
         """
         
-        pddl = remove_comments(pddl) # remove comments 
-        pddl = parse_pddl(pddl) # parse out the string into nested lists
+        pddl = remove_comments(pddl)
+        pddl = parse_pddl(pddl)
         pred_index = {pred["name"]: pred for pred in predicates}
+        func_index = {func["name"]: func for func in functions} if functions else {}
 
         def get_ordinal_suffix(_num):
-            """Helper function that appends ordinal suffix to parameter"""
             return (
                 {1: "st", 2: "nd", 3: "rd"}.get(_num % 10, "th")
                 if _num not in (11, 12, 13)
                 else "th"
             )
-        
+
         def split_var_type_pairs(raw_list):
             if not raw_list:
                 return []
-
             tokens = raw_list[0].split()
             result, current_vars = [], []
-
             for token in tokens:
                 if token == "-":
                     continue
@@ -515,169 +516,194 @@ class SyntaxValidator:
                     current_vars = []
                 else:
                     current_vars.append(token)
-            result.extend(current_vars)  # untyped vars
+            result.extend(current_vars)
             return result
 
+        def validate_term(term, scoped_params):
+            """Recursively validate a term which may be a function or value."""
+            if isinstance(term, list):
+                
+                head_parts = term[0].strip().split()
+                head = head_parts[0]
+                
+                if head in NUMERIC_OPERATORS:
+                    terms_ = term[0].split(" ") + term[1:]
+                    
+                    if len(terms_) != 3:
+                        return False, f"[ERROR]: Numeric operator `{head}` requires two arguments: {format_pddl_expr(terms_)}"
+                    
+                    for arg in term[1:]:
+                        valid, msg = validate_term(arg, scoped_params)
+                        if not valid:
+                            return False, msg
+                    return True, "[PASS]"
+                
+                # It's a function or nested expression
+                func_ = term[0].split(" ")
+                func_name = func_[0]
+                func_args = func_[1:]
+                if func_name not in func_index:
+                    available_funcs = "\n - " + "\n - ".join([f["raw"] for f in functions]) if functions else "No functions available."
+                    return False, (
+                        f"[ERROR]: Undeclared function `({func_name})` found in {part}.\n"
+                        f"List of available functions are: {available_funcs}"
+                    )
+                target_func = func_index[func_name]
+                expected_args = list(target_func["params"].keys())
+                expected_types = list(target_func["params"].values())
+
+                if len(func_args) != len(expected_args):
+                    return (
+                        False,
+                        f"[ERROR]: Function `{target_func['clean']}` expects {len(expected_args)} parameter(s), "
+                        f"but found {len(term[1:])} in {part}.\nParsed line: ({format_pddl_expr(term)})"
+                    )
+                for i, arg in enumerate(func_args):
+                    
+                    if isinstance(arg, list):
+                        valid, msg = validate_term(arg, scoped_params)
+                        if not valid:
+                            return False, msg
+                    else:
+                        expected_type = expected_types[i]
+                        actual_type = scoped_params.get(arg)
+                        if expected_type and actual_type:
+                            if not types:
+                                return (
+                                    False,
+                                    f"[ERROR]: Types declared but type dictionary is empty."
+                                )
+                            flag, _ = self.validate_type(expected_type, actual_type, types)
+                            if not flag:
+                                param_number = i + 1
+                                suffix = get_ordinal_suffix(param_number)
+                                return (
+                                    False,
+                                    f"[ERROR]: The {param_number}{suffix} parameter of `{target_func['clean']}` "
+                                    f"should be of type `{expected_type}`, but `{arg}` is `{actual_type}`."
+                                )     
+                        
+                        if arg not in scoped_params and not arg.isdigit():
+                            return (
+                                False,
+                                f"[ERROR]: Argument `{arg}` not found in scope for function `{func_name}`.\nScope: {list(scoped_params.keys())}"
+                            )
+                return True, "[PASS]"
+            else:
+                # It should be a variable or constant
+                if term not in scoped_params and not term.isdigit():
+                    return (
+                        False,
+                        f"[ERROR]: Variable `{term}` not in scope: {list(scoped_params.keys())}"
+                    )
+                return True, "[PASS]"
 
         def traverse(node, scoped_params):
-
-            # if reach end of leaf, return; else keep traversing node
             if isinstance(node, str) or not isinstance(node, list) or len(node) == 0:
                 return True, "[PASS]"
 
-            keyword = node[0].lower() # retrieve keyword
+            keyword = node[0].lower()
 
-            # (1) if keyword is a logical connective
             if keyword in LOGICAL_CONNECTIVES:
                 children = node[1:] if keyword != "not" else [node[1]]
-
-                # traverse its children nodes
                 for child in children:
                     valid, msg = traverse(child, scoped_params)
                     if not valid:
                         return False, msg
-                return True, ""
+                return True, "[PASS]"
 
-            # (2) if keyword is a quantifier
             if keyword in QUANTIFIERS:
-                # node must contain its keyword, the quantifier parameters, and the body
                 if len(node) != 3:
-                    node_str = format_pddl_expr(node)
-                    return False, (
-                        f"[ERROR]: Malformed `{keyword}` statement in {part}: {node_str}\n\n"
-                        f"A `{keyword}` construct must have exactly three parts: the {keyword}, its list of typed variables, and a single logical expression.\n"
-                        f"If you have multiple conditions, wrap them inside an `(and ...)` block.\n\n"
-                        f"Example:\n  ({keyword} (?x - block) (and (clear ?x) (movable ?x)))"
-                    )
-                
-                param_spec = node[1] # retrieve parameter arguments of quantifier
-                param_spec = split_var_type_pairs(param_spec) # parse out variable declarations
-                body = node[2] # retrieve predicate arguments in quantifier
-
+                    return False, f"[ERROR]: Malformed `{keyword}` expression: {format_pddl_expr(node)}"
+                param_spec = split_var_type_pairs(node[1])
+                body = node[2]
                 new_scope = scoped_params.copy()
-
-                # iterate through each quantifier parameters
-                for spec in param_spec:        
-                    # split up the parameter (e.g. `?b - box` into ['?b', '-', 'box])
-                    spec = spec.split(" ")
-                    var = spec[0]
-                    _type = spec[2] if len(spec) >= 3 and spec[1] == "-" else ""
-
-                    # if type assigned to parameter not found in :types
-                    if not _type or _type not in types:
-                        error_msg = (
-                            f"[ERROR]: Logical connective `{keyword}` "
-                            f"{'assigns variable `' + var + '` with no type' if not _type else 'introduces type `' + _type + '` not found in declared types: ' + str(list(types.keys()))}."
-                            f"\n\nParsed line: ({keyword} ({" ".join(param_spec)}))"
+                for spec in param_spec:
+                    parts = spec.split(" ")
+                    var = parts[0]
+                    var_type = parts[2] if len(parts) >= 3 and parts[1] == "-" else ""
+                    if not var_type or var_type not in types:
+                        return False, (
+                            f"[ERROR]: Unknown or missing type `{var_type}` for `{var}` in quantifier `{keyword}`"
                         )
-                        return False, error_msg
-
-                    new_scope[var] = _type # temporarily add new variable to quantifier scope
+                    new_scope[var] = var_type
                 return traverse(body, new_scope)
-            
-            # (3) if keyword is a conditional effect
+
             if keyword in CONDITIONAL_EFFECTS:
                 if len(node) != 3:
-                    return False, f"[ERROR]: Malformed 'when' in {part}: {node}"
-                
-                condition = node[1]
-                effect = node[2]
-                
-                valid, msg = traverse(condition, scoped_params)
+                    return False, f"[ERROR]: Malformed `when` statement: {node}"
+                valid, msg = traverse(node[1], scoped_params)
                 if not valid:
-                    return False, f"There is an invalid condition in the 'when' statement.\n\n{msg}"
-                
-                valid, msg = traverse(effect, scoped_params)
+                    return False, f"Invalid condition in 'when': {msg}"
+                valid, msg = traverse(node[2], scoped_params)
                 if not valid:
-                    return False, f"There is an invalid effect in the 'when' body.\n\n{msg}"
+                    return False, f"Invalid effect in 'when': {msg}"
+                return True, "[PASS]"
 
-                return True, ""
-            
-            # (4) if keyword is a predicate
-            pred_ = keyword # retrieve statement
-            pred_name = pred_.split(" ")[0] # retrieve name of predicate
-            pred_args = node[0].split(" ")[1:] # retreive arguments of predicate
-            
-            if pred_name in (COMPARISON_OPERATORS | NUMERIC_OPERATORS):
-                op = pred_name
+            if keyword in COMPARISON_OPERATORS | NUMERIC_OPERATORS | ASSIGNMENT_OPERATORS:
+                
+                if len(node) != 3:
+                    return False, f"[ERROR]: `{keyword}` operator requires exactly two arguments: {format_pddl_expr(node)}"
+                for term in node[1:]:
+                    
+                    valid, msg = validate_term(term, scoped_params)
+                    if not valid:
+                        return False, msg
+                return True, "[PASS]"
 
-                if len(pred_args) != 2:
-                    return (
-                        False,
-                        f"[ERROR]: Operator statement `{op}` in {part} must have exactly two arguments.\nParsed line: {node}"
-                    )
-                for var in node[0].split(" ")[1:]:
-                    if var not in scoped_params and not var.isdigit():
-                        return (
-                            False,
-                            f"[ERROR]: Variable `{var}` used for `{op}` statement not found in scope:\n"
-                            f"Scope parameters available: {list(scoped_params.keys())}\n"
-                            f"\nParsed line: ({node[0]})\n\n"
-                            f"Make sure variables are being used are found in parameter scope."
-                        )
-                return True, ""
+            # assume keyword is a predicate or unknown term
+            pred_ = keyword.split(" ")
+            pred_name = pred_[0]
+            args = pred_[1:]
 
             if pred_name not in pred_index:
                 available_preds = "\n - " + "\n - ".join([p["raw"] for p in predicates])
                 return (
                     False,
-                    f"[ERROR]: Undeclared predicate `({pred_})` found in {part}.\n"
-                    f"List of available predicates are:{available_preds}"
+                    f"[ERROR]: Undeclared predicate `({pred_name})` found in {part}.\n"
+                    f"Available predicates:\n{available_preds}"
                 )
 
             target_pred = pred_index[pred_name]
             expected_args = list(target_pred["params"].keys())
             expected_types = list(target_pred["params"].values())
 
-            # (i) Arity check
-            if len(pred_args) != len(expected_args):
+            if len(args) != len(expected_args):
                 return (
                     False,
-                    f"[ERROR]: Predicate `{target_pred['clean']}` expects {len(expected_args)} parameter(s), "
-                    f"but found {len(pred_args)} in {part}.\nParsed line: ({node[0]})\n\n"
-                    f"Possible solutions:\n"
-                    f"(1) Make sure that a predicate used in the action does not include the parameter's variable type. For instance: (drive ?c) is correct, but (drive ?c - car) is not."
+                    f"[ERROR]: Predicate `{target_pred['clean']}` expects {len(expected_args)} parameters, "
+                    f"but found {len(args)} in {part}.\nParsed line: {format_pddl_expr(node)}"
                 )
 
-            for i, param in enumerate(pred_args):
-                if param not in scoped_params:
-                    return (
-                        False,
-                        f"[ERROR]: Parameter `{param}` in predicate `{pred_name}` not found in scope.\n"
-                        f"Available variables: {list(scoped_params.keys())}\nParsed line: ({node[0]})\n\n"
-                        f"Possible solutions:\n"
-                        f"(1) Make sure the parameter variable being used is found in the available parameter variables list.\n"
-                        f"(2) Make sure that variable is assigned the correct type for use in predicate `{pred_name}`."
-                    )
-
-                # (iii) Type check
-                expected_type = expected_types[i]
-                actual_type = scoped_params[param]
-
-                # type mismatch only if both are defined
-                if expected_type and actual_type:
-                    if (types is None or len(types) == 0):
+            for i, arg in enumerate(args):
+                if isinstance(arg, list):
+                    valid, msg = validate_term(arg, scoped_params)
+                    if not valid:
+                        return False, msg
+                else:
+                    if arg not in scoped_params:
                         return (
                             False,
-                            f"[ERROR]: Types are declared in the {part} predicates, but list of available types are empty.\n"
-                            f"Remove all types from predicates."
+                            f"[ERROR]: Variable `{arg}` not found in scope for predicate `{pred_name}`.\nAvailable: {list(scoped_params.keys())}"
                         )
-                    flag, _ = self.validate_type(expected_type, actual_type, types)
-                    if not flag:
-                        param_number = i + 1
-                        ordinal_suffix = get_ordinal_suffix(param_number)
-                        violating_var = node[0].split(" ")[param_number]
-                        return (
-                            False,
-                            f"[ERROR]: The {param_number}{ordinal_suffix} parameter of `{target_pred['clean']}` "
-                            f"should be of type `{expected_type}`, but type `{actual_type}` was assigned to `{violating_var}` "
-                            f"in predicate: ({node[0]})\n\n"
-                            f"Make sure variable's are assigned the correct type for use in predicate `{pred_name}`"
-                        )
+                    expected_type = expected_types[i]
+                    actual_type = scoped_params[arg]
+                    if expected_type and actual_type:
+                        if not types:
+                            return (
+                                False,
+                                f"[ERROR]: Types declared in predicate, but types list is empty."
+                            )
+                        flag, _ = self.validate_type(expected_type, actual_type, types)
+                        if not flag:
+                            suffix = get_ordinal_suffix(i + 1)
+                            return (
+                                False,
+                                f"[ERROR]: The {i+1}{suffix} parameter of `{target_pred['clean']}` "
+                                f"should be of type `{expected_type}`, but `{arg}` is `{actual_type}`"
+                            )
+            return True, "[PASS]"
 
-            return True, "[PASS]: all predicates are syntactically valid."
-
-        # start traversal with base action parameters
         return traverse(pddl, scoped_params=action_params.copy())
 
 
@@ -685,7 +711,8 @@ class SyntaxValidator:
         self, 
         llm_response: str, 
         curr_predicates: list[Predicate] | None = None, 
-        types: dict[str, str] | list[dict[str,str]] | None = None
+        types: dict[str, str] | list[dict[str,str]] | None = None,
+        functions: list[Function] | None = None
     ):
         """
         This function performs very basic check over whether the predicates are used in a valid way.
@@ -710,7 +737,7 @@ class SyntaxValidator:
         )
 
         validation_info = self.validate_pddl_usage_predicates(
-            precond_str, curr_predicates, params_info[0], types, part="preconditions"
+            pddl=precond_str, predicates=curr_predicates, action_params=params_info[0], functions=functions, types=types, part="preconditions"
         )
         if not validation_info[0]:
             return validation_info
@@ -721,7 +748,7 @@ class SyntaxValidator:
         eff_str = llm_response.split("Effects")[1].split("```\n")[1].strip()
         eff_str = eff_str.replace("\n", " ").replace("(", " ( ").replace(")", " ) ")
         return self.validate_pddl_usage_predicates(
-            eff_str, curr_predicates, params_info[0], types, part="effects"
+            pddl=eff_str, predicates=curr_predicates, action_params=params_info[0], functions=functions, types=types, part="effects"
         )
 
 
@@ -892,9 +919,10 @@ class SyntaxValidator:
                 if not functions: functions = []
                 function_names = [f["name"] for f in functions]
                 if state_name not in function_names:
+                    function_names_str = function_names if functions else "No functions provided"
                     feedback_msgs.append(
                         f"[ERROR]: In the {state_type} state, '({state_op} ({state_name} {' '.join(state_params)}) {state_val})' "
-                        f"uses function '{state_name}', which is not defined in the domain: {function_names if functions else "No functions provided"}.\n\n"
+                        f"uses function '{state_name}', which is not defined in the domain: {function_names_str}.\n\n"
                         f"If there are no functions, do not include this state."
                     )
                     valid = False

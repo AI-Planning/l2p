@@ -30,7 +30,10 @@ class Action(TypedDict):
 
 class Function(TypedDict):
     name: str
+    desc: Optional[str]
+    raw: str
     params: ParameterList
+    clean: str
     
 
 # Domain details data class including predicates and actions

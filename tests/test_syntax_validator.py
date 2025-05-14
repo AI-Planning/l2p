@@ -429,13 +429,28 @@ class TestSyntaxValidator(unittest.TestCase):
             ### Action Preconditions
             ```
             (and
-                (holding ?a ?b1) ; The arm is holding the top block
-                (clear ?b2) ; The bottom block is clear
-                (= (function-name ?b1) 200)
+
+                (= (weight ?b1) (weight ?b2))
                 (forall (?box1 ?box2 - block)
                     (and
                     (clear ?box1)
                     (clear ?box2)
+                    (= (battery-level ?a) 100)
+                    (= (battery-level ?a) 100)
+                    (>= (weight ?box1) 10)  ; Weight of box1 must be at least 10
+                    (< (weight ?box2) 20)  ; Weight of box2 must be less than 20
+                    (increase (battery-level ?a) 200)
+                    (increase (battery-level ?a) (* (weight ?box1) 100))  ; Increase battery level by 10\% of box1's weight
+                    (decrease (battery-level ?a) (* 0.05 (weight ?box2)))  ; Decrease battery level by 5\% of box2's weight
+                    )
+                )
+                (forall (?box1 ?box2 - block)
+                    (and
+                    (= (battery-level ?a) 100)
+                    (>= (weight ?box1) 10)  ; Weight of box1 must be at least 10
+                    (< (weight ?box2) 20)  ; Weight of box2 must be less than 20
+                    (increase (battery-level ?a) (* (weight ?box1) 100))  ; Increase battery level by 10\% of box1's weight
+                    (decrease (battery-level ?a) (* 0.05 (weight ?box2)))  ; Decrease battery level by 5\% of box2's weight
                     )
                 )
             )
@@ -466,22 +481,35 @@ class TestSyntaxValidator(unittest.TestCase):
         )
         
         predicates = [
-            Predicate({'name': 'on', 
+            {'name': 'on', 
                     'desc': 'true if the block ?b1 is on top of the block ?b2', 
                     'raw': '(on ?b1 - block ?b2 - block): true if the block ?b1 is on top of the block ?b2', 
                     'params': OrderedDict([('?b1', 'block'), ('?b2', 'block')]), 
-                    'clean': '(on ?b1 - block ?b2 - block)'}),
-            Predicate({'name': 'holding', 
+                    'clean': '(on ?b1 - block ?b2 - block)'},
+            {'name': 'holding', 
                     'desc': 'true if arm is holding a block', 
                     'raw': '(holding ?a - arm ?b - block): true if arm is holding a block', 
                     'params': OrderedDict([('?a', 'arm'), ('?b', 'block')]), 
-                    'clean': '(holding ?a - arm ?b - block)'}),
-            Predicate({'name': 'clear', 
+                    'clean': '(holding ?a - arm ?b - block)'},
+            {'name': 'clear', 
                     'desc': 'true if a block does not have anything on top of it', 
                     'raw': '(clear ?b - block): true if a block does not have anything on top of it', 
                     'params': OrderedDict([('?b', 'block')]), 
-                    'clean': '(clear ?b - block)'}),
+                    'clean': '(clear ?b - block)'},
             ]
+        
+        functions = [
+            {'name': 'weight', 
+                    'desc': 'weight of the block', 
+                    'raw': '(weight ?b1 - block): weight of the block', 
+                    'params': OrderedDict([('?b1', 'block')]), 
+                    'clean': '(weight ?b1 - block)'},
+            {'name': 'battery-level', 
+                    'desc': 'battery level of arm', 
+                    'raw': '(battery-level ?a - arm): battery level of arm', 
+                    'params': OrderedDict([('?a', 'arm')]), 
+                    'clean': '(battery-level ?a - arm)'},
+        ]
         
         types = {
             'arm': 'arm for a robot',
@@ -492,15 +520,15 @@ class TestSyntaxValidator(unittest.TestCase):
         flag, msg = self.syntax_validator.validate_usage_predicates(
             llm_response=llm_response,
             curr_predicates=predicates,
-            types=types
+            types=types,
+            functions=functions
         )
-
+        
         print(msg)
 
         self.assertEqual(flag, True)
         
         # case 2: predicate declared in pddl but not in definition
-        
         predicates = [
             Predicate({'name': 'unstack', 
                     'desc': 'true if a block does not have anything on top of it', 
