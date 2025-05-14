@@ -100,13 +100,13 @@ class TestTaskBuilder(unittest.TestCase):
         )
 
         exp_initial = [
-            {'name': 'predicate_1', 
+            {'pred_name': 'predicate_1', 
              'params': ['object1', 'object2'], 
              'neg': False}, 
-            {'name': 'predicate_2', 
+            {'pred_name': 'predicate_2', 
              'params': ['object3', 'object1'], 
              'neg': False}, 
-            {'name': 'predicate_3', 
+            {'pred_name': 'predicate_3', 
              'params': ['object1'], 'neg': False}]
         
         self.assertEqual(validation_info[0], True)
@@ -138,9 +138,7 @@ class TestTaskBuilder(unittest.TestCase):
             ## DISTRACTION TEXT
             ### GOAL
             ```
-            (and
-                (predicate_3 object1) ; comment for initial state predicate 3
-            )
+            (predicate_3 object1) ; comment for initial state predicate 3
             ```
             ## DISTRACTION TEXT
             """
@@ -178,17 +176,18 @@ class TestTaskBuilder(unittest.TestCase):
         exp_objects = {'object1': 'type_1', 'object2': 'type_2', 'object3': 'type_3'}
 
         exp_initial = [
-            {'name': 'predicate_1', 
+            {'pred_name': 'predicate_1', 
              'params': ['object1', 'object2'], 
              'neg': False}, 
-            {'name': 'predicate_2', 
+            {'pred_name': 'predicate_2', 
              'params': ['object3', 'object1'], 
              'neg': False}
         ]
         
         exp_goal = [
-            {'name': 'predicate_3', 
-             'params': ['object1']}
+            {'pred_name': 'predicate_3', 
+             'params': ['object1'],
+             'neg': False}
         ]
         
         self.assertEqual(validation_info[0], True)
@@ -200,16 +199,17 @@ class TestTaskBuilder(unittest.TestCase):
 
         objects = {'object1': 'type_1', 'object2': 'type_2', 'object3': 'type_3'}
         initial = [
-            {'name': 'predicate_1', 
+            {'pred_name': 'predicate_1', 
              'params': ['object1', 'object2'], 
              'neg': False}, 
-            {'name': 'predicate_2', 
+            {'pred_name': 'predicate_2', 
              'params': ['object3', 'object1'], 
              'neg': False}
         ]
         goal = [
-            {'name': 'predicate_3', 
-             'params': ['object1']}
+            {'pred_name': 'predicate_3', 
+             'params': ['object1'],
+             'neg': False}
         ]
         
         expected_output = textwrap.dedent(

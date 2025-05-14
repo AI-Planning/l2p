@@ -20,10 +20,12 @@ Is supported in:
 """
 
 from collections import OrderedDict
-from .pddl_parser import parse_params, parse_new_predicates, parse_predicates, parse_pddl
+from .pddl_parser import *
 from .pddl_types import Predicate, Function
 from .pddl_format import format_types, remove_comments, format_pddl_expr
 import re
+
+ORDINAL_SUFFIXES = {1: "st", 2: "nd", 3: "rd"}
 
 LOGICAL_CONNECTIVES = {"and", "not", "or"}
 QUANTIFIERS = {"forall", "exists"}
@@ -58,14 +60,6 @@ class SyntaxValidator:
             'Action Effects', 
             'New Predicates',
         ]
-        
-        self.PDDL_KEYWORDS = {
-            "and", "or", "not", "when", "imply",
-            "exists", "forall", "either",
-            # "increase", "decrease", "assign", "scale-up", "scale-down",
-            # "=", "<", ">", "<=", ">=",
-            # "number", "object", "total-cost",
-        }
         
         self.error_types = error_types
         self.unsupported_keywords = (
@@ -487,32 +481,32 @@ class SyntaxValidator:
         part="preconditions",
     ) -> tuple[bool, str]:
         """
-        Validates predicates in nested PDDL list format.
+        Validates predicates and fluent expression in nested PDDL list format.
         """
         
         pddl = remove_comments(pddl)
-        pddl = parse_pddl(pddl)
+        pddl = parse_pddl(pddl) # parse into nested list
+
+        # retrieve dict comprehension for each predicate/function
         pred_index = {pred["name"]: pred for pred in predicates}
         func_index = {func["name"]: func for func in functions} if functions else {}
 
-        def get_ordinal_suffix(_num):
-            return (
-                {1: "st", 2: "nd", 3: "rd"}.get(_num % 10, "th")
-                if _num not in (11, 12, 13)
-                else "th"
-            )
+        def get_ordinal_suffix(num):
+            """Helper function that appends parameter index to string"""
+            return ORDINAL_SUFFIXES.get(num % 10, "th") if num % 100 not in (11, 12, 13) else "th"
 
         def split_var_type_pairs(raw_list):
+            """Helper function that for parsing typed variable declarations in PDDL-like syntax."""
             if not raw_list:
                 return []
             tokens = raw_list[0].split()
             result, current_vars = [], []
-            for token in tokens:
+            for i, token in enumerate(tokens):
                 if token == "-":
                     continue
-                if current_vars and tokens[tokens.index(token) - 1] == "-":
+                if current_vars and i > 0 and tokens[i-1] == "-":
                     var_type = token
-                    result.extend([f"{v} - {var_type}" for v in current_vars])
+                    result.extend(f"{v} - {var_type}" for v in current_vars)
                     current_vars = []
                 else:
                     current_vars.append(token)
@@ -520,9 +514,11 @@ class SyntaxValidator:
             return result
 
         def validate_term(term, scoped_params):
-            """Recursively validate a term which may be a function or value."""
+            """Recursive function that validates a term which may be a function or value."""
+
+            # if nested expression
             if isinstance(term, list):
-                
+                # (1) if term is a numeric operator
                 head_parts = term[0].strip().split()
                 head = head_parts[0]
                 
@@ -538,41 +534,52 @@ class SyntaxValidator:
                             return False, msg
                     return True, "[PASS]"
                 
-                # It's a function or nested expression
+                # (2) if term is a function or nested expression
                 func_ = term[0].split(" ")
                 func_name = func_[0]
                 func_args = func_[1:]
+
+                # checks if function name in pddl not found in :function list
                 if func_name not in func_index:
                     available_funcs = "\n - " + "\n - ".join([f["raw"] for f in functions]) if functions else "No functions available."
                     return False, (
                         f"[ERROR]: Undeclared function `({func_name})` found in {part}.\n"
                         f"List of available functions are: {available_funcs}"
                     )
+                
+                # retrieve target function arguments
                 target_func = func_index[func_name]
                 expected_args = list(target_func["params"].keys())
                 expected_types = list(target_func["params"].values())
 
+                # checks if function arguments align with :function list
                 if len(func_args) != len(expected_args):
                     return (
                         False,
                         f"[ERROR]: Function `{target_func['clean']}` expects {len(expected_args)} parameter(s), "
                         f"but found {len(term[1:])} in {part}.\nParsed line: ({format_pddl_expr(term)})"
                     )
+                
+                # recursively checks if function argument is nested
                 for i, arg in enumerate(func_args):
-                    
                     if isinstance(arg, list):
                         valid, msg = validate_term(arg, scoped_params)
                         if not valid:
                             return False, msg
                     else:
+                        # leaf of function call
                         expected_type = expected_types[i]
                         actual_type = scoped_params.get(arg)
                         if expected_type and actual_type:
+
+                            # checks if :types exists
                             if not types:
                                 return (
                                     False,
                                     f"[ERROR]: Types declared but type dictionary is empty."
                                 )
+                            
+                            # validates if variable type aligns with target :type
                             flag, _ = self.validate_type(expected_type, actual_type, types)
                             if not flag:
                                 param_number = i + 1
@@ -583,14 +590,16 @@ class SyntaxValidator:
                                     f"should be of type `{expected_type}`, but `{arg}` is `{actual_type}`."
                                 )     
                         
+                        # checks if variable is in the scope of available variables
                         if arg not in scoped_params and not arg.isdigit():
                             return (
                                 False,
                                 f"[ERROR]: Argument `{arg}` not found in scope for function `{func_name}`.\nScope: {list(scoped_params.keys())}"
                             )
                 return True, "[PASS]"
+            
+            # if not nested expression, it is a variable or constant
             else:
-                # It should be a variable or constant
                 if term not in scoped_params and not term.isdigit():
                     return (
                         False,
@@ -599,12 +608,18 @@ class SyntaxValidator:
                 return True, "[PASS]"
 
         def traverse(node, scoped_params):
+            """Recursive function that goes through nested list."""
+
+            # if reached end node with no errors, return true
             if isinstance(node, str) or not isinstance(node, list) or len(node) == 0:
                 return True, "[PASS]"
 
-            keyword = node[0].lower()
+            keyword = node[0].lower() # extract keyword from node
 
+            # (1) if keyword is a logical connective (and, not, or)
             if keyword in LOGICAL_CONNECTIVES:
+                
+                # recursively branch child nodes
                 children = node[1:] if keyword != "not" else [node[1]]
                 for child in children:
                     valid, msg = traverse(child, scoped_params)
@@ -612,9 +627,14 @@ class SyntaxValidator:
                         return False, msg
                 return True, "[PASS]"
 
+            # (2) if keyword is a quantifier (forall, exists)
             if keyword in QUANTIFIERS:
+                
+                # validates correct arguments passed into quantifier
                 if len(node) != 3:
                     return False, f"[ERROR]: Malformed `{keyword}` expression: {format_pddl_expr(node)}"
+                
+                # parse quantified variable declarations
                 param_spec = split_var_type_pairs(node[1])
                 body = node[2]
                 new_scope = scoped_params.copy()
@@ -622,13 +642,16 @@ class SyntaxValidator:
                     parts = spec.split(" ")
                     var = parts[0]
                     var_type = parts[2] if len(parts) >= 3 and parts[1] == "-" else ""
+
+                    # validate if type exists in :types
                     if not var_type or var_type not in types:
                         return False, (
                             f"[ERROR]: Unknown or missing type `{var_type}` for `{var}` in quantifier `{keyword}`"
                         )
-                    new_scope[var] = var_type
+                    new_scope[var] = var_type # update variable scope environment
                 return traverse(body, new_scope)
 
+            # (3) if keyword is a conditional effect (when)
             if keyword in CONDITIONAL_EFFECTS:
                 if len(node) != 3:
                     return False, f"[ERROR]: Malformed `when` statement: {node}"
@@ -640,22 +663,23 @@ class SyntaxValidator:
                     return False, f"Invalid effect in 'when': {msg}"
                 return True, "[PASS]"
 
+            # (4) if keyword is a numeric-fluent operator
             if keyword in COMPARISON_OPERATORS | NUMERIC_OPERATORS | ASSIGNMENT_OPERATORS:
-                
                 if len(node) != 3:
                     return False, f"[ERROR]: `{keyword}` operator requires exactly two arguments: {format_pddl_expr(node)}"
                 for term in node[1:]:
-                    
+                    # traverse terms of operator statement
                     valid, msg = validate_term(term, scoped_params)
                     if not valid:
                         return False, msg
                 return True, "[PASS]"
 
-            # assume keyword is a predicate or unknown term
+            # (5) if keyword is a predicate
             pred_ = keyword.split(" ")
             pred_name = pred_[0]
             args = pred_[1:]
 
+            # validate if predicate is found in :predicates
             if pred_name not in pred_index:
                 available_preds = "\n - " + "\n - ".join([p["raw"] for p in predicates])
                 return (
@@ -664,10 +688,12 @@ class SyntaxValidator:
                     f"Available predicates:\n{available_preds}"
                 )
 
+            # retrieve target predicate arguments
             target_pred = pred_index[pred_name]
             expected_args = list(target_pred["params"].keys())
             expected_types = list(target_pred["params"].values())
 
+            # checks if predicate arguments align with :predicates list
             if len(args) != len(expected_args):
                 return (
                     False,
@@ -676,19 +702,25 @@ class SyntaxValidator:
                 )
 
             for i, arg in enumerate(args):
+                # recursively checks if predicate argument is nested
                 if isinstance(arg, list):
                     valid, msg = validate_term(arg, scoped_params)
                     if not valid:
                         return False, msg
                 else:
+                    # checks if parameter variables are found in current scope
                     if arg not in scoped_params:
                         return (
                             False,
                             f"[ERROR]: Variable `{arg}` not found in scope for predicate `{pred_name}`.\nAvailable: {list(scoped_params.keys())}"
                         )
+                    
+                    # check if type of variable matches predicate type
                     expected_type = expected_types[i]
                     actual_type = scoped_params[arg]
                     if expected_type and actual_type:
+
+                        # if types is empty and it calls a type
                         if not types:
                             return (
                                 False,
@@ -702,8 +734,10 @@ class SyntaxValidator:
                                 f"[ERROR]: The {i+1}{suffix} parameter of `{target_pred['clean']}` "
                                 f"should be of type `{expected_type}`, but `{arg}` is `{actual_type}`"
                             )
+                        
             return True, "[PASS]"
 
+        # resurively invoked function to branch nested list
         return traverse(pddl, scoped_params=action_params.copy())
 
 
@@ -731,24 +765,30 @@ class SyntaxValidator:
         params_info = parse_params(llm_response)
 
         # check preconditions
-        precond_str = llm_response.split("Preconditions")[1].split("```\n")[1].strip()
-        precond_str = (
-            precond_str.replace("\n", " ").replace("(", " ( ").replace(")", " ) ")
+        precond_str = parse_preconditions(llm_response)
+        precond_str = precond_str.replace("\n", " ").replace("(", " ( ").replace(")", " ) ")
+        validation_info = self.validate_pddl_usage_predicates(
+            pddl=precond_str, 
+            predicates=curr_predicates, 
+            action_params=params_info[0], 
+            functions=functions, 
+            types=types, 
+            part="preconditions"
         )
 
-        validation_info = self.validate_pddl_usage_predicates(
-            pddl=precond_str, predicates=curr_predicates, action_params=params_info[0], functions=functions, types=types, part="preconditions"
-        )
         if not validation_info[0]:
             return validation_info
 
         # check effects
-        if llm_response.split("Effects")[1].count("```\n") < 2:
-            return True, "invalid_predicate_usage"
-        eff_str = llm_response.split("Effects")[1].split("```\n")[1].strip()
+        eff_str = parse_effects(llm_response)
         eff_str = eff_str.replace("\n", " ").replace("(", " ( ").replace(")", " ) ")
         return self.validate_pddl_usage_predicates(
-            pddl=eff_str, predicates=curr_predicates, action_params=params_info[0], functions=functions, types=types, part="effects"
+            pddl=eff_str, 
+            predicates=curr_predicates, 
+            action_params=params_info[0], 
+            functions=functions, 
+            types=types, 
+            part="effects"
         )
 
 
@@ -940,7 +980,7 @@ class SyntaxValidator:
                     continue  # Skip type check if parameters are invalid
 
                 # (iii) Check if object types match expected predicate types
-                target_func = next(p for p in functions if p["name"] == state_name)
+                target_func = next(f for f in functions if f["name"] == state_name)
                 expected_types = list(target_func["params"].values())
                 actual_types = [objects[param] for param in state_params]
                 actual_name_type_pairs = [f"'{param}': '{objects[param]}'" for param in state_params]

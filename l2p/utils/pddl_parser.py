@@ -258,7 +258,7 @@ def parse_preconditions(llm_output: str) -> str:
     try:
         preconditions = (
             llm_output.split("Preconditions\n")[1]
-            .split("##")[0]
+            .split("###")[0]
             .split("```")[1]
             .strip(" `\n")
         )
@@ -275,7 +275,7 @@ def parse_effects(llm_output: str) -> str:
     try:
         effects = (
                     llm_output.split("Effects\n")[1]
-                    .split("##")[0]
+                    .split("###")[0]
                     .split("```")[1]
                     .strip(" `\n")
                 )

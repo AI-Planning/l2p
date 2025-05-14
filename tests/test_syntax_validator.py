@@ -440,8 +440,8 @@ class TestSyntaxValidator(unittest.TestCase):
                     (>= (weight ?box1) 10)  ; Weight of box1 must be at least 10
                     (< (weight ?box2) 20)  ; Weight of box2 must be less than 20
                     (increase (battery-level ?a) 200)
-                    (increase (battery-level ?a) (* (weight ?box1) 100))  ; Increase battery level by 10\% of box1's weight
-                    (decrease (battery-level ?a) (* 0.05 (weight ?box2)))  ; Decrease battery level by 5\% of box2's weight
+                    (increase (battery-level ?a) (* (weight ?box1) 100))  ; Increase battery level by 10 percent of box1's weight
+                    (decrease (battery-level ?a) (* 0.05 (weight ?box2)))  ; Decrease battery level by 5 percent of box2's weight
                     )
                 )
                 (forall (?box1 ?box2 - block)
@@ -449,8 +449,8 @@ class TestSyntaxValidator(unittest.TestCase):
                     (= (battery-level ?a) 100)
                     (>= (weight ?box1) 10)  ; Weight of box1 must be at least 10
                     (< (weight ?box2) 20)  ; Weight of box2 must be less than 20
-                    (increase (battery-level ?a) (* (weight ?box1) 100))  ; Increase battery level by 10\% of box1's weight
-                    (decrease (battery-level ?a) (* 0.05 (weight ?box2)))  ; Decrease battery level by 5\% of box2's weight
+                    (increase (battery-level ?a) (* (weight ?box1) 100))  ; Increase battery level by 10 percent of box1's weight
+                    (decrease (battery-level ?a) (* 0.05 (weight ?box2)))  ; Decrease battery level by 5 percent of box2's weight
                     )
                 )
             )
