@@ -22,10 +22,19 @@ Is supported in:
 from collections import OrderedDict
 from .pddl_parser import parse_params, parse_new_predicates, parse_predicates, parse_pddl
 from .pddl_types import Predicate, Function
-from .pddl_format import format_types, remove_comments
+from .pddl_format import format_types, remove_comments, format_pddl_expr
 import re
 
-from typing import List, OrderedDict, Tuple, Union, Optional, Dict
+NUMERIC_OPERATORS = {"+", "-", "/", "*"}
+COMPARISON_OPERATORS = {"=", ">", "<", ">=", "<="}
+LOGICAL_CONNECTIVES = {"and", "not", "or"}
+QUANTIFIERS = {"forall", "exists"}
+CONDITIONAL_EFFECTS = {"when"}
+
+ASSIGNMENT_OPERATORS = {"assign", "increase", "decrease", "scale-up", "scale-down"}
+TEMPORAL_KEYWORDS = {"at", "over", "start", "end"}
+PREFERENCE_KEYWORDS = {"preference", "always", "sometime", "within", "at-most-once", "sometime-before", "sometime-after"}
+
 
 class SyntaxValidator:
     def __init__(
@@ -478,11 +487,12 @@ class SyntaxValidator:
         Validates predicates in nested PDDL list format.
         """
         
-        pddl = remove_comments(pddl)
-        pddl = parse_pddl(pddl)
+        pddl = remove_comments(pddl) # remove comments 
+        pddl = parse_pddl(pddl) # parse out the string into nested lists
         pred_index = {pred["name"]: pred for pred in predicates}
 
         def get_ordinal_suffix(_num):
+            """Helper function that appends ordinal suffix to parameter"""
             return (
                 {1: "st", 2: "nd", 3: "rd"}.get(_num % 10, "th")
                 if _num not in (11, 12, 13)
@@ -494,99 +504,101 @@ class SyntaxValidator:
                 return []
 
             tokens = raw_list[0].split()
-            result = []
-            i = 0
+            result, current_vars = [], []
 
-            while i < len(tokens):
-                if i + 1 < len(tokens) and tokens[i+1] == '-':
-                    # Handle typed variables (e.g., ?x - type)
-                    if i + 2 < len(tokens):
-                        var = tokens[i]
-                        typ = tokens[i+2]
-                        result.append(f"{var} - {typ}")
-                        i += 3
-                    else:
-                        raise ValueError(f"Malformed type declaration near: {tokens[i:]}")
+            for token in tokens:
+                if token == "-":
+                    continue
+                if current_vars and tokens[tokens.index(token) - 1] == "-":
+                    var_type = token
+                    result.extend([f"{v} - {var_type}" for v in current_vars])
+                    current_vars = []
                 else:
-                    # Untyped variable
-                    result.append(tokens[i])
-                    i += 1
-
+                    current_vars.append(token)
+            result.extend(current_vars)  # untyped vars
             return result
 
 
         def traverse(node, scoped_params):
-            if isinstance(node, str):
+
+            # if reach end of leaf, return; else keep traversing node
+            if isinstance(node, str) or not isinstance(node, list) or len(node) == 0:
                 return True, "[PASS]"
 
-            if not isinstance(node, list) or len(node) == 0:
-                return True, "[PASS]"
+            keyword = node[0].lower() # retrieve keyword
 
-            keyword = node[0].lower()
-
-            # logical connectives
-            if keyword in {"and", "or", "not", "imply"}:
+            # (1) if keyword is a logical connective
+            if keyword in LOGICAL_CONNECTIVES:
                 children = node[1:] if keyword != "not" else [node[1]]
+
+                # traverse its children nodes
                 for child in children:
                     valid, msg = traverse(child, scoped_params)
                     if not valid:
                         return False, msg
-                return True, "[PASS]"
+                return True, ""
 
-            # quantifiers
-            if keyword in {"forall", "exists"}:
+            # (2) if keyword is a quantifier
+            if keyword in QUANTIFIERS:
+                # node must contain its keyword, the quantifier parameters, and the body
                 if len(node) != 3:
-                    return False, f"[ERROR]: Malformed quantifier in {part}: {node}"
+                    node_str = format_pddl_expr(node)
+                    return False, (
+                        f"[ERROR]: Malformed `{keyword}` statement in {part}: {node_str}\n\n"
+                        f"A `{keyword}` construct must have exactly three parts: the {keyword}, its list of typed variables, and a single logical expression.\n"
+                        f"If you have multiple conditions, wrap them inside an `(and ...)` block.\n\n"
+                        f"Example:\n  ({keyword} (?x - block) (and (clear ?x) (movable ?x)))"
+                    )
                 
-                param_spec = node[1]  # e.g., ['?b - box']
-                param_spec = split_var_type_pairs(param_spec)
-                body = node[2]
+                param_spec = node[1] # retrieve parameter arguments of quantifier
+                param_spec = split_var_type_pairs(param_spec) # parse out variable declarations
+                body = node[2] # retrieve predicate arguments in quantifier
 
                 new_scope = scoped_params.copy()
 
+                # iterate through each quantifier parameters
                 for spec in param_spec:        
+                    # split up the parameter (e.g. `?b - box` into ['?b', '-', 'box])
                     spec = spec.split(" ")
                     var = spec[0]
                     _type = spec[2] if len(spec) >= 3 and spec[1] == "-" else ""
 
-                    if not _type:
-                        return (
-                            False,
-                            f"[ERROR]: Logical connective `{keyword}` assigns variable `{var}` with no type. Revise this so a variable contains a type.\n\nParsed line: ({keyword} ({" ".join(param_spec)}))"
+                    # if type assigned to parameter not found in :types
+                    if not _type or _type not in types:
+                        error_msg = (
+                            f"[ERROR]: Logical connective `{keyword}` "
+                            f"{'assigns variable `' + var + '` with no type' if not _type else 'introduces type `' + _type + '` not found in declared types: ' + str(list(types.keys()))}."
+                            f"\n\nParsed line: ({keyword} ({" ".join(param_spec)}))"
                         )
-                    if _type not in types:
-                        return (
-                            False, 
-                            f"[ERROR]: Logical connective `{keyword}` introduces type `{_type}` not found in list of declared types: {list(types.keys())}.\n\nParsed line: ({keyword} ({" ".join(param_spec)}))"
-                        )
+                        return False, error_msg
 
-                    new_scope[var] = _type
-                # else:  # e.g., ['?x - block']
-                #     param_spec = param_spec[0].split(" ")
-                #     var = param_spec[0]
-                #     _type = param_spec[2] if len(param_spec) >= 3 and param_spec[1] == "-" else ""
-
-                #     if not _type:
-                #             return (
-                #                 False,
-                #                 f"[ERROR]: Logical connective `{keyword}` assigns variable `{var}` with no type. Revise this so a variable contains a type.\n\nParsed line: ({keyword} ({" ".join(param_spec)}))"
-                #             )
-                #     if _type not in types:
-                #             return (
-                #                 False, 
-                #                 f"[ERROR]: Logical connective `{keyword}` introduces type `{_type}` not found in list of declared types: {list(types.keys())}.\n\nParsed line: ({" ".join(param_spec)})"
-                #             )
-                    
-                #     new_scope[var] = _type
-
+                    new_scope[var] = _type # temporarily add new variable to quantifier scope
                 return traverse(body, new_scope)
             
-            # retrieve predicate
-            pred_ = keyword
-            pred_name = pred_.split(" ")[0]
-            pred_args = node[0].split(" ")[1:]
+            # (3) if keyword is a conditional effect
+            if keyword in CONDITIONAL_EFFECTS:
+                if len(node) != 3:
+                    return False, f"[ERROR]: Malformed 'when' in {part}: {node}"
+                
+                condition = node[1]
+                effect = node[2]
+                
+                valid, msg = traverse(condition, scoped_params)
+                if not valid:
+                    return False, f"There is an invalid condition in the 'when' statement.\n\n{msg}"
+                
+                valid, msg = traverse(effect, scoped_params)
+                if not valid:
+                    return False, f"There is an invalid effect in the 'when' body.\n\n{msg}"
+
+                return True, ""
             
-            if pred_name in ["=", ">", "<", ">=", "<="]:
+            # (4) if keyword is a predicate
+            pred_ = keyword # retrieve statement
+            pred_name = pred_.split(" ")[0] # retrieve name of predicate
+            pred_args = node[0].split(" ")[1:] # retreive arguments of predicate
+            
+            if pred_name in (COMPARISON_OPERATORS | NUMERIC_OPERATORS):
                 op = pred_name
 
                 if len(pred_args) != 2:
@@ -603,7 +615,7 @@ class SyntaxValidator:
                             f"\nParsed line: ({node[0]})\n\n"
                             f"Make sure variables are being used are found in parameter scope."
                         )
-                return True, "[PASS]"
+                return True, ""
 
             if pred_name not in pred_index:
                 available_preds = "\n - " + "\n - ".join([p["raw"] for p in predicates])
@@ -636,7 +648,6 @@ class SyntaxValidator:
                         f"Possible solutions:\n"
                         f"(1) Make sure the parameter variable being used is found in the available parameter variables list.\n"
                         f"(2) Make sure that variable is assigned the correct type for use in predicate `{pred_name}`."
-                        
                     )
 
                 # (iii) Type check
@@ -661,12 +672,10 @@ class SyntaxValidator:
                             f"[ERROR]: The {param_number}{ordinal_suffix} parameter of `{target_pred['clean']}` "
                             f"should be of type `{expected_type}`, but type `{actual_type}` was assigned to `{violating_var}` "
                             f"in predicate: ({node[0]})\n\n"
-                            f"Possible solutions:\n"
-                            f"(1) Make sure variable `{violating_var}` is assigned the correct type for use in predicate `{pred_name}`\n"
-                            f"(2) If `{violating_var}` was recently introduced (i.e. forall quantifier), make sure the variable in that declaration line is assigned the correct type"
+                            f"Make sure variable's are assigned the correct type for use in predicate `{pred_name}`"
                         )
 
-            return True, "[PASS]"
+            return True, "[PASS]: all predicates are syntactically valid."
 
         # start traversal with base action parameters
         return traverse(pddl, scoped_params=action_params.copy())

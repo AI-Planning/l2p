@@ -271,3 +271,10 @@ def remove_comments(pddl_str):
     pddl_str = re.sub(r'\n{2,}', '\n\n', pddl_str)
 
     return pddl_str
+
+
+def format_pddl_expr(expr):
+    if isinstance(expr, list):
+        return "(" + " ".join(format_pddl_expr(e) for e in expr) + ")"
+    else:
+        return str(expr)

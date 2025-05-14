@@ -431,9 +431,12 @@ class TestSyntaxValidator(unittest.TestCase):
             (and
                 (holding ?a ?b1) ; The arm is holding the top block
                 (clear ?b2) ; The bottom block is clear
-                (= ?b1 200)
-                (forall (?box - block ?box2 - arm)
-                    (clear ?box)
+                (= (function-name ?b1) 200)
+                (forall (?box1 ?box2 - block)
+                    (and
+                    (clear ?box1)
+                    (clear ?box2)
+                    )
                 )
             )
             ```
@@ -441,9 +444,17 @@ class TestSyntaxValidator(unittest.TestCase):
             ### Action Effects
             ```
             (and
-                (not (holding ?a ?b1)) ; The arm is no longer holding the top block
-                (on ?b1 ?b2) ; The top block is now on the bottom block
-                (not (clear ?b2)) ; The bottom block is no longer clear
+                (not (holding ?a ?b1))   ; Unconditionally: the arm stops holding ?b1
+                (on ?b1 ?b2)             ; Unconditionally: ?b1 is now on ?b2
+                (not (clear ?b2))        ; Unconditionally: ?b2 is no longer clear
+
+                ;; Conditionally: if ?b1 was clear, then ?a becomes free
+                (when (clear ?b1)
+                    (and
+                    (clear ?b2)
+                    (clear ?b1)
+                    )
+                )
             )
             ```
 
