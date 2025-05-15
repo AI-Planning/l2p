@@ -1,4 +1,4 @@
-End your final answers starting with "### Action Preconditions" and "### New Predicates" with ''' ''' comment blocks in PDDL as so:
+End your final answers starting with "### Action Preconditions" and "### New Predicates" with ``` ``` comment blocks in PDDL as so:
 
 ### Action Preconditions
 ```

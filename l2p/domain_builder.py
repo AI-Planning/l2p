@@ -304,7 +304,8 @@ class DomainBuilder:
             "action_name": action_name,
             "action_desc": action_desc or "No description available.",
             "types": format_types_to_string(types) if types else "No types provided.",
-            "predicates": "\n".join([f"- {pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
+            "predicates": "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided.",
+            "functions": "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
         }
         
         prompt = prompt_template.format(**prompt_data)
@@ -992,7 +993,6 @@ class DomainBuilder:
         functions: list[Function] | None = None,
         actions: list[Action] = [],
         requirements: list[str] = REQUIREMENTS,
-        append_obj_type_to_parent: bool = True
     ) -> str:
         """
         Generates PDDL domain from given information
@@ -1012,7 +1012,7 @@ class DomainBuilder:
         desc += f"(define (domain {domain_name})\n"
         desc += indent(string=f"(:requirements\n   {' '.join(requirements)})", level=1)
         if types:
-            types_str = format_types_to_string(types, append_obj_type_to_parent)
+            types_str = format_types_to_string(types)
             desc += f"\n\n   (:types \n{indent(string=types_str, level=2)}\n   )"
             
         if not predicates:

@@ -61,11 +61,8 @@ def parse_params(llm_output):
             
         try:
             params_raw.append(line)
-            # Split into param name and type/description
+            # split into param name and type
             parts = line.split(":")
-            if len(parts) < 2:
-                print(f"[WARNING] Missing colon in parameter line: '{line}'")
-                continue
                 
             left_side = parts[0].strip()
             param_parts = [p.strip() for p in left_side.split("-")]

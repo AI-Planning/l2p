@@ -610,7 +610,8 @@ class TestDomainBuilder(unittest.TestCase):
                     :strips :typing :numeric-fluents)
 
                 (:types 
-                    location robot - object
+                    location 
+                    robot
                 )
 
                 (:predicates 

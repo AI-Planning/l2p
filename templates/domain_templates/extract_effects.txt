@@ -1,4 +1,4 @@
-End your final answers starting with "### Action Effects" and "### New Predicates" with ''' ''' comment blocks in PDDL as so:
+End your final answers starting with "### Action Effects" and "### New Predicates" with ``` ``` comment blocks in PDDL as so:
 
 ### Action Effects
 ```

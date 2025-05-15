@@ -143,8 +143,7 @@ def format_types(
     
     
 def format_types_to_string(
-    types: dict[str, str] | list[dict[str, str]],
-    append_obj_type_to_parent: bool = False # flag for appending `object` type to parent type
+    types: dict[str, str] | list[dict[str, str]]
     ) -> str:
     """Formats a type hierarchy (flat or nested) into a PDDL-style string."""
     formatted = format_types(types)
@@ -152,36 +151,44 @@ def format_types_to_string(
     # appends `object` to parent type (required for some PDDL parsers)
     type_groups = {}
     for type_name, desc in formatted.items():
+
+        # if type has a parent
         if " - " in type_name:
             type_part, parent_part = type_name.split(" - ")
             parent = parent_part.strip()
             type_part = type_part.strip()
+        # if type does not have a parent
         else:
-            parent = "object" if append_obj_type_to_parent else None
-            type_part = type_name.strip()
+            # requests if object is appended
+            parent = type_name.strip()
+            type_part = None
         
+        # if there is a parent (could be super type or object)
         if parent:
+            # if unique parent, add it to type groups
             if parent not in type_groups:
                 type_groups[parent] = []
-            type_groups[parent].append(type_part)
+            if type_part:
+                type_groups[parent].append(type_part)
     
-    # Build the output lines
+    # build the output lines
     lines = []
     
-    # Handle top-level objects first
+    # handle top-level objects first
     if "object" in type_groups:
         top_level_types = sorted(t for t in type_groups["object"] if t != "object")
         if top_level_types:
-            if append_obj_type_to_parent:
-                lines.append(f"{' '.join(top_level_types)} - object")
-            else:
-                lines.append(f"{' '.join(top_level_types)}")
+            lines.append(f"{' '.join(top_level_types)} - object")
         del type_groups["object"]
     
-    # Handle other groups
+    # handle child groups
     for parent, child_types in sorted(type_groups.items()):
-        child_line = " ".join(sorted(child_types))
-        lines.append(f"{child_line} - {parent}")
+
+        if child_types:
+            child_line = " ".join(sorted(child_types))
+            lines.append(f"{child_line} - {parent}")
+        else:
+            lines.append(f"{parent}")
     
     return "\n".join(lines)
 

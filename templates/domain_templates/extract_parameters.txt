@@ -1,4 +1,4 @@
-End your final answer underneath the header '### Action Parameters' with ''' ''' comment blocks in PDDL as so:
+End your final answer underneath the header '### Action Parameters' with ``` ``` comment blocks in PDDL as so:
 
 ### Action Parameters
 ```

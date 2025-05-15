@@ -842,7 +842,7 @@ class SyntaxValidator:
 
             # validate if predicate is found in :predicates
             if pred_name not in pred_index:
-                available_preds = "\n - " + "\n - ".join([p["raw"] for p in predicates])
+                available_preds = "\n - ".join([p["raw"] for p in predicates])
                 return (
                     False,
                     f"[ERROR]: Undeclared predicate `({pred_name})` found in {part}.\n"

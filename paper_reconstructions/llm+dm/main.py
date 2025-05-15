@@ -27,7 +27,7 @@ from l2p import *
 DOMAINS = [
     "household",
     "logistics",
-    "tyreworld",
+    "tyreworld"
 ]
 
 def get_action_prompt(prompt_template: str, action_desc: str):
