@@ -244,7 +244,7 @@ class TestSyntaxValidator(unittest.TestCase):
         flag, _ = self.syntax_validator.validate_format_predicates(predicates=pred_incorrect_param_type)
         self.assertEqual(flag, False)
 
-    def test_validate_pddl_usage_predicates(self):
+    def test_validate_pddl_action(self):
 
         # case 1: correct implementation – predicate aligns with action parameters and types
         types = {
@@ -277,7 +277,7 @@ class TestSyntaxValidator(unittest.TestCase):
             ['- ?b1 - block: The block being stacked on top', '- ?b2 - block: The block being stacked upon', '- ?a - arm: The arm performing the stacking action']
             )
 
-        flag, _ = self.syntax_validator.validate_pddl_usage_predicates(
+        flag, _ = self.syntax_validator.validate_pddl_action(
             pddl=precond_str,
             predicates=predicates,
             action_params=params_info[0],
@@ -288,7 +288,7 @@ class TestSyntaxValidator(unittest.TestCase):
 
         # case 2: incorrect number of predicate parameters in pddl component
         precond_str = "( and      ( holding ?b1 )  ; The arm is holding the top block      (clear ?b2 )  ; The bottom block is clear  )"
-        flag, _ = self.syntax_validator.validate_pddl_usage_predicates(
+        flag, _ = self.syntax_validator.validate_pddl_action(
             pddl=precond_str,
             predicates=predicates,
             action_params=params_info[0],
@@ -299,7 +299,7 @@ class TestSyntaxValidator(unittest.TestCase):
 
         # case 3: predicate parameters include object types
         precond_str = "( and      ( holding ?a - arm ?b1 - block)  ; The arm is holding the top block      (clear ?b2 )  ; The bottom block is clear  )"
-        flag, _ = self.syntax_validator.validate_pddl_usage_predicates(
+        flag, _ = self.syntax_validator.validate_pddl_action(
             pddl=precond_str,
             predicates=predicates,
             action_params=params_info[0],
@@ -311,7 +311,7 @@ class TestSyntaxValidator(unittest.TestCase):
         # case 3: parameters declared in predicate not found in action parameter
         precond_str = "( and      ( holding ?a ?b1)  ; The arm is holding the top block      (clear ?rock )  ; The bottom block is clear  )"
 
-        flag, _ = self.syntax_validator.validate_pddl_usage_predicates(
+        flag, _ = self.syntax_validator.validate_pddl_action(
             pddl=precond_str,
             predicates=predicates,
             action_params=params_info[0],
@@ -329,7 +329,7 @@ class TestSyntaxValidator(unittest.TestCase):
         # `clear` predicate parameter should be type `block` but instead `arm`
         precond_str = "( and      ( holding ?a ?b1)  ; The arm is holding the top block      (clear ?a )  ; The bottom block is clear  )"
         
-        flag, _ = self.syntax_validator.validate_pddl_usage_predicates(
+        flag, _ = self.syntax_validator.validate_pddl_action(
             pddl=precond_str,
             predicates=predicates,
             action_params=params_info[0],
@@ -383,7 +383,7 @@ class TestSyntaxValidator(unittest.TestCase):
             ['- ?b1 - block: The block being stacked on top', '- ?b2 - block: The block being stacked upon', '- ?a - arm: The arm performing the stacking action']
             )
         
-        flag, _ = self.syntax_validator.validate_pddl_usage_predicates(
+        flag, _ = self.syntax_validator.validate_pddl_action(
             pddl=precond_str,
             predicates=predicates,
             action_params=params_info[0],
@@ -392,7 +392,7 @@ class TestSyntaxValidator(unittest.TestCase):
         )
         self.assertEqual(flag, False)
         
-        flag, _ = self.syntax_validator.validate_pddl_usage_predicates(
+        flag, _ = self.syntax_validator.validate_pddl_action(
             pddl=precond_str,
             predicates=predicates_with_types,
             action_params=params_info[0],
@@ -406,7 +406,7 @@ class TestSyntaxValidator(unittest.TestCase):
             ['- ?b1: The block being stacked on top', '- ?b2 - block: The block being stacked upon', '- ?a: The arm performing the stacking action']
             )
         
-        flag, _ = self.syntax_validator.validate_pddl_usage_predicates(
+        flag, _ = self.syntax_validator.validate_pddl_action(
             pddl=precond_str,
             predicates=predicates_with_types,
             action_params=params_info[0],
@@ -415,7 +415,7 @@ class TestSyntaxValidator(unittest.TestCase):
         )
         self.assertEqual(flag, False)
 
-    def test_validate_usage_predicates(self):
+    def test_validate_usage_action(self):
         
         llm_response = textwrap.dedent(
             """
@@ -431,26 +431,14 @@ class TestSyntaxValidator(unittest.TestCase):
             (and
 
                 (= (weight ?b1) (weight ?b2))
-                (forall (?box1 ?box2 - block)
+                (forall (?block1 ?block2 - block ?a1 - arm)
                     (and
-                    (clear ?box1)
-                    (clear ?box2)
+                    (clear ?block1)
                     (= (battery-level ?a) 100)
-                    (= (battery-level ?a) 100)
-                    (>= (weight ?box1) 10)  ; Weight of box1 must be at least 10
-                    (< (weight ?box2) 20)  ; Weight of box2 must be less than 20
-                    (increase (battery-level ?a) 200)
-                    (increase (battery-level ?a) (* (weight ?box1) 100))  ; Increase battery level by 10 percent of box1's weight
-                    (decrease (battery-level ?a) (* 0.05 (weight ?box2)))  ; Decrease battery level by 5 percent of box2's weight
-                    )
-                )
-                (forall (?box1 ?box2 - block)
-                    (and
-                    (= (battery-level ?a) 100)
-                    (>= (weight ?box1) 10)  ; Weight of box1 must be at least 10
-                    (< (weight ?box2) 20)  ; Weight of box2 must be less than 20
-                    (increase (battery-level ?a) (* (weight ?box1) 100))  ; Increase battery level by 10 percent of box1's weight
-                    (decrease (battery-level ?a) (* 0.05 (weight ?box2)))  ; Decrease battery level by 5 percent of box2's weight
+                    (>= (weight ?block1) 10)
+                    (<= (weight ?b1) -100)
+                    (< (weight ?block2) 20)
+                    (> (battery-level ?a1) 10)
                     )
                 )
             )
@@ -470,6 +458,12 @@ class TestSyntaxValidator(unittest.TestCase):
                     (clear ?b1)
                     )
                 )
+                (increase (battery-level ?a) 200)
+                (increase (battery-level ?a) (* (weight ?b1) 100))
+                (decrease (battery-level ?a) (* 0.05 (weight ?b2)))
+                (assign (battery-level ?a) (* (weight ?b1) 2))
+                (scale-up (battery-level ?a) 2)
+                (scale-down (battery-level ?a) (weight ?b1))
             )
             ```
 
@@ -517,14 +511,12 @@ class TestSyntaxValidator(unittest.TestCase):
             'table': 'table that blocks sits on'
         }
         
-        flag, msg = self.syntax_validator.validate_usage_predicates(
+        flag, _ = self.syntax_validator.validate_usage_action(
             llm_response=llm_response,
             curr_predicates=predicates,
             types=types,
             functions=functions
         )
-        
-        print(msg)
 
         self.assertEqual(flag, True)
         
@@ -542,7 +534,7 @@ class TestSyntaxValidator(unittest.TestCase):
                     'clean': '(stack ?b - block)'}),
             ]
         
-        flag, _ = self.syntax_validator.validate_usage_predicates(
+        flag, _ = self.syntax_validator.validate_usage_action(
             llm_response=llm_response,
             curr_predicates=predicates,
             types=types

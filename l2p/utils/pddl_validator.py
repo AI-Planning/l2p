@@ -12,7 +12,7 @@ For instance:
                 "validate_params",
                 "validate_types_predicates",
                 "validate_format_predicates",
-                "validate_usage_predicates",
+                "validate_usage_action",
             ]
 
 Is supported in:
@@ -304,13 +304,106 @@ class SyntaxValidator:
         feedback_msg = "[PASS]: Type hierarchy is valid."
         return True, feedback_msg
     
+    
+    # ---- PDDL FUNCTION CHECKS ----
+    
+    def validate_format_functions(
+        self,
+        functions: list[Function],
+        types: dict[str,str] | list[dict[str,str]] | None = None
+    ) -> tuple[bool, str]:
+        """Check for any PDDL syntax found within functions, allowing untyped variables."""
+        
+        valid_types = list()
+        if types:
+            types = format_types(types)
+            valid_types = [
+                type_key.split(" - ")[0].strip()
+                for type_key in types.keys()
+            ]
+        else:
+            valid_types = []
+        
+        all_invalid_params = []
+        
+        for func in functions:
+            func_def = func["clean"]
+            func_def = func_def.strip(" ()`") # discard parentheses and similar
+            
+            # check if function name declared
+            if func_def.startswith("?") or func['name'].startswith("?"):
+                return (
+                    False,
+                    f"[ERROR]: Line `({func_def})` does not contain a function name. Function names must not start with `?`. Revise function to include name. For example: `(battery-level ?c - car)` where `battery-level` is the function name."
+                )
+
+            split_function = func_def.split(" ")[1:] # discard function name
+            split_function = [e for e in split_function if e != ""]
+            
+            i = 0
+            while i < len(split_function):
+                f = split_function[i]
+                # variable name must start with `?`
+                if "?" not in f:
+                    # catches random character declarations
+                    if re.match(r"^[^\w\s]+$", f) or re.match(r"^[^\w]", f):  # all non-word or starts with symbol
+                        return (
+                            False,
+                            f"[ERROR]: For PDDL, function `({func_def})` appears to contain invalid or unexpected symbol `{f}`. This might be a parsing error or stray character. Make sure each parameter follows the format `?name - type`."
+                        )
+                    
+                    raw_func = func['raw']
+                    
+                    feedback_msg = (
+                        f"[ERROR]: For PDDL, there is a syntax issue in the function definition."
+                        f"\n`{f}` appears where a variable is expected in function `{raw_func}`."
+                        f"\n\nPossible causes:"
+                        f"\n(1) `{f}` is intended to be a variable but is missing the `?` prefix. All variables must start with `?`, like `?block`."
+                        f"\n(2) `{f}` is actually a type, in which case it should appear after a `-` in a declaration like `?x - {p}`."
+                    )
+                    
+                    return False, feedback_msg
+                
+                # check if variable is followed by `- type` or nothing (untyped)
+                if i + 1 < len(split_function) and split_function[i+1] == "-":
+                    if i + 2 >= len(split_function):
+                        return (
+                            False,
+                            f"[ERROR]: For PDDL, there is a missing type after the `-` for parameter `{f}` in function `{func_def}`. Make sure each parameter follows the format `?name - type`."
+                        )
+                        
+                    param_obj_type = split_function[i + 2]
+                    
+                    if param_obj_type not in valid_types:
+                        all_invalid_params.append((param_obj_type, f, func_def))
+                        
+                    i += 3 # skip ?var - type
+                else:
+                    # untyped variable
+                    i += 1 # move to next token
+                    
+        if all_invalid_params:
+            feedback_msg = "[ERROR]: For PDDL, there are invalid object types in the functions:"
+            for param_obj_type, f, func_def in all_invalid_params:
+                feedback_msg += (
+                f"\n - `{param_obj_type}` for the parameter `{f}` in the definition of the function `{func_def}` "
+                + (f"not found in types: {valid_types}." if valid_types else "contain types when no types are available.")
+                )
+            feedback_msg += "\n\nRevise function parameters such that their types are assigned correctly. Otherwise leave variable untyped."
+            return False, feedback_msg
+
+        feedback_msg = "[PASS]: All functions are formatted correctly."
+        return True, feedback_msg
+            
+                    
+        
 
     # ---- PDDL PREDICATE CHECKS ----
 
     def validate_types_predicates(
         self, 
         predicates: list[Predicate], 
-        types: dict[str, str] | list[dict[str,str]] | None = None,
+        types: dict[str, str] | list[dict[str,str]] | None = None
     ) -> tuple[bool, str]:
         """Check if predicate name is found within any type definitions"""
         
@@ -385,6 +478,50 @@ class SyntaxValidator:
         return True, "[PASS]: All predicates are uniquely named and consistently defined."
 
 
+    def validate_overflow_predicates(
+        self, llm_response: str, limit: int = 30
+    ) -> tuple[bool, str]:
+        """
+        Checks if LLM output contains too many predicates in precondition/effects (based on users assigned limit)
+        """
+
+        spacer = "="*50
+
+        assert "Preconditions" in llm_response, llm_response
+        precond_str = (llm_response.split("Preconditions")[1].split("```\n")[1].strip())
+        num_prec_pred = len(precond_str.split("\n")) - 2 # for outer brackets
+        if num_prec_pred > limit:
+            feedback_msg = (
+                f"[ERROR]: You seem to have generated an action model with an unusually long list of precondition predicates.\n\n"
+                f"{spacer}\n"
+                f"{precond_str}\n"
+                f"{spacer}\n"
+                f"Extracted predicates: {num_prec_pred}\n\n"
+                f"Please include only the relevant preconditions and keep the action model concise or raise limit of predicates."
+            )
+            return False, feedback_msg
+
+        eff_str = llm_response.split("Effects")[1].split("```\n")[1].strip()
+        num_eff_pred = len(eff_str.split("\n")) - 2 # for outer brackets
+        if num_eff_pred > limit:
+            feedback_msg = (
+                f"[ERROR]: You seem to have generated an action model with an unusually long list of effect predicates.\n\n"
+                f"{spacer}\n"
+                f"{eff_str}\n"
+                f"{spacer}\n"
+                f"Extracted predicates: {num_eff_pred}\n\n"
+                f"Please include only the relevant effects and keep the action model concise or raise limit of predicates."
+            )
+            return False, feedback_msg
+
+        feedback_msg = (
+            f"[PASS]: predicate count satisfies limit of {limit}.\n"
+            f"Approximate predicates in preconditions: {num_prec_pred}\n"
+            f"Approximate Predicates in effects: {num_eff_pred}"
+        )
+        return True, feedback_msg
+
+
     def validate_format_predicates(
         self,
         predicates: list[dict],
@@ -411,7 +548,7 @@ class SyntaxValidator:
             
             # check if predicate name declared
             if pred_def.startswith("?") or pred['name'].startswith("?"):
-                feedback_msg = f"[ERROR]: Predicate `({pred_def})` does not contain a predicate name. Predicate names must not start with `?`. Revise predicate to include name like `(stack ?b - block ?t - table)` where `stack` is the predicate name."
+                feedback_msg = f"[ERROR]: Line `({pred_def})` does not contain a predicate name. Predicate names must not start with `?`. Revise predicate to include name. For example: `(stack ?b - block ?t - table)` where `stack` is the predicate name."
                 return False, feedback_msg
 
             split_predicate = pred_def.split(" ")[1:]  # discard the predicate name
@@ -422,7 +559,6 @@ class SyntaxValidator:
                 p = split_predicate[i]
                 # variable name must start with `?`
                 if "?" not in p:
-                    
                     # catches random character declarations
                     if re.match(r"^[^\w\s]+$", p) or re.match(r"^[^\w]", p):  # all non-word or starts with symbol
                         feedback_msg = f"[ERROR]: For PDDL, predicate `({pred_def})` appears to contain invalid or unexpected symbol `{p}`. This might be a parsing error or stray character. Make sure each parameter follows the format `?name - type`."
@@ -442,7 +578,7 @@ class SyntaxValidator:
 
 
                 # check if variable is followed by `- type` or nothing (untyped)
-                if i + 1 < len(split_predicate) and split_predicate[i + 1] == "-":
+                if i + 1 < len(split_predicate) and split_predicate[i+1] == "-":
                     if i + 2 >= len(split_predicate):
                         feedback_msg = f"[ERROR]: For PDDL, there is a missing type after the `-` for parameter `{p}` in new predicate `{pred_def}`. Make sure each parameter follows the format `?name - type`."
                         return False, feedback_msg
@@ -471,7 +607,10 @@ class SyntaxValidator:
         return True, feedback_msg
 
 
-    def validate_pddl_usage_predicates(
+    # ---- PDDL ACTION CHECKS ----
+
+
+    def validate_pddl_action(
         self,
         pddl: str,
         predicates: list[Predicate],
@@ -494,6 +633,14 @@ class SyntaxValidator:
         def get_ordinal_suffix(num):
             """Helper function that appends parameter index to string"""
             return ORDINAL_SUFFIXES.get(num % 10, "th") if num % 100 not in (11, 12, 13) else "th"
+        
+        def is_value(s):
+            """Helper function that checks if a string is numeric"""
+            try:
+                float(s)
+                return True
+            except ValueError:
+                return False
 
         def split_var_type_pairs(raw_list):
             """Helper function that for parsing typed variable declarations in PDDL-like syntax."""
@@ -591,7 +738,7 @@ class SyntaxValidator:
                                 )     
                         
                         # checks if variable is in the scope of available variables
-                        if arg not in scoped_params and not arg.isdigit():
+                        if arg not in scoped_params and not is_value(arg):
                             return (
                                 False,
                                 f"[ERROR]: Argument `{arg}` not found in scope for function `{func_name}`.\nScope: {list(scoped_params.keys())}"
@@ -600,7 +747,7 @@ class SyntaxValidator:
             
             # if not nested expression, it is a variable or constant
             else:
-                if term not in scoped_params and not term.isdigit():
+                if term not in scoped_params and not is_value(term):
                     return (
                         False,
                         f"[ERROR]: Variable `{term}` not in scope: {list(scoped_params.keys())}"
@@ -653,6 +800,13 @@ class SyntaxValidator:
 
             # (3) if keyword is a conditional effect (when)
             if keyword in CONDITIONAL_EFFECTS:
+                # ensures conditional effects only found in :effects
+                if part != "effects":
+                    return (
+                        False,
+                        f"[ERROR]: `{keyword}` is only allowed in the :effects section, but found in {part}."
+                    )
+                
                 if len(node) != 3:
                     return False, f"[ERROR]: Malformed `when` statement: {node}"
                 valid, msg = traverse(node[1], scoped_params)
@@ -665,6 +819,13 @@ class SyntaxValidator:
 
             # (4) if keyword is a numeric-fluent operator
             if keyword in COMPARISON_OPERATORS | NUMERIC_OPERATORS | ASSIGNMENT_OPERATORS:
+                # ensures assignment operators only found in :effects
+                if part != "effects" and keyword in ASSIGNMENT_OPERATORS:
+                    return (
+                        False,
+                        f"[ERROR]: `{keyword}` is only allowed in the :effects section, but found in {part}."
+                    )
+                
                 if len(node) != 3:
                     return False, f"[ERROR]: `{keyword}` operator requires exactly two arguments: {format_pddl_expr(node)}"
                 for term in node[1:]:
@@ -741,7 +902,7 @@ class SyntaxValidator:
         return traverse(pddl, scoped_params=action_params.copy())
 
 
-    def validate_usage_predicates(
+    def validate_usage_action(
         self, 
         llm_response: str, 
         curr_predicates: list[Predicate] | None = None, 
@@ -767,7 +928,7 @@ class SyntaxValidator:
         # check preconditions
         precond_str = parse_preconditions(llm_response)
         precond_str = precond_str.replace("\n", " ").replace("(", " ( ").replace(")", " ) ")
-        validation_info = self.validate_pddl_usage_predicates(
+        validation_info = self.validate_pddl_action(
             pddl=precond_str, 
             predicates=curr_predicates, 
             action_params=params_info[0], 
@@ -782,7 +943,7 @@ class SyntaxValidator:
         # check effects
         eff_str = parse_effects(llm_response)
         eff_str = eff_str.replace("\n", " ").replace("(", " ( ").replace(")", " ) ")
-        return self.validate_pddl_usage_predicates(
+        return self.validate_pddl_action(
             pddl=eff_str, 
             predicates=curr_predicates, 
             action_params=params_info[0], 
@@ -790,50 +951,6 @@ class SyntaxValidator:
             types=types, 
             part="effects"
         )
-
-
-    def validate_overflow_predicates(
-        self, llm_response: str, limit: int = 30
-    ) -> tuple[bool, str]:
-        """
-        Checks if LLM output contains too many predicates in precondition/effects (based on users assigned limit)
-        """
-
-        spacer = "="*50
-
-        assert "Preconditions" in llm_response, llm_response
-        precond_str = (llm_response.split("Preconditions")[1].split("```\n")[1].strip())
-        num_prec_pred = len(precond_str.split("\n")) - 2 # for outer brackets
-        if num_prec_pred > limit:
-            feedback_msg = (
-                f"[ERROR]: You seem to have generated an action model with an unusually long list of precondition predicates.\n\n"
-                f"{spacer}\n"
-                f"{precond_str}\n"
-                f"{spacer}\n"
-                f"Extracted predicates: {num_prec_pred}\n\n"
-                f"Please include only the relevant preconditions and keep the action model concise or raise limit of predicates."
-            )
-            return False, feedback_msg
-
-        eff_str = llm_response.split("Effects")[1].split("```\n")[1].strip()
-        num_eff_pred = len(eff_str.split("\n")) - 2 # for outer brackets
-        if num_eff_pred > limit:
-            feedback_msg = (
-                f"[ERROR]: You seem to have generated an action model with an unusually long list of effect predicates.\n\n"
-                f"{spacer}\n"
-                f"{eff_str}\n"
-                f"{spacer}\n"
-                f"Extracted predicates: {num_eff_pred}\n\n"
-                f"Please include only the relevant effects and keep the action model concise or raise limit of predicates."
-            )
-            return False, feedback_msg
-
-        feedback_msg = (
-            f"[PASS]: predicate count satisfies limit of {limit}.\n"
-            f"Approximate predicates in preconditions: {num_prec_pred}\n"
-            f"Approximate Predicates in effects: {num_eff_pred}"
-        )
-        return True, feedback_msg
 
 
     # ---- PDDL TASK CHECKS ----
@@ -1041,7 +1158,7 @@ class SyntaxValidator:
         )
         return valid, feedback_msg
 
-    # ---- TEXT PARSE CHECKS ----
+    # ---- COMMON CHECKS ----
 
     def validate_header(
             self, 

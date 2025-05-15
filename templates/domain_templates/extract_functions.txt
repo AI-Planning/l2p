@@ -1,0 +1,10 @@
+List function variable types separately. Do not group them if they share the same types.
+
+End your final answers starting with "### FUNCTIONS" with ``` ``` comment blocks in PDDL as so:
+
+### FUNCTIONS
+```
+- (function_name_1 ?t1 - type_1 ?t2 - type_2): 'function_description'
+- (function_name_2 ?t3 - type_3 ?t4 - type_4): 'function_description'
+- (function_name_3 ?t5 - type_5): 'function_description'
+``` 

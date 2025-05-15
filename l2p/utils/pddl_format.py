@@ -4,7 +4,7 @@ This file contains collection of functions for formatting Python PDDL components
 
 import json, re
 from collections import defaultdict, OrderedDict
-from .pddl_types import Predicate, Action
+from .pddl_types import Predicate, Action, Function
 
 def indent(string: str, level: int = 2):
     """Indent string helper function to format PDDL domain/task"""
@@ -186,13 +186,13 @@ def format_types_to_string(
     return "\n".join(lines)
 
 
-def format_predicates(predicates: list[Predicate]) -> str:
-    """Formats predicate list into a PDDL-style string, removing exact duplicates."""
+def format_expression(expression: list[Predicate] | list[Function]) -> str:
+    """Formats predicate/function/constant list into a PDDL-style string, removing exact duplicates."""
     unique = dict()  # key = (name.lower(), tuple(params)), value = clean string
-    for pred in predicates:
-        key = (pred["name"].lower(), tuple(pred["params"]))
+    for exp in expression:
+        key = (exp["name"].lower(), tuple(exp["params"]))
         if key not in unique:
-            unique[key] = pred["clean"].replace(":", " ; ")
+            unique[key] = exp["clean"].replace(":", " ; ")
 
     return "\n".join(unique.values())
 

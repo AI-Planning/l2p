@@ -4,7 +4,7 @@ This file contains collection of functions for extracting/parsing information fr
 
 from pddl.formatter import domain_to_string, problem_to_string
 from pddl import parse_domain, parse_problem
-from .pddl_types import Action, Predicate
+from .pddl_types import Action, Predicate, Function
 from collections import OrderedDict
 from copy import deepcopy
 from typing import Optional
@@ -109,7 +109,7 @@ def parse_new_predicates(llm_output) -> list[Predicate]:
         if not p_line or p_line.startswith("```"):
             continue  # skip empty lines and code block markers
 
-        # Skip lines that don't look like predicate definitions
+        # skip lines that do not look like predicate definitions
         if not (p_line.startswith("-") or p_line.startswith("(")):
             if len(p_line) > 0:
                 print(f'[WARNING] unable to parse the line: "{p_line}"')
@@ -141,12 +141,12 @@ def parse_new_predicates(llm_output) -> list[Predicate]:
         while i < len(param_parts):
             part = param_parts[i]
             if part.startswith("?"):
-                # Found a parameter
+                # found a parameter
                 current_param = part
                 params[current_param] = ""  # Default to untyped
                 i += 1
             elif part == "-":
-                # Found type indicator
+                # found type indicator
                 if current_param is None:
                     print(f"[WARNING] Found type indicator without parameter in: {p_line}")
                     i += 1
@@ -164,7 +164,7 @@ def parse_new_predicates(llm_output) -> list[Predicate]:
                 params[current_param] = ""
                 i += 1
 
-        # Generate clean PDDL representation
+        # generate clean PDDL representation
         clean_params = []
         for param, type_ in params.items():
             if type_:
@@ -182,6 +182,104 @@ def parse_new_predicates(llm_output) -> list[Predicate]:
         })
     
     return new_predicates
+
+
+def parse_functions(llm_output) -> list[Function]:
+    """
+    Parses function from LLM into Python format (refer to example templates to see
+    how these functions should be formatted in LLM response).
+
+    LLM output header should contain '### FUNCTIONS' along with structured content.
+    """
+    functions = list()
+    try:
+        function_heading = (
+            llm_output.split("FUNCTIONS\n")[1].strip().split("###")[0]
+        )
+    except:
+        raise Exception(
+            "Could not find the 'FUNCTIONS' section in the output. Provide the entire response, including all headings even if some are unchanged."
+        )
+    function_output = combine_blocks(function_heading)
+
+    for f_line in function_output.split("\n"):
+        f_line = f_line.strip()
+        if not f_line or f_line.startswith("```"):
+            continue  # skip empty lines and code block markers
+
+        # skip lines that do not look like function definitions
+        if not (f_line.startswith("-") or f_line.startswith("(")):
+            if len(f_line) > 0:
+                print(f'[WARNING] unable to parse the line: "{f_line}"')
+            continue
+
+        # extract function signature and description
+        if ": " in f_line:
+            func_part, desc = f_line.split(": ", 1)
+            function_desc = desc.strip().strip("'\"")
+        else:
+            func_part = f_line
+            function_desc = ""
+
+        # clean the function signature
+        func_part = func_part.strip("- ()").strip()
+        
+        # split into name and parameters
+        parts = func_part.split()
+        if not parts:
+            continue
+            
+        function_name = parts[0]
+        param_parts = parts[1:]
+        
+        params = OrderedDict()
+        current_param = None
+        
+        i = 0
+        while i < len(param_parts):
+            part = param_parts[i]
+            if part.startswith("?"):
+                # found a parameter
+                current_param = part
+                params[current_param] = ""  # default to untyped
+                i += 1
+            elif part == "-":
+                # found type indicator
+                if current_param is None:
+                    print(f"[WARNING] Found type indicator without parameter in: {f_line}")
+                    i += 1
+                    continue
+                if i + 1 < len(param_parts):
+                    params[current_param] = param_parts[i+1]
+                    i += 2
+                else:
+                    print(f"[WARNING] Missing type after '-' in: {f_line}")
+                    i += 1
+            else:
+                # might be a typeless parameter (accept it with warning)
+                print(f"[WARNING] Assuming '{part}' is an untyped parameter in: {f_line}")
+                current_param = f"?{part.lstrip('?')}"
+                params[current_param] = ""
+                i += 1
+
+        # generate clean PDDL representation
+        clean_params = []
+        for param, type_ in params.items():
+            if type_:
+                clean_params.append(f"{param} - {type_}")
+            else:
+                clean_params.append(param)
+        clean = f"({function_name} {' '.join(clean_params)})"
+
+        functions.append({
+            "name": function_name,
+            "desc": function_desc,
+            "raw": f_line,
+            "params": params,
+            "clean": clean,
+        })
+    
+    return functions
 
 
 def parse_predicates(all_predicates):

@@ -272,6 +272,7 @@ class DomainBuilder:
         action_list: list[str] = None,
         predicates: list[Predicate] = None,
         types: dict[str,str] | list[dict[str,str]] = None,
+        functions: list[Function] = None,
         syntax_validator: SyntaxValidator = None,
         max_retries: int = 3
     ) -> tuple[Action, list[Predicate], str, tuple[bool, str]]:
@@ -341,8 +342,8 @@ class DomainBuilder:
                             validation_info = validator(new_predicates, types)
                         elif error_type == "validate_format_predicates":
                             validation_info = validator(new_predicates, types)
-                        elif error_type == "validate_usage_predicates":
-                            validation_info = validator(llm_output, predicates, types)
+                        elif error_type == "validate_usage_action":
+                            validation_info = validator(llm_output, predicates, types, functions)
                         
                         if not validation_info[0]:
                             return action, new_predicates, llm_output, validation_info
@@ -611,7 +612,7 @@ class DomainBuilder:
                             validation_info = validator(preconditions)
                         elif error_type == "validate_duplicate_predicates":
                             validation_info == validator(predicates, new_predicates)
-                        elif error_type == "validate_pddl_usage_predicates":
+                        elif error_type == "validate_pddl_action":
                             all_predicates = predicates
                             all_predicates.extend(new_predicates)
                             validation_info = validator(preconditions, all_predicates, params, types, "preconditions")
@@ -711,7 +712,7 @@ class DomainBuilder:
                             validation_info = validator(effects)
                         elif error_type == "validate_duplicate_predicates":
                             validation_info == validator(predicates, new_predicates)
-                        elif error_type == "validate_pddl_usage_predicates":
+                        elif error_type == "validate_pddl_action":
                             all_predicates = predicates
                             all_predicates.extend(new_predicates)
                             validation_info = validator(effects, all_predicates, params, types, "effects")
@@ -736,7 +737,7 @@ class DomainBuilder:
         model: BaseLLM,
         domain_desc: str,
         prompt_template: str,
-        types: dict[str, str] | list[dict[str,str]] = None,
+        types: dict[str, str] | list[dict[str,str]] | None = None,
         predicates: list[Predicate] = None,
         syntax_validator: SyntaxValidator = None,
         max_retries: int = 3,
@@ -773,7 +774,7 @@ class DomainBuilder:
                 model.reset_tokens()
                 llm_output = model.query(prompt=prompt)  # prompt model
 
-                # extract respective types from response
+                # extract new predicates from response
                 new_predicates = parse_new_predicates(llm_output=llm_output)
                 
                 # run syntax validation if applicable
@@ -811,6 +812,69 @@ class DomainBuilder:
                 time.sleep(2)  # add a delay before retrying
 
         raise RuntimeError("Max retries exceeded. Failed to extract predicates.")
+
+
+    @require_llm
+    def extract_functions(
+        self,
+        model: BaseLLM,
+        domain_desc: str,
+        prompt_template: str,
+        types: dict[str, str] | list[dict[str,str]] | None = None,
+        syntax_validator: SyntaxValidator = None,
+        max_retries = 3,
+    ) -> tuple[list[Function], str, tuple[bool, str]]:
+        """
+        Extracts :functions via BaseLLM
+        """
+        
+        prompt_data = {
+            "domain_desc": domain_desc,
+            "types": format_types_to_string(types) if types else "No types provided.",
+        }
+        
+        prompt = prompt_template.format(**prompt_data)
+        
+        # iterate through attempts in case of extraction failure
+        for attempt in range(max_retries):
+            try:
+                model.reset_tokens()
+                llm_output = model.query(prompt=prompt)
+                
+                # extract functions from response
+                functions = parse_functions(llm_output=llm_output)
+                
+                # run syntax validation if applicable
+                validation_info = (True, "All validations passed.")
+                if syntax_validator:
+                    for error_type in syntax_validator.error_types:
+                        validator = getattr(syntax_validator, f"{error_type}", None)
+                        if not callable(validator):
+                            continue
+                        
+                        # dispatch based on expected arguments
+                        if error_type == "validate_header":
+                            validation_info = validator(llm_output)
+                        elif error_type == "validate_duplicate_headers":
+                            validation_info = validator(llm_output)
+                        elif error_type == "validate_unsupported_keywords":
+                            validation_info = validator(llm_output)
+                        elif error_type == "validate_format_functions":
+                            validation_info = validator(functions, types)
+                            
+                        if not validation_info[0]:
+                            return functions, llm_output, validation_info
+                
+                return functions, llm_output, validation_info
+        
+            except Exception as e:
+                print(
+                    f"Error encountered during attempt {attempt + 1}/{max_retries}: {e}. "
+                    f"\nLLM Output: \n\n{llm_output if 'llm_output' in locals() else 'None'}\n\n Retrying..."
+                )
+                time.sleep(2)  # add a delay before retrying
+
+        raise RuntimeError("Max retries exceeded. Failed to extract functions.")
 
 
     """Delete functions"""
@@ -925,6 +989,7 @@ class DomainBuilder:
         domain_name: str,
         types: dict[str,str] | list[dict[str,str]] | None = None,
         predicates: list[Predicate] | None = None,
+        functions: list[Function] | None = None,
         actions: list[Action] = [],
         requirements: list[str] = REQUIREMENTS,
         append_obj_type_to_parent: bool = True
@@ -949,11 +1014,17 @@ class DomainBuilder:
         if types:
             types_str = format_types_to_string(types, append_obj_type_to_parent)
             desc += f"\n\n   (:types \n{indent(string=types_str, level=2)}\n   )"
+            
         if not predicates:
             print("[WARNING]: Domain has no predicates. This may cause planners to reject the domain or behave unexpectedly.")
         else:
-            pred_str = format_predicates(predicates)
+            pred_str = format_expression(predicates)
             desc += f"\n\n   (:predicates \n{indent(string=pred_str, level=2)}\n   )"
+            
+        if functions:
+            func_str = format_expression(functions)
+            desc += f"\n\n   (:functions \n{indent(string=func_str, level=2)}\n   )"
+            
         if not actions:
             print("[WARNING]: Domain has no actions. The planner will not be able to generate any plan unless the goal is already satisfied.")
         else:

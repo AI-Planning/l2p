@@ -91,13 +91,62 @@ class TestDomainBuilder(unittest.TestCase):
 
         self.assertEqual(expected_types, types)
         self.assertEqual(validation_info[0], True)
+        
+        
+    def test_extract_functions(self):
+        
+        self.syntax_validator.error_types = ['validate_format_functions']
+        
+        self.mock_llm.output = textwrap.dedent(
+            """
+            ## DISTRACTION TEXT
+            ### FUNCTIONS
+            ```
+            (battery-level ?a - arm): battery level of robot arm
+            (weight ?b - block): weight of a block
+            ```
+            ## DISTRACTION TEXT
+            """
+        )
+        
+        types = {
+            'arm': 'arm for a robot',
+            'block': 'block that can be stacked and unstacked',
+            'table': 'table that blocks sits on'
+        }
+        
+        functions, _, validation_info = self.domain_builder.extract_functions(
+            model=self.mock_llm,
+            domain_desc="",
+            prompt_template="",
+            types=types,
+            syntax_validator=self.syntax_validator
+        )
+        
+        exp_functions = [
+            {'name': 'battery-level', 
+             'desc': 'battery level of robot arm', 
+             'raw': '(battery-level ?a - arm): battery level of robot arm', 
+             'params': OrderedDict([('?a', 'arm')]), 
+             'clean': '(battery-level ?a - arm)'}, 
+            {'name': 'weight', 
+             'desc': 'weight of a block', 
+             'raw': '(weight ?b - block): weight of a block', 
+             'params': OrderedDict([('?b', 'block')]), 
+             'clean': '(weight ?b - block)'}
+        ]
+        
+        self.assertEqual(validation_info[0], True)
+        self.assertEqual(exp_functions, functions)
 
     def test_extract_pddl_action(self):
+        
+        self.syntax_validator.unsupported_keywords = []
 
         self.syntax_validator.error_types = [
             'validate_header', 'validate_duplicate_headers', 'validate_unsupported_keywords',
             'validate_params', 'validate_duplicate_predicates', 'validate_types_predicates',
-            'validate_format_predicates', 'validate_usage_predicates'
+            'validate_format_predicates', 'validate_usage_action'
             ]
         self.mock_llm.output = textwrap.dedent(
             """
@@ -116,6 +165,17 @@ class TestDomainBuilder(unittest.TestCase):
             (and
                 (holding ?a ?b1) ; The arm is holding the top block
                 (clear ?b2) ; The bottom block is clear
+                (= (weight ?b1) (weight ?b2))
+                (forall (?block1 ?block2 - block ?a1 - arm)
+                    (and
+                    (clear ?block1)
+                    (= (battery-level ?a) 100)
+                    (>= (weight ?block1) 10)
+                    (<= (weight ?b1) -100)
+                    (< (weight ?block2) 20)
+                    (> (battery-level ?a1) 10)
+                    )
+                )
             )
             ```
 
@@ -127,6 +187,18 @@ class TestDomainBuilder(unittest.TestCase):
                 (not (holding ?a ?b1)) ; The arm is no longer holding the top block
                 (on ?b1 ?b2) ; The top block is now on the bottom block
                 (not (clear ?b2)) ; The bottom block is no longer clear
+                (when (clear ?b1)
+                    (and
+                    (clear ?b2)
+                    (clear ?b1)
+                    )
+                )
+                (increase (battery-level ?a) 200)
+                (increase (battery-level ?a) (* (weight ?b1) 100))
+                (decrease (battery-level ?a) (* 0.05 (weight ?b2)))
+                (assign (battery-level ?a) (* (weight ?b1) 2))
+                (scale-up (battery-level ?a) 2)
+                (scale-down (battery-level ?a) (weight ?b1))
             )
             ```
 
@@ -163,20 +235,36 @@ class TestDomainBuilder(unittest.TestCase):
         
         exp_action = {
             'name': 'stack', 
-            'params': OrderedDict({'?b1': 'block', '?b2': 'block', '?a': 'arm'}), 
-            'preconditions': '(and\n    (holding ?a ?b1) ; The arm is holding the top block\n    (clear ?b2) ; The bottom block is clear\n)', 'effects': '(and\n    (not (holding ?a ?b1)) ; The arm is no longer holding the top block\n    (on ?b1 ?b2) ; The top block is now on the bottom block\n    (not (clear ?b2)) ; The bottom block is no longer clear\n)'}
+            'params': OrderedDict([('?b1', 'block'), ('?b2', 'block'), ('?a', 'arm')]), 
+            'preconditions': '(and\n    (holding ?a ?b1) ; The arm is holding the top block\n    (clear ?b2) ; The bottom block is clear\n    (= (weight ?b1) (weight ?b2))\n    (forall (?block1 ?block2 - block ?a1 - arm)\n        (and\n        (clear ?block1)\n        (= (battery-level ?a) 100)\n        (>= (weight ?block1) 10)\n        (<= (weight ?b1) -100)\n        (< (weight ?block2) 20)\n        (> (battery-level ?a1) 10)\n        )\n    )\n)', 
+            'effects': '(and\n    (not (holding ?a ?b1)) ; The arm is no longer holding the top block\n    (on ?b1 ?b2) ; The top block is now on the bottom block\n    (not (clear ?b2)) ; The bottom block is no longer clear\n    (when (clear ?b1)\n        (and\n        (clear ?b2)\n        (clear ?b1)\n        )\n    )\n    (increase (battery-level ?a) 200)\n    (increase (battery-level ?a) (* (weight ?b1) 100))\n    (decrease (battery-level ?a) (* 0.05 (weight ?b2)))\n    (assign (battery-level ?a) (* (weight ?b1) 2))\n    (scale-up (battery-level ?a) 2)\n    (scale-down (battery-level ?a) (weight ?b1))\n)'
+        }
 
         types = {
             'arm': 'arm for a robot', 'block': 
             'block that can be stacked and unstacked', 
             'table': 'table that blocks sits on'
-            }
+        }
+        
+        functions = [
+            {'name': 'battery-level', 
+             'desc': 'battery level of robot arm', 
+             'raw': '(battery-level ?a - arm): battery level of robot arm', 
+             'params': OrderedDict([('?a', 'arm')]), 
+             'clean': '(battery-level ?a - arm)'}, 
+            {'name': 'weight', 
+             'desc': 'weight of a block', 
+             'raw': '(weight ?b - block): weight of a block', 
+             'params': OrderedDict([('?b', 'block')]), 
+             'clean': '(weight ?b - block)'}
+        ]
         
         action, new_predicates, _, validation_info = self.domain_builder.extract_pddl_action(
             model=self.mock_llm,
             domain_desc="",
             prompt_template="",
             types=types,
+            functions=functions,
             syntax_validator=self.syntax_validator,
             action_name="stack"
         )
@@ -412,6 +500,56 @@ class TestDomainBuilder(unittest.TestCase):
 
         self.assertCountEqual(exp_predicates, predicates)
         self.assertEqual(validation_info[0], True)
+        
+    
+    def test_extract_function(self):
+        
+        self.syntax_validator.error_types = [
+            'validate_format_functions'
+        ]
+        self.mock_llm.output = textwrap.dedent(
+            """
+            ## DISTRACTION TEXT
+
+            ### FUNCTIONS
+            ```
+            - (battery-level ?r - robot): battery level of robot
+            - (humidity ?loc - location): humidity of location
+            ```
+
+            ## DISTRACTION TEXT
+            """
+        )
+        
+        types = {
+            'robot': 'a robot',
+            'location': 'location to be at'
+        }
+        
+        functions, _, validation_info = self.domain_builder.extract_functions(
+            model=self.mock_llm,
+            domain_desc="",
+            prompt_template="",
+            types=types,
+            syntax_validator=self.syntax_validator
+        )
+        
+        exp_functions = [
+            {'name': 'battery-level', 
+             'desc': 'battery level of robot', 
+             'raw': '- (battery-level ?r - robot): battery level of robot', 
+             'params': OrderedDict([('?r', 'robot')]), 
+             'clean': '(battery-level ?r - robot)'}, 
+            {'name': 'humidity', 
+             'desc': 'humidity of location', 
+             'raw': '- (humidity ?loc - location): humidity of location', 
+             'params': OrderedDict([('?loc', 'location')]), 
+             'clean': '(humidity ?loc - location)'}
+        ]
+        
+        self.assertEqual(validation_info[0], True)
+        self.assertEqual(exp_functions, functions)
+        
 
     def test_generate_domain(self):
 
@@ -434,6 +572,19 @@ class TestDomainBuilder(unittest.TestCase):
              'params': OrderedDict({'?l1': 'location', '?l2': 'location'}),
              'clean': '(connected ?l1 ?l2 - location)'}
         ]
+        
+        functions = [
+            {'name': 'battery-level', 
+             'desc': 'battery level of robot', 
+             'raw': '(battery-level ?r - robot): battery level of robot', 
+             'params': OrderedDict([('?r', 'robot')]), 
+             'clean': '(battery-level ?r - robot)'}, 
+            {'name': 'humidity', 
+             'desc': 'humidity of location', 
+             'raw': '(humidity ?loc - location): humidity of location', 
+             'params': OrderedDict([('?loc', 'location')]), 
+             'clean': '(humidity ?loc - location)'}
+        ]
 
         actions = [
             {
@@ -450,13 +601,13 @@ class TestDomainBuilder(unittest.TestCase):
             },
         ]
 
-        requirements = [":strips", ":typing"]
+        requirements = [":strips", ":typing", ":numeric-fluents"]
 
         expected_output = textwrap.dedent(
             """
             (define (domain test_domain)
                 (:requirements
-                    :strips :typing)
+                    :strips :typing :numeric-fluents)
 
                 (:types 
                     location robot - object
@@ -465,6 +616,11 @@ class TestDomainBuilder(unittest.TestCase):
                 (:predicates 
                     (at ?r - robot ?l - location)
                     (connected ?l1 ?l2 - location)
+                )
+                
+                (:functions 
+                    (battery-level ?r - robot)
+                    (humidity ?loc - location)
                 )
 
                 (:action move
@@ -494,6 +650,7 @@ class TestDomainBuilder(unittest.TestCase):
             domain_name=domain,
             types=types,
             predicates=predicates,
+            functions=functions,
             actions=actions,
             requirements=requirements,
         )

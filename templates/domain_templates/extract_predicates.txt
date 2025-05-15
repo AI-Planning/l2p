@@ -1,3 +1,5 @@
+List predicate variable types separately. Do not group them if they share the same types.
+
 End your final answers starting with "### New Predicates" with ''' ''' comment blocks in PDDL as so:
 
 ### New Predicates
