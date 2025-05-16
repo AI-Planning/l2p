@@ -400,7 +400,7 @@ def parse_objects(llm_output: str) -> dict[str, str]:
     )  # Remove comments
 
     objects = {
-        obj.split(" - ")[0].strip(" `"): obj.split(" - ")[1].strip(" `").lower()
+        obj.split(" - ")[0].strip(" `"): obj.split(" - ")[1].strip(" `")
         for obj in objects_clean.split("\n")
         if obj.strip()
     }

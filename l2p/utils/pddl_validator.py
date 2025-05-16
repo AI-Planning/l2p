@@ -402,10 +402,13 @@ class SyntaxValidator:
 
     def validate_types_predicates(
         self, 
-        predicates: list[Predicate], 
+        predicates: list[Predicate] | None = None, 
         types: dict[str, str] | list[dict[str,str]] | None = None
     ) -> tuple[bool, str]:
         """Check if predicate name is found within any type definitions"""
+        
+        if not predicates:
+            return True, "[PASS]: no predicates passed."
         
         # if types is None or empty, return true
         if not types:
@@ -442,6 +445,9 @@ class SyntaxValidator:
         new_predicates: list[Predicate] | None = None
     ) -> tuple[bool, str]:
         """Checks if predicates have the same name but different parameters."""
+        
+        if not new_predicates:
+            return True, "[PASS]: no new predicates were created."
         
         if curr_predicates:
             curr_pred_dict = {pred["name"]: pred for pred in curr_predicates}
@@ -524,10 +530,13 @@ class SyntaxValidator:
 
     def validate_format_predicates(
         self,
-        predicates: list[dict],
+        predicates: list[dict] | None = None,
         types: dict[str, str] | list[dict[str, str]] | None = None
     ) -> tuple[bool, str]:
         """Checks for any PDDL syntax found within predicates, allowing untyped variables."""
+        
+        if not predicates:
+            return True, "[PASS: no predicates passed."
 
         valid_types = list()
         # flatten type hierarchy if exists
@@ -673,7 +682,12 @@ class SyntaxValidator:
                     terms_ = term[0].split(" ") + term[1:]
                     
                     if len(terms_) != 3:
-                        return False, f"[ERROR]: Numeric operator `{head}` requires two arguments: {format_pddl_expr(terms_)}"
+                        return (
+                            False, 
+                            f"[ERROR]: Numeric operator `{head}` requires two arguments: {format_pddl_expr(terms_)}\n\n"
+                            f"Parsed line: {format_pddl_expr(term)}\n\n"
+                            f"Make sure that only fluents are used and not variables."
+                        )
                     
                     for arg in term[1:]:
                         valid, msg = validate_term(arg, scoped_params)
@@ -691,7 +705,9 @@ class SyntaxValidator:
                     available_funcs = "\n - " + "\n - ".join([f["raw"] for f in functions]) if functions else "No functions available."
                     return False, (
                         f"[ERROR]: Undeclared function `({func_name})` found in {part}.\n"
-                        f"List of available functions are: {available_funcs}"
+                        f"List of available functions are: {available_funcs}\n\n"
+                        f"Parsed line: {format_pddl_expr(term)}\n\n"
+                        f"If ({func_name}) is a predicate, make sure it adheres to PDDL syntax."
                     )
                 
                 # retrieve target function arguments
@@ -703,8 +719,8 @@ class SyntaxValidator:
                 if len(func_args) != len(expected_args):
                     return (
                         False,
-                        f"[ERROR]: Function `{target_func['clean']}` expects {len(expected_args)} parameter(s), "
-                        f"but found {len(term[1:])} in {part}.\nParsed line: ({format_pddl_expr(term)})"
+                        f"[ERROR]: Function `{target_func['clean']}` expects {len(expected_args)} variable parameter(s), "
+                        f"but found {len(term[1:])} in {part}.\n\nParsed line: ({format_pddl_expr(term)})"
                     )
                 
                 # recursively checks if function argument is nested
@@ -734,14 +750,17 @@ class SyntaxValidator:
                                 return (
                                     False,
                                     f"[ERROR]: The {param_number}{suffix} parameter of `{target_func['clean']}` "
-                                    f"should be of type `{expected_type}`, but `{arg}` is `{actual_type}`."
+                                    f"should be of type `{expected_type}`, but `{arg}` is `{actual_type}`\n\n"
+                                    f"Parsed line: {format_pddl_expr(term)}"
                                 )     
                         
                         # checks if variable is in the scope of available variables
                         if arg not in scoped_params and not is_value(arg):
                             return (
                                 False,
-                                f"[ERROR]: Argument `{arg}` not found in scope for function `{func_name}`.\nScope: {list(scoped_params.keys())}"
+                                f"[ERROR]: Argument `{arg}` not found in scope for function `{func_name}`.\nScope: {list(scoped_params.keys())}\n\n"
+                                f"Parsed line: {format_pddl_expr(term)}\n\n"
+                                f"Make sure the function uses the correct variables from its scope. Otherwise, you may need to add a new variable to the parameters section."
                             )
                 return True, "[PASS]"
             
@@ -761,7 +780,7 @@ class SyntaxValidator:
             if isinstance(node, str) or not isinstance(node, list) or len(node) == 0:
                 return True, "[PASS]"
 
-            keyword = node[0].lower() # extract keyword from node
+            keyword = node[0] # extract keyword from node
 
             # (1) if keyword is a logical connective (and, not, or)
             if keyword in LOGICAL_CONNECTIVES:
@@ -793,7 +812,8 @@ class SyntaxValidator:
                     # validate if type exists in :types
                     if not var_type or var_type not in types:
                         return False, (
-                            f"[ERROR]: Unknown or missing type `{var_type}` for `{var}` in quantifier `{keyword}`"
+                            f"[ERROR]: Unknown or missing type `{var_type}` for `{var}` in quantifier `{keyword}`\n\n"
+                            f"Parsed line: {format_pddl_expr(node)}"
                         )
                     new_scope[var] = var_type # update variable scope environment
                 return traverse(body, new_scope)
@@ -804,7 +824,8 @@ class SyntaxValidator:
                 if part != "effects":
                     return (
                         False,
-                        f"[ERROR]: `{keyword}` is only allowed in the :effects section, but found in {part}."
+                        f"[ERROR]: `{keyword}` is only allowed in the :effects section, but found in {part}.\n\n"
+                        f"Parsed line: {format_pddl_expr(node)}"
                     )
                 
                 if len(node) != 3:
@@ -823,11 +844,16 @@ class SyntaxValidator:
                 if part != "effects" and keyword in ASSIGNMENT_OPERATORS:
                     return (
                         False,
-                        f"[ERROR]: `{keyword}` is only allowed in the :effects section, but found in {part}."
+                        f"[ERROR]: `{keyword}` is only allowed in the :effects section, but found in {part}.\n\n"
+                        f"Parsed line: {format_pddl_expr(node)}"
                     )
                 
                 if len(node) != 3:
-                    return False, f"[ERROR]: `{keyword}` operator requires exactly two arguments: {format_pddl_expr(node)}"
+                    return (
+                        False, 
+                        f"[ERROR]: `{keyword}` operator requires exactly two arguments: {format_pddl_expr(node)}\n\n"
+                        f"Parsed line: {format_pddl_expr(node)}"
+                    )
                 for term in node[1:]:
                     # traverse terms of operator statement
                     valid, msg = validate_term(term, scoped_params)
@@ -842,11 +868,12 @@ class SyntaxValidator:
 
             # validate if predicate is found in :predicates
             if pred_name not in pred_index:
-                available_preds = "\n - ".join([p["raw"] for p in predicates])
+                available_preds = "\n".join([p["raw"] for p in predicates])
                 return (
                     False,
                     f"[ERROR]: Undeclared predicate `({pred_name})` found in {part}.\n"
-                    f"Available predicates:\n{available_preds}"
+                    f"Available predicates:\n{available_preds}\n\n"
+                    f"Parsed line: {format_pddl_expr(node)}"
                 )
 
             # retrieve target predicate arguments
@@ -859,7 +886,8 @@ class SyntaxValidator:
                 return (
                     False,
                     f"[ERROR]: Predicate `{target_pred['clean']}` expects {len(expected_args)} parameters, "
-                    f"but found {len(args)} in {part}.\nParsed line: {format_pddl_expr(node)}"
+                    f"but found {len(args)} in {part}.\n\nParsed line: {format_pddl_expr(node)}\n\n"
+                    f"Make sure that only variables (i.e. `?var`) is being passed through a predicate argument."
                 )
 
             for i, arg in enumerate(args):
@@ -873,7 +901,9 @@ class SyntaxValidator:
                     if arg not in scoped_params:
                         return (
                             False,
-                            f"[ERROR]: Variable `{arg}` not found in scope for predicate `{pred_name}`.\nAvailable: {list(scoped_params.keys())}"
+                            f"[ERROR]: Variable `{arg}` not found in scope for predicate `{pred_name}`.\n\nAvailable variables in scope: {list(scoped_params.keys())}\n\n"
+                            f"Parsed line: {format_pddl_expr(node)}\n\n"
+                            f"Make sure the predicate uses the correct variables from its scope. Otherwise, you may need to add a new variable to the parameters section."
                         )
                     
                     # check if type of variable matches predicate type
@@ -893,7 +923,8 @@ class SyntaxValidator:
                             return (
                                 False,
                                 f"[ERROR]: The {i+1}{suffix} parameter of `{target_pred['clean']}` "
-                                f"should be of type `{expected_type}`, but `{arg}` is `{actual_type}`"
+                                f"should be of type `{expected_type}`, but `{arg}` is `{actual_type}`\n\n"
+                                f"Parsed line: {format_pddl_expr(node)}"
                             )
                         
             return True, "[PASS]"
@@ -907,7 +938,8 @@ class SyntaxValidator:
         llm_response: str, 
         curr_predicates: list[Predicate] | None = None, 
         types: dict[str, str] | list[dict[str,str]] | None = None,
-        functions: list[Function] | None = None
+        functions: list[Function] | None = None,
+        parse_new_pred: bool = False
     ):
         """
         This function performs very basic check over whether the predicates are used in a valid way.
@@ -915,7 +947,11 @@ class SyntaxValidator:
         """
 
         # parse predicates
-        new_predicates = parse_new_predicates(llm_response)
+        if parse_new_pred:
+            new_predicates = parse_new_predicates(llm_response)
+        else:
+            new_predicates = []
+        
         if curr_predicates is None:
             curr_predicates = new_predicates
         else:
@@ -1186,7 +1222,7 @@ class SyntaxValidator:
                     f"```\n"
                     f"[CONTENT]\n"
                     f"```"
-                    f"\n\n Make sure the header is only stated once in your response."          
+                    f"\n\n Source of error may be that keyword `{header}` was used somewhere else. Make sure the header is only stated once in your response."          
                 )
                 return False, feedback_msg
 

@@ -197,7 +197,7 @@ def format_expression(expression: list[Predicate] | list[Function]) -> str:
     """Formats predicate/function/constant list into a PDDL-style string, removing exact duplicates."""
     unique = dict()  # key = (name.lower(), tuple(params)), value = clean string
     for exp in expression:
-        key = (exp["name"].lower(), tuple(exp["params"]))
+        key = (exp["name"], tuple(exp["params"]))
         if key not in unique:
             unique[key] = exp["clean"].replace(":", " ; ")
 

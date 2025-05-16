@@ -441,6 +441,7 @@ class TestSyntaxValidator(unittest.TestCase):
                     (> (battery-level ?a1) 10)
                     )
                 )
+                (= (battery-level ?a) 200)
             )
             ```
 
@@ -511,12 +512,14 @@ class TestSyntaxValidator(unittest.TestCase):
             'table': 'table that blocks sits on'
         }
         
-        flag, _ = self.syntax_validator.validate_usage_action(
+        flag, msg = self.syntax_validator.validate_usage_action(
             llm_response=llm_response,
             curr_predicates=predicates,
             types=types,
             functions=functions
         )
+        
+        print(msg)
 
         self.assertEqual(flag, True)
         

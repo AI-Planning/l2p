@@ -274,6 +274,7 @@ class DomainBuilder:
         types: dict[str,str] | list[dict[str,str]] = None,
         functions: list[Function] = None,
         syntax_validator: SyntaxValidator = None,
+        parse_new_preds = False,
         max_retries: int = 3
     ) -> tuple[Action, list[Predicate], str, tuple[bool, str]]:
         """
@@ -318,7 +319,11 @@ class DomainBuilder:
                 
                 # parse LLM output into action and predicates
                 action = parse_action(llm_output=llm_output, action_name=action_name)
-                new_predicates = parse_new_predicates(llm_output=llm_output)
+                
+                if parse_new_preds:
+                    new_predicates = parse_new_predicates(llm_output=llm_output)
+                else:
+                    new_predicates = []
                 
                 # run syntax validation if applicable
                 validation_info = (True, "All validations passed.")
@@ -344,7 +349,7 @@ class DomainBuilder:
                         elif error_type == "validate_format_predicates":
                             validation_info = validator(new_predicates, types)
                         elif error_type == "validate_usage_action":
-                            validation_info = validator(llm_output, predicates, types, functions)
+                            validation_info = validator(llm_output, predicates, types, functions, parse_new_preds)
                         
                         if not validation_info[0]:
                             return action, new_predicates, llm_output, validation_info
