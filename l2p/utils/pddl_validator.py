@@ -691,7 +691,7 @@ class SyntaxValidator:
             result.extend(current_vars)
             return result
 
-        def validate_term(term, scoped_params):
+        def validate_term(node, term, scoped_params):
             """Recursive function that validates a term which may be a function or value."""
 
             # if nested expression
@@ -707,12 +707,12 @@ class SyntaxValidator:
                         return (
                             False, 
                             f"[ERROR]: Numeric operator `{head}` requires two arguments: {format_pddl_expr(terms_)}\n\n"
-                            f"Parsed line: {format_pddl_expr(term)}\n\n"
+                            f"Parsed line: {format_pddl_expr(node)}\n\n"
                             f"Make sure that only fluents are used and not variables."
                         )
                     
                     for arg in term[1:]:
-                        valid, msg = validate_term(arg, scoped_params)
+                        valid, msg = validate_term(node, arg, scoped_params)
                         if not valid:
                             return False, msg
                     return True, "[PASS]"
@@ -724,12 +724,28 @@ class SyntaxValidator:
 
                 # checks if function name in pddl not found in :function list
                 if func_name not in func_index:
-                    available_funcs = "\n - " + "\n - ".join([f["raw"] for f in functions]) if functions else "No functions available."
+                    
+                    # extra catch - could be predicate but used as a function!
+                    if func_name in pred_index:
+                        return (
+                            False,
+                            f"[ERROR]: `{func_name}` is a predicate, not a function. Predicates cannot be used to return numeric values but instead as standalone conditions.\n\n"
+                            f"Parsed line: {format_pddl_expr(node)}\n\n"
+                            f"Predicates can only be used within a boolean context—that is, they must appear inside logical expressions like `and`, `or`, `not`, `when`, or standalone conditions in PDDL actions."
+                        )
+                        
+                    available_funcs = (
+                        " - " + "\n - ".join(
+                            [f"{f['name']}: {f['desc']}" for f in functions]
+                        )
+                    ) if functions else "No functions available."    
+                    
+                    available_funcs = "List of available function(s) are:\n - " + "\n - ".join([f["raw"] for f in functions]) if functions else "Numeric fluents cannot be used because no functions are declared in the :functions section of the domain."
                     return False, (
-                        f"[ERROR]: Undeclared function `({func_name})` found in {part}.\n"
-                        f"List of available functions are: {available_funcs}\n\n"
-                        f"Parsed line: {format_pddl_expr(term)}\n\n"
-                        f"If ({func_name}) is a predicate, make sure it adheres to PDDL syntax."
+                        f"[ERROR]: Undeclared function `({func_name})` found in {part}.\n\n"
+                        f"{available_funcs}\n\n"
+                        f"Parsed line: {format_pddl_expr(node)}"
+                        
                     )
                 
                 # retrieve target function arguments
@@ -742,13 +758,13 @@ class SyntaxValidator:
                     return (
                         False,
                         f"[ERROR]: Function `{target_func['clean']}` expects {len(expected_args)} variable parameter(s), "
-                        f"but found {len(term[1:])} in {part}.\n\nParsed line: ({format_pddl_expr(term)})"
+                        f"but found {len(term[1:])} in {part}.\n\nParsed line: ({format_pddl_expr(node)})"
                     )
                 
                 # recursively checks if function argument is nested
                 for i, arg in enumerate(func_args):
                     if isinstance(arg, list):
-                        valid, msg = validate_term(arg, scoped_params)
+                        valid, msg = validate_term(node, arg, scoped_params)
                         if not valid:
                             return False, msg
                     else:
@@ -773,7 +789,8 @@ class SyntaxValidator:
                                     False,
                                     f"[ERROR]: The {param_number}{suffix} parameter of `{target_func['clean']}` "
                                     f"should be of type `{expected_type}`, but `{arg}` is `{actual_type}`\n\n"
-                                    f"Parsed line: {format_pddl_expr(term)}"
+                                    f"Parsed line: {format_pddl_expr(term)}\n"
+                                    f"Found in: {format_pddl_expr(node)}"
                                 )     
                         
                         # checks if variable is in the scope of available variables
@@ -781,7 +798,8 @@ class SyntaxValidator:
                             return (
                                 False,
                                 f"[ERROR]: Argument `{arg}` not found in scope for function `{func_name}`.\nScope: {list(scoped_params.keys())}\n\n"
-                                f"Parsed line: {format_pddl_expr(term)}\n\n"
+                                f"Parsed line: {format_pddl_expr(term)}\n"
+                                f"Found in: {format_pddl_expr(node)}\n\n"
                                 f"Make sure the function uses the correct variables from its scope. Otherwise, you may need to add a new variable to the parameters section."
                             )
                 return True, "[PASS]"
@@ -822,12 +840,12 @@ class SyntaxValidator:
                 if len(node) != 3:
                     return (
                         False,
-                        f"[ERROR]: malformed usage of `{keyword}` statement."
-                        f"\nMake sure to adhere to valid PDDL syntax. For example: `({keyword} (<variable_list>) (<logical_expression>))`\n\n"
+                        f"[ERROR]: malformed usage of `{keyword}` statement. There should be 3 main arguments, but {len(node)} was given."
+                        f"\nMake sure to adhere to valid PDDL syntax. For example: `({keyword} (<variable_list>) (<logical_expression(s)>))`\n\n"
                         f"Parsed line: {format_pddl_expr(node)}\n\n"
                         f"Possible solutions:\n"
                         f"  (1) Always wrap the list of variables with their types in parentheses, even for a single variable.\n"
-                        f"  (2) The second argument of {keyword} should be a valid condition, or a use of `and` expression to wrap multiple conditions."
+                        f"  (2) The second argument of {keyword} should be a valid condition, or a use of `and/or` expression to wrap multiple conditions."
                     )
                 
                 # parse quantified variable declarations
@@ -861,12 +879,12 @@ class SyntaxValidator:
                 if len(node) != 3:
                     return (
                         False, 
-                        f"[ERROR]: malformed usage of `{keyword}` statement."
-                        f"\nMake sure to adhere to valid PDDL syntax. For example: `({keyword} (<condition>) (<effect>))`\n\n"
+                        f"[ERROR]: malformed usage of `{keyword}` statement. There should be 3 main arguments, but {len(node)} was given."
+                        f"\nMake sure to adhere to valid PDDL syntax. For example: `({keyword} (<condition(s)>) (<effect(s)>))`\n\n"
                         f"Parsed line: {format_pddl_expr(node)}\n\n"
                         f"Possible solutions:\n"
                         f"  (1) `{keyword}` must have two arguments: `(when <condition> <effect>)` where both condition and effect must be wrapped in parentheses.\n"
-                        f"  (2) If there are multiple conditions or effects, they must use an `and` expression to wrap arguments."
+                        f"  (2) If there are multiple conditions or effects, they must use a logical connective like `and` expression to wrap arguments."
                     )
                 valid, msg = traverse(node[1], scoped_params)
                 if not valid:
@@ -885,6 +903,45 @@ class SyntaxValidator:
                         f"[ERROR]: `{keyword}` is only allowed in the :effects section, but found in {part}.\n\n"
                         f"Parsed line: {format_pddl_expr(node)}"
                     )
+                    
+                # check if equality is doing object comparison
+                if keyword == "=":
+                    arg_1 = node[0].split(" ")[1]
+                    arg_2 = node[0].split(" ")[2]
+                    if arg_1.startswith("?") and arg_2.startswith("?"):
+                        
+                        # check if they exist in scope parameters
+                        if arg_1 not in scoped_params:
+                            return (
+                                False, 
+                                f"[ERROR]: variable `{arg_1}` not found in scope of the {part} section. Available variables in scope: {list(scoped_params.keys())}\n\n"
+                                f"Parsed line: {format_pddl_expr(node)}\n\n"
+                                f"Possible solutions:\n"
+                                f"  (1) Revise line to only use variables in scope.\n"
+                                f"  (2) If necessary, create new variables in the parameters, or adjust the scope."
+                            )
+                        if arg_2 not in scoped_params:
+                            return (
+                                False, 
+                                f"[ERROR]: variable `{arg_2}` not found in scope of the {part} section. Available variables in scope: {list(scoped_params.keys())}\n\n"
+                                f"Parsed line: {format_pddl_expr(node)}\n\n"
+                                f"Possible solutions:\n"
+                                f"  (1) Revise line to only use variables in scope.\n"
+                                f"  (2) If necessary, create new variables in the parameters, or adjust the scope."
+                            )
+                            
+                        # check if the arguments are the same type
+                        if scoped_params[arg_1] != scoped_params[arg_2]:
+                            return (
+                                False,
+                                f"[ERROR]: invalid object type equality usage.\n\n"
+                                f"Parsed line: {format_pddl_expr(node)}\n"
+                                f"Variable `{arg_1}` type: {scoped_params[arg_1]}\n"
+                                f"Variable `{arg_2}` type: {scoped_params[arg_2]}\n\n"
+                                f"Make sure the variables have the same type for object equality usage."
+                            )
+                        
+                        return True, "[PASS]"
                 
                 if len(node) != 3:
                     return (
@@ -894,13 +951,12 @@ class SyntaxValidator:
                     )
                 for term in node[1:]:
                     # traverse terms of operator statement
-                    valid, msg = validate_term(term, scoped_params)
+                    valid, msg = validate_term(node, term, scoped_params)
                     if not valid:
                         return False, msg
                 return True, "[PASS]"
 
             # (5) if keyword is a predicate
-            
             pred_name = keyword
             pred_args = node[0].split(" ")[1:]
 
@@ -915,10 +971,16 @@ class SyntaxValidator:
                         f"Parsed line: {format_pddl_expr(node)}\n\n"
                         f"Functions can only be used within a numeric context such as comparison (e.g., `(= (<function_name> <?var>) <numeric_expression>)`)"
                     )
-                available_preds = "\n".join([p["raw"] for p in predicates])
+                
+                available_preds = (
+                    " - " + "\n - ".join(
+                        [f"{p['name']}: {p['desc']}" for p in predicates]
+                    )
+                ) if predicates else "No predicates available."
+                
                 return (
                     False,
-                    f"[ERROR]: Undeclared predicate `({pred_name})` found in {part}.\n"
+                    f"[ERROR]: Undeclared predicate `({pred_name})` found in {part}.\n\n"
                     f"Available predicates:\n{available_preds}\n\n"
                     f"Parsed line: {format_pddl_expr(node)}"
                 )
@@ -941,7 +1003,7 @@ class SyntaxValidator:
             for i, arg in enumerate(pred_args):
                 # recursively checks if predicate argument is nested
                 if isinstance(arg, list):
-                    valid, msg = validate_term(arg, scoped_params)
+                    valid, msg = validate_term(node, arg, scoped_params)
                     if not valid:
                         return False, msg
                 else:

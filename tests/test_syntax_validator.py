@@ -244,342 +244,180 @@ class TestSyntaxValidator(unittest.TestCase):
         flag, _ = self.syntax_validator.validate_format_predicates(predicates=pred_incorrect_param_type)
         self.assertEqual(flag, False)
 
-    # def test_validate_pddl_action(self):
 
-    #     # case 1: correct implementation – predicate aligns with action parameters and types
-    #     types = {
-    #         'arm': 'arm for a robot',
-    #         'block': 'block that can be stacked and unstacked',
-    #         'table': 'table that blocks sits on'
-    #     }
+    def test_validate_pddl_action(self):
 
-    #     predicates = [
-    #         Predicate({'name': 'on', 
-    #                 'desc': 'true if the block ?b1 is on top of the block ?b2', 
-    #                 'raw': '(on ?b1 - block ?b2 - block): true if the block ?b1 is on top of the block ?b2', 
-    #                 'params': OrderedDict([('?b1', 'block'), ('?b2', 'block')]), 
-    #                 'clean': '(on ?b1 - block ?b2 - block)'}),
-    #         Predicate({'name': 'holding', 
-    #                 'desc': 'true if arm is holding a block', 
-    #                 'raw': '(holding ?a - arm ?b - block): true if arm is holding a block', 
-    #                 'params': OrderedDict([('?a', 'arm'), ('?b', 'block')]), 
-    #                 'clean': '(holding ?a - arm ?b - block)'}),
-    #         Predicate({'name': 'clear', 
-    #                 'desc': 'true if a block does not have anything on top of it', 
-    #                 'raw': '(clear ?b - block): true if a block does not have anything on top of it', 
-    #                 'params': OrderedDict([('?b', 'block')]), 
-    #                 'clean': '(clear ?b - block)'}),
-    #         ]
-        
-    #     precond_str = "( and      ( holding ?a ?b1 )  ; The arm is holding the top block      (clear ?b2 )  ; The bottom block is clear  )"
-    #     params_info = (
-    #         OrderedDict({'?b1': 'block', '?b2': 'block', '?a': 'arm'}), 
-    #         ['- ?b1 - block: The block being stacked on top', '- ?b2 - block: The block being stacked upon', '- ?a - arm: The arm performing the stacking action']
-    #         )
+        # case 1: correct implementation – predicate aligns with action parameters and types
+        types = {
+            'arm': 'arm for a robot',
+            'block': 'block that can be stacked and unstacked',
+            'table': 'table that blocks sits on'
+        }
 
-    #     flag, _ = self.syntax_validator.validate_pddl_action(
-    #         pddl=precond_str,
-    #         predicates=predicates,
-    #         action_params=params_info[0],
-    #         types=types,
-    #         part="preconditions"
-    #     )
-    #     self.assertEqual(flag, True)
+        predicates = [
+            Predicate({'name': 'on', 
+                    'desc': 'true if the block ?b1 is on top of the block ?b2', 
+                    'raw': '(on ?b1 - block ?b2 - block): true if the block ?b1 is on top of the block ?b2', 
+                    'params': OrderedDict([('?b1', 'block'), ('?b2', 'block')]), 
+                    'clean': '(on ?b1 - block ?b2 - block)'}),
+            Predicate({'name': 'holding', 
+                    'desc': 'true if arm is holding a block', 
+                    'raw': '(holding ?a - arm ?b - block): true if arm is holding a block', 
+                    'params': OrderedDict([('?a', 'arm'), ('?b', 'block')]), 
+                    'clean': '(holding ?a - arm ?b - block)'}),
+            Predicate({'name': 'clear', 
+                    'desc': 'true if a block does not have anything on top of it', 
+                    'raw': '(clear ?b - block): true if a block does not have anything on top of it', 
+                    'params': OrderedDict([('?b', 'block')]), 
+                    'clean': '(clear ?b - block)'}),
+            ]
+        
+        precond_str = "( and      ( holding ?a ?b1 )  ; The arm is holding the top block      (clear ?b2 )  ; The bottom block is clear  )"
+        params_info = (
+            OrderedDict({'?b1': 'block', '?b2': 'block', '?a': 'arm'}), 
+            ['- ?b1 - block: The block being stacked on top', '- ?b2 - block: The block being stacked upon', '- ?a - arm: The arm performing the stacking action']
+            )
 
-    #     # case 2: incorrect number of predicate parameters in pddl component
-    #     precond_str = "( and      ( holding ?b1 )  ; The arm is holding the top block      (clear ?b2 )  ; The bottom block is clear  )"
-    #     flag, _ = self.syntax_validator.validate_pddl_action(
-    #         pddl=precond_str,
-    #         predicates=predicates,
-    #         action_params=params_info[0],
-    #         types=types,
-    #         part="preconditions"
-    #     )
-    #     self.assertEqual(flag, False)
+        flag, _ = self.syntax_validator.validate_pddl_action(
+            pddl=precond_str,
+            predicates=predicates,
+            action_params=params_info[0],
+            types=types,
+            part="preconditions"
+        )
+        self.assertEqual(flag, True)
 
-    #     # case 3: predicate parameters include object types
-    #     precond_str = "( and      ( holding ?a - arm ?b1 - block)  ; The arm is holding the top block      (clear ?b2 )  ; The bottom block is clear  )"
-    #     flag, _ = self.syntax_validator.validate_pddl_action(
-    #         pddl=precond_str,
-    #         predicates=predicates,
-    #         action_params=params_info[0],
-    #         types=types,
-    #         part="preconditions"
-    #     )
-    #     self.assertEqual(flag, False)
+        # case 2: incorrect number of predicate parameters in pddl component
+        precond_str = "( and      ( holding ?b1 )  ; The arm is holding the top block      (clear ?b2 )  ; The bottom block is clear  )"
+        flag, _ = self.syntax_validator.validate_pddl_action(
+            pddl=precond_str,
+            predicates=predicates,
+            action_params=params_info[0],
+            types=types,
+            part="preconditions"
+        )
+        self.assertEqual(flag, False)
 
-    #     # case 3: parameters declared in predicate not found in action parameter
-    #     precond_str = "( and      ( holding ?a ?b1)  ; The arm is holding the top block      (clear ?rock )  ; The bottom block is clear  )"
+        # case 3: predicate parameters include object types
+        precond_str = "( and      ( holding ?a - arm ?b1 - block)  ; The arm is holding the top block      (clear ?b2 )  ; The bottom block is clear  )"
+        flag, _ = self.syntax_validator.validate_pddl_action(
+            pddl=precond_str,
+            predicates=predicates,
+            action_params=params_info[0],
+            types=types,
+            part="preconditions"
+        )
+        self.assertEqual(flag, False)
 
-    #     flag, _ = self.syntax_validator.validate_pddl_action(
-    #         pddl=precond_str,
-    #         predicates=predicates,
-    #         action_params=params_info[0],
-    #         types=types,
-    #         part="preconditions"
-    #     )
-    #     self.assertEqual(flag, False)
+        # case 3: parameters declared in predicate not found in action parameter
+        precond_str = "( and      ( holding ?a ?b1)  ; The arm is holding the top block      (clear ?rock )  ; The bottom block is clear  )"
 
-    #     # case 4: check if declared predicate object types align with original predicate types
-    #     params_info = (
-    #         OrderedDict({'?b1': 'block', '?b2': 'block', '?a': 'arm'}), 
-    #         ['- ?b1 - block: The block being stacked on top', '- ?b2 - block: The block being stacked upon', '- ?a - arm: The arm performing the stacking action']
-    #         )
+        flag, _ = self.syntax_validator.validate_pddl_action(
+            pddl=precond_str,
+            predicates=predicates,
+            action_params=params_info[0],
+            types=types,
+            part="preconditions"
+        )
+        self.assertEqual(flag, False)
+
+        # case 4: check if declared predicate object types align with original predicate types
+        params_info = (
+            OrderedDict({'?b1': 'block', '?b2': 'block', '?a': 'arm'}), 
+            ['- ?b1 - block: The block being stacked on top', '- ?b2 - block: The block being stacked upon', '- ?a - arm: The arm performing the stacking action']
+            )
         
-    #     # `clear` predicate parameter should be type `block` but instead `arm`
-    #     precond_str = "( and      ( holding ?a ?b1)  ; The arm is holding the top block      (clear ?a )  ; The bottom block is clear  )"
+        # `clear` predicate parameter should be type `block` but instead `arm`
+        precond_str = "( and      ( holding ?a ?b1)  ; The arm is holding the top block      (clear ?a )  ; The bottom block is clear  )"
         
-    #     flag, _ = self.syntax_validator.validate_pddl_action(
-    #         pddl=precond_str,
-    #         predicates=predicates,
-    #         action_params=params_info[0],
-    #         types=types,
-    #         part="preconditions"
-    #     )
-    #     self.assertEqual(flag, False)
+        flag, _ = self.syntax_validator.validate_pddl_action(
+            pddl=precond_str,
+            predicates=predicates,
+            action_params=params_info[0],
+            types=types,
+            part="preconditions"
+        )
+        self.assertEqual(flag, False)
         
-    #     # case 5: types is empty but action parameter or predicate in pddl contains types
-    #     types = {}
+        # case 5: types is empty but action parameter or predicate in pddl contains types
+        types = {}
         
-    #     predicates = [
-    #         Predicate({'name': 'on', 
-    #                 'desc': 'true if the block ?b1 is on top of the block ?b2', 
-    #                 'raw': '(on ?b1 ?b2): true if the block ?b1 is on top of the block ?b2', 
-    #                 'params': OrderedDict([('?b1', ''), ('?b2', '')]), 
-    #                 'clean': '(on ?b1 ?b2)'}),
-    #         Predicate({'name': 'holding', 
-    #                 'desc': 'true if arm is holding a block', 
-    #                 'raw': '(holding ?a - arm ?b - block): true if arm is holding a block', 
-    #                 'params': OrderedDict([('?a', 'arm'), ('?b', 'block')]), 
-    #                 'clean': '(holding ?a - arm ?b - block)'}),
-    #         Predicate({'name': 'clear', 
-    #                 'desc': 'true if a block does not have anything on top of it', 
-    #                 'raw': '(clear ?b): true if a block does not have anything on top of it', 
-    #                 'params': OrderedDict([('?b', '')]), 
-    #                 'clean': '(clear ?b)'}),
-    #         ]
+        predicates = [
+            Predicate({'name': 'on', 
+                    'desc': 'true if the block ?b1 is on top of the block ?b2', 
+                    'raw': '(on ?b1 ?b2): true if the block ?b1 is on top of the block ?b2', 
+                    'params': OrderedDict([('?b1', ''), ('?b2', '')]), 
+                    'clean': '(on ?b1 ?b2)'}),
+            Predicate({'name': 'holding', 
+                    'desc': 'true if arm is holding a block', 
+                    'raw': '(holding ?a - arm ?b - block): true if arm is holding a block', 
+                    'params': OrderedDict([('?a', 'arm'), ('?b', 'block')]), 
+                    'clean': '(holding ?a - arm ?b - block)'}),
+            Predicate({'name': 'clear', 
+                    'desc': 'true if a block does not have anything on top of it', 
+                    'raw': '(clear ?b): true if a block does not have anything on top of it', 
+                    'params': OrderedDict([('?b', '')]), 
+                    'clean': '(clear ?b)'}),
+            ]
         
-    #     predicates_with_types = [
-    #         Predicate({'name': 'on', 
-    #                 'desc': 'true if the block ?b1 is on top of the block ?b2', 
-    #                 'raw': '(on ?b1 - block ?b2 - block): true if the block ?b1 is on top of the block ?b2', 
-    #                 'params': OrderedDict([('?b1', 'block'), ('?b2', 'block')]), 
-    #                 'clean': '(on ?b1 - block ?b2 - block)'}),
-    #         Predicate({'name': 'holding', 
-    #                 'desc': 'true if arm is holding a block', 
-    #                 'raw': '(holding ?a - arm ?b - block): true if arm is holding a block', 
-    #                 'params': OrderedDict([('?a', 'arm'), ('?b', 'block')]), 
-    #                 'clean': '(holding ?a - arm ?b - block)'}),
-    #         Predicate({'name': 'clear', 
-    #                 'desc': 'true if a block does not have anything on top of it', 
-    #                 'raw': '(clear ?b - block): true if a block does not have anything on top of it', 
-    #                 'params': OrderedDict([('?b', 'block')]), 
-    #                 'clean': '(clear ?b - block)'}),
-    #         ]
+        predicates_with_types = [
+            Predicate({'name': 'on', 
+                    'desc': 'true if the block ?b1 is on top of the block ?b2', 
+                    'raw': '(on ?b1 - block ?b2 - block): true if the block ?b1 is on top of the block ?b2', 
+                    'params': OrderedDict([('?b1', 'block'), ('?b2', 'block')]), 
+                    'clean': '(on ?b1 - block ?b2 - block)'}),
+            Predicate({'name': 'holding', 
+                    'desc': 'true if arm is holding a block', 
+                    'raw': '(holding ?a - arm ?b - block): true if arm is holding a block', 
+                    'params': OrderedDict([('?a', 'arm'), ('?b', 'block')]), 
+                    'clean': '(holding ?a - arm ?b - block)'}),
+            Predicate({'name': 'clear', 
+                    'desc': 'true if a block does not have anything on top of it', 
+                    'raw': '(clear ?b - block): true if a block does not have anything on top of it', 
+                    'params': OrderedDict([('?b', 'block')]), 
+                    'clean': '(clear ?b - block)'}),
+            ]
         
-    #     precond_str = "( and      ( holding ?a ?b1 )  ; The arm is holding the top block      (clear ?b2 )  ; The bottom block is clear  )"
-    #     params_info = (
-    #         OrderedDict({'?b1': 'block', '?b2': 'block', '?a': 'arm'}), 
-    #         ['- ?b1 - block: The block being stacked on top', '- ?b2 - block: The block being stacked upon', '- ?a - arm: The arm performing the stacking action']
-    #         )
+        precond_str = "( and      ( holding ?a ?b1 )  ; The arm is holding the top block      (clear ?b2 )  ; The bottom block is clear  )"
+        params_info = (
+            OrderedDict({'?b1': 'block', '?b2': 'block', '?a': 'arm'}), 
+            ['- ?b1 - block: The block being stacked on top', '- ?b2 - block: The block being stacked upon', '- ?a - arm: The arm performing the stacking action']
+            )
         
-    #     flag, _ = self.syntax_validator.validate_pddl_action(
-    #         pddl=precond_str,
-    #         predicates=predicates,
-    #         action_params=params_info[0],
-    #         types=types,
-    #         part="preconditions"
-    #     )
-    #     self.assertEqual(flag, False)
+        flag, _ = self.syntax_validator.validate_pddl_action(
+            pddl=precond_str,
+            predicates=predicates,
+            action_params=params_info[0],
+            types=types,
+            part="preconditions"
+        )
+        self.assertEqual(flag, False)
         
-    #     flag, _ = self.syntax_validator.validate_pddl_action(
-    #         pddl=precond_str,
-    #         predicates=predicates_with_types,
-    #         action_params=params_info[0],
-    #         types=types,
-    #         part="preconditions"
-    #     )
-    #     self.assertEqual(flag, False)
+        flag, _ = self.syntax_validator.validate_pddl_action(
+            pddl=precond_str,
+            predicates=predicates_with_types,
+            action_params=params_info[0],
+            types=types,
+            part="preconditions"
+        )
+        self.assertEqual(flag, False)
         
-    #     params_info = (
-    #         OrderedDict({'?b1': '', '?b2': 'block', '?a': ''}), 
-    #         ['- ?b1: The block being stacked on top', '- ?b2 - block: The block being stacked upon', '- ?a: The arm performing the stacking action']
-    #         )
+        params_info = (
+            OrderedDict({'?b1': '', '?b2': 'block', '?a': ''}), 
+            ['- ?b1: The block being stacked on top', '- ?b2 - block: The block being stacked upon', '- ?a: The arm performing the stacking action']
+            )
         
-    #     flag, _ = self.syntax_validator.validate_pddl_action(
-    #         pddl=precond_str,
-    #         predicates=predicates_with_types,
-    #         action_params=params_info[0],
-    #         types=types,
-    #         part="preconditions"
-    #     )
-    #     self.assertEqual(flag, False)
+        flag, _ = self.syntax_validator.validate_pddl_action(
+            pddl=precond_str,
+            predicates=predicates_with_types,
+            action_params=params_info[0],
+            types=types,
+            part="preconditions"
+        )
+        self.assertEqual(flag, False)
 
 
     def test_validate_usage_action(self):
-        
-        # case 1: incorrect 
-        llm_response = textwrap.dedent(
-            """
-            ### Action Parameters
-            ```
-            - ?b1 - block: The block being stacked on top
-            - ?b2 - block: The block being stacked upon
-            - ?a - arm: The arm performing the stacking action
-            ```
-
-            ### Action Preconditions
-            ```
-            (and
-
-                (= (weight ?b1) (weight ?b2))
-                (forall (?block1 ?block2 - block ?a1 - arm)
-                    (and
-                    (clear ?block1)
-                    (= (battery-level ?a) 100)
-                    (>= (weight ?block1) 10)
-                    (<= (weight ?b1) -100)
-                    (< (weight ?block2) 20)
-                    (> (battery-level ?a1) 10)
-                    )
-                )
-                (= (battery-level ?a) 200)
-            )
-            ```
-
-            ### Action Effects
-            ```
-            (and
-                (not (holding ?a ?b1))   ; Unconditionally: the arm stops holding ?b1
-                (on ?b1 ?b2)             ; Unconditionally: ?b1 is now on ?b2
-                (not (clear ?b2))        ; Unconditionally: ?b2 is no longer clear
-
-                ;; Conditionally: if ?b1 was clear, then ?a becomes free
-                (when (clear ?b1)
-                    (and
-                    (clear ?b2)
-                    (clear ?b1)
-                    )
-                )
-                (increase (battery-level ?a) 200)
-                (increase (battery-level ?a) (* (weight ?b1) 100))
-                (decrease (battery-level ?a) (* 0.05 (weight ?b2)))
-                (assign (battery-level ?a) (* (weight ?b1) 2))
-                (scale-up (battery-level ?a) 2)
-                (scale-down (battery-level ?a) (weight ?b1))
-            )
-            ```
-            """
-        )
-        
-        llm_response = textwrap.dedent(
-            """
-            ### Action Parameters
-            ```
-            - ?a - arm: The arm performing the action
-            - ?b1 - block: The heavy block to be placed
-            - ?b2 - block: The support block
-            ```
-
-            ### Action Preconditions
-            ```
-            (and
-                (holding ?a ?b1)
-                (clear ?b2)
-                (<= (weight ?b1) 100)
-                (>= (battery-level ?a) (* 2 (weight ?b1)))
-            )
-            ```
-
-            ### Action Effects
-            ```
-            (and
-                (on ?b1 ?b2)
-                (not (clear ?b2))
-                (clear ?b1)
-                (not (holding ?a ?b1))
-                (decrease (battery-level ?a) (* 1.5 (weight ?b1)))
-                (when (> (weight ?b1) 50)
-                    (scale-down (battery-level ?a) 2)
-                )
-            )
-            ```
-            """
-        )
-        
-        llm_response = textwrap.dedent(
-            """
-            ### Action Parameters
-            ```
-            - ?a - arm: The arm stacking the block
-            - ?b1 - block: The block being stacked
-            - ?b2 - block: The destination block
-            ```
-
-            ### Action Preconditions
-            ```
-            (and
-                (holding ?a ?b1)
-                (forall (?x - block)
-                    (or
-                        (clear ?x)
-                        (< (weight ?x) 50)
-                    )
-                )
-                (> (battery-level ?a) 100)
-            )
-            ```
-
-            ### Action Effects
-            ```
-            (and
-                (on ?b1 ?b2)
-                (not (clear ?b2))
-                (clear ?b1)
-                (not (holding ?a ?b1))
-                (decrease (battery-level ?a) (* (weight ?b1) 2))
-                (scale-up (battery-level ?a) 1.2)
-            )
-            ```
-
-            ### New Predicates
-            ```
-
-            ```
-            """
-        )
-        
-        llm_response = textwrap.dedent(
-    """
-    ### Action Parameters
-    ```
-    - ?a - arm
-    - ?b - block
-    ```
-
-    ### Action Preconditions
-    ```
-    (and
-        (holding ?a ?b)
-        (clear ?b)
-    )
-    ```
-
-    ### Action Effects
-    ```
-    (and
-        (when
-            (clear ?b)
-        )  ; ❌ 'when' must have a condition and an effect block
-    )
-    ```
-
-    ### New Predicates
-    ```
-
-    ```
-    """
-)
         
         predicates = [
             {'name': 'on', 
@@ -618,6 +456,159 @@ class TestSyntaxValidator(unittest.TestCase):
             'table': 'table that blocks sits on'
         }
         
+        # case 1: correct implementation
+        llm_response = textwrap.dedent(
+            """
+            ### Action Parameters
+            ```
+            - ?a - arm: The robotic arm
+            - ?b1 - block: The block being moved
+            - ?b2 - block: The block it's being stacked upon
+            ``` 
+
+            ### Action Preconditions
+            ```
+            (and
+            
+                ;; normal predicates
+                (holding ?a ?b1)
+                (clear ?b2)
+                
+                ;; object equality
+                (not (= ?b1 ?b2))
+                
+                ;; comparison operators on functions
+                (<= (weight ?b1) 30)
+                (>= (weight ?b2) 10)
+                (< (battery-level ?a) 100)
+                (> (battery-level ?a) (* 2 (weight ?b1))) ;; comparison with nested arithmetic
+                
+                ;; universal quantifier
+                (forall (?x - block)
+                    (or
+                        (clear ?x)
+                        (< (weight ?x) 50)
+                    )
+                )
+                
+                ;; existential quantifier
+                (exists (?y - block)
+                    (and
+                        (not (= ?y ?b1))
+                        (> (weight ?y) 25)
+                        (clear ?y)
+                    )
+                )
+            )
+            ```
+
+            ### Action Effects
+            ```
+            (and
+                (on ?b1 ?b2)
+                
+                ;; `not` logical connective
+                (not (clear ?b2))
+                (not (holding ?a ?b1))
+                
+                ;; conditional effect
+                (when (>= (weight ?b1) 20)
+                    (and
+                        (scale-down (battery-level ?a) 1.5)
+                        (when (< (battery-level ?a) 100)
+                            (assign (battery-level ?a) 100)
+                        )
+                    )
+                )
+                
+                ;; assignment oeprators
+                (increase (battery-level ?a) 5)
+                (decrease (weight ?b1) 10)
+                (scale-up (battery-level ?a) 2.5)
+                (scale-down (battery-level ?a) 5)
+            )
+            ```
+            """
+        )
+        
+        flag, _ = self.syntax_validator.validate_usage_action(
+            llm_response=llm_response,
+            curr_predicates=predicates,
+            types=types,
+            functions=functions
+        )
+
+        self.assertEqual(flag, True)
+        
+        # case 2: incorrect predicate usage
+        invalid_predicates = [
+            Predicate({'name': 'unstack', 
+                    'desc': 'true if a block does not have anything on top of it', 
+                    'raw': '(unstack ?b - block): true if a block does not have anything on top of it', 
+                    'params': OrderedDict([('?b', 'block')]), 
+                    'clean': '(unstack ?b - block)'}),
+            Predicate({'name': 'stack', 
+                    'desc': 'true if a block does not have anything on top of it', 
+                    'raw': '(stack ?b - block): true if a block does not have anything on top of it', 
+                    'params': OrderedDict([('?b', 'block')]), 
+                    'clean': '(stack ?b - block)'}),
+            ]
+        
+        flag, msg = self.syntax_validator.validate_usage_action(
+            llm_response=llm_response,
+            curr_predicates=invalid_predicates,
+            types=types
+        )
+        
+        self.assertEqual(flag, False)
+        
+        # case 3: incorrect function usage
+        invalid_functions = [
+            {'name': 'weight', 
+                    'desc': 'weight of the block', 
+                    'raw': '(weight ?b1 - block): weight of the block', 
+                    'params': OrderedDict([('?b1', 'block')]), 
+                    'clean': '(weight ?b1 - block)'}
+        ]
+        
+        flag, msg = self.syntax_validator.validate_usage_action(
+            llm_response=llm_response,
+            curr_predicates=predicates,
+            types=types,
+            functions=invalid_functions
+        )
+    
+        self.assertEqual(flag, False)
+        
+        # case 4: incorrect quantifier usage (invalid arguments)
+        llm_response = textwrap.dedent(
+            """
+            ### Action Parameters
+            ```
+            - ?a - arm: The robotic arm
+            - ?b1 - block: The block being moved
+            - ?b2 - block: The block it's being stacked upon
+            ``` 
+
+            ### Action Preconditions
+            ```
+            (and
+                (forall ?x - block
+                    (or
+                        (clear ?x)
+                        (< (weight ?x) 50)
+                    )
+                )
+            )
+            ```
+
+            ### Action Effects
+            ```
+            (and)
+            ```
+            """
+        )
+        
         flag, msg = self.syntax_validator.validate_usage_action(
             llm_response=llm_response,
             curr_predicates=predicates,
@@ -625,30 +616,181 @@ class TestSyntaxValidator(unittest.TestCase):
             functions=functions
         )
         
-        print(msg)
+        self.assertEqual(flag, False)
+        
+        llm_response = textwrap.dedent(
+            """
+            ### Action Parameters
+            ```
+            - ?a - arm: The robotic arm
+            - ?b1 - block: The block being moved
+            - ?b2 - block: The block it's being stacked upon
+            ``` 
 
-        self.assertEqual(flag, True)
+            ### Action Preconditions
+            ```
+            (and
+                (exists (?y - block)
+                        (not (= ?y ?b1))
+                        (> (weight ?y) 25)
+                        (clear ?y)
+                )
+            )
+            ```
+
+            ### Action Effects
+            ```
+            (and)
+            ```
+            """
+        )
         
-        # # case 2: predicate declared in pddl but not in definition
-        # predicates = [
-        #     Predicate({'name': 'unstack', 
-        #             'desc': 'true if a block does not have anything on top of it', 
-        #             'raw': '(unstack ?b - block): true if a block does not have anything on top of it', 
-        #             'params': OrderedDict([('?b', 'block')]), 
-        #             'clean': '(unstack ?b - block)'}),
-        #     Predicate({'name': 'stack', 
-        #             'desc': 'true if a block does not have anything on top of it', 
-        #             'raw': '(stack ?b - block): true if a block does not have anything on top of it', 
-        #             'params': OrderedDict([('?b', 'block')]), 
-        #             'clean': '(stack ?b - block)'}),
-        #     ]
+        flag, msg = self.syntax_validator.validate_usage_action(
+            llm_response=llm_response,
+            curr_predicates=predicates,
+            types=types,
+            functions=functions
+        )
         
-        # flag, _ = self.syntax_validator.validate_usage_action(
-        #     llm_response=llm_response,
-        #     curr_predicates=predicates,
-        #     types=types
-        # )
-        # self.assertEqual(flag, False)
+        self.assertEqual(flag, False)
+        
+        
+        # case 5: incorrect conditional effect usage
+        
+        # case 6: predicate used as function - vice versa
+        llm_response = textwrap.dedent(
+            """
+            ### Action Parameters
+            ```
+            - ?a - arm: The robotic arm
+            - ?b1 - block: The block being moved
+            - ?b2 - block: The block it's being stacked upon
+            ``` 
+
+            ### Action Preconditions
+            ```
+            (and
+                (< (holding ?a ?b1) 100)
+            )
+            ```
+
+            ### Action Effects
+            ```
+            (and)
+            ```
+            """
+        )
+        
+        flag, msg = self.syntax_validator.validate_usage_action(
+            llm_response=llm_response,
+            curr_predicates=predicates,
+            types=types,
+            functions=functions
+        )
+        
+        self.assertEqual(flag, False)
+        
+        llm_response = textwrap.dedent(
+            """
+            ### Action Parameters
+            ```
+            - ?a - arm: The robotic arm
+            - ?b1 - block: The block being moved
+            - ?b2 - block: The block it's being stacked upon
+            ``` 
+
+            ### Action Preconditions
+            ```
+            (and
+                (battery-level ?a)
+            )
+            ```
+
+            ### Action Effects
+            ```
+            (and)
+            ```
+            """
+        )
+        
+        flag, msg = self.syntax_validator.validate_usage_action(
+            llm_response=llm_response,
+            curr_predicates=predicates,
+            types=types,
+            functions=functions
+        )
+        
+        self.assertEqual(flag, False)
+        
+        # case 7: incorrect object equality usage
+        llm_response = textwrap.dedent(
+            """
+            ### Action Parameters
+            ```
+            - ?left - arm: left robot arm
+            - ?right - arm: right robot arm
+            - ?b1 - block: The block being moved
+            - ?b2 - block: The block it's being stacked upon
+            ``` 
+
+            ### Action Preconditions
+            ```
+            (and
+                (not (= ?left ?right))
+                (= ?b2 5) ;; incorrect
+            )
+            ```
+
+            ### Action Effects
+            ```
+            (and)
+            ```
+            """
+        )
+        
+        flag, msg = self.syntax_validator.validate_usage_action(
+            llm_response=llm_response,
+            curr_predicates=predicates,
+            types=types,
+            functions=functions
+        )
+        
+        self.assertEqual(flag, False)
+        
+        llm_response = textwrap.dedent(
+            """
+            ### Action Parameters
+            ```
+            - ?a - arm: The robotic arm
+            - ?b1 - block: The block being moved
+            - ?b2 - block: The block it's being stacked upon
+            ``` 
+
+            ### Action Preconditions
+            ```
+            (and
+                (not (= ?a ?b1))
+                (= ?b2 5) ;; incorrect
+            )
+            ```
+
+            ### Action Effects
+            ```
+            (and)
+            ```
+            """
+        )
+        
+        flag, msg = self.syntax_validator.validate_usage_action(
+            llm_response=llm_response,
+            curr_predicates=predicates,
+            types=types,
+            functions=functions
+        )
+        
+        self.assertEqual(flag, False)
+        
+        
         
     def test_validate_overflow_predicates(self):
 
