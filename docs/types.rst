@@ -75,7 +75,7 @@ Where **ParameterList** is: ::
 
     ParameterList = NewType("ParameterList", OrderedDict[str, str])  # {'?param_name': 'param_type'} OR OrderedDict([('?param_name', 'param_type')])
 
-For example, **extract_predicates()** takes the LLM output: ::
+For example, **formalize_predicates()** takes the LLM output: ::
 
     ### New Predicates
     ```
@@ -120,7 +120,7 @@ An **Action** is a class defined as a `TypeDict` in Python. Each key specifies a
 - **preconditions** (*str*): 
 - **effects** (*str*):
 
-For example, **extract_pddl_action()** takes the LLM output: ::
+For example, **formalize_pddl_action()** takes the LLM output: ::
 
     ### Action Parameters
     ```
@@ -164,7 +164,7 @@ Action Parameters
 -------------------------------------------------------
 **Action Parameters** are formatted as `OrderedDict` type.
 
-For example, **extract_parameters()** takes the LLM output: ::
+For example, **formalize_parameters()** takes the LLM output: ::
 
     ### Action Parameters
     ```
@@ -181,7 +181,7 @@ Action Preconditions
 -------------------------------------------------------
 **Action Preconditions** are formatted as Python string type.
 
-For example, **extract_preconditions()** takes the LLM output: ::
+For example, **formalize_preconditions()** takes the LLM output: ::
 
     ### Action Preconditions
     ```
@@ -199,7 +199,7 @@ Action Effects
 -------------------------------------------------------
 **Action Effects** are formatted as Python string type.
 
-For example, **extract_effects()** takes the LLM output: ::
+For example, **formalize_effects()** takes the LLM output: ::
 
     ### Action Effects
     ```
@@ -220,7 +220,7 @@ Task Objects
 -------------------------------------------------------
 **Objects** are formatted as Python `dict[str,str] # {'name': 'description'}`
 
-For example, **extract_objects()** takes the LLM output: ::
+For example, **formalize_objects()** takes the LLM output: ::
 
     ## OBJECTS
     ```
@@ -238,7 +238,7 @@ Task Initial States
 -------------------------------------------------------
 **Initial States** are formatted as Python `list[dict[str,str]] # essentially [{predicate,params,neg}]`
 
-For example, **extract_initial_state()** takes the LLM output: ::
+For example, **formalize_initial_state()** takes the LLM output: ::
 
     ## INITIAL
     ```
@@ -268,7 +268,7 @@ Task Goal States
 -------------------------------------------------------
 **Goal States** are formatted as Python `list[dict[str,str]] # essentially [{predicate,params,neg}]`
 
-For example, **extract_goal_state()** takes the LLM output: ::
+For example, **formalize_goal_state()** takes the LLM output: ::
 
     ## GOAL
     ```

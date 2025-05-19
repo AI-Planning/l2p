@@ -33,12 +33,12 @@ def run_parse_and_solve(
     """
 
     # extract initial states
-    initial_states, _ = task_builder.extract_initial_state(
+    initial_states, _ = task_builder.formalize_initial_state(
         model=model, problem_desc="", prompt_template=prompt_initial, objects=""
     )
 
     # extract goal states
-    goal_states, _ = task_builder.extract_goal_state(
+    goal_states, _ = task_builder.formalize_goal_state(
         model=model, problem_desc="", prompt_template=prompt_goal, objects=""
     )
 

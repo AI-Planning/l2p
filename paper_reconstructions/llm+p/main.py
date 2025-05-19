@@ -76,7 +76,7 @@ def llm_ic_pddl_planner(args, problem_name):
     prompt = create_llm_ic_pddl_prompt(task_nl, domain_pddl, context)
 
     # query LLM using L2P
-    objects, initial, goal, llm_response = task_builder.extract_task(
+    objects, initial, goal, llm_response = task_builder.formalize_task(
         model=model,
         problem_desc="",
         prompt_template=prompt,

@@ -20,6 +20,7 @@ REQUIREMENTS = [
     # ":conditional-effects",
     # ":quantified-preconditions",
     ":fluents",
+    ":action-costs",
     ":adl"
 ]
 
@@ -35,16 +36,16 @@ class DomainBuilder:
         pddl_actions: list[Action] = None,
     ):
         """
-        Initializes a domain builder object
+        Initializes a domain builder object.
 
         Args:
-            types (dict[str,str]): types dictionary with name: description key-value pair
-            type_hierarchy (dict[str,str]): type hierarchy dictionary
-            
-            predicates (list[Predicate]): list of Predicate objects
-            functions (list[Function]): list of Function objects
-            nl_actions (dict[str,str]): dictionary of extracted actions, where the keys are action names and values are action descriptions
-            pddl_actions (list[Action]): list of Action objects
+            types (dict[str,str]): flat types dictionary w/ {name: description} key-value pair (PDDL :types)
+            type_hierarchy (list[dict[str,str]]): type hierarchy dictionary list (PDDL :types)
+            constants (dict[str,str]): flat constant dictionary w/ {name: type} kry-value pair (PDDL :constants)
+            predicates (list[Predicate]): list of Predicate objects (PDDL :predicates)
+            functions (list[Function]): list of Function objects (PDDL :functions)
+            nl_actions (dict[str,str]): dictionary of NL extracted actions w/ {action name: description} key-value pairs
+            pddl_actions (list[Action]): list of Action objects (PDDL :actions)
         """
         self.types = types or {}
         self.type_hierarchy = type_hierarchy or []
@@ -54,10 +55,10 @@ class DomainBuilder:
         self.nl_actions = nl_actions or {}
         self.pddl_actions = pddl_actions or []
 
-    """Extract functions"""
+    """Formalize/generate functions"""
 
     @require_llm
-    def extract_types(
+    def formalize_types(
         self,
         model: BaseLLM,
         domain_desc: str,
@@ -68,15 +69,16 @@ class DomainBuilder:
         max_retries: int = 3,
     ) -> tuple[dict[str,str], str, tuple[bool, str]]:
         """
-        Extracts types with domain given
+        Formalizes PDDL :types in singular flat format via LLM. It is recommended to use 
+        `formalize_type_hierarchy()` for sub-types.
 
         Args:
-            model (BaseLLM): BaseLLM
-            domain_desc (str): domain description
-            prompt_template (str): prompt template
-            types (dict[str,str]): current types in model, defaults to None
+            model (BaseLLM): LLM to query
+            domain_desc (str): general domain description
+            prompt_template (str): structured prompt template for :types extraction
+            types (dict[str,str] | list[dict[str,str]]): current types in specification, defaults to None
             check_invalid_obj_usage (bool): removes keyword `object` from types, defaults to True
-            syntax_validator (SyntaxValidator): syntax checker for types, defaults to None
+            syntax_validator (SyntaxValidator): syntax checker for generated types, defaults to None
             max_retries (int): max # of retries if failure occurs, defaults to 3
 
         Returns:
@@ -133,7 +135,7 @@ class DomainBuilder:
         raise RuntimeError("Max retries exceeded. Failed to extract types.")
 
     @require_llm
-    def extract_type_hierarchy(
+    def formalize_type_hierarchy(
         self,
         model: BaseLLM,
         domain_desc: str,
@@ -144,15 +146,15 @@ class DomainBuilder:
         max_retries: int = 3,
     ) -> tuple[list[dict[str,str]], str, tuple[bool,str]]:
         """
-        Extracts type hierarchy from types list and domain given
+        Formalizes PDDL :types in hierarchy format via LLM. Recommended to use over `formalize_types()`
 
         Args:
-            model (BaseLLM): BaseLLM
-            domain_desc (str): domain description
-            prompt_template (str): prompt template
-            types (dict[str,str]): current types in model
+            model (BaseLLM): LLM to query
+            domain_desc (str): general domain description
+            prompt_template (str): structured prompt template for :types extraction
+            types (dict[str,str] | list[dict[str,str]]): current types in specification, defaults to None
             check_invalid_obj_usage (bool): removes keyword `object` from types, defaults to True
-            syntax_validator (SyntaxValidator): syntax checker for types, defaults to None
+            syntax_validator (SyntaxValidator): syntax checker for generated types, defaults to None
             max_retries (int): max # of retries if failure occurs
 
         Returns:
@@ -219,20 +221,32 @@ class DomainBuilder:
         raise RuntimeError("Max retries exceeded. Failed to extract types.")
     
     @require_llm
-    def extract_constants(
+    def formalize_constants(
         self,
         model: BaseLLM,
         domain_desc: str,
         prompt_template: str,
-        types: dict[str,str] | None = None,
+        types: dict[str,str] | list[dict[str,str]] | None = None,
         constants: dict[str,str] | None = None,
         syntax_validator: SyntaxValidator = None,
         max_retries: int = 3
     ) -> tuple[dict[str,str], str, tuple[bool,str]]:
         """
-        Extracts PDDL :constants from the LLM-generated output.  
-        In L2P, :constants have the same syntax as :types,  
-        so the parsing and validation logic is shared between them.
+        Formalizes PDDL :constants in flat dictionary format via LLM.
+
+        Args:
+            model (BaseLLM): LLM to query
+            domain_desc (str): general domain description
+            prompt_template (str): structured prompt template for :constants extraction
+            types (dict[str,str] | list[dict[str,str]]): current types in specification, defaults to None
+            constants (dict[str,str]): current constants in specification, defaults to None
+            syntax_validator (SyntaxValidator): syntax checker for generated constants, defaults to None
+            max_retries (int): max # of retries if failure occurs, defaults to 3
+
+        Returns:
+            constants (dict[str,str]): dictionary of constants with {<name>: <type>} pair
+            llm_output (str): the raw string BaseLLM response
+            validation_info (dict[bool,str]): validation info containing pass flag and error message
         """
         
         prompt_data = {
@@ -279,7 +293,7 @@ class DomainBuilder:
         raise RuntimeError("Max retries exceeded. Failed to extract constants.")
 
     @require_llm
-    def extract_predicates(
+    def formalize_predicates(
         self,
         model: BaseLLM,
         domain_desc: str,
@@ -290,21 +304,21 @@ class DomainBuilder:
         max_retries: int = 3,
     ) -> tuple[list[Predicate], str, tuple[bool, str]]:
         """
-        Extracts predicates via BaseLLM
+        Formalizes PDDL :predicates via LLM.
 
         Args:
-            model (BaseLLM): BaseLLM
-            domain_desc (str): domain description
-            prompt_template (str): prompt template
-            types (dict[str,str]): current types in model
-            predicates (list[Predicate]): list of current predicates in model
-            syntax_validator (SyntaxValidator): custom syntax validator, defaults to None
+            model (BaseLLM): LLM to query
+            domain_desc (str): general domain description
+            prompt_template (str): structured prompt template for :predicates extraction
+            types (dict[str,str] | list[dict[str,str]]): current types in specification, defaults to None
+            predicates (list[Predicate]): list of current predicates in specification, defaults to None
+            syntax_validator (SyntaxValidator): syntax checker for generated predicates, defaults to None
             max_retries (int): max # of retries if failure occurs
 
         Returns:
             new_predicates (list[Predicate]): a list of new predicates
-            llm_response (str): the raw string BaseLLM response
-            validation_info (tuple[bool, str]): validation check information
+            llm_output (str): the raw string BaseLLM response
+            validation_info (tuple[bool, str]): validation info containing pass flag and error message
         """
         
         prompt_data = {
@@ -361,7 +375,7 @@ class DomainBuilder:
         raise RuntimeError("Max retries exceeded. Failed to extract predicates.")
 
     @require_llm
-    def extract_functions(
+    def formalize_functions(
         self,
         model: BaseLLM,
         domain_desc: str,
@@ -371,7 +385,20 @@ class DomainBuilder:
         max_retries = 3,
     ) -> tuple[list[Function], str, tuple[bool, str]]:
         """
-        Extracts :functions via BaseLLM
+        Formalizes PDDL :functions via LLM
+
+        Args:
+            model (BaseLLM): LLM to query
+            domain_desc (str): general domain description
+            prompt_template (str): structured prompt template for :functions extraction
+            types (dict[str,str] | list[dict[str,str]]): current types in specification, defaults to None
+            syntax_validator (SyntaxValidator): syntax checker for generated functions, defaults to None
+            max_retries (int): max # of retries if failure occurs
+
+        Returns:
+            functions (list[Function]): a list of generated :functions
+            llm_output (str): the raw string BaseLLM response
+            validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
         
         prompt_data = {
@@ -434,18 +461,21 @@ class DomainBuilder:
         max_retries: int = 3,
     ) -> tuple[dict[str, str], str]:
         """
-        Extract actions in natural language given domain description using BaseLLM.
+        Extract actions in natural language given domain description using BaseLLM. 
+        
+        NOTE: This is not an official formalize function. It is inspired by the NL2PLAN framework 
+        (Gestrin et al., 2024) and is designed to guide the LLM in constructing appropriate actions.
 
         Args:
-            model (BaseLLM): BaseLLM
-            domain_desc (str): domain description
-            prompt_template (str): prompt template
-            types (dict[str,str]): current types in model
-            nl_actions (dict[str, str]): NL actions currently in model
+            model (BaseLLM): LLM to query
+            domain_desc (str): general domain description
+            prompt_template (str): structured prompt template for dictionary extraction
+            types (dict[str,str] | list[dict[str,str]]): current types in specification, defaults to None
+            nl_actions (dict[str, str]): NL actions currently in class object w/ {<name>: <description>} key-value pair
             max_retries (int): max # of retries if failure occurs
 
         Returns:
-            nl_actions (dict[str, str]): a dictionary of extracted actions {action name: action description}
+            nl_actions (dict[str, str]): a dictionary of extracted NL actions {<name>: <description>}
             llm_output (str): the raw string BaseLLM response
         """
 
@@ -479,7 +509,7 @@ class DomainBuilder:
         raise RuntimeError("Max retries exceeded. Failed to extract NL actions.")
     
     @require_llm
-    def extract_pddl_action(
+    def formalize_pddl_action(
         self,
         model: BaseLLM,
         domain_desc: str,
@@ -490,30 +520,32 @@ class DomainBuilder:
         predicates: list[Predicate] = None,
         types: dict[str,str] | list[dict[str,str]] = None,
         functions: list[Function] = None,
+        extract_new_preds = False,
         syntax_validator: SyntaxValidator = None,
-        parse_new_preds = False,
         max_retries: int = 3
     ) -> tuple[Action, list[Predicate], str, tuple[bool, str]]:
         """
-        Extract an action and predicates from a given action description using BaseLLM
+        Formalizes an :action and new :predicates from a given action description using BaseLLM.
+        Users can set `extract_new_preds (bool)` to True if tasking LLM to generate new predicates.
 
         Args:
-            model (BaseLLM): BaseLLM
-            domain_desc (str): domain description
-            prompt_template (str): action construction prompt
+            model (BaseLLM): LLM to query
+            domain_desc (str): general domain description
+            prompt_template (str): structured prompt template for :action extraction
             action_name (str): action name
             action_desc (str): action description, defaults to None
             action_list (list[str]): list of other actions to be translated, defaults to None
-            predicates (list[Predicate]): list of predicates in current model, defaults to None
-            types (dict[str,str] | list[dict[str,str]]): current types in model, defaults to None
-            syntax_validator (SyntaxValidator): custom syntax validator, defaults to None
+            predicates (list[Predicate]): list of predicates in current specification, defaults to None
+            types (dict[str,str] | list[dict[str,str]]): types in current specification, defaults to None
+            extract_new_preds (bool): flag for parsing new predicates generated from action, defaults to False
+            syntax_validator (SyntaxValidator): syntax checker for generated actions
             max_retries (int): max # of retries if failure occurs
 
         Returns:
-            action (Action): constructed action class
-            new_predicates (list[Predicate]): a list of new predicates
+            action (Action): constructed action class containing :parameters, :preconditions, and :effects
+            new_predicates (list[Predicate]): a list of new predicates, defaults to empty list
             llm_output (str): the raw string BaseLLM response
-            validation_info (tuple[bool, str]): validation check information
+            validation_info (tuple[bool, str]): validation info containing pass flag and error message
         """
         
         prompt_data = {
@@ -537,7 +569,7 @@ class DomainBuilder:
                 # parse LLM output into action and predicates
                 action = parse_action(llm_output=llm_output, action_name=action_name)
                 
-                if parse_new_preds:
+                if extract_new_preds:
                     new_predicates = parse_new_predicates(llm_output=llm_output)
                 else:
                     new_predicates = []
@@ -566,7 +598,7 @@ class DomainBuilder:
                         elif error_type == "validate_format_predicates":
                             validation_info = validator(new_predicates, types)
                         elif error_type == "validate_usage_action":
-                            validation_info = validator(llm_output, predicates, types, functions, parse_new_preds)
+                            validation_info = validator(llm_output, predicates, types, functions, extract_new_preds)
                         
                         if not validation_info[0]:
                             return action, new_predicates, llm_output, validation_info
@@ -584,7 +616,7 @@ class DomainBuilder:
 
     # NOTE: This function is experimental and may be subject to change in future versions.
     @require_llm
-    def extract_pddl_actions(
+    def formalize_pddl_actions(
         self,
         model: BaseLLM,
         domain_desc: str,
@@ -595,10 +627,10 @@ class DomainBuilder:
         max_retries: int = 3
     ) -> tuple[list[Action], list[Predicate], str]:
         """
-        Extract all actions from a given action description using BaseLLM
+        Formalizes several :actions via LLM. 
 
         Args:
-            model (BaseLLM): BaseLLM
+            model (BaseLLM): LLM to query
             domain_desc (str): domain description
             prompt_template (str): action construction prompt
             action_list (list[str]): list of other actions to be translated, defaults to None
@@ -649,7 +681,7 @@ class DomainBuilder:
                         parse_action(llm_output=rest_of_string, action_name=action_name)
                     )
 
-                # if user queries predicate creation via BaseLLM
+                # if user queries predicate creation via LLM
                 try:
                     new_predicates = parse_new_predicates(llm_output)
 
@@ -675,7 +707,7 @@ class DomainBuilder:
         raise RuntimeError("Max retries exceeded. Failed to extract PDDL action.")
 
     @require_llm
-    def extract_parameters(
+    def formalize_parameters(
         self,
         model: BaseLLM,
         domain_desc: str,
@@ -687,20 +719,20 @@ class DomainBuilder:
         max_retries: int = 3,
     ) -> tuple[OrderedDict, list, str, tuple[bool, str]]:
         """
-        Extracts parameters from single action description via BaseLLM
+        Formalizes PDDL :parameters for single action via LLM.
 
         Args:
-            model (BaseLLM): BaseLLM
-            domain_desc (str): domain description
-            prompt_template (str): prompt template
+            model (BaseLLM): LLM to query
+            domain_desc (str): general domain description
+            prompt_template (str): structured prompt template for :parameters extraction
             action_name (str): action name
             action_desc (str): action description, defaults to None
-            types (dict[str,str] | list(dict[str,str])): current types in model, defaults to None
-            syntax_validator (SyntaxValidator): syntax checker for params, defaults to None
+            types (dict[str,str] | list(dict[str,str])): current types in specification, defaults to None
+            syntax_validator (SyntaxValidator): syntax checker for generated params, defaults to None
             max_retries (int): max # of retries if failure occurs
 
         Returns:
-            param (OrderedDict): ordered list of parameters
+            param (OrderedDict): ordered list of parameters {<?var>: <type>}
             param_raw (list()): list of raw parameters
             llm_output (str): the raw string BaseLLM response
             validation_info (dict[bool,str]): validation info containing pass flag and error message
@@ -757,7 +789,7 @@ class DomainBuilder:
         raise RuntimeError("Max retries exceeded. Failed to extract parameters.")
 
     @require_llm
-    def extract_preconditions(
+    def formalize_preconditions(
         self,
         model: BaseLLM,
         domain_desc: str,
@@ -767,29 +799,30 @@ class DomainBuilder:
         params: OrderedDict = None,
         types: dict[str, str] | list[dict[str,str]] | None = None,
         predicates: list[Predicate] = None,
+        extract_new_preds: bool = False,
         syntax_validator: SyntaxValidator = None,
-        parse_predicates: bool = True,
         max_retries: int = 3,
     ) -> tuple[str, list[Predicate], str, tuple[bool,str]]:
         """
-        Extracts preconditions from single action description via BaseLLM
+        Formalizes PDDL :preconditions from a single action via LLM.
 
         Args:
-            model (BaseLLM): BaseLLM
-            domain_desc (str): domain description
-            prompt_template (str): prompt template
+            model (BaseLLM): LLM to query
+            domain_desc (str): general domain description
+            prompt_template (str): structured prompt template for :preconditions extraction
             action_name (str): action name
             action_desc (str): action description, defaults to None
-            params (list[str]): list of parameters from action, defaults to None
-            types (dict[str,str] | list(dict[str,str])): current types in model, defaults to None
-            predicates (list[Predicate]): list of current predicates in model, defaults to None
-            syntax_validator (SyntaxValidator): syntax checker for preconditions, defaults to None
+            params (OrderedDict): dictionary of parameters from action, defaults to None
+            types (dict[str,str] | list(dict[str,str])): current types in specification, defaults to None
+            predicates (list[Predicate]): list of current predicates in specifications, defaults to None
+            extract_new_preds (bool): flag for parsing new predicates generated from action, defaults to False
+            syntax_validator (SyntaxValidator): syntax checker for generated preconditions, defaults to None
             max_retries (int): max # of retries if failure occurs
 
         Returns:
-            preconditions (str): PDDL format of preconditions
-            new_predicates (list[Predicate]): a list of new predicates
-            llm_response (str): the raw string BaseLLM response
+            preconditions (str): PDDL format of :preconditions
+            new_predicates (list[Predicate]): a list of new predicates, defaults to empty list
+            llm_output (str): the raw string BaseLLM response
             validation_info (dict[bool,str]): validation info containing pass flag and error message
         """
         
@@ -813,7 +846,7 @@ class DomainBuilder:
                 # extract respective preconditions from response
                 preconditions = parse_preconditions(llm_output=llm_output)
 
-                if parse_predicates:
+                if extract_new_preds:
                     new_predicates = parse_new_predicates(llm_output=llm_output)
                 else:
                     new_predicates = None
@@ -855,7 +888,7 @@ class DomainBuilder:
         raise RuntimeError("Max retries exceeded. Failed to extract preconditions.")
 
     @require_llm
-    def extract_effects(
+    def formalize_effects(
         self,
         model: BaseLLM,
         domain_desc: str,
@@ -866,30 +899,31 @@ class DomainBuilder:
         types: dict[str,str] | list[dict[str,str]] | None = None,
         preconditions: str = None,
         predicates: list[Predicate] = None,
+        extract_new_preds: bool = False,
         syntax_validator: SyntaxValidator = None,
-        parse_predicates: bool = True,
         max_retries: int = 3,
     ) -> tuple[str, list[Predicate], str, tuple[bool,str]]:
         """
-        Extracts effects from single action description via BaseLLM
+        Formalizes PDDL :effects from a single action via LLM
 
         Args:
-            model (BaseLLM): BaseLLM
-            domain_desc (str): domain description
-            prompt_template (str): prompt template
+            model (BaseLLM): LLM to query
+            domain_desc (str): general domain description
+            prompt_template (str): structured prompt template for :effects extraction
             action_name (str): action name
             action_desc (str): action description, defaults to None
             params (list[str]): list of parameters from action, defaults to None
             types (dict[str,str] | list(dict[str,str])): current types in model, defaults to None
             precondition (str): PDDL format of preconditions, defaults to None
             predicates (list[Predicate]): list of current predicates in model, defaults to None
-            syntax_validator (SyntaxValidator): syntax checker for effects, defaults to None
+            extract_new_preds (bool): flag for parsing new predicates generated from action, defaults to False
+            syntax_validator (SyntaxValidator): syntax checker for generated effects, defaults to None
             max_retries (int): max # of retries if failure occurs
 
         Returns:
-            effects (str): PDDL format of effects
-            new_predicates (list[Predicate]): a list of new predicates
-            llm_response (str): the raw string BaseLLM response
+            effects (str): PDDL format of :effects
+            new_predicates (list[Predicate]): a list of new predicates, defaults to empty list
+            llm_output (str): the raw string BaseLLM response
         """
         
         prompt_data = {
@@ -913,7 +947,7 @@ class DomainBuilder:
                 # extract respective effects from response
                 effects = parse_effects(llm_output=llm_output)
                 
-                if parse_predicates:
+                if extract_new_preds:
                     new_predicates = parse_new_predicates(llm_output=llm_output)
                 else:
                     new_predicates = None
@@ -957,17 +991,34 @@ class DomainBuilder:
 
     # NOTE: This function is experimental and may be subject to change in future versions.
     @require_llm
-    def extract_domain_level_specs(
+    def formalize_domain_level_specs(
         self,
         model: BaseLLM,
         domain_desc: str,
         prompt_template: str,
-        extract_types: bool = False,
-        extract_constants: bool = False,
-        extract_predicates: bool = False,
-        extract_functions: bool = False,
+        formalize_types: bool = False,
+        formalize_constants: bool = False,
+        formalize_predicates: bool = False,
+        formalize_functions: bool = False,
         max_retries: int = 3
     ) -> tuple[dict[str, Any], str]:
+        """
+        Formalizes domain-level specifications (i.e. :types, :constants, :predicates, :functions) via LLM.
+
+        Args:
+            model (BaseLLM): LLM to query
+            domain_desc (str): domain description
+            prompt_template (str): prompt template
+            formalize_types (bool): flag for extracting :types, defaults to False
+            formalize_constants (bool): flag for extracting :constants, defaults to False
+            formalize_predicates (bool): flag for extracting :predicates, defaults to False
+            formalize_predicates (bool): flag for extracting :functions, defaults to False
+            max_retries (int): max # of retries if failure occurs
+
+        Returns:
+            spec_results (dict[str, Any]): domain-level specifications of user requirements
+            llm_output (str): the raw string BaseLLM response
+        """
         
         spec_results = {}
         
@@ -980,13 +1031,13 @@ class DomainBuilder:
                 model.reset_tokens()
                 llm_output = model.query(prompt=prompt)
         
-                if extract_types:
+                if formalize_types:
                     spec_results["types"] = parse_type_hierarchy(llm_output=llm_output)
-                if extract_constants:
+                if formalize_constants:
                     spec_results["constants"] = parse_constants(llm_output=llm_output)
-                if extract_predicates:
+                if formalize_predicates:
                     spec_results["predicates"] = parse_new_predicates(llm_output=llm_output)
-                if extract_functions:
+                if formalize_functions:
                     spec_results["functions"] = parse_functions(llm_output=llm_output)
                     
                 return spec_results, llm_output
@@ -1040,26 +1091,26 @@ class DomainBuilder:
             self.type_hierarchy = remove_and_promote(self.type_hierarchy)
             
     def delete_constants(self, name: str):
-        """Deletes specific constant from current model"""
+        """Deletes specific constant from current specification"""
         if self.constants is not None:
             self.constants = {cons_: type_ for cons_, type_ in self.constants.items() if cons_ != name}
             
     def delete_predicate(self, name: str):
-        """Deletes specific predicate from current model"""
+        """Deletes specific predicate from current specification"""
         if self.predicates is not None:
             self.predicates = [
                 predicate for predicate in self.predicates if predicate["name"] != name
             ]
             
     def delete_function(self, name: str):
-        """Deletes specific function from current model"""
+        """Deletes specific function from current specification"""
         if self.functions is not None:
             self.functions = [
                 function for function in self.functions if function["name"] != name
             ]
 
     def delete_nl_action(self, name: str):
-        """Deletes specific NL action from current model"""
+        """Deletes specific NL action from current specification"""
         if self.nl_actions is not None:
             self.nl_actions = {
                 action_name: action_desc
@@ -1068,7 +1119,7 @@ class DomainBuilder:
             }
 
     def delete_pddl_action(self, name: str):
-        """Deletes specific PDDL action from current model"""
+        """Deletes specific PDDL action from current specification"""
         if self.pddl_actions is not None:
             self.pddl_actions = [
                 action for action in self.pddl_actions if action["name"] != name
@@ -1078,62 +1129,62 @@ class DomainBuilder:
     """Set functions"""
 
     def set_types(self, types: dict[str, str]):
-        """Sets types for current model"""
+        """Sets types for current specification"""
         self.types = types
 
     def set_type_hierarchy(self, type_hierarchy: list[dict[str, str]]):
-        """Sets type hierarchy for current model"""
+        """Sets type hierarchy for current specification"""
         self.type_hierarchy = type_hierarchy
         
     def set_constants(self, constants: dict[str,str]):
-        """Sets constants for current model"""
+        """Sets constants for current specification"""
         self.constants = constants
         
     def set_predicate(self, predicate: Predicate):
-        """Appends a predicate for current model"""
+        """Appends a predicate for current specification"""
         self.predicates.append(predicate)
         
     def set_function(self, function: Function):
-        """Appends a function for current model"""
+        """Appends a function for current specification"""
         self.functions.append(function)
 
     def set_nl_actions(self, nl_actions: dict[str, str]):
-        """Sets NL actions for current model"""
+        """Sets NL actions for current specification"""
         self.nl_actions = nl_actions
 
     def set_pddl_action(self, pddl_action: Action):
-        """Appends a PDDL action for current model"""
+        """Appends a PDDL action for current specification"""
         self.pddl_actions.append(pddl_action)
 
 
     """Get functions"""
 
-    def get_types(self):
-        """Returns types from current model"""
+    def get_types(self) -> dict[str,str]:
+        """Returns types from current specification"""
         return self.types
 
-    def get_type_hierarchy(self):
-        """Returns type hierarchy from current model"""
+    def get_type_hierarchy(self) -> list[dict[str,str]]:
+        """Returns type hierarchy from current specification"""
         return self.type_hierarchy
     
-    def get_constants(self):
-        """Returns constants from current model"""
+    def get_constants(self) -> dict[str,str]:
+        """Returns constants from current specification"""
         return self.constants
     
-    def get_predicates(self):
-        """Returns predicates from current model"""
+    def get_predicates(self) -> list[Predicate]:
+        """Returns predicates from current specification"""
         return self.predicates
     
-    def get_functions(self):
-        """Returns functions from current model"""
+    def get_functions(self) -> list[Function]:
+        """Returns functions from current specification"""
         return self.functions
 
-    def get_nl_actions(self):
-        """Returns natural language actions from current model"""
+    def get_nl_actions(self) -> dict[str,str]:
+        """Returns natural language actions from current specification"""
         return self.nl_actions
 
-    def get_pddl_actions(self):
-        """Returns PDDL actions from current model"""
+    def get_pddl_actions(self) -> list[Action]:
+        """Returns PDDL actions from current specification"""
         return self.pddl_actions
 
 
@@ -1148,16 +1199,16 @@ class DomainBuilder:
         requirements: list[str] = REQUIREMENTS,
     ) -> str:
         """
-        Generates PDDL domain from given information
+        Generates PDDL domain from given information.
 
         Args:
             domain_name (str): domain name
-            types (dict[str,str] | list[dict[str,str]] | None): domain types
-            constants (dict[str,str] | None): domain constants
-            predicates (list[Predicate] | None): domain predicates
-            functions (list[Function] | None): domain functions
-            actions (list[Action]): domain actions
-            requirements (list[str]): domain requirements
+            types (dict[str,str] | list[dict[str,str]] | None): domain :types, defaults to None
+            constants (dict[str,str] | None): domain :constants, defaults to None
+            predicates (list[Predicate] | None): domain :predicates, defaults to None
+            functions (list[Function] | None): domain :functions, defaults to None
+            actions (list[Action]): domain :action(s), defaults to None
+            requirements (list[str]): domain :requirements, defaults to constant REQUIREMENTS
 
         Returns:
             desc (str): PDDL domain

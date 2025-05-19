@@ -43,7 +43,7 @@ Build PDDL domain components using the ``DomainBuilder`` class. This is an examp
 
     domain_builder = DomainBuilder()
 
-    domain_builder.extract_types(
+    domain_builder.formalize_types(
         model = openai_llm,
         domain_desc = domain,
         prompt_template = type_extraction_prompt
@@ -55,7 +55,7 @@ Build PDDL problem components using the ``TaskBuilder`` class. This is an exampl
 
     task_builder = TaskBuilder()
 
-    task_builder.extract_initial_states(
+    task_builder.formalize_initial_states(
         model = openai_llm,
         problem_desc = problem,
         prompt_template = task_prompt
@@ -97,15 +97,15 @@ Below are actual runnable usage examples. This is the general setup to build dom
 
     # load in assumptions
     domain_desc = load_file(r'tests/usage/prompts/domain/blocksworld_domain.txt')
-    extract_predicates_prompt = load_file(r'tests/usage/prompts/domain/extract_predicates.txt')
+    formalize_predicates_prompt = load_file(r'tests/usage/prompts/domain/extract_predicates.txt')
     types = load_file(r'tests/usage/prompts/domain/types.json')
     action = load_file(r'tests/usage/prompts/domain/action.json')
 
     # extract predicates via LLM
-    predicates, llm_output = domain_builder.extract_predicates(
+    predicates, llm_output = domain_builder.formalize_predicates(
         model=model,
         domain_desc=domain_desc,
-        prompt_template=extract_predicates_prompt,
+        prompt_template=formalize_predicates_prompt,
         types=types,
         nl_actions={action['action_name']: action['action_desc']}
         )
@@ -135,13 +135,13 @@ Here is how you would setup a PDDL problem:
 
     # load in assumptions
     problem_desc= load_file(r'tests/usage/prompts/problem/blocksworld_problem.txt')
-    extract_task_prompt = load_file(r'tests/usage/prompts/problem/extract_task.txt')
+    formalize_task_prompt = load_file(r'tests/usage/prompts/problem/extract_task.txt')
 
     # extract PDDL task specifications via LLM
-    objects, initial_states, goal_states, llm_response = task_builder.extract_task(
+    objects, initial_states, goal_states, llm_response = task_builder.formalize_task(
         model=model,
         problem_desc=problem_desc,
-        prompt_template=extract_task_prompt,
+        prompt_template=formalize_task_prompt,
         types=types,
         predicates=predicates
         )

@@ -16,7 +16,7 @@ This paper contains 2 main module components (Step 1+2 in LLM+DM):
     
 Changes made:
     > structure output from LLM to enable L2P type extractions
-    > using L2P `extract_pddl_action` function in ABA algorithm
+    > using L2P `formalize_pddl_action` function in ABA algorithm
     > syntax validator + error message changes
 """
 
@@ -110,7 +110,7 @@ def construct_action(
         try:
                 # L2P usage for extracting actions and predicates
                 action, new_predicates, llm_response, validation_info = (
-                    domain_builder.extract_pddl_action(
+                    domain_builder.formalize_pddl_action(
                         model=model,
                         domain_desc="",
                         prompt_template=act_pred_prompt,

@@ -12,7 +12,7 @@ class TestDomainBuilder(unittest.TestCase):
     def normalize(self, string):
         return "\n".join(line.strip() for line in textwrap.dedent(string).strip().splitlines())
 
-    def test_extract_types(self):
+    def test_formalize_types(self):
 
         self.syntax_validator.error_types = ['validate_format_types']
         self.mock_llm.output = textwrap.dedent(
@@ -34,7 +34,7 @@ class TestDomainBuilder(unittest.TestCase):
             'table': 'table that blocks sits on'
             }
         
-        types, _, validation_info = self.domain_builder.extract_types(
+        types, _, validation_info = self.domain_builder.formalize_types(
             model=self.mock_llm,
             domain_desc="",
             prompt_template="",
@@ -44,7 +44,7 @@ class TestDomainBuilder(unittest.TestCase):
         self.assertEqual(expected_types, types)
         self.assertEqual(validation_info[0], True)
 
-    def test_extract_type_hierarchy(self):
+    def test_formalize_type_hierarchy(self):
         self.syntax_validator.error_types = ['validate_format_types', 'validate_cyclic_types']
         self.mock_llm.output = textwrap.dedent(
             """
@@ -84,7 +84,7 @@ class TestDomainBuilder(unittest.TestCase):
             {"table": "table that blocks sits on","children": []}
             ]
         
-        types, _, validation_info = self.domain_builder.extract_type_hierarchy(
+        types, _, validation_info = self.domain_builder.formalize_type_hierarchy(
             model=self.mock_llm,
             domain_desc="",
             prompt_template="",
@@ -94,7 +94,7 @@ class TestDomainBuilder(unittest.TestCase):
         self.assertEqual(expected_types, types)
         self.assertEqual(validation_info[0], True)
         
-    def test_extract_functions(self):
+    def test_formalize_functions(self):
         
         self.syntax_validator.error_types = ['validate_format_functions']
         
@@ -116,7 +116,7 @@ class TestDomainBuilder(unittest.TestCase):
             'table': 'table that blocks sits on'
         }
         
-        functions, _, validation_info = self.domain_builder.extract_functions(
+        functions, _, validation_info = self.domain_builder.formalize_functions(
             model=self.mock_llm,
             domain_desc="",
             prompt_template="",
@@ -140,7 +140,7 @@ class TestDomainBuilder(unittest.TestCase):
         self.assertEqual(validation_info[0], True)
         self.assertEqual(exp_functions, functions)
 
-    def test_extract_pddl_action(self):
+    def test_formalize_pddl_action(self):
         
         self.syntax_validator.unsupported_keywords = []
 
@@ -260,7 +260,7 @@ class TestDomainBuilder(unittest.TestCase):
              'clean': '(weight ?b - block)'}
         ]
         
-        action, new_predicates, _, validation_info = self.domain_builder.extract_pddl_action(
+        action, new_predicates, _, validation_info = self.domain_builder.formalize_pddl_action(
             model=self.mock_llm,
             domain_desc="",
             prompt_template="",
@@ -268,14 +268,14 @@ class TestDomainBuilder(unittest.TestCase):
             functions=functions,
             syntax_validator=self.syntax_validator,
             action_name="stack",
-            parse_new_preds=True
+            extract_new_preds=True
         )
 
         self.assertEqual(exp_action, action)
         self.assertEqual(exp_predicates, new_predicates)
         self.assertEqual(validation_info[0], True)
 
-    def test_extract_parameters(self):
+    def test_formalize_parameters(self):
 
         self.syntax_validator.headers = ['Action Parameters']
         self.syntax_validator.error_types = [
@@ -306,7 +306,7 @@ class TestDomainBuilder(unittest.TestCase):
         
         exp_params = OrderedDict({'?b1': 'block', '?b2': 'block', '?a': 'arm'})
         
-        params, _, _, validation_info = self.domain_builder.extract_parameters(
+        params, _, _, validation_info = self.domain_builder.formalize_parameters(
             model=self.mock_llm,
             domain_desc="",
             prompt_template="",
@@ -318,7 +318,7 @@ class TestDomainBuilder(unittest.TestCase):
         self.assertEqual(exp_params, params)
         self.assertEqual(validation_info[0], True)
 
-    def test_extract_preconditions(self):
+    def test_formalize_preconditions(self):
         self.syntax_validator.headers = ['Action Preconditions']
         self.syntax_validator.error_types = [
             'validate_header', 'validate_duplicate_headers', 
@@ -358,7 +358,7 @@ class TestDomainBuilder(unittest.TestCase):
             """
         )
         
-        preconditions, _, _, validation_info = self.domain_builder.extract_preconditions(
+        preconditions, _, _, validation_info = self.domain_builder.formalize_preconditions(
             model=self.mock_llm,
             domain_desc="",
             prompt_template="",
@@ -366,13 +366,13 @@ class TestDomainBuilder(unittest.TestCase):
             params=params,
             types=types,
             syntax_validator=self.syntax_validator,
-            parse_predicates=False
+            extract_new_preds=False
         )
 
         self.assertEqual(exp_preconditions.strip(), preconditions.strip())
         self.assertEqual(validation_info[0], True)
 
-    def test_extract_effects(self):
+    def test_formalize_effects(self):
         self.syntax_validator.headers = ['Action Effects']
         self.syntax_validator.error_types = [
             'validate_header', 'validate_duplicate_headers', 
@@ -422,7 +422,7 @@ class TestDomainBuilder(unittest.TestCase):
             """
         )
         
-        effects, _, _, validation_info = self.domain_builder.extract_effects(
+        effects, _, _, validation_info = self.domain_builder.formalize_effects(
             model=self.mock_llm,
             domain_desc="",
             prompt_template="",
@@ -430,13 +430,13 @@ class TestDomainBuilder(unittest.TestCase):
             params=params,
             types=types,
             syntax_validator=self.syntax_validator,
-            parse_predicates=False
+            extract_new_preds=False
         )
 
         self.assertEqual(self.normalize(exp_effects),self.normalize(effects))
         self.assertEqual(validation_info[0], True)
 
-    def test_extract_predicates(self):
+    def test_formalize_predicates(self):
         self.syntax_validator.headers = ['New Predicates']
         self.syntax_validator.error_types = [
             'validate_types_predicates', 'validate_format_predicates', 
@@ -471,7 +471,7 @@ class TestDomainBuilder(unittest.TestCase):
              'clean': '(on ?b1 - block ?b2 - block)'}
              ]
         
-        new_predicates, _, validation_info = self.domain_builder.extract_predicates(
+        new_predicates, _, validation_info = self.domain_builder.formalize_predicates(
             model=self.mock_llm,
             domain_desc="",
             prompt_template="",
@@ -503,7 +503,7 @@ class TestDomainBuilder(unittest.TestCase):
         self.assertCountEqual(exp_predicates, predicates)
         self.assertEqual(validation_info[0], True)
         
-    def test_extract_function(self):
+    def test_formalize_function(self):
         
         self.syntax_validator.error_types = [
             'validate_format_functions'
@@ -527,7 +527,7 @@ class TestDomainBuilder(unittest.TestCase):
             'location': 'location to be at'
         }
         
-        functions, _, validation_info = self.domain_builder.extract_functions(
+        functions, _, validation_info = self.domain_builder.formalize_functions(
             model=self.mock_llm,
             domain_desc="",
             prompt_template="",
@@ -551,7 +551,7 @@ class TestDomainBuilder(unittest.TestCase):
         self.assertEqual(validation_info[0], True)
         self.assertEqual(exp_functions, functions)
         
-    def test_extract_constants(self):
+    def test_formalize_constants(self):
         self.syntax_validator.error_types = ['validate_constant_types']
         
         self.mock_llm.output = textwrap.dedent(
@@ -584,7 +584,7 @@ class TestDomainBuilder(unittest.TestCase):
             'loading-dock': 'location',
         }
         
-        constants, _, validation_info = self.domain_builder.extract_constants(
+        constants, _, validation_info = self.domain_builder.formalize_constants(
             model=self.mock_llm,
             domain_desc="",
             prompt_template="",
@@ -596,7 +596,7 @@ class TestDomainBuilder(unittest.TestCase):
         self.assertEqual(exp_constants, constants)
         self.assertEqual(validation_info[0], True)
         
-    def test_extract_domain_level_specs(self):
+    def test_formalize_domain_level_specs(self):
         
         self.mock_llm.output = textwrap.dedent(
             """
@@ -653,14 +653,14 @@ class TestDomainBuilder(unittest.TestCase):
             """
         )
         
-        results, _ = self.domain_builder.extract_domain_level_specs(
+        results, _ = self.domain_builder.formalize_domain_level_specs(
             model=self.mock_llm,
             domain_desc="",
             prompt_template="",
-            extract_types=True,
-            extract_constants=True,
-            extract_predicates=True,
-            extract_functions=True
+            formalize_types=True,
+            formalize_constants=True,
+            formalize_predicates=True,
+            formalize_functions=True
         )
         
         exp_types = [

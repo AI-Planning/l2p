@@ -68,7 +68,7 @@ Below is L2P code reconstruction of "action-by-action algorithm" from `"Leveragi
             try:
                     # L2P usage for extracting actions and predicates
                     action, new_predicates, llm_response, validation_info = (
-                        domain_builder.extract_pddl_action(
+                        domain_builder.formalize_pddl_action(
                             model=model,
                             domain_desc="",
                             prompt_template=act_pred_prompt,

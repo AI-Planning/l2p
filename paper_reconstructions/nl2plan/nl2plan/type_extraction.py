@@ -33,7 +33,7 @@ class TypeExtraction:
         """
 
         # prompt LLM to extract types
-        types, _ = self.domain_builder.extract_types(
+        types, _ = self.domain_builder.formalize_types(
             model=model,
             domain_desc=domain_desc,
             prompt_template=type_extraction_prompt.generate_prompt(),

@@ -27,10 +27,10 @@ class TaskBuilder:
         self.initial = initial
         self.goal = goal
 
-    """Extract functions"""
+    """Formalize/generate functions"""
 
     @require_llm
-    def extract_objects(
+    def formalize_objects(
         self,
         model: BaseLLM,
         problem_desc: str,
@@ -41,20 +41,21 @@ class TaskBuilder:
         max_retries: int = 3,
     ) -> tuple[dict[str, str], str, tuple[bool, str]]:
         """
-        Extracts objects with given predicates in current model
+        Formalizes PDDL :objects via LLM.
 
         Args:
-            model (BaseLLM): BaseLLM
-            problem_desc (str): problem description
-            domain_desc (str): domain description
-            prompt_template (str): prompt template class
-            types (dict[str,str]): current types in model
-            predicates (list[Predicate]): list of predicates in current model
+            model (BaseLLM): LLM to query
+            problem_desc (str): general problem description
+            prompt_template (str): structured prompt template for :objects extraction
+            types (dict[str,str] | list[dict[str,str]]): current types in specification, defaults to None
+            predicates (list[Predicate]): list of current predicates in specification, defaults to None
+            syntax_validator (SyntaxValidator): syntax checker for generated objects, defaults to None
             max_retries (int): max # of retries if failure occurs
 
         Returns:
-            objects (dict[str,str]): dictionary of object types {name:description}
-            llm_response (str): the raw string BaseLLM response
+            objects (dict[str,str]): dictionary of object types {<name>: <type>}
+            llm_output (str): the raw string BaseLLM response
+            validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
 
         prompt_data = {
@@ -107,7 +108,7 @@ class TaskBuilder:
         raise RuntimeError("Max retries exceeded. Failed to extract objects.")
 
     @require_llm
-    def extract_initial_state(
+    def formalize_initial_state(
         self,
         model: BaseLLM,
         problem_desc: str,
@@ -121,23 +122,26 @@ class TaskBuilder:
         max_retries: int = 3,
     ) -> tuple[list[dict[str, str]], str, tuple[bool, str]]:
         """
-        Extracts initial states with given predicates, objects, and states in current model
+        Formalizes PDDL :init states via LLM.
 
         Args:
-            model (BaseLLM): BaseLLM
-            problem_desc (str): problem description
-            domain_desc (str): domain description
-            prompt_template (str): prompt template class
-            types (dict[str,str]): current types in model
-            predicates (list[Predicate]): current list of predicates in model
-            objects (dict[str,str]): current dictionary of task objects in model
-            initial (list[dict[str,str]]): current initial states in model
-            goal (list[dict[str,str]]): current goal states in model
+            model (BaseLLM): LLM to query
+            problem_desc (str): general problem description
+            prompt_template (str): structured prompt template for :init extraction
+            types (dict[str,str] | list[dict[str,str]]): current types in domain, defaults to None
+            predicates (list[Predicate]): list of current predicates in domain, defaults to None
+            objects (dict[str,str]): current dictionary of task :objects in specification, defaults to None
+            initial (list[dict[str,str]]): current :init states in specification, defaults to None
+            goal (list[dict[str,str]]): current :goal states in specification, defaults to None
+            syntax_validator (SyntaxValidator): syntax checker for generated initial states, defaults to None
             max_retries (int): max # of retries if failure occurs
 
         Returns:
-            initial (list[dict[str,str]]): list of dictionary of initial states [{predicate,params,neg}]
-            llm_response (str): the raw string BaseLLM response
+            initial (list[dict[str,str]]): list of dictionaries containing initial states consisting of:
+                {<predicate_name>:<str>, <params>:<list[str]>, <neg>:<bool>} OR
+                {<function_name>:<str>, <params>:<list[str]>, <value>:<int>, <op>:<str>}
+            llm_output (str): the raw string BaseLLM response
+            validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
 
         prompt_data = {
@@ -193,7 +197,7 @@ class TaskBuilder:
         raise RuntimeError("Max retries exceeded. Failed to extract initial states.")
 
     @require_llm
-    def extract_goal_state(
+    def formalize_goal_state(
         self,
         model: BaseLLM,
         problem_desc: str,
@@ -205,25 +209,28 @@ class TaskBuilder:
         goal: list[dict[str, str]] = None,
         syntax_validator: SyntaxValidator = None,
         max_retries: int = 3,
-    ) -> tuple[list[dict[str, str]], str]:
+    ) -> tuple[list[dict[str, str]], str, tuple[bool,str]]:
         """
-        Extracts goal states with given predicates, objects, and states in current model
+        Formalizes PDDL :goal states via LLM.
 
         Args:
-            model (BaseLLM): BaseLLM
-            problem_desc (str): problem description
-            domain_desc (str): domain description
-            prompt_template (str): prompt template class
-            types (dict[str,str]): current types in model
-            predicates (list[Predicate]): current list of predicates in model
-            objects (dict[str,str]): current dictionary of task objects in model
-            initial (list[dict[str,str]]): current initial states in model
-            goal (list[dict[str,str]]): current goal states in model
+            model (BaseLLM): LLM to query
+            problem_desc (str): general problem description
+            prompt_template (str): structured prompt template for :goal extraction
+            types (dict[str,str] | list[dict[str,str]]): current :types in domain, defaults to None
+            predicates (list[Predicate]): list of current :predicates in domain, defaults to None
+            objects (dict[str,str]): current dictionary of task :objects in specification, defaults to None
+            initial (list[dict[str,str]]): current :init states in specification, defaults to None
+            goal (list[dict[str,str]]): current :goal states in specification, defaults to None
+            syntax_validator (SyntaxValidator): syntax checker for generated goal states, defaults to None
             max_retries (int): max # of retries if failure occurs
 
         Returns:
-            goal (list[dict[str,str]]): list of dictionary of goal states [{predicate,params,neg}]
-            llm_response (str): the raw string BaseLLM response
+            goal (list[dict[str,str]]): list of dictionaries containing goal states consisting of:
+                {<predicate_name>:<str>, <params>:<list[str]>, <neg>:<bool>} OR
+                {<function_name>:<str>, <params>:<list[str]>, <value>:<int>, <op>:<str>}
+            llm_output (str): the raw string BaseLLM response
+            validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
 
         prompt_data = {
@@ -279,7 +286,7 @@ class TaskBuilder:
         raise RuntimeError("Max retries exceeded. Failed to extract goal states.")
 
     @require_llm
-    def extract_task(
+    def formalize_task(
         self,
         model: BaseLLM,
         problem_desc: str,
@@ -294,22 +301,23 @@ class TaskBuilder:
             list[dict[str, str]], 
             str, tuple[bool, str]]:
         """
-        Extracts whole task specification in current model
+        Formalizes whole task specification via LLM.
 
         Args:
-            model (BaseLLM): BaseLLM
-            problem_desc (str): problem description
-            domain_desc (str): domain description
-            prompt_template (str): prompt template class
-            types (dict[str,str]): current types in model
-            predicates (list[Predicate]): current list of predicates in model
+            model (BaseLLM): LLM to query
+            problem_desc (str): general problem description
+            prompt_template (str): structured prompt template for :problem extraction
+            types (dict[str,str]): current :types in domain, defaults to None
+            predicates (list[Predicate]): list of current :predicates in domain, defaults to None
+            syntax_validator (SyntaxValidator): syntax checker for generated :problem, defaults to None
             max_retries (int): max # of retries if failure occurs
 
         Returns:
-            objects (dict[str,str]): dictionary of object types {name:description}
-            initial (list[dict[str,str]]): list of dictionary of initial states [{predicate,params,neg}]
-            goal (list[dict[str,str]]): list of dictionary of goal states [{predicate,params,neg}]
-            llm_response (str): the raw string BaseLLM response
+            objects (dict[str,str]): dictionary of object names and assigned types
+            initial (list[dict[str,str]]): list of dictionary of initial states
+            goal (list[dict[str,str]]): list of dictionary of goal states
+            llm_output (str): the raw string BaseLLM response
+            validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
 
         prompt_data = {
@@ -368,43 +376,55 @@ class TaskBuilder:
         raise RuntimeError("Max retries exceeded. Failed to extract task.")
 
 
-    """Delete function"""
+    """Delete functions"""
 
     def delete_objects(self, object: dict[str,str]):
+        """Deletes specific item in :objects from current specification"""
         if self.objects is not None:
             self.objects = {
                 var: type_ for var, type_ in self.objects.items() if var != object
             }
 
     def delete_initial_state(self, state: dict[str, str]):
+        """Deletes specific :init state from current specification"""
         if self.initial is not None:
             self.initial = [s for s in self.initial if s != state]
 
     def delete_goal_state(self, state: dict[str, str]):
+        """Deletes specific PDDL :goal state from current specification"""
         if self.goal is not None:
             self.goal = [s for s in self.goal if s != state]
+
 
     """Set functions"""
 
     def set_objects(self, objects: dict[str, str]):
+        """Sets PDDL :objects for current specification"""
         self.objects = objects
 
     def set_initial(self, initial: list[dict[str, str]]):
+        """Sets PDDL :init states for current specification"""
         self.initial = initial
 
     def set_goal(self, goal: list[dict[str,str]]):
+        """Sets PDDL :goal states for current specification"""
         self.goal = goal
+
 
     """Get functions"""
 
     def get_objects(self) -> dict[str, str]:
+        """Returns PDDL :objects from current specification"""
         return self.objects
 
     def get_initial(self) -> list[dict[str, str]]:
+        """Returns PDDL :init states from current specification"""
         return self.initial
 
     def get_goal(self) -> list[dict[str,str]]:
+        """Returns PDDL :goal states from current specification"""
         return self.goal
+
 
     def generate_task(
         self, 
@@ -413,8 +433,18 @@ class TaskBuilder:
         objects: dict[str,str], 
         initial: list[dict[str,str]], 
         goal: list[dict[str,str]]
-    ):
-        # Write problem file
+    ) -> str:
+        """
+        Generates PDDL problem from given information.
+
+        Args:
+            domain_name (str): domain name
+            problem_name (str): specific task instance name
+            objects (dict[str,str]): PDDL :objects
+            initial (list[dict[str,str]]): PDDL :init states
+            goal (list[dict[str,str]]): PDDL :goal states
+        """
+
         desc = "(define\n"
         desc += f"   (problem {problem_name})\n"
         desc += f"   (:domain {domain_name})\n\n"

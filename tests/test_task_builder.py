@@ -15,7 +15,7 @@ class TestTaskBuilder(unittest.TestCase):
     def normalize(self, string):
         return "\n".join(line.strip() for line in textwrap.dedent(string).strip().splitlines())
 
-    def test_extract_objects(self):
+    def test_formalize_objects(self):
         
         self.syntax_validator.headers = ['OBJECTS']
         self.syntax_validator.error_types = [
@@ -36,7 +36,7 @@ class TestTaskBuilder(unittest.TestCase):
 
         types = {"type_1": "", "type_2": "", "type_3": ""}
         
-        objects, _, validation_info = self.task_builder.extract_objects(
+        objects, _, validation_info = self.task_builder.formalize_objects(
             model=self.mock_llm,
             problem_desc="",
             prompt_template="",
@@ -49,7 +49,7 @@ class TestTaskBuilder(unittest.TestCase):
         self.assertEqual(validation_info[0], True)
         self.assertEqual(exp_objects, objects)
 
-    def test_extract_initial_state(self):
+    def test_formalize_initial_state(self):
 
         self.syntax_validator.headers = ['INITIAL']
         self.syntax_validator.error_types = [
@@ -89,7 +89,7 @@ class TestTaskBuilder(unittest.TestCase):
                     'clean': '(predicate_3 ?t1'}),
         ]
         
-        initial, _, validation_info = self.task_builder.extract_initial_state(
+        initial, _, validation_info = self.task_builder.formalize_initial_state(
             model=self.mock_llm,
             problem_desc="",
             prompt_template="",
@@ -112,7 +112,7 @@ class TestTaskBuilder(unittest.TestCase):
         self.assertEqual(validation_info[0], True)
         self.assertEqual(exp_initial, initial)
 
-    def test_extract_task(self):
+    def test_formalize_task(self):
         self.syntax_validator.headers = ['INITIAL']
         self.syntax_validator.error_types = [
             'validate_header', 'validate_duplicate_headers',
@@ -164,7 +164,7 @@ class TestTaskBuilder(unittest.TestCase):
                     'clean': '(predicate_3 ?t1'}),
         ]
         
-        objects, initial, goal, _, validation_info = self.task_builder.extract_task(
+        objects, initial, goal, _, validation_info = self.task_builder.formalize_task(
             model=self.mock_llm,
             problem_desc="",
             prompt_template="",

@@ -64,13 +64,13 @@ if __name__ == "__main__":
         "paper_reconstructions/proc2pddl/prompts/pddl_translate_prompt/task.txt"
     )
     task += "\n\nhere are the action descriptions to use:\n" + action_descriptions
-    pddl_extract_prompt = PromptBuilder(role=role, examples=[example], task=task)
+    pddl_formalize_prompt = PromptBuilder(role=role, examples=[example], task=task)
 
     # (2) extract PDDL requirements
-    actions, _, llm_response = domain_builder.extract_pddl_actions(
+    actions, _, llm_response = domain_builder.formalize_pddl_actions(
         model=openai_llm,
         domain_desc=domain_desc,
-        prompt_template=pddl_extract_prompt.generate_prompt(),
+        prompt_template=pddl_formalize_prompt.generate_prompt(),
         nl_actions=nl_actions,
         predicates=predicates,
         types=types,

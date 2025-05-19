@@ -83,7 +83,7 @@ class ActionConstruction:
             # syntax check runs directly inside L2P extraction function
             try:
                 action, new_predicates, llm_response, validation_info = (
-                    self.domain_builder.extract_pddl_action(
+                    self.domain_builder.formalize_pddl_action(
                         model=model,
                         domain_desc=domain_desc,
                         prompt_template=action_prompt,
@@ -136,7 +136,7 @@ class ActionConstruction:
                 error_prompt = error_prompt.replace("{llm_response}", llm_response)
 
                 action, new_predicates, llm_response, validation_info = (
-                    self.domain_builder.extract_pddl_action(
+                    self.domain_builder.formalize_pddl_action(
                         model=model,
                         domain_desc=domain_desc,
                         prompt_template=error_prompt,

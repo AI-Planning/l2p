@@ -49,7 +49,7 @@ class TaskExtraction:
         """
 
         # initial extraction of task
-        objects, initial, goal, llm_response = self.task_builder.extract_task(
+        objects, initial, goal, llm_response = self.task_builder.formalize_task(
             model=model,
             problem_desc=problem_desc,
             prompt_template=task_extraction_prompt.generate_prompt(),

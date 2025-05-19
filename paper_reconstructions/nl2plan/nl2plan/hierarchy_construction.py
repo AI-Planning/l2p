@@ -34,7 +34,7 @@ class HierarchyConstruction:
         """
 
         # prompt LLM to extract type hierarchy (using L2P)
-        type_hierarchy, _ = self.domain_builder.extract_type_hierarchy(
+        type_hierarchy, _ = self.domain_builder.formalize_type_hierarchy(
             model=model,
             domain_desc=domain_desc,
             prompt_template=type_hierarchy_prompt.generate_prompt(),

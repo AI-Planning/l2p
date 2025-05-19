@@ -94,7 +94,7 @@ class FeedbackBuilder:
 
             model.reset_tokens()
 
-            types, llm_response = domain_builder.extract_types(
+            types, llm_response = domain_builder.formalize_types(
                 model, domain_desc, prompt, type_str
             )
 
@@ -166,7 +166,7 @@ class FeedbackBuilder:
 
             model.reset_tokens()
 
-            type_hierarchy, llm_response = domain_builder.extract_type_hierarchy(
+            type_hierarchy, llm_response = domain_builder.formalize_type_hierarchy(
                 model, domain_desc, prompt, type_str
             )
 
@@ -223,7 +223,7 @@ class FeedbackBuilder:
 
             model.reset_tokens()
 
-            nl_actions, llm_response = domain_builder.extract_nl_actions(
+            nl_actions, llm_response = domain_builder.formalize_nl_actions(
                 model, domain_desc, prompt
             )
 
@@ -319,7 +319,7 @@ class FeedbackBuilder:
             model.reset_tokens()
 
             action, predicates, llm_response, validation_info = (
-                domain_builder.extract_pddl_action(
+                domain_builder.formalize_pddl_action(
                     model, domain_desc, prompt, action_name
                 )
             )
@@ -370,7 +370,7 @@ class FeedbackBuilder:
 
             model.reset_tokens()
 
-            param, param_raw, llm_response = domain_builder.extract_parameters(
+            param, param_raw, llm_response = domain_builder.formalize_parameters(
                 model, domain_desc, prompt, action_name, action_desc, types
             )
         return param, param_raw, llm_response
@@ -433,7 +433,7 @@ class FeedbackBuilder:
             model.reset_tokens()
 
             preconditions, new_predicates, llm_response = (
-                domain_builder.extract_preconditions(
+                domain_builder.formalize_preconditions(
                     model, domain_desc, prompt, action_name, action_desc
                 )
             )
@@ -499,7 +499,7 @@ class FeedbackBuilder:
 
             model.reset_tokens()
 
-            effects, new_predicates, llm_response = domain_builder.extract_effects(
+            effects, new_predicates, llm_response = domain_builder.formalize_effects(
                 model, domain_desc, prompt, action_name, action_desc
             )
         return effects, new_predicates, llm_response
@@ -546,7 +546,7 @@ class FeedbackBuilder:
 
             model.reset_tokens()
 
-            new_predicates, llm_response = domain_builder.extract_predicates(
+            new_predicates, llm_response = domain_builder.formalize_predicates(
                 model, domain_desc, prompt
             )
         return new_predicates, llm_response
@@ -640,7 +640,7 @@ class FeedbackBuilder:
 
             model.reset_tokens()
 
-            objects, initial, goal, _ = task_builder.extract_task(
+            objects, initial, goal, _ = task_builder.formalize_task(
                 model, problem_desc, prompt
             )
 
@@ -692,7 +692,7 @@ class FeedbackBuilder:
 
             model.reset_tokens()
 
-            objects, llm_response = task_builder.extract_objects(
+            objects, llm_response = task_builder.formalize_objects(
                 model, problem_desc, prompt
             )
 
@@ -753,7 +753,7 @@ class FeedbackBuilder:
 
             model.reset_tokens()
 
-            initial, llm_response = task_builder.extract_initial_state(
+            initial, llm_response = task_builder.formalize_initial_state(
                 model, problem_desc, prompt
             )
 
@@ -819,7 +819,7 @@ class FeedbackBuilder:
 
             model.reset_tokens()
 
-            goal, llm_response = task_builder.extract_goal_state(
+            goal, llm_response = task_builder.formalize_goal_state(
                 model, problem_desc, prompt
             )
 
