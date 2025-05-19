@@ -1,8 +1,6 @@
 import unittest, textwrap
 from collections import OrderedDict
-from l2p.domain_builder import DomainBuilder
-from l2p.utils.pddl_validator import SyntaxValidator
-from l2p.utils.pddl_types import Predicate
+from l2p import *
 from .mock_llm import MockLLM
 
 class TestDomainBuilder(unittest.TestCase):
@@ -91,7 +89,6 @@ class TestDomainBuilder(unittest.TestCase):
 
         self.assertEqual(expected_types, types)
         self.assertEqual(validation_info[0], True)
-        
         
     def test_extract_functions(self):
         
@@ -266,7 +263,8 @@ class TestDomainBuilder(unittest.TestCase):
             types=types,
             functions=functions,
             syntax_validator=self.syntax_validator,
-            action_name="stack"
+            action_name="stack",
+            parse_new_preds=True
         )
 
         self.assertEqual(exp_action, action)
@@ -501,7 +499,6 @@ class TestDomainBuilder(unittest.TestCase):
         self.assertCountEqual(exp_predicates, predicates)
         self.assertEqual(validation_info[0], True)
         
-    
     def test_extract_function(self):
         
         self.syntax_validator.error_types = [
@@ -550,7 +547,49 @@ class TestDomainBuilder(unittest.TestCase):
         self.assertEqual(validation_info[0], True)
         self.assertEqual(exp_functions, functions)
         
-
+    def test_extract_constants(self):
+        self.syntax_validator.error_types = ['validate_constant_types']
+        
+        self.mock_llm.output = textwrap.dedent(
+            """
+            ### DISTRACTION TEXT
+            ## OUTPUT
+            {
+                'robot1': 'robot',
+                'robot2': 'robot',
+                'charging-station': 'location',
+                'storage-room': 'location',
+                'loading-dock': 'location',
+            }
+            ### DISTRACTION TEXT
+            """
+        )
+        
+        types = {
+            'robot': 'a robot',
+            'location': 'location to be at'
+        }
+        
+        exp_constants = {
+            'robot1': 'robot',
+            'robot2': 'robot',
+            'charging-station': 'location',
+            'storage-room': 'location',
+            'loading-dock': 'location',
+        }
+        
+        constants, _, validation_info = self.domain_builder.extract_constants(
+            model=self.mock_llm,
+            domain_desc="",
+            prompt_template="",
+            types=types,
+            constants=None,
+            syntax_validator=self.syntax_validator
+        )
+        
+        self.assertEqual(exp_constants, constants)
+        self.assertEqual(validation_info[0], True)
+        
     def test_generate_domain(self):
 
         domain = "test_domain"
@@ -558,6 +597,14 @@ class TestDomainBuilder(unittest.TestCase):
         types = {
             'robot': 'a robot',
             'location': 'location to be at'
+        }
+        
+        constants = {
+            'robot1': 'robot',
+            'robot2': 'robot',
+            'charging-station': 'location',
+            'storage-room': 'location',
+            'loading-dock': 'location',
         }
 
         predicates = [
@@ -613,6 +660,14 @@ class TestDomainBuilder(unittest.TestCase):
                     location 
                     robot
                 )
+                
+                (:constants 
+                    robot1 - robot
+                    robot2 - robot
+                    charging-station - location
+                    storage-room - location
+                    loading-dock - location
+                )
 
                 (:predicates 
                     (at ?r - robot ?l - location)
@@ -650,6 +705,7 @@ class TestDomainBuilder(unittest.TestCase):
         result = self.domain_builder.generate_domain(
             domain_name=domain,
             types=types,
+            constants=constants,
             predicates=predicates,
             functions=functions,
             actions=actions,

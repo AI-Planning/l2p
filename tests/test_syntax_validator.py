@@ -518,8 +518,6 @@ class TestSyntaxValidator(unittest.TestCase):
             types=types,
             functions=functions
         )
-        
-        print(msg)
 
         self.assertEqual(flag, True)
         
@@ -1323,6 +1321,46 @@ class TestSyntaxValidator(unittest.TestCase):
         ]
         
         flag, msg = self.syntax_validator.validate_cyclic_types(type_hierarchy)
+        self.assertEqual(flag, False)
+        
+    
+    def test_validate_constant_types(self):
+        
+        constants = {
+            'robot1': 'robot',
+            'robot2': 'robot',
+            'charging-station': 'location',
+            'storage-room': 'location',
+            'loading-dock': 'location',
+        }
+        
+        types = {
+            'robot': 'a robot',
+            'location': 'location to be at'
+        }
+        
+        self.syntax_validator.error_types = ['validate_constant_types']
+        
+        flag, _ = self.syntax_validator.validate_constant_types(
+            constants=constants,
+            types=types
+        )
+        
+        self.assertEqual(flag, True)
+        
+        constants = {
+            'robot1': 'robot',
+            'robot2': 'robo',
+            'charging-station': 'location',
+            'storage-room': 'location',
+            'loading-dock': 'location',
+        }
+        
+        flag, _ = self.syntax_validator.validate_constant_types(
+            constants=constants,
+            types=types
+        )
+        
         self.assertEqual(flag, False)
         
         

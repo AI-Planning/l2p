@@ -7,22 +7,29 @@ from .llm import BaseLLM, require_llm
 from collections import OrderedDict
 import re, time
 
+# :adl covers commented requirements
 REQUIREMENTS = [
-    ":strips",
-    ":typing",
-    ":equality",
-    ":negative-preconditions",
-    ":disjunctive-preconditions",
-    ":universal-preconditions",
-    ":conditional-effects",
+    # ":strips",
+    # ":typing",
+    # ":equality",
+    # ":negative-preconditions",
+    # ":disjunctive-preconditions",
+    # ":universal-preconditions",
+    # ":existential-preconditions",
+    # ":conditional-effects",
+    # ":quantified-preconditions",
+    ":fluents",
+    ":adl"
 ]
 
 class DomainBuilder:
     def __init__(
         self,
         types: dict[str, str] = None,
-        type_hierarchy: dict[str, str] = None,
+        type_hierarchy: list[dict[str, str]] = None,
+        constants: dict[str,str] = None,
         predicates: list[Predicate] = None,
+        functions: list[Function] = None,
         nl_actions: dict[str, str] = None,
         pddl_actions: list[Action] = None,
     ):
@@ -32,15 +39,19 @@ class DomainBuilder:
         Args:
             types (dict[str,str]): types dictionary with name: description key-value pair
             type_hierarchy (dict[str,str]): type hierarchy dictionary
+            
             predicates (list[Predicate]): list of Predicate objects
+            functions (list[Function]): list of Function objects
             nl_actions (dict[str,str]): dictionary of extracted actions, where the keys are action names and values are action descriptions
             pddl_actions (list[Action]): list of Action objects
         """
-        self.types = types
-        self.type_hierarchy = type_hierarchy
-        self.predicates = predicates
-        self.nl_actions = nl_actions
-        self.pddl_actions = pddl_actions
+        self.types = types or {}
+        self.type_hierarchy = type_hierarchy or []
+        self.constants = constants or {}
+        self.predicates = predicates or []
+        self.functions = functions or []
+        self.nl_actions = nl_actions or {}
+        self.pddl_actions = pddl_actions or []
 
     """Extract functions"""
 
@@ -205,6 +216,211 @@ class DomainBuilder:
                 time.sleep(2)  # add a delay before retrying
 
         raise RuntimeError("Max retries exceeded. Failed to extract types.")
+    
+    @require_llm
+    def extract_constants(
+        self,
+        model: BaseLLM,
+        domain_desc: str,
+        prompt_template: str,
+        types: dict[str,str] | None = None,
+        constants: dict[str,str] | None = None,
+        syntax_validator: SyntaxValidator = None,
+        max_retries: int = 3
+    ) -> tuple[dict[str,str], str, tuple[bool,str]]:
+        """
+        Extracts PDDL :constants from the LLM-generated output.  
+        In L2P, :constants have the same syntax as :types,  
+        so the parsing and validation logic is shared between them.
+        """
+        
+        prompt_data = {
+            "domain_desc": domain_desc,
+            "types": format_types_to_string(types) if types else "No types provided.",
+            "constants": format_constants(constants) if constants else "No constants provided."
+        }
+        
+        prompt = prompt_template.format(**prompt_data)
+        
+        # iterate through attempts in case of extraction failure
+        for attempt in range(max_retries):
+            try:
+                model.reset_tokens()
+                llm_output = model.query(prompt=prompt)
+                
+                # parse LLM output into constants
+                constants = parse_types(llm_output=llm_output)
+                
+                # run syntax validation if applicable
+                validation_info = (True, "All validations passed.")
+                if syntax_validator:
+                    for error_type in syntax_validator.error_types:
+                        validator = getattr(syntax_validator, f"{error_type}", None)
+                        if not callable(validator):
+                            continue
+                        
+                        # dispatch based on expected arguments
+                        if error_type == "validate_constant_types":
+                            validation_info = validator(constants, types)
+                        
+                        if not validation_info[0]:
+                            return constants, llm_output, validation_info
+                
+                return constants, llm_output, validation_info
+            
+            except Exception as e:
+                print(
+                    f"Error encountered during attempt {attempt + 1}/{max_retries}: {e}. "
+                    f"\nLLM Output: \n\n{llm_output if 'llm_output' in locals() else 'None'}\n\n Retrying..."
+                )
+                time.sleep(2)  # add a delay before retrying
+
+        raise RuntimeError("Max retries exceeded. Failed to extract constants.")
+
+    @require_llm
+    def extract_predicates(
+        self,
+        model: BaseLLM,
+        domain_desc: str,
+        prompt_template: str,
+        types: dict[str, str] | list[dict[str,str]] | None = None,
+        predicates: list[Predicate] = None,
+        syntax_validator: SyntaxValidator = None,
+        max_retries: int = 3,
+    ) -> tuple[list[Predicate], str, tuple[bool, str]]:
+        """
+        Extracts predicates via BaseLLM
+
+        Args:
+            model (BaseLLM): BaseLLM
+            domain_desc (str): domain description
+            prompt_template (str): prompt template
+            types (dict[str,str]): current types in model
+            predicates (list[Predicate]): list of current predicates in model
+            syntax_validator (SyntaxValidator): custom syntax validator, defaults to None
+            max_retries (int): max # of retries if failure occurs
+
+        Returns:
+            new_predicates (list[Predicate]): a list of new predicates
+            llm_response (str): the raw string BaseLLM response
+            validation_info (tuple[bool, str]): validation check information
+        """
+        
+        prompt_data = {
+            "domain_desc": domain_desc,
+            "types": format_types_to_string(types) if types else "No types provided.",
+            "predicates": "\n".join([f"- {pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
+        }
+        
+        prompt = prompt_template.format(**prompt_data)
+
+        # iterate through attempts in case of extraction failure
+        for attempt in range(max_retries):
+            try:
+                model.reset_tokens()
+                llm_output = model.query(prompt=prompt)  # prompt model
+
+                # extract new predicates from response
+                new_predicates = parse_new_predicates(llm_output=llm_output)
+                
+                # run syntax validation if applicable
+                validation_info = (True, "All validations passed.")
+                if syntax_validator:
+                    for error_type in syntax_validator.error_types:
+                        validator = getattr(syntax_validator, f"{error_type}", None)
+                        if not callable(validator):
+                            continue
+                        
+                        # dispatch based on expected arguments
+                        if error_type == "validate_header":
+                            validation_info = validator(llm_output)
+                        elif error_type == "validate_duplicate_headers":
+                            validation_info = validator(llm_output)
+                        elif error_type == "validate_unsupported_keywords":
+                            validation_info = validator(llm_output)
+                        elif error_type == "validate_types_predicates":
+                            validation_info = validator(new_predicates, types)
+                        elif error_type == "validate_format_predicates":
+                            validation_info = validator(new_predicates, types)
+                        elif error_type == "validate_duplicate_predicates":
+                            validation_info = validator(predicates, new_predicates)
+                        
+                        if not validation_info[0]:
+                            return new_predicates, llm_output, validation_info
+
+                return new_predicates, llm_output, validation_info
+
+            except Exception as e:
+                print(
+                    f"Error encountered during attempt {attempt + 1}/{max_retries}: {e}. "
+                    f"\nLLM Output: \n\n{llm_output if 'llm_output' in locals() else 'None'}\n\n Retrying..."
+                )
+                time.sleep(2)  # add a delay before retrying
+
+        raise RuntimeError("Max retries exceeded. Failed to extract predicates.")
+
+    @require_llm
+    def extract_functions(
+        self,
+        model: BaseLLM,
+        domain_desc: str,
+        prompt_template: str,
+        types: dict[str, str] | list[dict[str,str]] | None = None,
+        syntax_validator: SyntaxValidator = None,
+        max_retries = 3,
+    ) -> tuple[list[Function], str, tuple[bool, str]]:
+        """
+        Extracts :functions via BaseLLM
+        """
+        
+        prompt_data = {
+            "domain_desc": domain_desc,
+            "types": format_types_to_string(types) if types else "No types provided.",
+        }
+        
+        prompt = prompt_template.format(**prompt_data)
+        
+        # iterate through attempts in case of extraction failure
+        for attempt in range(max_retries):
+            try:
+                model.reset_tokens()
+                llm_output = model.query(prompt=prompt)
+                
+                # extract functions from response
+                functions = parse_functions(llm_output=llm_output)
+                
+                # run syntax validation if applicable
+                validation_info = (True, "All validations passed.")
+                if syntax_validator:
+                    for error_type in syntax_validator.error_types:
+                        validator = getattr(syntax_validator, f"{error_type}", None)
+                        if not callable(validator):
+                            continue
+                        
+                        # dispatch based on expected arguments
+                        if error_type == "validate_header":
+                            validation_info = validator(llm_output)
+                        elif error_type == "validate_duplicate_headers":
+                            validation_info = validator(llm_output)
+                        elif error_type == "validate_unsupported_keywords":
+                            validation_info = validator(llm_output)
+                        elif error_type == "validate_format_functions":
+                            validation_info = validator(functions, types)
+                            
+                        if not validation_info[0]:
+                            return functions, llm_output, validation_info
+                
+                return functions, llm_output, validation_info
+        
+            except Exception as e:
+                print(
+                    f"Error encountered during attempt {attempt + 1}/{max_retries}: {e}. "
+                    f"\nLLM Output: \n\n{llm_output if 'llm_output' in locals() else 'None'}\n\n Retrying..."
+                )
+                time.sleep(2)  # add a delay before retrying
+
+        raise RuntimeError("Max retries exceeded. Failed to extract functions.")
+                
 
     @require_llm
     def extract_nl_actions(
@@ -736,152 +952,7 @@ class DomainBuilder:
                 time.sleep(2)  # add a delay before retrying
 
         raise RuntimeError("Max retries exceeded. Failed to extract effects.")
-
-    @require_llm
-    def extract_predicates(
-        self,
-        model: BaseLLM,
-        domain_desc: str,
-        prompt_template: str,
-        types: dict[str, str] | list[dict[str,str]] | None = None,
-        predicates: list[Predicate] = None,
-        syntax_validator: SyntaxValidator = None,
-        max_retries: int = 3,
-    ) -> tuple[list[Predicate], str, tuple[bool, str]]:
-        """
-        Extracts predicates via BaseLLM
-
-        Args:
-            model (BaseLLM): BaseLLM
-            domain_desc (str): domain description
-            prompt_template (str): prompt template
-            types (dict[str,str]): current types in model
-            predicates (list[Predicate]): list of current predicates in model
-            syntax_validator (SyntaxValidator): custom syntax validator, defaults to None
-            max_retries (int): max # of retries if failure occurs
-
-        Returns:
-            new_predicates (list[Predicate]): a list of new predicates
-            llm_response (str): the raw string BaseLLM response
-            validation_info (tuple[bool, str]): validation check information
-        """
-        
-        prompt_data = {
-            "domain_desc": domain_desc,
-            "types": format_types_to_string(types) if types else "No types provided.",
-            "predicates": "\n".join([f"- {pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
-        }
-        
-        prompt = prompt_template.format(**prompt_data)
-
-        # iterate through attempts in case of extraction failure
-        for attempt in range(max_retries):
-            try:
-                model.reset_tokens()
-                llm_output = model.query(prompt=prompt)  # prompt model
-
-                # extract new predicates from response
-                new_predicates = parse_new_predicates(llm_output=llm_output)
                 
-                # run syntax validation if applicable
-                validation_info = (True, "All validations passed.")
-                if syntax_validator:
-                    for error_type in syntax_validator.error_types:
-                        validator = getattr(syntax_validator, f"{error_type}", None)
-                        if not callable(validator):
-                            continue
-                        
-                        # dispatch based on expected arguments
-                        if error_type == "validate_header":
-                            validation_info = validator(llm_output)
-                        elif error_type == "validate_duplicate_headers":
-                            validation_info = validator(llm_output)
-                        elif error_type == "validate_unsupported_keywords":
-                            validation_info = validator(llm_output)
-                        elif error_type == "validate_types_predicates":
-                            validation_info = validator(new_predicates, types)
-                        elif error_type == "validate_format_predicates":
-                            validation_info = validator(new_predicates, types)
-                        elif error_type == "validate_duplicate_predicates":
-                            validation_info = validator(predicates, new_predicates)
-                        
-                        if not validation_info[0]:
-                            return new_predicates, llm_output, validation_info
-
-                return new_predicates, llm_output, validation_info
-
-            except Exception as e:
-                print(
-                    f"Error encountered during attempt {attempt + 1}/{max_retries}: {e}. "
-                    f"\nLLM Output: \n\n{llm_output if 'llm_output' in locals() else 'None'}\n\n Retrying..."
-                )
-                time.sleep(2)  # add a delay before retrying
-
-        raise RuntimeError("Max retries exceeded. Failed to extract predicates.")
-
-
-    @require_llm
-    def extract_functions(
-        self,
-        model: BaseLLM,
-        domain_desc: str,
-        prompt_template: str,
-        types: dict[str, str] | list[dict[str,str]] | None = None,
-        syntax_validator: SyntaxValidator = None,
-        max_retries = 3,
-    ) -> tuple[list[Function], str, tuple[bool, str]]:
-        """
-        Extracts :functions via BaseLLM
-        """
-        
-        prompt_data = {
-            "domain_desc": domain_desc,
-            "types": format_types_to_string(types) if types else "No types provided.",
-        }
-        
-        prompt = prompt_template.format(**prompt_data)
-        
-        # iterate through attempts in case of extraction failure
-        for attempt in range(max_retries):
-            try:
-                model.reset_tokens()
-                llm_output = model.query(prompt=prompt)
-                
-                # extract functions from response
-                functions = parse_functions(llm_output=llm_output)
-                
-                # run syntax validation if applicable
-                validation_info = (True, "All validations passed.")
-                if syntax_validator:
-                    for error_type in syntax_validator.error_types:
-                        validator = getattr(syntax_validator, f"{error_type}", None)
-                        if not callable(validator):
-                            continue
-                        
-                        # dispatch based on expected arguments
-                        if error_type == "validate_header":
-                            validation_info = validator(llm_output)
-                        elif error_type == "validate_duplicate_headers":
-                            validation_info = validator(llm_output)
-                        elif error_type == "validate_unsupported_keywords":
-                            validation_info = validator(llm_output)
-                        elif error_type == "validate_format_functions":
-                            validation_info = validator(functions, types)
-                            
-                        if not validation_info[0]:
-                            return functions, llm_output, validation_info
-                
-                return functions, llm_output, validation_info
-        
-            except Exception as e:
-                print(
-                    f"Error encountered during attempt {attempt + 1}/{max_retries}: {e}. "
-                    f"\nLLM Output: \n\n{llm_output if 'llm_output' in locals() else 'None'}\n\n Retrying..."
-                )
-                time.sleep(2)  # add a delay before retrying
-
-        raise RuntimeError("Max retries exceeded. Failed to extract functions.")
-
 
     """Delete functions"""
     
@@ -919,6 +990,25 @@ class DomainBuilder:
         # update the type_hierarchy if it exists
         if self.type_hierarchy is not None:
             self.type_hierarchy = remove_and_promote(self.type_hierarchy)
+            
+    def delete_constants(self, name: str):
+        """Deletes specific constant from current model"""
+        if self.constants is not None:
+            self.constants = {cons_: type_ for cons_, type_ in self.constants.items() if cons_ != name}
+            
+    def delete_predicate(self, name: str):
+        """Deletes specific predicate from current model"""
+        if self.predicates is not None:
+            self.predicates = [
+                predicate for predicate in self.predicates if predicate["name"] != name
+            ]
+            
+    def delete_function(self, name: str):
+        """Deletes specific function from current model"""
+        if self.functions is not None:
+            self.functions = [
+                function for function in self.functions if function["name"] != name
+            ]
 
     def delete_nl_action(self, name: str):
         """Deletes specific NL action from current model"""
@@ -936,13 +1026,6 @@ class DomainBuilder:
                 action for action in self.pddl_actions if action["name"] != name
             ]
 
-    def delete_predicate(self, name: str):
-        """Deletes specific predicate from current model"""
-        if self.predicates is not None:
-            self.predicates = [
-                predicate for predicate in self.predicates if predicate["name"] != name
-            ]
-
 
     """Set functions"""
 
@@ -953,6 +1036,18 @@ class DomainBuilder:
     def set_type_hierarchy(self, type_hierarchy: list[dict[str, str]]):
         """Sets type hierarchy for current model"""
         self.type_hierarchy = type_hierarchy
+        
+    def set_constants(self, constants: dict[str,str]):
+        """Sets constants for current model"""
+        self.constants = constants
+        
+    def set_predicate(self, predicate: Predicate):
+        """Appends a predicate for current model"""
+        self.predicates.append(predicate)
+        
+    def set_function(self, function: Function):
+        """Appends a function for current model"""
+        self.functions.append(function)
 
     def set_nl_actions(self, nl_actions: dict[str, str]):
         """Sets NL actions for current model"""
@@ -961,10 +1056,6 @@ class DomainBuilder:
     def set_pddl_action(self, pddl_action: Action):
         """Appends a PDDL action for current model"""
         self.pddl_actions.append(pddl_action)
-
-    def set_predicate(self, predicate: Predicate):
-        """Appends a predicate for current model"""
-        self.predicates.append(predicate)
 
 
     """Get functions"""
@@ -976,6 +1067,18 @@ class DomainBuilder:
     def get_type_hierarchy(self):
         """Returns type hierarchy from current model"""
         return self.type_hierarchy
+    
+    def get_constants(self):
+        """Returns constants from current model"""
+        return self.constants
+    
+    def get_predicates(self):
+        """Returns predicates from current model"""
+        return self.predicates
+    
+    def get_functions(self):
+        """Returns functions from current model"""
+        return self.functions
 
     def get_nl_actions(self):
         """Returns natural language actions from current model"""
@@ -985,15 +1088,12 @@ class DomainBuilder:
         """Returns PDDL actions from current model"""
         return self.pddl_actions
 
-    def get_predicates(self):
-        """Returns predicates from current model"""
-        return self.predicates
-
 
     def generate_domain(
         self,
         domain_name: str,
         types: dict[str,str] | list[dict[str,str]] | None = None,
+        constants: dict[str,str] | None = None,
         predicates: list[Predicate] | None = None,
         functions: list[Function] | None = None,
         actions: list[Action] = [],
@@ -1004,8 +1104,10 @@ class DomainBuilder:
 
         Args:
             domain_name (str): domain name
-            types (str | None): domain types
+            types (dict[str,str] | list[dict[str,str]] | None): domain types
+            constants (dict[str,str] | None): domain constants
             predicates (list[Predicate] | None): domain predicates
+            functions (list[Function] | None): domain functions
             actions (list[Action]): domain actions
             requirements (list[str]): domain requirements
 
@@ -1019,6 +1121,10 @@ class DomainBuilder:
         if types:
             types_str = format_types_to_string(types)
             desc += f"\n\n   (:types \n{indent(string=types_str, level=2)}\n   )"
+            
+        if constants:
+            const_str = format_constants(constants)
+            desc += f"\n\n   (:constants \n{indent(string=const_str, level=2)}\n   )"
             
         if not predicates:
             print("[WARNING]: Domain has no predicates. This may cause planners to reject the domain or behave unexpectedly.")

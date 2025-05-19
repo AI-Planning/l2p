@@ -193,8 +193,18 @@ def format_types_to_string(
     return "\n".join(lines)
 
 
+def format_constants(constants: dict[str,str]) -> str:
+    """Formats constant dictionary into PDDL-style string"""
+    lines = []
+    for const_name, const_type in constants.items():
+        lines.append(f"{const_name} - {const_type}")
+    
+    return "\n".join(lines)
+
+
+
 def format_expression(expression: list[Predicate] | list[Function]) -> str:
-    """Formats predicate/function/constant list into a PDDL-style string, removing exact duplicates."""
+    """Formats predicate/function list into a PDDL-style string, removing exact duplicates."""
     unique = dict()  # key = (name.lower(), tuple(params)), value = clean string
     for exp in expression:
         key = (exp["name"], tuple(exp["params"]))

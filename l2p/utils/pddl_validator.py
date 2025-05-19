@@ -22,7 +22,7 @@ Is supported in:
 from collections import OrderedDict
 from .pddl_parser import *
 from .pddl_types import Predicate, Function
-from .pddl_format import format_types, remove_comments, format_pddl_expr
+from .pddl_format import format_types, remove_comments, format_pddl_expr, format_types_to_string
 import re
 
 ORDINAL_SUFFIXES = {1: "st", 2: "nd", 3: "rd"}
@@ -303,6 +303,28 @@ class SyntaxValidator:
 
         feedback_msg = "[PASS]: Type hierarchy is valid."
         return True, feedback_msg
+    
+    
+    def validate_constant_types(
+        self, 
+        constants: dict[str,str],
+        types: dict[str,str] | list[dict[str,str]] | None = None
+    ) -> dict[bool, str]:
+    
+        types = format_types(types)
+        
+        if types:
+            for const_name, const_type in constants.items():
+                if const_type not in types.keys():
+                    return (
+                        False,
+                        f"[ERROR]: constant `{const_name}` contains type `{const_type}` that not found in list of available types:\n"
+                        f"{format_types_to_string(types)}\n\n"
+                        f"Make sure that constants only point to types that exist."
+                    )
+        
+        return True, "[PASS]: all constants are valid."
+    
     
     
     # ---- PDDL FUNCTION CHECKS ----
