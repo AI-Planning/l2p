@@ -1,8 +1,9 @@
 Organize a dependency tree for the class hierarchy between different objects within a PDDL domain. Do not expand on your reasoning, except as short comments. Each object should appear only once, even if it could belong to several types.  Note, that every child should be a subtype of its parent, not physically contained within the parent. You shouldn't create any new types except those needed for organisation of the provided types.
 
-End your final answer starting with "## OUTPUT" and then the Python list of nested dictionaries in the format [{{...}}, {{...}}], where each dictionary represents a type with an optional "children" key containing subtypes.
+End your final answers starting with "### TYPES" with the Python list of nested dictionaries in the format [{{...}}, {{...}}], where each dictionary represents a type with an optional "children" key containing subtypes. The content must be enclosed with ``` ``` comment blocks in PDDL as so:
 
-## OUTPUT
+### TYPES
+```
 [
     {{
         "parent_type_1": "description for parent type 1",
@@ -28,3 +29,6 @@ End your final answer starting with "## OUTPUT" and then the Python list of nest
         ]
     }}
 ]
+```
+
+If there are no children, leave the list empty.

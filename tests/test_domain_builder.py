@@ -17,12 +17,14 @@ class TestDomainBuilder(unittest.TestCase):
         self.syntax_validator.error_types = ['validate_format_types']
         self.mock_llm.output = textwrap.dedent(
             """
-            ## OUTPUT
+            ### TYPES
+            ```
             {
                 "arm": "arm for a robot",
                 "block": "block that can be stacked and unstacked",
                 "table": "table that blocks sits on",
             }
+            ```
             """
         )
 
@@ -46,7 +48,8 @@ class TestDomainBuilder(unittest.TestCase):
         self.syntax_validator.error_types = ['validate_format_types', 'validate_cyclic_types']
         self.mock_llm.output = textwrap.dedent(
             """
-            ## OUTPUT
+            ### TYPES
+            ```
             [
                 {
                     "arm": "'arm for a robot'",
@@ -70,6 +73,7 @@ class TestDomainBuilder(unittest.TestCase):
                     "children": []
                 }
             ]
+            ```
             """)
 
         expected_types = [
@@ -553,7 +557,8 @@ class TestDomainBuilder(unittest.TestCase):
         self.mock_llm.output = textwrap.dedent(
             """
             ### DISTRACTION TEXT
-            ## OUTPUT
+            ### CONSTANTS
+            ```
             {
                 'robot1': 'robot',
                 'robot2': 'robot',
@@ -561,6 +566,7 @@ class TestDomainBuilder(unittest.TestCase):
                 'storage-room': 'location',
                 'loading-dock': 'location',
             }
+            ```
             ### DISTRACTION TEXT
             """
         )
@@ -590,6 +596,120 @@ class TestDomainBuilder(unittest.TestCase):
         self.assertEqual(exp_constants, constants)
         self.assertEqual(validation_info[0], True)
         
+    def test_extract_domain_level_specs(self):
+        
+        self.mock_llm.output = textwrap.dedent(
+            """
+            ### TYPES
+            ```
+            [
+                {
+                    "arm": "'arm for a robot'",
+                    "children": []
+                },
+                {
+                    "block": "block that can be stacked and unstacked",
+                    "children": [
+                        {
+                            "heavy_block": "a heavy block that cannot be picked up",
+                            "children": []
+                        },
+                        {
+                            "light_block": "a light block that can be picked up",
+                            "children": []
+                        }
+                    ]
+                },
+                {
+                    "table": "table that blocks sits on",
+                    "children": []
+                }
+            ]
+            ```
+            
+            ### CONSTANTS
+            ```
+            {
+                'robot1': 'robot',
+                'robot2': 'robot',
+                'charging-station': 'location',
+                'storage-room': 'location',
+                'loading-dock': 'location',
+            }
+            ```
+            
+            ### New Predicates
+            ```
+            - (holding ?a - arm ?b - block): true if arm is holding a block
+            - (clear ?b - block): true if a block does not have anything on top of it
+            ```
+            
+            ### FUNCTIONS
+            ```
+            - (battery-level ?r - robot): battery level of robot
+            - (humidity ?loc - location): humidity of location
+            ```
+            
+            """
+        )
+        
+        results, _ = self.domain_builder.extract_domain_level_specs(
+            model=self.mock_llm,
+            domain_desc="",
+            prompt_template="",
+            extract_types=True,
+            extract_constants=True,
+            extract_predicates=True,
+            extract_functions=True
+        )
+        
+        exp_types = [
+            {'arm': "'arm for a robot'", 'children': []}, 
+            {'block': 'block that can be stacked and unstacked', 
+                  'children': [{'heavy_block': 'a heavy block that cannot be picked up', 'children': []}, 
+                               {'light_block': 'a light block that can be picked up', 'children': []}]}, 
+            {'table': 'table that blocks sits on', 'children': []}
+            ]
+        
+        exp_constants = {
+            'robot1': 'robot', 
+            'robot2': 'robot', 
+            'charging-station': 'location', 
+            'storage-room': 'location', 
+            'loading-dock': 'location'
+            }
+        
+        exp_preds = [
+            {'name': 'holding', 
+             'desc': 'true if arm is holding a block', 
+             'raw': '- (holding ?a - arm ?b - block): true if arm is holding a block', 
+             'params': OrderedDict([('?a', 'arm'), ('?b', 'block')]), 
+             'clean': '(holding ?a - arm ?b - block)'}, 
+            {'name': 'clear', 
+             'desc': 'true if a block does not have anything on top of it', 
+             'raw': '- (clear ?b - block): true if a block does not have anything on top of it', 
+             'params': OrderedDict([('?b', 'block')]), 
+             'clean': '(clear ?b - block)'}
+            ] 
+        
+        exp_func = [
+            {'name': 'battery-level', 
+             'desc': 'battery level of robot', 
+             'raw': '- (battery-level ?r - robot): battery level of robot', 
+             'params': OrderedDict([('?r', 'robot')]), 
+             'clean': '(battery-level ?r - robot)'}, 
+            {'name': 'humidity', 
+             'desc': 'humidity of location', 
+             'raw': '- (humidity ?loc - location): humidity of location', 
+             'params': OrderedDict([('?loc', 'location')]), 
+             'clean': '(humidity ?loc - location)'}
+            ]
+        
+        self.assertEqual(results['types'], exp_types)
+        self.assertEqual(results['constants'], exp_constants)
+        self.assertEqual(results['predicates'], exp_preds)
+        self.assertEqual(results['functions'], exp_func)
+            
     def test_generate_domain(self):
 
         domain = "test_domain"

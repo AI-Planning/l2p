@@ -6,6 +6,7 @@ from .utils import *
 from .llm import BaseLLM, require_llm
 from collections import OrderedDict
 import re, time
+from typing import Any
 
 # :adl covers commented requirements
 REQUIREMENTS = [
@@ -249,7 +250,7 @@ class DomainBuilder:
                 llm_output = model.query(prompt=prompt)
                 
                 # parse LLM output into constants
-                constants = parse_types(llm_output=llm_output)
+                constants = parse_constants(llm_output=llm_output)
                 
                 # run syntax validation if applicable
                 validation_info = (True, "All validations passed.")
@@ -953,6 +954,53 @@ class DomainBuilder:
 
         raise RuntimeError("Max retries exceeded. Failed to extract effects.")
                 
+
+    # NOTE: This function is experimental and may be subject to change in future versions.
+    @require_llm
+    def extract_domain_level_specs(
+        self,
+        model: BaseLLM,
+        domain_desc: str,
+        prompt_template: str,
+        extract_types: bool = False,
+        extract_constants: bool = False,
+        extract_predicates: bool = False,
+        extract_functions: bool = False,
+        max_retries: int = 3
+    ) -> tuple[dict[str, Any], str]:
+        
+        spec_results = {}
+        
+        prompt_data = prompt_data = {"domain_desc": domain_desc}
+        prompt = prompt_template.format(**prompt_data)
+
+        # iterate through attempts in case of extraction failure
+        for attempt in range(max_retries):
+            try:
+                model.reset_tokens()
+                llm_output = model.query(prompt=prompt)
+        
+                if extract_types:
+                    spec_results["types"] = parse_type_hierarchy(llm_output=llm_output)
+                if extract_constants:
+                    spec_results["constants"] = parse_constants(llm_output=llm_output)
+                if extract_predicates:
+                    spec_results["predicates"] = parse_new_predicates(llm_output=llm_output)
+                if extract_functions:
+                    spec_results["functions"] = parse_functions(llm_output=llm_output)
+                    
+                return spec_results, llm_output
+                            
+            except Exception as e:
+                print(
+                    f"Error encountered during attempt {attempt + 1}/{max_retries}: {e}. "
+                    f"\nLLM Output: \n\n{llm_output if 'llm_output' in locals() else 'None'}\n\n Retrying..."
+                )
+                time.sleep(2)  # add a delay before retrying
+
+        raise RuntimeError("Max retries exceeded. Failed to extract domain specification.")
+            
+
 
     """Delete functions"""
     

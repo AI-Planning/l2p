@@ -1,8 +1,10 @@
-End your final answer starting with "## OUTPUT" and then the Python dictionary pair '{{'name':'description'}}' as so:
+End your final answers starting with "### TYPES" with the Python dictionary pair '{{'name':'description'}}'. The content must be enclosed with ``` ``` comment blocks in PDDL as so:
 
-## OUTPUT
+### TYPES
+```
 {{
     "type_1": "description",
     "type_2": "description",
     "type_3": "description",
 }}
+```

@@ -600,9 +600,18 @@ def parse_types(llm_output: str) -> Optional[dict[str, str]]:
         dict[str, str] | None: Parsed dictionary if valid, else None.
     """
     try:
+        
+        types_head = parse_heading(llm_output, "TYPES")
+        if types_head.count("```") != 2:
+            raise ValueError(
+                "Could not find exactly one block in the types section enclosed by [```, ```] of the LLM output."
+            )
+
+        types_raw = combine_blocks(types_head)
+        
         # Regex to extract the first dictionary-like structure
         dict_pattern = re.compile(r"{[^{}]*}", re.DOTALL)
-        match = dict_pattern.search(llm_output)
+        match = dict_pattern.search(types_raw)
 
         if not match:
             print("No dictionary found in the LLM response.")
@@ -636,7 +645,15 @@ def parse_type_hierarchy(llm_output: str) -> Optional[list[dict[str,str]]]:
         list[dict[str,str]] | None: Parsed type hierarchy if valid, else None.
     """
     try:
-        parsed = ast.literal_eval(llm_output)
+        
+        types_head = parse_heading(llm_output, "TYPES")
+        if types_head.count("```") != 2:
+            raise ValueError(
+                "Could not find exactly one block in the types section enclosed by [```, ```] of the LLM output."
+            )
+
+        types_raw = combine_blocks(types_head)
+        parsed = ast.literal_eval(types_raw)
 
         # Ensure it's a list of dicts with proper structure
         if not isinstance(parsed, list):
@@ -661,6 +678,51 @@ def parse_type_hierarchy(llm_output: str) -> Optional[list[dict[str,str]]]:
 
     except Exception as e:
         print(f"Failed to convert response to dict: {e}")
+        return None
+    
+
+def parse_constants(llm_output: str) -> Optional[dict[str, str]]:
+    """
+    Safely extracts and evaluates a dictionary structure from a string (LLM response).
+
+    Parameters:
+        llm_output (str): Raw string from the LLM expected to contain a flat dictionary.
+
+    Returns:
+        dict[str, str] | None: Parsed dictionary if valid, else None.
+    """
+    try:
+        
+        constant_head = parse_heading(llm_output, "CONSTANTS")
+        if constant_head.count("```") != 2:
+            raise ValueError(
+                "Could not find exactly one block in the constants section enclosed by [```, ```] of the LLM output."
+            )
+
+        constants_raw = combine_blocks(constant_head)
+        
+        # Regex to extract the first dictionary-like structure
+        dict_pattern = re.compile(r"{[^{}]*}", re.DOTALL)
+        match = dict_pattern.search(constants_raw)
+
+        if not match:
+            print("No dictionary found in the LLM response.")
+            return None
+
+        dict_str = match.group(0)
+        parsed = ast.literal_eval(dict_str)
+
+        # Validate it is a flat dictionary with string keys and values
+        if isinstance(parsed, dict) and all(
+            isinstance(k, str) and isinstance(v, str) for k, v in parsed.items()
+        ):
+            return parsed
+
+        print("Parsed object is not a flat dictionary of string keys and values.")
+        return None
+
+    except Exception as e:
+        print(f"Error parsing dictionary: {e}")
         return None
 
 
