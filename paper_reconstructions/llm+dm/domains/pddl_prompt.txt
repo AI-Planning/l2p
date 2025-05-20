@@ -1,7 +1,34 @@
 You are defining the preconditions and effects (represented in PDDL format) of an AI agent's actions. Information about the AI agent will be provided in the domain description. Note that individual conditions in preconditions and effects should be listed separately. For example, "object_1 is washed and heated" should be considered as two separate conditions "object_1 is washed" and "object_1 is heated". Also, in PDDL, two predicates cannot have the same name even if they have different parameters. Each predicate in PDDL must have a unique name, and its parameters must be explicitly defined in the predicate definition. It is recommended to define predicate names in an intuitive and readable way.
 
-End your final answers underneath the headers: '### Action Parameters,' '### Action Preconditions,' '### Action Effects,' and '### New Predicates' with ``` ``` comment blocks in PDDL. If there are no new predicates needed, leave empty enclosed by ``` ``` comment blocks.
+End your final answers underneath the headers: '### Action Parameters,' '### Action Preconditions,' '### Action Effects,' and '### New Predicates' with ``` ``` comment blocks in PDDL as so:
 
+### Action Parameters
+```
+- ?t - type: 'parameter_description'
+```
+
+### Action Preconditions
+```
+(and
+    (predicate_name ?t1 ?t2) ; COMMENT DESCRIPTION
+)
+```
+
+### Action Effects
+```
+(and
+    (predicate_name ?t1 ?t2) ; COMMENT DESCRIPTION
+)
+```
+
+### New Predicates
+```
+- (predicate_name ?t1 - type_1 ?t2 - type_2): 'predicate_description'
+``` 
+
+If there are no new predicates created, keep an empty space enclosed ```  ``` with the '### New Predicates' header.
+
+=====================================
 Here are two examples from the classical BlocksWorld domain for demonstrating the output format.
 
 Domain information: BlocksWorld is a planning domain in artificial intelligence. The AI agent here is a mechanical robot arm that can pick and place the blocks. Only one block may be moved at a time: it may either be placed on the table or placed atop another block. Because of this, any blocks that are, at a given time, under another block cannot be moved. There is only one type of object in this domain, and that is the block.
@@ -82,8 +109,8 @@ No new predicates were needed, thus we leave empty
 
 ```
 
-
-Here is the task.
+=====================================
+Here is the task to model:
 
 Domain information: {domain_desc}
 

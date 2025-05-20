@@ -653,8 +653,7 @@ class SyntaxValidator:
         """
         Validates predicates and fluent expression in nested PDDL list format.
         """
-        
-        pddl = remove_comments(pddl)
+
         pddl = parse_pddl(pddl) # parse into nested list
 
         # retrieve dict comprehension for each predicate/function
@@ -992,7 +991,7 @@ class SyntaxValidator:
                     False,
                     f"[ERROR]: Predicate `{target_pred['clean']}` expects {len(expected_args)} parameters, "
                     f"but found {len(pred_args)} in {part}.\n\nParsed line: {format_pddl_expr(node)}\n\n"
-                    f"Make sure that only variables (i.e. `?var`) is being passed through a predicate argument."
+                    f"Make sure that only variables (i.e. `?var`) is being passed through a predicate argument and not its type. For example: `(pred_name ?var)` is correct; `(pred_name ?var - object)` is incorrect."
                 )
 
             for i, arg in enumerate(pred_args):
@@ -1068,6 +1067,7 @@ class SyntaxValidator:
 
         # check preconditions
         precond_str = parse_preconditions(llm_response)
+        precond_str = remove_comments(precond_str)
         precond_str = precond_str.replace("\n", " ").replace("(", " ( ").replace(")", " ) ")
         validation_info = self.validate_pddl_action(
             pddl=precond_str, 
@@ -1083,6 +1083,7 @@ class SyntaxValidator:
 
         # check effects
         eff_str = parse_effects(llm_response)
+        eff_str = remove_comments(eff_str)
         eff_str = eff_str.replace("\n", " ").replace("(", " ( ").replace(")", " ) ")
         return self.validate_pddl_action(
             pddl=eff_str, 

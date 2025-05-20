@@ -45,9 +45,9 @@ def get_action_prompt(prompt_template: str, action_desc: str):
 def get_predicate_prompt(predicates):
     """Creates prompt for list of available predicates generated so far."""
     
-    predicate_prompt = 'You can create and define new predicates, but you may also reuse the following predicates:'
+    predicate_prompt = 'You can create and define new predicates, but you may also reuse the following predicates:\n'
     if len(predicates) == 0:
-        predicate_prompt += '\nNo predicate has been defined yet'
+        predicate_prompt += 'No predicate has been defined yet'
     else:
         predicate_prompt += "\n".join([f"- {pred['clean']}" for pred in predicates])
     return predicate_prompt
@@ -97,7 +97,16 @@ def construct_action(
     predicate_str = "\n".join([f"- {pred['clean']}" for pred in predicates])
     
     # syntax validator check
-    if syntax_validator: validator = SyntaxValidator()
+    if syntax_validator: 
+        validator = SyntaxValidator()
+        validator.unsupported_keywords = []
+
+        validator.error_types = [
+            'validate_header', 'validate_duplicate_headers', 'validate_unsupported_keywords',
+            'validate_params', 'validate_duplicate_predicates', 'validate_types_predicates',
+            'validate_format_predicates', 'validate_usage_action'
+            ]
+        
     else: validator = None
 
     no_syntax_error = False
@@ -117,6 +126,7 @@ def construct_action(
                         action_name=action_name,
                         predicates=predicates,
                         types=types,
+                        extract_new_preds=True,
                         syntax_validator=validator,
                     )
                 )
@@ -264,6 +274,10 @@ def run_llm_dm(
     with open(domain_file, "w") as f:
         f.write(pddl_domain)
 
+    
+    domain = check_parse_domain(file_path=domain_file)
+    print(domain)
+
 if __name__ == "__main__":
     
     engine = "gpt-4o-mini"
@@ -272,6 +286,6 @@ if __name__ == "__main__":
     domain_builder = DomainBuilder()
 
     # run LLM+DM method on all domains
-    run_llm_dm(model=gpt_model, domain="logistics")
-    # run_llm_dm(model=gpt_model, domain="household")
+    # run_llm_dm(model=gpt_model, domain="logistics")
+    run_llm_dm(model=gpt_model, domain="household")
     # run_llm_dm(model=gpt_model, domain="tyreworld")
