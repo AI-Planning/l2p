@@ -652,8 +652,43 @@ class TestSyntaxValidator(unittest.TestCase):
         
         self.assertEqual(flag, False)
         
-        
         # case 5: incorrect conditional effect usage
+        llm_response = textwrap.dedent(
+            """
+            ### Action Parameters
+            ```
+            - ?a - arm: The robotic arm
+            - ?b1 - block: The block being moved
+            - ?b2 - block: The block it's being stacked upon
+            ``` 
+
+            ### Action Preconditions
+            ```
+            (and
+                (when (on ?b1 ?b2) ;; THIS SHOULD FAIL
+                        (clear ?b1)
+                )
+            )
+            ```
+
+            ### Action Effects
+            ```
+            (and
+                (when on ?b1 ?b2 ;; THIS SHOULD FAILURE DUE TO PDDL MALFORMITY
+                        (clear ?b1)
+                )
+            )
+            ```
+            """
+        )
+        flag, msg = self.syntax_validator.validate_usage_action(
+            llm_response=llm_response,
+            curr_predicates=predicates,
+            types=types,
+            functions=functions
+        )
+        
+        self.assertEqual(flag, False)
         
         # case 6: predicate used as function - vice versa
         llm_response = textwrap.dedent(

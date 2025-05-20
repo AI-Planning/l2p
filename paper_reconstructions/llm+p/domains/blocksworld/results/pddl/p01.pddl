@@ -1,5 +1,5 @@
 (define
-   (problem blocksworld_problem)
+   (problem blocksworld-4ops_problem)
    (:domain blocksworld)
 
    (:objects 
@@ -18,9 +18,8 @@
 
    (:goal
       (and 
-         (on b2 b3) 
-         (on b3 b1) 
+         (on b2 b3)
+         (on b3 b1)
       )
    )
-
 )

@@ -31,7 +31,7 @@ DOMAINS = [
 def create_llm_ic_pddl_prompt(task_nl, domain_pddl, context):
     # (LM+P), create the problem PDDL given the context
 
-    context_nl, context_pddl, context_sol = context
+    context_nl, context_pddl, _ = context
 
     prompt = (
         f"I want you to solve planning problems. "
@@ -76,7 +76,7 @@ def llm_ic_pddl_planner(args, problem_name):
     prompt = create_llm_ic_pddl_prompt(task_nl, domain_pddl, context)
 
     # query LLM using L2P
-    objects, initial, goal, llm_response = task_builder.formalize_task(
+    objects, initial, goal, _, _ = task_builder.formalize_task(
         model=model,
         problem_desc="",
         prompt_template=prompt,
@@ -114,11 +114,11 @@ if __name__ == "__main__":
 
     # load in arguments to run program
     parser = argparse.ArgumentParser(description="LLM+P")
-    parser.add_argument("--model", type=str, default="gpt-4o-mini")
-    parser.add_argument("--domain", type=str, choices=DOMAINS, default="blocksworld")
-    parser.add_argument("--task", type=int, default=0)  # task to run
+    parser.add_argument("--model", type=str, default="gpt-4o-mini") # experiment originally ran on o3-mini
+    parser.add_argument("--domain", type=str, choices=DOMAINS, default="termes")
+    parser.add_argument("--task", type=int, default=3)  # task to run
     parser.add_argument("--planner", type=str, default="downward/fast-downward.py")
     args = parser.parse_args()
 
     # run LLM+P method
-    llm_ic_pddl_planner(args=args, problem_name="blocksworld_problem")
+    llm_ic_pddl_planner(args=args, problem_name="termes_problem")

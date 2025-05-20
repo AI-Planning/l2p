@@ -279,7 +279,7 @@ def parse_functions(llm_output) -> list[Function]:
     return functions
 
 
-def parse_predicates(all_predicates):
+def parse_predicates(all_predicates: list[Predicate]) -> list[Predicate]:
     """
     This function assumes the predicate definitions adhere to PDDL grammar.
     Assigns `params` to the predicate arguments properly. This should be run
@@ -469,7 +469,7 @@ def parse_task_states(parsed_states: list) -> list[dict]:
                 continue
             if name == "not":
                 name = line[1][0].split(" ")[0] # retrieve function name
-                params = line[1][0].split(" ")
+                params = line[1][0].split(" ")[1:]
                 neg = True
             else:
                 neg = False

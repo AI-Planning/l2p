@@ -139,6 +139,7 @@ class TestTaskBuilder(unittest.TestCase):
             ### GOAL
             ```
             (predicate_3 object1) ; comment for initial state predicate 3
+            (not (predicate_2 object3 object1))
             ```
             ## DISTRACTION TEXT
             """
@@ -187,7 +188,10 @@ class TestTaskBuilder(unittest.TestCase):
         exp_goal = [
             {'pred_name': 'predicate_3', 
              'params': ['object1'],
-             'neg': False}
+             'neg': False},
+            {'pred_name': 'predicate_2', 
+             'params': ['object3', 'object1'], 
+             'neg': True}
         ]
         
         self.assertEqual(validation_info[0], True)
