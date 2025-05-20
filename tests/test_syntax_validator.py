@@ -244,7 +244,6 @@ class TestSyntaxValidator(unittest.TestCase):
         flag, _ = self.syntax_validator.validate_format_predicates(predicates=pred_incorrect_param_type)
         self.assertEqual(flag, False)
 
-
     def test_validate_pddl_action(self):
 
         # case 1: correct implementation – predicate aligns with action parameters and types
@@ -416,7 +415,6 @@ class TestSyntaxValidator(unittest.TestCase):
         )
         self.assertEqual(flag, False)
 
-
     def test_validate_usage_action(self):
         
         predicates = [
@@ -554,7 +552,7 @@ class TestSyntaxValidator(unittest.TestCase):
                     'clean': '(stack ?b - block)'}),
             ]
         
-        flag, msg = self.syntax_validator.validate_usage_action(
+        flag, _ = self.syntax_validator.validate_usage_action(
             llm_response=llm_response,
             curr_predicates=invalid_predicates,
             types=types
@@ -571,7 +569,7 @@ class TestSyntaxValidator(unittest.TestCase):
                     'clean': '(weight ?b1 - block)'}
         ]
         
-        flag, msg = self.syntax_validator.validate_usage_action(
+        flag, _ = self.syntax_validator.validate_usage_action(
             llm_response=llm_response,
             curr_predicates=predicates,
             types=types,
@@ -609,7 +607,7 @@ class TestSyntaxValidator(unittest.TestCase):
             """
         )
         
-        flag, msg = self.syntax_validator.validate_usage_action(
+        flag, _ = self.syntax_validator.validate_usage_action(
             llm_response=llm_response,
             curr_predicates=predicates,
             types=types,
@@ -645,7 +643,7 @@ class TestSyntaxValidator(unittest.TestCase):
             """
         )
         
-        flag, msg = self.syntax_validator.validate_usage_action(
+        flag, _ = self.syntax_validator.validate_usage_action(
             llm_response=llm_response,
             curr_predicates=predicates,
             types=types,
@@ -681,7 +679,7 @@ class TestSyntaxValidator(unittest.TestCase):
             """
         )
         
-        flag, msg = self.syntax_validator.validate_usage_action(
+        flag, _ = self.syntax_validator.validate_usage_action(
             llm_response=llm_response,
             curr_predicates=predicates,
             types=types,
@@ -713,7 +711,7 @@ class TestSyntaxValidator(unittest.TestCase):
             """
         )
         
-        flag, msg = self.syntax_validator.validate_usage_action(
+        flag, _ = self.syntax_validator.validate_usage_action(
             llm_response=llm_response,
             curr_predicates=predicates,
             types=types,
@@ -748,7 +746,7 @@ class TestSyntaxValidator(unittest.TestCase):
             """
         )
         
-        flag, msg = self.syntax_validator.validate_usage_action(
+        flag, _ = self.syntax_validator.validate_usage_action(
             llm_response=llm_response,
             curr_predicates=predicates,
             types=types,
@@ -781,7 +779,7 @@ class TestSyntaxValidator(unittest.TestCase):
             """
         )
         
-        flag, msg = self.syntax_validator.validate_usage_action(
+        flag, _ = self.syntax_validator.validate_usage_action(
             llm_response=llm_response,
             curr_predicates=predicates,
             types=types,
@@ -789,9 +787,7 @@ class TestSyntaxValidator(unittest.TestCase):
         )
         
         self.assertEqual(flag, False)
-        
-        
-        
+         
     def test_validate_overflow_predicates(self):
 
         llm_response = textwrap.dedent(
@@ -1495,10 +1491,10 @@ class TestSyntaxValidator(unittest.TestCase):
             'table': 'table that blocks sits on',
         }
         
-        flag, msg = self.syntax_validator.validate_cyclic_types(type_hierarchy)
+        flag, _ = self.syntax_validator.validate_cyclic_types(type_hierarchy)
         self.assertEqual(flag, True)
 
-        flag, msg = self.syntax_validator.validate_cyclic_types(types)
+        flag, _ = self.syntax_validator.validate_cyclic_types(types)
         self.assertEqual(flag, True)
         
         # case 2: type hierarchy is cyclic within its branches
@@ -1545,7 +1541,7 @@ class TestSyntaxValidator(unittest.TestCase):
             },
         ]
         
-        flag, msg = self.syntax_validator.validate_cyclic_types(type_hierarchy)
+        flag, _ = self.syntax_validator.validate_cyclic_types(type_hierarchy)
         self.assertEqual(flag, False)
         
         # case 3: type hierarchy is cyclic in its parent types
@@ -1570,7 +1566,7 @@ class TestSyntaxValidator(unittest.TestCase):
             }
         ]
         
-        flag, msg = self.syntax_validator.validate_cyclic_types(type_hierarchy)
+        flag, _ = self.syntax_validator.validate_cyclic_types(type_hierarchy)
         self.assertEqual(flag, False)
         
     def test_validate_constant_types(self):

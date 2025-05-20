@@ -906,54 +906,49 @@ class SyntaxValidator:
                     
                 # check if equality is doing object comparison
                 if keyword == "=":
-                    arg_1 = node[0].split(" ")[1]
-                    arg_2 = node[0].split(" ")[2]
-                    if arg_1.startswith("?") and arg_2.startswith("?"):
-                        
-                        # check if they exist in scope parameters
-                        if arg_1 not in scoped_params:
-                            return (
-                                False, 
-                                f"[ERROR]: variable `{arg_1}` not found in scope of the {part} section. Available variables in scope: {list(scoped_params.keys())}\n\n"
-                                f"Parsed line: {format_pddl_expr(node)}\n\n"
-                                f"Possible solutions:\n"
-                                f"  (1) Revise line to only use variables in scope.\n"
-                                f"  (2) If necessary, create new variables in the parameters, or adjust the scope."
-                            )
-                        if arg_2 not in scoped_params:
-                            return (
-                                False, 
-                                f"[ERROR]: variable `{arg_2}` not found in scope of the {part} section. Available variables in scope: {list(scoped_params.keys())}\n\n"
-                                f"Parsed line: {format_pddl_expr(node)}\n\n"
-                                f"Possible solutions:\n"
-                                f"  (1) Revise line to only use variables in scope.\n"
-                                f"  (2) If necessary, create new variables in the parameters, or adjust the scope."
-                            )
+                    parts = node[0].split(" ")
+                    if len(parts) == 3:
+                        arg_1, arg_2 = parts[1], parts[2]
+
+                        if arg_1.startswith("?") and arg_2.startswith("?"):
+                            for arg in (arg_1, arg_2):
+                                if arg not in scoped_params:
+                                    return (
+                                        False,
+                                        f"[ERROR]: variable `{arg}` not found in scope of the {part} section. "
+                                        f"Available variables in scope: {list(scoped_params.keys())}\n\n"
+                                        f"Parsed line: {format_pddl_expr(node)}\n\n"
+                                        f"Possible solutions:\n"
+                                        f"  (1) Revise line to only use variables in scope.\n"
+                                        f"  (2) If necessary, create new variables in the parameters or consider using quantifiers."
+                                    )
+                                
+                            # check if the arguments are the same type
+                            if scoped_params[arg_1] != scoped_params[arg_2]:
+                                return (
+                                    False,
+                                    f"[ERROR]: invalid object equality usage in the {part} section.\nVariable `{arg_1}` points to type `{scoped_params[arg_1]}`. However, variable `{arg_2}` points to type `{scoped_params[arg_2]}`\n\n"
+                                    f"Parsed line: {format_pddl_expr(node)}\n\n"
+                                    f"Make sure that when using object equality, the variables share the same types."
+                                )
                             
-                        # check if the arguments are the same type
-                        if scoped_params[arg_1] != scoped_params[arg_2]:
-                            return (
-                                False,
-                                f"[ERROR]: invalid object type equality usage.\n\n"
-                                f"Parsed line: {format_pddl_expr(node)}\n"
-                                f"Variable `{arg_1}` type: {scoped_params[arg_1]}\n"
-                                f"Variable `{arg_2}` type: {scoped_params[arg_2]}\n\n"
-                                f"Make sure the variables have the same type for object equality usage."
-                            )
-                        
-                        return True, "[PASS]"
+                            return True, "[PASS]"
                 
                 if len(node) != 3:
                     return (
                         False, 
                         f"[ERROR]: `{keyword}` operator requires exactly two arguments.\n\n"
-                        f"Parsed line: {format_pddl_expr(node)}"
+                        f"Parsed line: {format_pddl_expr(node)}\n\n"
+                        f"Verify that the expression has exactly two arguments in the form: ({keyword} (<arg1>) (<arg2>)),\n"
+                        f"where both <arg1> and <arg2> can be numeric constants (e.g., 5, 3.14, -2)\n"
+                        f"or numeric function expressions (e.g., (total-cost), (fuel-level ?v))."
                     )
                 for term in node[1:]:
                     # traverse terms of operator statement
                     valid, msg = validate_term(node, term, scoped_params)
                     if not valid:
                         return False, msg
+                    
                 return True, "[PASS]"
 
             # (5) if keyword is a predicate
