@@ -1,5 +1,5 @@
 """
-This module contains collection of functions PDDL syntax validations. Users MUST specify what validation checker
+This module contains a collection of PDDL syntax validation functions. Users MUST specify what validation checker
 is being used in `error_types` when using an extraction function found in DomainBuilder/TaskBuilder class.
 
 For instance:

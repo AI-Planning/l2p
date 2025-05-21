@@ -1,88 +1,186 @@
 """
-This file contains collection of functions for extracting/parsing information from LLM output
+This module contains a collection of helper functions that parses information from LLM output.
 """
 
-from pddl.formatter import domain_to_string, problem_to_string
-from pddl import parse_domain, parse_problem
-from .pddl_types import Action, Predicate, Function
-from .pddl_format import remove_comments
+import ast
+import json
+import os
+import re
+import sys
+
 from collections import OrderedDict
 from copy import deepcopy
 from typing import Optional
-import re
-import ast
-import json
-import sys
-import os
+
+from pddl import parse_domain, parse_problem
+from pddl.formatter import domain_to_string, problem_to_string
+
+from .pddl_format import remove_comments
+from .pddl_types import Action, Function, Predicate
 
 
-def load_file(file_path: str):
-    _, ext = os.path.splitext(file_path)
-    with open(file_path, "r") as file:
-        if ext == ".json":
-            return json.load(file)
-        else:
-            return file.read().strip()
+# ---- PDDL DOMAIN PARSERS ----
 
-
-def load_files(folder_path: str):
-    file_contents = []
-    for filename in sorted(os.listdir(folder_path)):
-        file_path = os.path.join(folder_path, filename)
-        if os.path.isfile(file_path):
-            with open(file_path, "r") as file:
-                file_contents.append(file.read())
-    return file_contents
-
-
-def parse_params(llm_output):
+def parse_types(llm_output: str) -> Optional[dict[str, str]]:
     """
-    Parses parameters from LLM into Python format (refer to example templates to see
-    how these parameters should be formatted in LLM response).
+    Safely extracts and evaluates a dictionary structure from a string (LLM response).
 
-    LLM output header should contain '### Parameters' along with structured content.
+    Args:
+        llm_output (str): raw string from the LLM expected to contain a flat dictionary
+
+    Returns:
+        types_parsed (dict[str, str]) | None: parsed dictionary of :types if valid, else None.
     """
-    params_info = OrderedDict()
-    params_heading = re.split(
-        r"\n#+\s", llm_output.split("Parameters")[1].strip(), maxsplit=1
-    )[0]
-    params_str = combine_blocks(params_heading)
-    params_raw = []
+    try:
+        
+        types_head = parse_heading(llm_output, "TYPES")
+        if types_head.count("```") != 2:
+            raise ValueError(
+                "Could not find exactly one block in the types section enclosed by [```, ```] of the LLM output."
+            )
+
+        types_raw = combine_blocks(types_head)
+        
+        # Regex to extract the first dictionary-like structure
+        dict_pattern = re.compile(r"{[^{}]*}", re.DOTALL)
+        match = dict_pattern.search(types_raw)
+
+        if not match:
+            print("No dictionary found in the LLM response.")
+            return None
+
+        dict_str = match.group(0)
+        types_parsed = ast.literal_eval(dict_str)
+
+        # Validate it is a flat dictionary with string keys and values
+        if isinstance(types_parsed, dict) and all(
+            isinstance(k, str) and isinstance(v, str) for k, v in types_parsed.items()
+        ):
+            return types_parsed
+
+        print("Parsed object is not a flat dictionary of string keys and values.")
+        return None
+
+    except Exception as e:
+        print(f"Error parsing dictionary: {e}")
+        return None
     
-    for line in params_str.split("\n"):
-        line = line.strip()
-        if not line:  # skip empty lines
+def parse_type_hierarchy(llm_output: str) -> Optional[list[dict[str,str]]]:
+    """
+    Safely parses LLM response into a list of nested dictionaries representing the type hierarchy.
+
+    Args:
+        llm_output (str): raw LLM output expected to contain a Python list of dictionaries.
+
+    Returns:
+        types_parsed (list[dict[str,str]]) | None: parsed type hierarchy if valid, else None.
+    """
+    try:
+        
+        types_head = parse_heading(llm_output, "TYPES")
+        if types_head.count("```") != 2:
+            raise ValueError(
+                "Could not find exactly one block in the types section enclosed by [```, ```] of the LLM output."
+            )
+
+        types_raw = combine_blocks(types_head)
+        types_parsed = ast.literal_eval(types_raw)
+
+        # Ensure it's a list of dicts with proper structure
+        if not isinstance(types_parsed, list):
+            return None
+
+        def validate_type_node(node):
+            if not isinstance(node, dict):
+                return False
+            if "children" not in node:
+                return False
+            if not isinstance(node["children"], list):
+                return False
+            for child in node["children"]:
+                if not validate_type_node(child):
+                    return False
+            return True
+
+        if all(validate_type_node(item) for item in types_parsed):
+            return types_parsed
+
+        return None
+
+    except Exception as e:
+        print(f"Failed to convert response to dict: {e}")
+        return None
+    
+def parse_constants(llm_output: str) -> Optional[dict[str, str]]:
+    """
+    Safely extracts and evaluates a dictionary structure from a string (LLM response).
+
+    Args:
+        llm_output (str): Raw string from the LLM expected to contain a flat dictionary.
+
+    Returns:
+        constants_parsed (dict[str, str]) | None: parsed dictionary if valid, else None.
+    """
+    try:
+        
+        constant_head = parse_heading(llm_output, "CONSTANTS")
+        if constant_head.count("```") != 2:
+            raise ValueError(
+                "Could not find exactly one block in the constants section enclosed by [```, ```] of the LLM output."
+            )
+
+        constants_raw = combine_blocks(constant_head)
+        
+        # Regex to extract the first dictionary-like structure
+        dict_pattern = re.compile(r"{[^{}]*}", re.DOTALL)
+        match = dict_pattern.search(constants_raw)
+
+        if not match:
+            print("No dictionary found in the LLM response.")
+            return None
+
+        dict_str = match.group(0)
+        constants_parsed = ast.literal_eval(dict_str)
+
+        # Validate it is a flat dictionary with string keys and values
+        if isinstance(constants_parsed, dict) and all(
+            isinstance(k, str) and isinstance(v, str) for k, v in constants_parsed.items()
+        ):
+            return constants_parsed
+
+        print("Parsed object is not a flat dictionary of string keys and values.")
+        return None
+
+    except Exception as e:
+        print(f"Error parsing dictionary: {e}")
+        return None
+
+
+def parse_predicates(all_predicates: list[Predicate]) -> list[Predicate]:
+    """
+    This function assumes the predicate definitions adhere to PDDL grammar.
+    Assigns `params` to the predicate arguments properly. This should be run
+    after retrieving a predicate list to ensure predicates are set correctly.
+    """
+    all_predicates = deepcopy(all_predicates)
+    for i, pred in enumerate(all_predicates):
+        if "params" in pred:
             continue
+        pred_def = pred["raw"].split(": ")[0]
+        pred_def = pred_def.strip(" ()`")  # drop any leading/strange formatting
+        split_predicate = pred_def.split(" ")[1:]  # discard the predicate name
+        split_predicate = [e for e in split_predicate if e != ""]
 
-        if line.startswith("-"):
-            line = line[1:].strip()  # remove the dash and clean up
-            
-        if not line.startswith("?"):
-            print(f"[WARNING] Invalid parameter line - must start with '?': '{line}'")
-            
-        try:
-            params_raw.append(line)
-            # split into param name and type
-            parts = line.split(":")
-                
-            left_side = parts[0].strip()
-            param_parts = [p.strip() for p in left_side.split("-")]
-            
-            param_name = param_parts[0].strip(" `")
-            if len(param_parts) == 2 and param_parts[1]:
-                param_type = param_parts[1].strip(" `")
-            else:
-                print(f"[WARNING] Invalid parameter format: '{line}'. Defaulting to no type.")
-                param_type = ""  # no type provided
-
-            params_info[param_name] = param_type
-            
-        except Exception as e:
-            print(f"[WARNING] Failed to parse parameter line: '{line}' - {str(e)}")
-            continue
-            
-    return params_info, params_raw
-
+        pred["params"] = OrderedDict()
+        for j, p in enumerate(split_predicate):
+            if j % 3 == 0:
+                assert "?" in p, f"invalid predicate definition: {pred_def}"
+                assert (
+                    split_predicate[j + 1] == "-"
+                ), f"invalid predicate definition: {pred_def}"
+                param_name, param_obj_type = p, split_predicate[j + 2]
+                pred["params"][param_name] = param_obj_type
+    return all_predicates
 
 def parse_new_predicates(llm_output) -> list[Predicate]:
     """
@@ -181,8 +279,7 @@ def parse_new_predicates(llm_output) -> list[Predicate]:
     
     return new_predicates
 
-
-def parse_functions(llm_output) -> list[Function]:
+def parse_functions(llm_output: str) -> list[Function]:
     """
     Parses function from LLM into Python format (refer to example templates to see
     how these functions should be formatted in LLM response).
@@ -280,43 +377,16 @@ def parse_functions(llm_output) -> list[Function]:
     return functions
 
 
-def parse_predicates(all_predicates: list[Predicate]) -> list[Predicate]:
-    """
-    This function assumes the predicate definitions adhere to PDDL grammar.
-    Assigns `params` to the predicate arguments properly. This should be run
-    after retrieving a predicate list to ensure predicates are set correctly.
-    """
-    all_predicates = deepcopy(all_predicates)
-    for i, pred in enumerate(all_predicates):
-        if "params" in pred:
-            continue
-        pred_def = pred["raw"].split(": ")[0]
-        pred_def = pred_def.strip(" ()`")  # drop any leading/strange formatting
-        split_predicate = pred_def.split(" ")[1:]  # discard the predicate name
-        split_predicate = [e for e in split_predicate if e != ""]
-
-        pred["params"] = OrderedDict()
-        for j, p in enumerate(split_predicate):
-            if j % 3 == 0:
-                assert "?" in p, f"invalid predicate definition: {pred_def}"
-                assert (
-                    split_predicate[j + 1] == "-"
-                ), f"invalid predicate definition: {pred_def}"
-                param_name, param_obj_type = p, split_predicate[j + 2]
-                pred["params"][param_name] = param_obj_type
-    return all_predicates
-
-
 def parse_action(llm_output: str, action_name: str) -> Action:
     """
     Parse an action from a given LLM output.
 
-    Parameters:
-        llm_output (str): The LLM output.
-        action_name (str): The name of the action.
+    Args:
+        llm_output (str): raw LLM output
+        action_name (str): the name of the action
 
     Returns:
-        Action: The parsed action.
+        Action: the parsed PDDL action
     """
     parameters, _ = parse_params(llm_output)
     try:
@@ -347,8 +417,55 @@ def parse_action(llm_output: str, action_name: str) -> Action:
         "preconditions": preconditions,
         "effects": effects,
     }
-    
 
+def parse_params(llm_output: str) -> tuple[OrderedDict, list]:
+    """
+    Parses parameters from LLM into Python format (refer to example templates to see
+    how these parameters should be formatted in LLM response).
+
+    LLM output header should contain 'Parameters' along with structured content.
+    """
+    params_info = OrderedDict()
+    params_heading = re.split(
+        r"\n#+\s", llm_output.split("Parameters")[1].strip(), maxsplit=1
+    )[0]
+    params_str = combine_blocks(params_heading)
+    params_raw = []
+    
+    for line in params_str.split("\n"):
+        line = line.strip()
+        if not line:  # skip empty lines
+            continue
+
+        if line.startswith("-"):
+            line = line[1:].strip()  # remove the dash and clean up
+            
+        if not line.startswith("?"):
+            print(f"[WARNING] Invalid parameter line - must start with '?': '{line}'")
+            
+        try:
+            params_raw.append(line)
+            # split into param name and type
+            parts = line.split(":")
+                
+            left_side = parts[0].strip()
+            param_parts = [p.strip() for p in left_side.split("-")]
+            
+            param_name = param_parts[0].strip(" `")
+            if len(param_parts) == 2 and param_parts[1]:
+                param_type = param_parts[1].strip(" `")
+            else:
+                print(f"[WARNING] Invalid parameter format: '{line}'. Defaulting to no type.")
+                param_type = ""  # no type provided
+
+            params_info[param_name] = param_type
+            
+        except Exception as e:
+            print(f"[WARNING] Failed to parse parameter line: '{line}' - {str(e)}")
+            continue
+            
+    return params_info, params_raw
+    
 def parse_preconditions(llm_output: str) -> str:
     """Parses precondition string from LLM output"""
     try:
@@ -365,7 +482,6 @@ def parse_preconditions(llm_output: str) -> str:
             "Could not find the 'Preconditions' section in the output. Provide the entire response, including all headings even if some are unchanged."
         )
         
-        
 def parse_effects(llm_output: str) -> str:
     """Parses effect string from LLM output"""
     try:
@@ -381,100 +497,6 @@ def parse_effects(llm_output: str) -> str:
         raise Exception(
             "Could not find the 'Preconditions' section in the output. Provide the entire response, including all headings even if some are unchanged."
         )
-
-def parse_objects(llm_output: str) -> dict[str, str]:
-    """
-    Extract objects from LLM response and returns dictionary string pairs object(name, type)
-    Parameters:
-        - llm_output (str):
-        - types (dict[str,str]): WILL BE USED FOR CHECK ERROR RAISES
-        - predicates (list[Predicate]): WILL BE USED FOR CHECK ERROR RAISES
-    Returns:
-        - dict[str,str]: objects
-    """
-
-    objects_head = parse_heading(llm_output, "OBJECTS")
-    objects_raw = combine_blocks(objects_head)
-    objects_clean = remove_comments(objects_raw)
-
-    objects_parsed = {
-        obj.split(" - ")[0].strip(" `"): obj.split(" - ")[1].strip(" `")
-        for obj in objects_clean.split("\n")
-        if obj.strip()
-    }
-
-    return objects_parsed
-
-def parse_initial(llm_output: str) -> list[dict[str, str]]:
-    """
-    Extracts state (PDDL-init) from LLM response and returns it as a list of dict strings
-
-    Parameters:
-        llm_output (str): The LLM output.
-
-    Returns:
-        states (list[dict[str,str]]): list of initial states in dictionaries
-    """
-    initial_head = parse_heading(llm_output, "INITIAL")
-    if initial_head.count("```") != 2:
-        raise ValueError(
-            "Could not find exactly one block in the initial section enclosed by [```, ```] of the LLM output. The initial states have to be specified in a single block Likely this is caused by a too long response and limited context length. If so, try to shorten the message and exclude objects which aren't needed for the task."
-        )
-
-    initial_raw = combine_blocks(initial_head)
-    initial_clean = remove_comments(initial_raw)
-    initial_parsed = parse_pddl(f"({initial_clean})")
-
-    return parse_task_states(initial_parsed)
-
-def parse_goal(llm_output: str) -> list[dict[str, str]]:
-    """
-    Extracts goal (PDDL-goal) from LLM response and returns it as a string
-
-    Parameters:
-        llm_output (str): The LLM output.
-
-    Returns:
-        states (list[dict[str,str]]): list of goal states in dictionaries
-    """
-    goal_head = parse_heading(llm_output, "GOAL")
-    if goal_head.count("```") != 2:
-        raise ValueError(
-            "Could not find exactly one block in the goal section enclosed by [```, ```] of the LLM output. The goal states have to be specified in a single block Likely this is caused by a too long response and limited context length. If so, try to shorten the message and exclude objects which aren't needed for the task."
-        )
-
-    goal_raw = combine_blocks(goal_head)
-    goal_clean = remove_comments(goal_raw)
-    goal_parsed = parse_pddl(f"({goal_clean})")
-
-    return parse_task_states(goal_parsed)
-
-def parse_task_states(parsed_states: list) -> list[dict]:
-    states = []
-    for line in parsed_states:
-
-        # only parse lines
-        if isinstance(line, list):
-            name = line[0].split(" ")[0]
-
-            # if comparsion operator
-            if name in ["=", ">", "<", ">=", "<="]:
-                op = name
-                name = line[1][0].split(" ")[0] # retrieve function name
-                params = line[1][0].split(" ")[1:]
-                value = line[2]
-                states.append({"func_name": name, "params": params, "value": value, "op": op})
-                continue
-            if name == "not":
-                name = line[1][0].split(" ")[0] # retrieve function name
-                params = line[1][0].split(" ")[1:]
-                neg = True
-            else:
-                neg = False
-                params = line[0].split(" ")[1:]
-            states.append({"pred_name": name, "params": params, "neg": neg})
-
-    return states
 
 
 def prune_types(
@@ -541,19 +563,19 @@ def prune_types(
 
     return used_types
 
-
 def prune_predicates(
-    predicates: list[Predicate], actions: list[Action]
+    predicates: list[Predicate], 
+    actions: list[Action]
 ) -> list[Predicate]:
     """
     Remove predicates that are not used in any action.
 
-    Parameters:
-        predicates (list[Predicate]): A list of predicates.
-        actions (list[Action]): A list of actions.
+    Args:
+        predicates (list[Predicate]): a list of predicates
+        actions (list[Action]): a list of actions
 
     Returns:
-        list[Predicate]: The pruned list of predicates.
+        list[Predicate]: the pruned list of predicates
     """
     used_predicates = []
     seen_predicate_names = set()
@@ -572,7 +594,108 @@ def prune_predicates(
     return used_predicates
 
 
-def parse_heading(llm_output: str, heading: str):
+# ---- PDDL PROBLEM PARSERS ----
+
+def parse_objects(llm_output: str) -> dict[str, str]:
+    """
+    Extract objects from LLM response and returns dictionary string pairs object(name, type)
+    
+    Args:
+        llm_output (str): raw LLM output
+        types (dict[str,str]): WILL BE USED FOR CHECK ERROR RAISES
+        predicates (list[Predicate]): WILL BE USED FOR CHECK ERROR RAISES
+
+    Returns:
+        objects_parsed (dict[str,str]): PDDL task objects
+    """
+
+    objects_head = parse_heading(llm_output, "OBJECTS")
+    objects_raw = combine_blocks(objects_head)
+    objects_clean = remove_comments(objects_raw)
+
+    objects_parsed = {
+        obj.split(" - ")[0].strip(" `"): obj.split(" - ")[1].strip(" `")
+        for obj in objects_clean.split("\n")
+        if obj.strip()
+    }
+
+    return objects_parsed
+
+def parse_initial(llm_output: str) -> list[dict[str, str]]:
+    """
+    Extracts state (PDDL-init) from LLM response and returns it as a list of dict strings
+
+    Parameters:
+        llm_output (str): raw LLM output
+
+    Returns:
+        states (list[dict[str,str]]): list of initial states in dictionaries
+    """
+    initial_head = parse_heading(llm_output, "INITIAL")
+    if initial_head.count("```") != 2:
+        raise ValueError(
+            "Could not find exactly one block in the initial section enclosed by [```, ```] of the LLM output. The initial states have to be specified in a single block Likely this is caused by a too long response and limited context length. If so, try to shorten the message and exclude objects which aren't needed for the task."
+        )
+
+    initial_raw = combine_blocks(initial_head)
+    initial_clean = remove_comments(initial_raw)
+    initial_parsed = parse_pddl(f"({initial_clean})")
+
+    return parse_task_states(initial_parsed)
+
+def parse_goal(llm_output: str) -> list[dict[str, str]]:
+    """
+    Extracts goal (PDDL-goal) from LLM response and returns it as a string
+
+    Parameters:
+        llm_output (str): raw LLM output
+
+    Returns:
+        states (list[dict[str,str]]): list of goal states in dictionaries
+    """
+    goal_head = parse_heading(llm_output, "GOAL")
+    if goal_head.count("```") != 2:
+        raise ValueError(
+            "Could not find exactly one block in the goal section enclosed by [```, ```] of the LLM output. The goal states have to be specified in a single block Likely this is caused by a too long response and limited context length. If so, try to shorten the message and exclude objects which aren't needed for the task."
+        )
+
+    goal_raw = combine_blocks(goal_head)
+    goal_clean = remove_comments(goal_raw)
+    goal_parsed = parse_pddl(f"({goal_clean})")
+
+    return parse_task_states(goal_parsed)
+
+def parse_task_states(parsed_states: list) -> list[dict]:
+    states = []
+    for line in parsed_states:
+
+        # only parse lines
+        if isinstance(line, list):
+            name = line[0].split(" ")[0]
+
+            # if comparsion operator
+            if name in ["=", ">", "<", ">=", "<="]:
+                op = name
+                name = line[1][0].split(" ")[0] # retrieve function name
+                params = line[1][0].split(" ")[1:]
+                value = line[2]
+                states.append({"func_name": name, "params": params, "value": value, "op": op})
+                continue
+            if name == "not":
+                name = line[1][0].split(" ")[0] # retrieve function name
+                params = line[1][0].split(" ")[1:]
+                neg = True
+            else:
+                neg = False
+                params = line[0].split(" ")[1:]
+            states.append({"pred_name": name, "params": params, "neg": neg})
+
+    return states
+
+
+# ---- SUPPLEMENTARY PARSING FUNCTIONS ----
+
+def parse_heading(llm_output: str, heading: str) -> str:
     """Extract the text between the heading and the next second level heading in the LLM output."""
     if heading not in llm_output:
         print("#" * 10, "LLM Output", "#" * 10)
@@ -586,143 +709,34 @@ def parse_heading(llm_output: str, heading: str):
     )  # Get the text between the heading and the next heading
     return heading_str
 
-
-def parse_types(llm_output: str) -> Optional[dict[str, str]]:
+def parse_pddl(pddl_str: str) -> list:
     """
-    Safely extracts and evaluates a dictionary structure from a string (LLM response).
-
-    Parameters:
-        llm_output (str): Raw string from the LLM expected to contain a flat dictionary.
-
-    Returns:
-        dict[str, str] | None: Parsed dictionary if valid, else None.
+    Simplified PDDL parser that converts the string into a nested list structure.
     """
-    try:
-        
-        types_head = parse_heading(llm_output, "TYPES")
-        if types_head.count("```") != 2:
-            raise ValueError(
-                "Could not find exactly one block in the types section enclosed by [```, ```] of the LLM output."
-            )
-
-        types_raw = combine_blocks(types_head)
-        
-        # Regex to extract the first dictionary-like structure
-        dict_pattern = re.compile(r"{[^{}]*}", re.DOTALL)
-        match = dict_pattern.search(types_raw)
-
-        if not match:
-            print("No dictionary found in the LLM response.")
-            return None
-
-        dict_str = match.group(0)
-        parsed = ast.literal_eval(dict_str)
-
-        # Validate it is a flat dictionary with string keys and values
-        if isinstance(parsed, dict) and all(
-            isinstance(k, str) and isinstance(v, str) for k, v in parsed.items()
-        ):
-            return parsed
-
-        print("Parsed object is not a flat dictionary of string keys and values.")
-        return None
-
-    except Exception as e:
-        print(f"Error parsing dictionary: {e}")
-        return None
     
+    # tokenize string
+    tokens = re.sub(r'([()])', r' \1 ', pddl_str).split()
+    stack = []
+    current = []
     
-def parse_type_hierarchy(llm_output: str) -> Optional[list[dict[str,str]]]:
-    """
-    Safely parses LLM response into a list of nested dictionaries representing the type hierarchy.
-
-    Parameters:
-        llm_output (str): raw LLM output expected to contain a Python list of dictionaries.
-
-    Returns:
-        list[dict[str,str]] | None: Parsed type hierarchy if valid, else None.
-    """
-    try:
-        
-        types_head = parse_heading(llm_output, "TYPES")
-        if types_head.count("```") != 2:
-            raise ValueError(
-                "Could not find exactly one block in the types section enclosed by [```, ```] of the LLM output."
-            )
-
-        types_raw = combine_blocks(types_head)
-        parsed = ast.literal_eval(types_raw)
-
-        # Ensure it's a list of dicts with proper structure
-        if not isinstance(parsed, list):
-            return None
-
-        def validate_type_node(node):
-            if not isinstance(node, dict):
-                return False
-            if "children" not in node:
-                return False
-            if not isinstance(node["children"], list):
-                return False
-            for child in node["children"]:
-                if not validate_type_node(child):
-                    return False
-            return True
-
-        if all(validate_type_node(item) for item in parsed):
-            return parsed
-
-        return None
-
-    except Exception as e:
-        print(f"Failed to convert response to dict: {e}")
-        return None
+    # iterate each token, if it is a bracket, we append to new list
+    for token in tokens:
+        if token == '(':
+            stack.append(current)
+            current = []
+        elif token == ')':
+            if stack:
+                parent = stack.pop()
+                parent.append(current)
+                current = parent
+        else:
+            current.append(token)
     
-
-def parse_constants(llm_output: str) -> Optional[dict[str, str]]:
-    """
-    Safely extracts and evaluates a dictionary structure from a string (LLM response).
-
-    Parameters:
-        llm_output (str): Raw string from the LLM expected to contain a flat dictionary.
-
-    Returns:
-        dict[str, str] | None: Parsed dictionary if valid, else None.
-    """
-    try:
-        
-        constant_head = parse_heading(llm_output, "CONSTANTS")
-        if constant_head.count("```") != 2:
-            raise ValueError(
-                "Could not find exactly one block in the constants section enclosed by [```, ```] of the LLM output."
-            )
-
-        constants_raw = combine_blocks(constant_head)
-        
-        # Regex to extract the first dictionary-like structure
-        dict_pattern = re.compile(r"{[^{}]*}", re.DOTALL)
-        match = dict_pattern.search(constants_raw)
-
-        if not match:
-            print("No dictionary found in the LLM response.")
-            return None
-
-        dict_str = match.group(0)
-        parsed = ast.literal_eval(dict_str)
-
-        # Validate it is a flat dictionary with string keys and values
-        if isinstance(parsed, dict) and all(
-            isinstance(k, str) and isinstance(v, str) for k, v in parsed.items()
-        ):
-            return parsed
-
-        print("Parsed object is not a flat dictionary of string keys and values.")
-        return None
-
-    except Exception as e:
-        print(f"Error parsing dictionary: {e}")
-        return None
-
+    if len(current) != 1:
+        raise ValueError("Malformed PDDL expression")
+    
+    nested_pddl = concatenate_strings(current[0])
+    return nested_pddl
 
 def combine_blocks(heading_str: str):
     """Combine the inside of blocks from the heading string into a single string."""
@@ -738,36 +752,6 @@ def combine_blocks(heading_str: str):
         "\n\n", "\n"
     ).strip()  # remove leading/trailing whitespace and internal empty lines
     
-    
-def parse_pddl(pddl_str: str) -> list:
-        """
-        Simplified PDDL parser that converts the string into a nested list structure.
-        """
-        import re
-        
-        # Tokenize the string
-        tokens = re.sub(r'([()])', r' \1 ', pddl_str).split()
-        stack = []
-        current = []
-        
-        for token in tokens:
-            if token == '(':
-                stack.append(current)
-                current = []
-            elif token == ')':
-                if stack:
-                    parent = stack.pop()
-                    parent.append(current)
-                    current = parent
-            else:
-                current.append(token)
-        
-        if len(current) != 1:
-            raise ValueError("Malformed PDDL expression")
-        
-        nested_pddl = concatenate_strings(current[0])
-        return nested_pddl
-    
 def concatenate_strings(nested_list):
     """Helper function that concatenates strings within a list together."""
     if not isinstance(nested_list, list):
@@ -778,7 +762,7 @@ def concatenate_strings(nested_list):
     while i < len(nested_list):
         current = nested_list[i]
         if isinstance(current, str):
-            # Start collecting consecutive strings
+            # start collecting consecutive strings
             concatenated = current
             j = i + 1
             while j < len(nested_list) and isinstance(nested_list[j], str):
@@ -787,11 +771,35 @@ def concatenate_strings(nested_list):
             new_list.append(concatenated)
             i = j
         else:
-            # Recurse for sublists
+            # recurse for sublists
             new_list.append(concatenate_strings(current))
             i += 1
     return new_list
 
+
+    # ---- SUPPLEMENTARY FUNCTIONS ----
+
+
+# ---- HELPER FUNCTIONS ----
+
+def load_file(file_path: str):
+    """Helper function that loads a single file into a string"""
+    _, ext = os.path.splitext(file_path)
+    with open(file_path, "r") as file:
+        if ext == ".json":
+            return json.load(file)
+        else:
+            return file.read().strip()
+
+def load_files(folder_path: str):
+    """Helper function that loads multiple files into a string list"""
+    file_contents = []
+    for filename in sorted(os.listdir(folder_path)):
+        file_path = os.path.join(folder_path, filename)
+        if os.path.isfile(file_path):
+            with open(file_path, "r") as file:
+                file_contents.append(file.read())
+    return file_contents
 
 def check_parse_domain(file_path: str):
     """Run PDDL library to check if file is syntactically correct"""
@@ -804,7 +812,6 @@ def check_parse_domain(file_path: str):
         print(f"Error parsing domain: {e}", file=sys.stderr)
         print("------------------")
         sys.exit(1)
-
 
 def check_parse_problem(file_path: str):
     """Run PDDL library to check if file is syntactically correct"""
