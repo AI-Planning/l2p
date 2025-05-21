@@ -26,7 +26,7 @@ class DomainBuilder:
         predicates: list[Predicate] = None,
         functions: list[Function] = None,
         pddl_actions: list[Action] = None,
-    ):
+    ) -> None:
         """
         Initializes an L2P domain builder object.
 
@@ -75,7 +75,7 @@ class DomainBuilder:
         Returns:
             types (dict[str,str]): dictionary of types with {<name>: <description>} pair
             llm_output (str): the raw string BaseLLM response
-            validation_info (dict[bool,str]): validation info containing pass flag and error message
+            validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
 
         prompt_data = {
@@ -151,7 +151,7 @@ class DomainBuilder:
         Returns:
             type_hierarchy (list[dict[str,str]]): list of dictionaries containing the type hierarchy
             llm_output (str): the raw string BaseLLM response
-            validation_info (dict[bool,str]): validation info containing pass flag and error message
+            validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
         
         prompt_data = prompt_data = {
@@ -237,7 +237,7 @@ class DomainBuilder:
         Returns:
             constants (dict[str,str]): dictionary of constants with {<name>: <type>} pair
             llm_output (str): the raw string BaseLLM response
-            validation_info (dict[bool,str]): validation info containing pass flag and error message
+            validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
         
         prompt_data = {
@@ -726,7 +726,7 @@ class DomainBuilder:
             param (OrderedDict): ordered list of parameters {<?var>: <type>}
             param_raw (list()): list of raw parameters
             llm_output (str): the raw string BaseLLM response
-            validation_info (dict[bool,str]): validation info containing pass flag and error message
+            validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
         
         prompt_data = {
@@ -814,7 +814,7 @@ class DomainBuilder:
             preconditions (str): PDDL format of :preconditions
             new_predicates (list[Predicate]): a list of new predicates, defaults to empty list
             llm_output (str): the raw string BaseLLM response
-            validation_info (dict[bool,str]): validation info containing pass flag and error message
+            validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
         
         prompt_data = {
@@ -915,6 +915,7 @@ class DomainBuilder:
             effects (str): PDDL format of :effects
             new_predicates (list[Predicate]): a list of new predicates, defaults to empty list
             llm_output (str): the raw string BaseLLM response
+            validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
         
         prompt_data = {

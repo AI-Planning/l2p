@@ -18,7 +18,7 @@ class TaskBuilder:
         objects: dict[str, str] = None,
         initial: list[dict[str, str]] = None,
         goal: list[dict[str, str]] = None,
-    ):
+    ) -> None:
         """
         Initializes an L2P task builder object.
 

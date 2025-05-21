@@ -1,5 +1,5 @@
 """
-This file contains collection of functions PDDL syntax validations. Users MUST specify what validation checker
+This module contains collection of functions PDDL syntax validations. Users MUST specify what validation checker
 is being used in `error_types` when using an extraction function found in DomainBuilder/TaskBuilder class.
 
 For instance:
@@ -15,18 +15,19 @@ For instance:
                 "validate_usage_action",
             ]
 
-Is supported in:
-    DomainBuilder.extract_pddl_action(**kwargs, syntax_validator)
+Is supported in: DomainBuilder.extract_pddl_action(**kwargs, syntax_validator)
 """
 
+import re
 from collections import OrderedDict
+from .pddl_format import *
 from .pddl_parser import *
 from .pddl_types import Predicate, Function
-from .pddl_format import format_types, remove_comments, format_pddl_expr, format_types_to_string
-import re
+
 
 ORDINAL_SUFFIXES = {1: "st", 2: "nd", 3: "rd"}
 
+# constant declarations for PDDL types
 LOGICAL_CONNECTIVES = {"and", "not", "or"}
 QUANTIFIERS = {"forall", "exists"}
 CONDITIONAL_EFFECTS = {"when"}
@@ -42,32 +43,29 @@ PREFERENCE_KEYWORDS = {"sometime-after", "sometime-before", "always-within", "ho
 
 class SyntaxValidator:
     def __init__(
-            self, 
-            headers: list[str] | None = None,
-            error_types: list[str] | None = None,
-            unsupported_keywords: list[str] | None = None
-            ) -> None:
+        self, 
+        headers: list[str] | None = None,
+        error_types: list[str] | None = None,
+        unsupported_keywords: list[str] | None = None
+    ) -> None:
+        """
+        Initializes an L2P custom syntax validator checker object.
 
-        default_unsupported = [
-            "forall", "when",
-            "exists", "implies",
-            "pddl", "lisp", "python"
-        ]
+        Args:
+            headers (list[str]): headers to extract from LLM output
+            error_types (list[str]): error types to execute formalization functions
+            unsupported_keywords (list[str]): keywords to check against LLM output
+        """
+
+        # assign default unsupported keywords
+        default_unsupported = ["pddl", "lisp", "python"]
         
-        default_headers = [
-            'Action Parameters', 
-            'Action Preconditions', 
-            'Action Effects', 
-            'New Predicates',
-        ]
-        
-        self.error_types = error_types
+        self.headers = headers if headers else []
+        self.error_types = error_types if error_types else []
         self.unsupported_keywords = (
-            default_unsupported
-            if unsupported_keywords is None
-            else unsupported_keywords
+            default_unsupported if unsupported_keywords 
+            is None else unsupported_keywords
         )
-        self.headers = default_headers if headers is None else headers
 
     # ---- PDDL PARAMETER CHECKS ----
 
@@ -76,7 +74,17 @@ class SyntaxValidator:
         parameters: OrderedDict, 
         types: dict[str, str] | list[dict[str,str]] | None = None
     ) -> tuple[bool, str]:
-        """Checks whether a PDDL action parameter is correctly formatted and type declaration assigned correctly."""
+        """
+        Checks whether a PDDL action parameter is correctly 
+        formatted and type declaration assigned correctly.
+
+        Args:
+            parameters (OrderedDict): parameters of an action
+            types (dict[str,str] | list[dict[str,str]]): current types in domain
+
+        Returns:
+            validation_info (tuple[bool,str]): validation info containing pass flag and error message
+        """
 
         # check if parameter names (i.e. ?a) contains '?'
         invalid_param_names = list()
@@ -142,21 +150,21 @@ class SyntaxValidator:
     # ---- PDDL TYPE CHECKS ----
 
     def validate_type(
-            self, 
-            target_type: str, 
-            claimed_type: str, 
-            types: dict[str,str] | list[dict[str,str]] | None = None
-            ) -> tuple[bool, str]:
+        self, 
+        target_type: str, 
+        claimed_type: str, 
+        types: dict[str,str] | list[dict[str,str]] | None = None
+    ) -> tuple[bool, str]:
         """
         Check if the claimed_type is valid for the target_type according to the type hierarchy.
 
-        Parameters:
-            - target_type (str): The type that is expected for the parameter (from predicate).
-            - claimed_type (str): The type that is provided in the PDDL.
-            - types (dict[str, str]): A dictionary mapping subtypes to their supertypes.
+        Args:
+            target_type (str): type that is expected for the parameter (from :predicates)
+            claimed_type (str): type that is provided in the LLM output PDDL.
+            types (dict[str,str] | list[dict[str,str]]): current types in domain
 
         Returns:
-            - bool: True if claimed_type is valid, False otherwise.
+            validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
 
         # check if the claimed type matches the target type
@@ -204,10 +212,18 @@ class SyntaxValidator:
     
     
     def validate_format_types(
-            self, 
-            types: dict[str,str] | list[dict[str,str]]
-            ) -> tuple[bool, str]: 
-        """Checks if type variables contain `?` characters."""
+        self, 
+        types: dict[str,str] | list[dict[str,str]]
+    ) -> tuple[bool, str]: 
+        """
+        Checks if type variables contain `?` characters.
+
+        Args:
+            types (dict[str,str] | list[dict[str,str]]): types given from LLM output
+
+        Returns:
+            validation_info (tuple[bool,str]): validation info containing pass flag and error message
+        """
 
         # flatten types if it is in a hierarchy
         types = format_types(types)
@@ -238,7 +254,15 @@ class SyntaxValidator:
         self,
         types: dict[str,str] | list[dict[str,str]] | None = None,
     ) -> tuple[bool, str]:
-        """Checks if the types given contain an invalid cyclic hierarchy."""
+        """
+        Checks if the types given contain an invalid cyclic hierarchy.
+        
+        Args:
+            types (dict[str,str] | list[dict[str,str]]): current types in domain
+
+        Returns:
+            validation_info (tuple[bool,str]): validation info containing pass flag and error message
+        """
         
         def visit_type(node, visited, path, all_types):
             """Traverses the type hierarchy and check for cycles."""
@@ -309,22 +333,32 @@ class SyntaxValidator:
         self, 
         constants: dict[str,str],
         types: dict[str,str] | list[dict[str,str]] | None = None
-    ) -> dict[bool, str]:
+    ) -> tuple[bool, str]:
+        """
+        Checks if constant types are found in current :types.
+
+        Args: 
+            constants (dict[str,str]): current :constants in domain
+            types (dict[str,str] | list[dict[str,str]]): current types in domain
+
+        Returns:
+            validation_info (tuple[bool,str]): validation info containing pass flag and error message
+        """
     
-        types = format_types(types)
+        types = format_types(types) # flatten type hierarchy
         
         if types:
             for const_name, const_type in constants.items():
                 if const_type not in types.keys():
                     return (
                         False,
-                        f"[ERROR]: constant `{const_name}` contains type `{const_type}` that not found in list of available types:\n"
+                        f"[ERROR]: constant `{const_name}` contains type `{const_type}` "
+                        f"that is not found in list of available types:\n"
                         f"{format_types_to_string(types)}\n\n"
                         f"Make sure that constants only point to types that exist."
                     )
         
         return True, "[PASS]: all constants are valid."
-    
     
     
     # ---- PDDL FUNCTION CHECKS ----
@@ -334,8 +368,18 @@ class SyntaxValidator:
         functions: list[Function],
         types: dict[str,str] | list[dict[str,str]] | None = None
     ) -> tuple[bool, str]:
-        """Check for any PDDL syntax found within functions, allowing untyped variables."""
+        """
+        Check for any PDDL syntax found within functions, allowing untyped variables.
+
+        Args:
+            functions (list[Function]): list of functions in domain
+            types (dict[str,str] | list[dict[str,str]]): current types in domain
+
+        Returns:
+            validation_info (tuple[bool,str]): validation info containing pass flag and error message
+        """
         
+        # retrieve types
         valid_types = list()
         if types:
             types = format_types(types)
@@ -417,8 +461,6 @@ class SyntaxValidator:
         feedback_msg = "[PASS]: All functions are formatted correctly."
         return True, feedback_msg
             
-                    
-        
 
     # ---- PDDL PREDICATE CHECKS ----
 
@@ -427,7 +469,16 @@ class SyntaxValidator:
         predicates: list[Predicate] | None = None, 
         types: dict[str, str] | list[dict[str,str]] | None = None
     ) -> tuple[bool, str]:
-        """Check if predicate name is found within any type definitions"""
+        """
+        Check if predicate name is found within any type definitions.
+
+        Args:
+            predicates (list[Predicate]): current predicates in domain / generated from LLM
+            types (dict[str,str] | list[dict[str,str]]): current types in domain
+
+        Returns:
+            validation_info (tuple[bool,str]): validation info containing pass flag and error message
+        """
         
         if not predicates:
             return True, "[PASS]: no predicates passed."
@@ -466,7 +517,16 @@ class SyntaxValidator:
         curr_predicates: list[Predicate] | None = None, 
         new_predicates: list[Predicate] | None = None
     ) -> tuple[bool, str]:
-        """Checks if predicates have the same name but different parameters."""
+        """
+        Checks if predicates have the same name but different parameters.
+
+        Args:
+            curr_predicates (list[predicate]): current predicates in domain
+            new_predicates (list[Predicate]): new predicates generated from LLM
+
+        Returns:
+            validation_info (tuple[bool,str]): validation info containing pass flag and error message
+        """
         
         if not new_predicates:
             return True, "[PASS]: no new predicates were created."
@@ -507,16 +567,27 @@ class SyntaxValidator:
 
 
     def validate_overflow_predicates(
-        self, llm_response: str, limit: int = 30
+        self, 
+        llm_response: str, 
+        limit: int = 30
     ) -> tuple[bool, str]:
         """
-        Checks if LLM output contains too many predicates in precondition/effects (based on users assigned limit)
+        Checks if LLM output contains too many predicates in precondition/effects (based on users assigned limit).
+        This error is very rare, but can occur. Thus, it is omitted in core functions but is still available.
+
+        Args:
+            llm_response (str): raw LLM output
+            limit (int): max number of states declared, default to 30
+        
+        Returns:
+            validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
 
         spacer = "="*50
 
         assert "Preconditions" in llm_response, llm_response
         precond_str = (llm_response.split("Preconditions")[1].split("```\n")[1].strip())
+        precond_str = remove_comments(precond_str)
         num_prec_pred = len(precond_str.split("\n")) - 2 # for outer brackets
         if num_prec_pred > limit:
             feedback_msg = (
@@ -555,7 +626,16 @@ class SyntaxValidator:
         predicates: list[dict] | None = None,
         types: dict[str, str] | list[dict[str, str]] | None = None
     ) -> tuple[bool, str]:
-        """Checks for any PDDL syntax found within predicates, allowing untyped variables."""
+        """
+        Checks for any PDDL syntactic errors found within predicates, allowing untyped variables.
+
+        Args:
+            predicates (list[Predicate]): current predicates in domain / generated from LLM
+            types (dict[str,str] | list[dict[str,str]]): current types in domain
+
+        Returns:
+            validation_info (tuple[bool,str]): validation info containing pass flag and error message
+        """
         
         if not predicates:
             return True, "[PASS: no predicates passed."
@@ -651,7 +731,24 @@ class SyntaxValidator:
         part="preconditions",
     ) -> tuple[bool, str]:
         """
-        Validates predicates and fluent expression in nested PDDL list format.
+        Validates predicates and fluent expression in nested PDDL list format. There are many specific
+        checks in this validation function. This is where LLMs encounter the most syntax errors.
+
+        Performs three main kinds of checks:
+            (i) if predicate / functions statements are misused or does not exist
+            (ii) if state parameters align with original definition parameters
+            (iii) if arguments are being passed correctly (i.e. conditional-effects)
+
+        Args:
+            pddl (str): part of PDDL section from LLM
+            predicates (list[Predicate]): current predicates in domain / generated from LLM
+            action_params (OrderedDict): PDDL parameters of current action
+            functions (list[Function]): list of current functions in domain
+            types (dict[str,str] | list[dict[str,str]]): current types in domain
+            part (str): section of the PDDL to focus on
+
+        Returns:
+            validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
 
         pddl = parse_pddl(pddl) # parse into nested list
@@ -1043,15 +1140,25 @@ class SyntaxValidator:
         curr_predicates: list[Predicate] | None = None, 
         types: dict[str, str] | list[dict[str,str]] | None = None,
         functions: list[Function] | None = None,
-        parse_new_pred: bool = False
-    ):
+        extract_new_preds: bool = False
+    ) -> tuple[bool, str]:
         """
-        This function performs very basic check over whether the predicates are used in a valid way.
-            This check should be performed at the end.
+        Higher level function that performs checks over whether the predicates/functions are used in a
+        valid way in the PDDL action. Invokes `validate_pddl_action` to perform deep syntax checks. 
+
+        Args:
+            llm_response (str): raw LLM output
+            curr_predicates (list[predicate]): current predicates in domain
+            types (dict[str,str] | list[dict[str,str]]): current types in domain
+            functions (list[Function]): list of current functions in domain
+            extract_new_preds (bool): flag for if new predicates are being extracted, defaults to False
+
+        Returns:
+            validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
 
         # parse predicates
-        if parse_new_pred:
+        if extract_new_preds:
             new_predicates = parse_new_predicates(llm_response)
         else:
             new_predicates = []
@@ -1103,16 +1210,16 @@ class SyntaxValidator:
         types: dict[str, str] | list[dict[str,str]] | None = None
     ) -> tuple[bool, str]:
         """
-        Parameters:
-            - objects (dict[str,str]): a dictionary of the task objects.
-            - types (dict[str,str]): a dictionary of the domain types.
+        Checks if task objects are declared correctly. Performs the following cases:
+            (i) if object type is found within list of available types
+            (ii) if object name is the same as a type (invalid)
+        
+        Args:
+            objects (dict[str,str]): task objects generated from LLM
+            types (dict[str,str] | list[dict[str,str]]): current types in domain
 
         Returns:
-            - check, feedback_msg (bool, str)
-
-        Checks following cases:
-            (i) if object type is the same as type
-            (ii) if object name is the same as type
+            validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
 
         # if type hierarchy format
@@ -1187,20 +1294,20 @@ class SyntaxValidator:
         state_type: str = "initial",
     ) -> tuple[bool, str]:
         """
-        Parameters:
-            - states (list[dict[str,str]]): a list of dictionaries of the state states.
-            - objects (dict[str,str]): a dictionary of the task objects and their types.
-            - predicates (list[Predicate]): a list of predicate definitions.
-            - state_type (str): optional; 'initial' or 'goal' to label messages.
-
-        Returns:
-            - valid (bool): True if all checks pass, False otherwise.
-            - feedback_msg (str): summary of validation results.
-
-        Checks:
-            (i) if predicates in states exist in the domain
+        Checks if task states are declared correcly. Performs following checks:
+            (i) if predicates/functions in states exist in the domain
             (ii) if all object variables in states are declared in task objects
             (iii) if types of object variables match predicate parameter types
+
+        Args:
+            states (list[dict[str,str]]): a list of dictionaries of the states
+            objects (dict[str,str]): a dictionary of the task objects and their types
+            predicates (list[Predicate]): current predicates in domain
+            functions (list[Function]): list of current functions in domain
+            state_type (str): optional; 'initial' or 'goal' to label messages
+
+        Returns:
+            validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
         valid = True
         feedback_msgs = []
@@ -1303,10 +1410,19 @@ class SyntaxValidator:
     # ---- COMMON CHECKS ----
 
     def validate_header(
-            self, 
-            llm_response: str,
-            ):
-        """Checks if domain headers and formatted code block syntax are found in LLM output"""
+        self, 
+        llm_response: str,
+    ) -> tuple[bool, str]:
+        """
+        Checks if domain headers and formatted code block syntax are found in LLM output.
+        Headers to check must be declared as `self.headers = ['Action Preconditions']`
+
+        Args:
+            llm_response (str): raw LLM output
+
+        Returns:
+            validation_info (tuple[bool,str]): validation info containing pass flag and error message
+        """
 
         # catches if a header is not present
         for header in self.headers:
@@ -1340,7 +1456,16 @@ class SyntaxValidator:
         self, 
         llm_response: str,
     ) -> tuple[bool, str]:
-        """Checks if the LLM attempts to create a new action (so two or more actions defined in the same response)."""
+        """
+        Checks if the LLM attempts to create a new action (so two or more actions defined in the same response).
+        Headers to check must be declared as `self.headers = ['Action Preconditions']`
+
+        Args:
+            llm_response (str): raw LLM output
+
+        Returns:
+            validation_info (tuple[bool,str]): validation info containing pass flag and error message
+        """
 
         invalid = False
         duplicate_headers = []
@@ -1367,7 +1492,16 @@ class SyntaxValidator:
         self, 
         llm_response: str
     ) -> tuple[bool, str]:
-        """Checks whether PDDL model uses unsupported logic keywords"""
+        """
+        Checks whether PDDL model uses unsupported logic keywords
+        Unsupported keywords to check must be declared as `self.unsupported_keywords = ['lisp']`
+
+        Args:
+            llm_response (str): raw LLM output
+
+        Returns:
+            validation_info (tuple[bool,str]): validation info containing pass flag and error message
+        """
 
         if not self.unsupported_keywords:
             feedback_msg = "[PASS]: No unsupported keywords declared."
