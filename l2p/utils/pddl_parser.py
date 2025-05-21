@@ -5,6 +5,7 @@ This file contains collection of functions for extracting/parsing information fr
 from pddl.formatter import domain_to_string, problem_to_string
 from pddl import parse_domain, parse_problem
 from .pddl_types import Action, Predicate, Function
+from .pddl_format import remove_comments
 from collections import OrderedDict
 from copy import deepcopy
 from typing import Optional
@@ -394,18 +395,15 @@ def parse_objects(llm_output: str) -> dict[str, str]:
 
     objects_head = parse_heading(llm_output, "OBJECTS")
     objects_raw = combine_blocks(objects_head)
+    objects_clean = remove_comments(objects_raw)
 
-    objects_clean = clear_comments(
-        text=objects_raw, comments=[":", "//", "#", ";", "(", ")"]
-    )  # Remove comments
-
-    objects = {
+    objects_parsed = {
         obj.split(" - ")[0].strip(" `"): obj.split(" - ")[1].strip(" `")
         for obj in objects_clean.split("\n")
         if obj.strip()
     }
 
-    return objects
+    return objects_parsed
 
 def parse_initial(llm_output: str) -> list[dict[str, str]]:
     """
@@ -424,7 +422,7 @@ def parse_initial(llm_output: str) -> list[dict[str, str]]:
         )
 
     initial_raw = combine_blocks(initial_head)
-    initial_clean = clear_comments(initial_raw)
+    initial_clean = remove_comments(initial_raw)
     initial_parsed = parse_pddl(f"({initial_clean})")
 
     return parse_task_states(initial_parsed)
@@ -446,7 +444,7 @@ def parse_goal(llm_output: str) -> list[dict[str, str]]:
         )
 
     goal_raw = combine_blocks(goal_head)
-    goal_clean = clear_comments(goal_raw)
+    goal_clean = remove_comments(goal_raw)
     goal_parsed = parse_pddl(f"({goal_clean})")
 
     return parse_task_states(goal_parsed)
@@ -724,13 +722,6 @@ def parse_constants(llm_output: str) -> Optional[dict[str, str]]:
     except Exception as e:
         print(f"Error parsing dictionary: {e}")
         return None
-
-
-def clear_comments(text: str, comments=[":", "//", "#", ";"]) -> str:
-    """Helper function that removes comments from the text."""
-    for comment in comments:
-        text = "\n".join([line.split(comment)[0] for line in text.split("\n")])
-    return text
 
 
 def combine_blocks(heading_str: str):

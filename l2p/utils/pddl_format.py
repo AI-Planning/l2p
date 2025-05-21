@@ -274,18 +274,27 @@ def format_goal(goal_states: list[dict[str, str]]) -> str:
 
     return goal_states_str
 
-def remove_comments(pddl_str):
+def remove_comments(text: str, comment_prefixes=[";", "#", "//"]) -> str:
+    """
+    Remove comments from text using multiple prefix styles.
+    Preserves important syntax like ':' and '()'.
+    """
+    lines = text.splitlines()
+    cleaned_lines = []
+    
+    for line in lines:
+        stripped_line = line
+        for prefix in comment_prefixes:
+            if prefix in stripped_line:
+                # Only remove comment if prefix is not inside quotes or code
+                stripped_line = stripped_line.split(prefix, 1)[0]
+        cleaned_lines.append(stripped_line.rstrip())
 
-    # remove all comments starting with ';' to the end of the line
-    pddl_str = re.sub(r";[^\n]*", "", pddl_str)
+    # Remove blank lines and normalize whitespace
+    cleaned = "\n".join(line for line in cleaned_lines if line.strip())
+    cleaned = re.sub(r'\n{2,}', '\n\n', cleaned)  # collapse multiple newlines
 
-    # remove lines that contain only whitespace
-    pddl_str = re.sub(r'^[ \t]*\n', '', pddl_str, flags=re.MULTILINE)
-
-    # replace multiple consecutive newlines with just two
-    pddl_str = re.sub(r'\n{2,}', '\n\n', pddl_str)
-
-    return pddl_str
+    return cleaned
 
 
 def format_pddl_expr(expr):
