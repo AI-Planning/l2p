@@ -1,5 +1,5 @@
 """
-L2P comes pre-packaged with FastDownward: https://www.fast-downward.org 
+L2P is compatible with FastDownward: https://www.fast-downward.org 
 
 For usage, users must clone or download the submodule /downward separately and direct the 
 `planner_path` to the folder. This module is not necessary to use L2P, but for ease of use
@@ -46,14 +46,14 @@ class FastDownward:
         Main function to run planner.
 
         Args:
-            - domain_file (str): PDDL domain file path
-            - problem_file (str): PDDL problem file path
-            - search_alg (str): search algorithm/heuristic to use
+            domain_file (str): PDDL domain file path
+            problem_file (str): PDDL problem file path
+            search_alg (str): search algorithm/heuristic to use
                 + refer to: https://www.fast-downward.org/PlannerUsage
 
         Returns:
-            - success (bool): if a plan was found, otherwise False for incomplete.
-            - plan_output (str): plan output information.
+            success (bool): if a plan was found, otherwise False for incomplete.
+            plan_output (str): plan output information.
 
         """
         try:

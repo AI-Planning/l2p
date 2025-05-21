@@ -1,102 +1,18 @@
 """
-This file contains collection of functions for formatting Python PDDL components into PDDL format strings.
+This module contains collection of functions for formatting Python PDDL components into PDDL format strings.
 """
 
-import json, re
+import json
+import re
 from collections import defaultdict, OrderedDict
-from .pddl_types import Predicate, Action, Function
-
-def indent(string: str, level: int = 2):
-    """Indent string helper function to format PDDL domain/task"""
-    return "   " * level + string.replace("\n", f"\n{'   ' * level}")
+from .pddl_types import Action, Function, Predicate
 
 
-def pretty_print_dict(data):
-    """Formats dictionary or list of dictionaries in JSON format for readability."""
-    if isinstance(data, (dict, list)):
-        return json.dumps(data, indent=4)
-    else:
-        raise TypeError("Input must be a dictionary or a list of dictionaries")
-
-
-def pretty_print_predicates(predicates: list[Predicate]) -> str:
-    """Formats list of predicates easier for readability"""
-    if not predicates:
-        return ""
-    return "\n".join(
-        f"{i + 1}. {pred['name']}: {pred.get('desc', 'No description provided') or 'No description provided'}"
-        for i, pred in enumerate(predicates)
-    )
-
-
-def action_desc(action: Action) -> str:
-    """Helper function to format individual action descriptions"""
-    param_str = format_action_params(action)
-    
-    preconditions = "\n".join(
-        line for line in action['preconditions'].splitlines() if line.strip()
-    )
-    
-    effects = "\n".join(
-        line for line in action['effects'].splitlines() if line.strip()
-    )
-    
-    desc = f"(:action {action['name']}\n"
-    desc += f"   :parameters (\n{indent(string=param_str, level=2)}\n   )\n"
-    desc += f"   :precondition\n{indent(string=preconditions, level=2)}\n"
-    desc += f"   :effect\n{indent(string=effects, level=2)}\n"
-    desc += ")"
-    return desc
-
-def format_actions(actions: list[Action]) -> str:
-    """Formats a list of Actions into a PDDL-style string."""
-    desc = ""
-    for action in actions:
-        desc += "\n\n" + indent(action_desc(action), level=1)
-    return desc
-
-
-def format_action_params(action: Action) -> str:
-    """Helper function to format action parameters into a PDDL-style string."""
-    grouped_params = defaultdict(list)
-    for name, type_ in action["params"].items():
-        # ensure name starts with '?'
-        name = name if name.startswith("?") else f"?{name}"
-        clean_type = type_.strip() if type_ else None
-        grouped_params[clean_type].append(name)
-
-    param_parts = []
-    for type_, names in grouped_params.items():
-        if type_ is None:
-            param_parts.append(" ".join(names))  # untyped parameters
-        else:
-            param_parts.append(f"{' '.join(names)} - {type_}")
-
-    return " ".join(param_parts)
-
-
-def format_params(parameters: OrderedDict) -> str:
-    """Helper function to format parameters (as its type) into a PDDL-style string."""
-    grouped_params = defaultdict(list)
-    for name, type_ in parameters.items():
-        # ensure name starts with '?'
-        name = name if name.startswith("?") else f"?{name}"
-        clean_type = type_.strip() if type_ else None
-        grouped_params[clean_type].append(name)
-
-    param_parts = []
-    for type_, names in grouped_params.items():
-        if type_ is None:
-            param_parts.append(" ".join(names))  # untyped parameters
-        else:
-            param_parts.append(f"{' '.join(names)} - {type_}")
-
-    return " ".join(param_parts)
-
+# ---- PDDL DOMAIN FORMATTER ----
 
 def format_types(
-        types: dict[str,str] | list[dict[str,str]] | None = None
-        ) -> dict[str, str]:
+    types: dict[str,str] | list[dict[str,str]] | None = None
+) -> dict[str, str]:
     """
     Formats nested Python type hierarchies into flat dictionaries. Flat type dictionaries 
     (no hierarchies) are returned as default.
@@ -140,7 +56,6 @@ def format_types(
             result[type_name] = f"; {description}" if description else ""
 
     return result
-    
     
 def format_types_to_string(
     types: dict[str, str] | list[dict[str, str]]
@@ -192,7 +107,6 @@ def format_types_to_string(
     
     return "\n".join(lines)
 
-
 def format_constants(constants: dict[str,str]) -> str:
     """Formats constant dictionary into PDDL-style string"""
     lines = []
@@ -200,8 +114,6 @@ def format_constants(constants: dict[str,str]) -> str:
         lines.append(f"{const_name} - {const_type}")
     
     return "\n".join(lines)
-
-
 
 def format_expression(expression: list[Predicate] | list[Function]) -> str:
     """Formats predicate/function list into a PDDL-style string, removing exact duplicates."""
@@ -213,12 +125,57 @@ def format_expression(expression: list[Predicate] | list[Function]) -> str:
 
     return "\n".join(unique.values())
 
+def format_params(parameters: OrderedDict) -> str:
+    """Helper function to format parameters (as its type) into a PDDL-style string."""
+    grouped_params = defaultdict(list)
+    for name, type_ in parameters.items():
+        # ensure name starts with '?'
+        name = name if name.startswith("?") else f"?{name}"
+        clean_type = type_.strip() if type_ else None
+        grouped_params[clean_type].append(name)
+
+    param_parts = []
+    for type_, names in grouped_params.items():
+        if type_ is None:
+            param_parts.append(" ".join(names))  # untyped parameters
+        else:
+            param_parts.append(f"{' '.join(names)} - {type_}")
+
+    return " ".join(param_parts)
+
+def format_actions(actions: list[Action]) -> str:
+    """Formats a list of Actions into a PDDL-style string."""
+    desc = ""
+    for action in actions:
+        desc += "\n\n" + indent(format_action_desc(action), level=1)
+    return desc
+
+def format_action_desc(action: Action) -> str:
+    """Helper function to format individual action descriptions"""
+    param_str = format_params(action["params"])
+    
+    preconditions = "\n".join(
+        line for line in action['preconditions'].splitlines() if line.strip()
+    )
+    
+    effects = "\n".join(
+        line for line in action['effects'].splitlines() if line.strip()
+    )
+    
+    desc = f"(:action {action['name']}\n"
+    desc += f"   :parameters (\n{indent(string=param_str, level=2)}\n   )\n"
+    desc += f"   :precondition\n{indent(string=preconditions, level=2)}\n"
+    desc += f"   :effect\n{indent(string=effects, level=2)}\n"
+    desc += ")"
+    return desc
+
+
+# ---- PDDL PROBLEM FORMATTER ----
 
 def format_objects(objects: dict[str, str]) -> str:
     """Formats task objects into a PDDL-style string."""
     objects = "\n".join([f"{obj} - {type}" if type else f"{obj}" for obj, type in objects.items()])
     return objects
-
 
 def format_initial(initial_states: list[dict[str, str]]) -> str:
     """Formats task initial states into a PDDL-style string."""
@@ -247,7 +204,6 @@ def format_initial(initial_states: list[dict[str, str]]) -> str:
 
     return initial_states_str
 
-
 def format_goal(goal_states: list[dict[str, str]]) -> str:
     """Formats task goal states into a PDDL-style string."""
     full_str = []
@@ -274,11 +230,16 @@ def format_goal(goal_states: list[dict[str, str]]) -> str:
 
     return goal_states_str
 
+
+# ---- HELPER FUNCTIONS ----
+
+def indent(string: str, level: int = 2):
+    """Indent string helper function to format PDDL domain/task"""
+    return "   " * level + string.replace("\n", f"\n{'   ' * level}")
+
 def remove_comments(text: str, comment_prefixes=[";", "#", "//"]) -> str:
-    """
-    Remove comments from text using multiple prefix styles.
-    Preserves important syntax like ':' and '()'.
-    """
+    """Remove comments from text using multiple prefix styles."""
+
     lines = text.splitlines()
     cleaned_lines = []
     
@@ -286,19 +247,35 @@ def remove_comments(text: str, comment_prefixes=[";", "#", "//"]) -> str:
         stripped_line = line
         for prefix in comment_prefixes:
             if prefix in stripped_line:
-                # Only remove comment if prefix is not inside quotes or code
+                # only remove comment if prefix is not inside quotes or code
                 stripped_line = stripped_line.split(prefix, 1)[0]
         cleaned_lines.append(stripped_line.rstrip())
 
-    # Remove blank lines and normalize whitespace
+    # remove blank lines and normalize whitespace
     cleaned = "\n".join(line for line in cleaned_lines if line.strip())
     cleaned = re.sub(r'\n{2,}', '\n\n', cleaned)  # collapse multiple newlines
 
     return cleaned
 
-
 def format_pddl_expr(expr):
+    """Parses nested list format into bracket."""
     if isinstance(expr, list):
         return "(" + " ".join(format_pddl_expr(e) for e in expr) + ")"
     else:
         return str(expr)
+    
+def pretty_print_dict(data):
+    """Formats dictionary or list of dictionaries in JSON format for readability."""
+    if isinstance(data, (dict, list)):
+        return json.dumps(data, indent=4)
+    else:
+        raise TypeError("Input must be a dictionary or a list of dictionaries")
+
+def pretty_print_predicates(predicates: list[Predicate]) -> str:
+    """Formats list of predicates easier for readability"""
+    if not predicates:
+        return ""
+    return "\n".join(
+        f"{i + 1}. {pred['name']}: {pred.get('desc', 'No description provided') or 'No description provided'}"
+        for i, pred in enumerate(predicates)
+    )
