@@ -1,11 +1,16 @@
 """
-This file contains collection of functions for PDDL task generation purposes
+PDDL Problem Formalization/Generation Functions
+
+This module defines the `TaskBuilder` class and related utilities for constructing
+PDDL problem specifications programatically. 
+
+Refer to /docs for more information how to use class funcions. Refer to /templates
+for how to structurally prompt LLMs so they are compatible with class function parsing.
 """
 
-from .utils import *
-from .llm import BaseLLM, require_llm
 import time
-
+from .llm import BaseLLM, require_llm
+from .utils import *
 
 class TaskBuilder:
     def __init__(
@@ -15,17 +20,17 @@ class TaskBuilder:
         goal: list[dict[str, str]] = None,
     ):
         """
-        Initializes a task builder object
+        Initializes an L2P task builder object.
 
         Args:
-            objects (dict[str,str]): current dictionary of task objects in model
-            initial (list[dict[str,str]]): current initial states in model
-            goal (list[dict[str,str]]): current goal states in model
+            objects (dict[str,str]): current dictionary of task objects in specification
+            initial (list[dict[str,str]]): current initial states in specification
+            goal (list[dict[str,str]]): current goal states in specification
         """
 
-        self.objects = objects
-        self.initial = initial
-        self.goal = goal
+        self.objects = objects or {}
+        self.initial = initial or []
+        self.goal = goal or []
 
     """Formalize/generate functions"""
 
@@ -443,6 +448,9 @@ class TaskBuilder:
             objects (dict[str,str]): PDDL :objects
             initial (list[dict[str,str]]): PDDL :init states
             goal (list[dict[str,str]]): PDDL :goal states
+
+        Returns:
+            desc (str): PDDL problem in string format
         """
 
         desc = "(define\n"

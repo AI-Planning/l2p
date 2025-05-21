@@ -212,4 +212,4 @@ The following are the available predicates which can be used:
 {predicates}
 
 ## Original LLM response
-{llm_response}
+{llm_output}

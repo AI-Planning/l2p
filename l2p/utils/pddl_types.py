@@ -2,14 +2,12 @@
 This file contains classes of PDDL types
 """
 
-from typing import TypedDict, NewType, List, Optional
 from collections import OrderedDict
 from dataclasses import dataclass
+from typing import TypedDict, NewType, Optional
 
-ParameterList = NewType(
-    "ParameterList", OrderedDict[str, str]
-)  # {param_name: param_type}
-ObjectList = NewType("ObjectList", dict[str, str])  # {obj_name: obj_type}
+ParameterList = NewType("ParameterList", OrderedDict[str, str]) # {param_name: param_type}
+ObjectList = NewType("ObjectList", dict[str, str]) # {obj_name: obj_type}
 
 
 class Predicate(TypedDict):
@@ -22,6 +20,7 @@ class Predicate(TypedDict):
 
 class Action(TypedDict):
     name: str
+    desc: Optional[str]
     raw: str
     params: ParameterList
     preconditions: str
@@ -42,10 +41,12 @@ class DomainDetails:
     name: str
     domain_desc: str
     domain_pddl: str
-    types: str
     requirements: list[str]
-    predicates: List[Predicate]  # List of Predicate objects
-    actions: List[Action]  # List of Action objects
+    types: dict[str,str] | list[dict[str,str]]
+    constants: dict[str,str]
+    predicates: list[Predicate]  # List of Predicate objects
+    functions: list[Function]
+    actions: list[Action]  # List of Action objects
 
 
 # Problem details data class

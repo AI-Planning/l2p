@@ -1,5 +1,11 @@
 """
-This file contains collection of functions for PDDL domain generation purposes
+PDDL Domain Formalization/Generation Functions
+
+This module defines the `DomainBuilder` class and related utilities for constructing
+PDDL domain specifications programatically. 
+
+Refer to /docs for more information how to use class funcions. Refer to /templates
+for how to structurally prompt LLMs so they are compatible with class function parsing.
 """
 
 import re

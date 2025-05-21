@@ -99,14 +99,14 @@ predicates_json = load_file(r'tests/usage/prompts/domain/predicates.json')
 predicates: List[Predicate] = [Predicate(**item) for item in predicates_json]
 llm_response = load_file(r'tests/usage/prompts/domain/llm_output_task.txt')
 
-objects, initial, goal, feedback_response = feedback_builder.task_feedback(
+fb_pass, feedback_response = feedback_builder.task_feedback(
     model=llm,
     problem_desc=problem_desc,
+    llm_output=llm_response,
     feedback_template=feedback_template,
     feedback_type="llm",
     predicates=predicates,
-    types=types,
-    llm_response=llm_response)
+    types=types)
 
 print("FEEDBACK:\n", feedback_response)
 ```

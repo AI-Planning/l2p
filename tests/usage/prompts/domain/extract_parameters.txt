@@ -29,25 +29,25 @@ Given domain:
 The AI agent is here a scheduling system for a house construction company with administrators who can create orders, workers who perform them and vehicles to transport things.
 
 Given type hierarchy:
-{
+{{
     "object": "Object is always root, everything is an object",
     "children": [
-        {
+        {{
             "worker": "A type of object consisting of humans who do things.",
             "children": [
-                {"administrator": "A type of worker.", "children": []},
-                {"general_worker": "A type of worker.", "children": []}
+                {{"administrator": "A type of worker.", "children": []}},
+                {{"general_worker": "A type of worker.", "children": []}}
             ]
-        },
-        {"vehicle": "A type of object consisting of vehicles.", "children": []},
-        {
+        }},
+        {{"vehicle": "A type of object consisting of vehicles.", "children": []}},
+        {{
             "location": "A type of object consisting of places which can be visited.",
             "children": [
-                {"house": "A type of location.", "children": []}
+                {{"house": "A type of location.", "children": []}}
             ]
-        }
+        }}
     ]
-}
+}}
 
 Given action:
 'drive'
