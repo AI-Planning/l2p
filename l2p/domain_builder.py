@@ -2,27 +2,14 @@
 This file contains collection of functions for PDDL domain generation purposes
 """
 
-from .utils import *
-from .llm import BaseLLM, require_llm
+import re
+import time
+
 from collections import OrderedDict
-import re, time
 from typing import Any
 
-# :adl covers commented requirements
-REQUIREMENTS = [
-    # ":strips",
-    # ":typing",
-    # ":equality",
-    # ":negative-preconditions",
-    # ":disjunctive-preconditions",
-    # ":universal-preconditions",
-    # ":existential-preconditions",
-    # ":conditional-effects",
-    # ":quantified-preconditions",
-    ":fluents",
-    ":action-costs",
-    ":adl"
-]
+from .llm import BaseLLM, require_llm
+from .utils import *
 
 class DomainBuilder:
     def __init__(
@@ -32,27 +19,25 @@ class DomainBuilder:
         constants: dict[str,str] = None,
         predicates: list[Predicate] = None,
         functions: list[Function] = None,
-        nl_actions: dict[str, str] = None,
         pddl_actions: list[Action] = None,
     ):
         """
-        Initializes a domain builder object.
+        Initializes an L2P domain builder object.
 
         Args:
             types (dict[str,str]): flat types dictionary w/ {name: description} key-value pair (PDDL :types)
             type_hierarchy (list[dict[str,str]]): type hierarchy dictionary list (PDDL :types)
-            constants (dict[str,str]): flat constant dictionary w/ {name: type} kry-value pair (PDDL :constants)
+            constants (dict[str,str]): flat constant dictionary w/ {name: type} key-value pair (PDDL :constants)
             predicates (list[Predicate]): list of Predicate objects (PDDL :predicates)
             functions (list[Function]): list of Function objects (PDDL :functions)
-            nl_actions (dict[str,str]): dictionary of NL extracted actions w/ {action name: description} key-value pairs
-            pddl_actions (list[Action]): list of Action objects (PDDL :actions)
+            pddl_actions (list[Action]): list of Action objects (PDDL :action)
         """
+
         self.types = types or {}
         self.type_hierarchy = type_hierarchy or []
         self.constants = constants or {}
         self.predicates = predicates or []
         self.functions = functions or []
-        self.nl_actions = nl_actions or {}
         self.pddl_actions = pddl_actions or []
 
     """Formalize/generate functions"""
@@ -69,8 +54,8 @@ class DomainBuilder:
         max_retries: int = 3,
     ) -> tuple[dict[str,str], str, tuple[bool, str]]:
         """
-        Formalizes PDDL :types in singular flat format via LLM. It is recommended to use 
-        `formalize_type_hierarchy()` for sub-types.
+        Formalizes PDDL :types in singular flat hierarchy via LLM. It is recommended to use 
+        `formalize_type_hierarchy()` for sub-type support.
 
         Args:
             model (BaseLLM): LLM to query
@@ -1020,7 +1005,7 @@ class DomainBuilder:
             llm_output (str): the raw string BaseLLM response
         """
         
-        spec_results = {}
+        spec_results = {} # results dictionary of top-level PDDL domain specifications
         
         prompt_data = prompt_data = {"domain_desc": domain_desc}
         prompt = prompt_template.format(**prompt_data)
@@ -1109,15 +1094,6 @@ class DomainBuilder:
                 function for function in self.functions if function["name"] != name
             ]
 
-    def delete_nl_action(self, name: str):
-        """Deletes specific NL action from current specification"""
-        if self.nl_actions is not None:
-            self.nl_actions = {
-                action_name: action_desc
-                for action_name, action_desc in self.nl_actions.items()
-                if action_name != name
-            }
-
     def delete_pddl_action(self, name: str):
         """Deletes specific PDDL action from current specification"""
         if self.pddl_actions is not None:
@@ -1148,10 +1124,6 @@ class DomainBuilder:
         """Appends a function for current specification"""
         self.functions.append(function)
 
-    def set_nl_actions(self, nl_actions: dict[str, str]):
-        """Sets NL actions for current specification"""
-        self.nl_actions = nl_actions
-
     def set_pddl_action(self, pddl_action: Action):
         """Appends a PDDL action for current specification"""
         self.pddl_actions.append(pddl_action)
@@ -1179,10 +1151,6 @@ class DomainBuilder:
         """Returns functions from current specification"""
         return self.functions
 
-    def get_nl_actions(self) -> dict[str,str]:
-        """Returns natural language actions from current specification"""
-        return self.nl_actions
-
     def get_pddl_actions(self) -> list[Action]:
         """Returns PDDL actions from current specification"""
         return self.pddl_actions
@@ -1196,7 +1164,7 @@ class DomainBuilder:
         predicates: list[Predicate] | None = None,
         functions: list[Function] | None = None,
         actions: list[Action] = [],
-        requirements: list[str] = REQUIREMENTS,
+        requirements: list[str] = [':adl', ':numeric-fluents'],
     ) -> str:
         """
         Generates PDDL domain from given information.
@@ -1211,7 +1179,7 @@ class DomainBuilder:
             requirements (list[str]): domain :requirements, defaults to constant REQUIREMENTS
 
         Returns:
-            desc (str): PDDL domain
+            desc (str): PDDL domain in string format
         """
 
         desc = ""

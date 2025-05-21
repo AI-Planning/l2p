@@ -208,8 +208,8 @@ if __name__ == "__main__":
 
     # load in base templates
     ROLE = "Your task is to convert the natural language states into PDDL initial state predicates.\n\n"
-    ROLE_INITIAL = ROLE + load_file("templates/task_templates/extract_initial.txt")
-    ROLE_GOAL = ROLE + load_file("templates/task_templates/extract_goal.txt")
+    ROLE_INITIAL = ROLE + load_file("templates/task_templates/formalize_initial.txt")
+    ROLE_GOAL = ROLE + load_file("templates/task_templates/formalize_goal.txt")
     DOMAIN_DIR = "paper_reconstructions/p+s/domain.pddl"
 
     # run problem sets

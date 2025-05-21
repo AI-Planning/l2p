@@ -43,7 +43,7 @@ def create_llm_ic_pddl_prompt(task_nl, domain_pddl, context):
     )
 
     # add in L2P default format prompt
-    prompt += "\n\n" + load_file("templates/task_templates/extract_task.txt")
+    prompt += "\n\n" + load_file("templates/task_templates/formalize_task.txt")
     return prompt
 
 

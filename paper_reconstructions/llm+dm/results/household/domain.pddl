@@ -3,492 +3,457 @@
       :typing :negative-preconditions :disjunctive-preconditions :conditional-effects :equality)
 
    (:types 
-      object
-      furnitureAppliance - object
-      householdObject - object
+      furnitureAppliance householdObject - object
       smallReceptacle - householdObject
    )
 
    (:predicates 
-      (robot-at ?x - furnitureAppliance) ;  true if the robot is currently at the furniture or appliance ?x
-      (furnitureAppliance-clear ?x - furnitureAppliance) ;  true if the furniture or appliance ?x is clear for the robot to navigate to
-      (object-pickupable ?o - householdObject) ;  true if the object ?o can be picked up by the robot
-      (object-stacked ?o - householdObject) ;  true if the object ?o is stacked on top of other household items
-      (object-in ?o - householdObject ?f - furnitureAppliance) ;  true if the object ?o is placed in or on the furniture or appliance ?f
-      (robot-holding ?o - householdObject) ;  true if the robot is currently holding the object ?o
-      (dirty ?c - smallReceptacle) ;  true if the cloth ?c is dirty after cleaning
+      (robot-at ?f - furnitureAppliance)
+      (furnitureAppliance-clear ?f - furnitureAppliance)
+      (pickupable ?o - householdObject)
+      (stacked ?o - householdObject)
+      (openable ?f - furnitureAppliance)
+      (robot-holding ?o - householdObject)
+      (opened ?f - furnitureAppliance)
+      (sliced ?o - householdObject ?k - householdObject)
+      (heated ?r - smallReceptacle ?m - furnitureAppliance)
+      (dirty ?c - householdObject)
    )
 
-   (:action Go to a Furniture Piece or an Appliance
+   (:action go-to
       :parameters (
-         ?from - furnitureAppliance
-         ?to - furnitureAppliance
+         ?from ?to - furnitureAppliance
       )
       :precondition
          (and
-             (robot-at ?from)
-             (furnitureAppliance-clear ?to)
+             (robot-at ?from) ; The robot is currently at the starting furniture or appliance
+             (furnitureAppliance-clear ?to) ; The destination furniture or appliance is clear for navigation
          )
       :effect
          (and
-             (not (robot-at ?from))
-             (robot-at ?to)
+             (not (robot-at ?from)) ; The robot is no longer at the starting furniture or appliance
+             (robot-at ?to) ; The robot is now at the destination furniture or appliance
          )
    )
 
-   (:action Pick up an Object on or in a Furniture Piece or an Appliance
+   (:action pick-up
       :parameters (
-         ?o - householdObject
-         ?f - furnitureAppliance
+         ?o - householdObject ?f - furnitureAppliance
       )
       :precondition
          (and
-             (robot-at ?f)
-             (furnitureAppliance-clear ?f)
-             (object-pickupable ?o)
-             (not (object-stacked ?o))
-             (not (robot-holding ?x))
+             (robot-at ?f) ; The robot is at the location of the furniture or appliance
+             (furnitureAppliance-clear ?f) ; The furniture or appliance is clear for manipulation
+             (pickupable ?o) ; The object is pickupable by the robot
+             (not (stacked ?o)) ; The object is not stacked on top of other household items
+             (or
+                 (openable ?f) ; The furniture or appliance is openable
+                 (not (openable ?f)) ; The furniture or appliance is not openable
+             )
          )
       :effect
          (and
-             (not (furnitureAppliance-clear ?f))
-             (not (object-pickupable ?o))
-             (robot-holding ?o)
+             (not (furnitureAppliance-clear ?f)) ; The furniture or appliance is no longer clear after picking up the object
+             (not (pickupable ?o)) ; The object is no longer pickupable as it is now held by the robot
+             (robot-holding ?o) ; The robot is now holding the object
          )
    )
 
-   (:action Put an Object on or in a Furniture Piece or an Appliance
+   (:action put-on-or-in
       :parameters (
-         ?o - householdObject
-         ?f - furnitureAppliance
+         ?o - householdObject ?f - furnitureAppliance
       )
       :precondition
          (and
-             (robot-at ?f)
-             (furnitureAppliance-clear ?f)
-             (object-pickupable ?o)
-             (not (object-stacked ?o))
+             (robot-holding ?o) ; The robot must be holding the object
+             (robot-at ?f) ; The robot must be at the location of the furniture or appliance
+             (furnitureAppliance-clear ?f) ; The furniture or appliance must be clear for placing the object
+             (or
+                 (openable ?f) ; The furniture or appliance must be openable if it is to be opened
+                 (not (openable ?f)) ; If it is not openable, this condition is satisfied
+             )
          )
       :effect
          (and
-             (not (object-pickupable ?o))
-             (not (furnitureAppliance-clear ?f))
-             (object-in ?o ?f)
+             (not (robot-holding ?o)) ; The robot is no longer holding the object
+             (not (furnitureAppliance-clear ?f)) ; The furniture or appliance is no longer clear
+             (stacked ?o) ; The object is now placed on or in the furniture or appliance
          )
    )
 
-   (:action Stack Objects
+   (:action stack
       :parameters (
-         ?o1 - householdObject
-         ?o2 - householdObject
-         ?f - furnitureAppliance
+         ?o1 ?o2 - householdObject ?f - furnitureAppliance
       )
       :precondition
          (and
-             (robot-holding ?o1)
-             (object-pickupable ?o1)
-             (object-pickupable ?o2)
-             (robot-at ?f)
-             (furnitureAppliance-clear ?f)
-             (not (object-stacked ?o2))
-             (object-in ?o2 ?f)
+             (robot-holding ?o1) ; The robot is holding object_1
+             (pickupable ?o1) ; object_1 is a pickupable household object
+             (pickupable ?o2) ; object_2 is a pickupable household object
+             (furnitureAppliance-clear ?f) ; The furniture piece has a clear surface
+             (not (stacked ?o2)) ; object_2 is not already stacked on another object
+             (robot-at ?f) ; The robot is at the location of the furniture piece
          )
       :effect
          (and
-             (not (robot-holding ?o1))
-             (not (object-in ?o1 ?f))
-             (object-stacked ?o1)
-             (object-in ?o1 ?f)
+             (not (robot-holding ?o1)) ; The robot is no longer holding object_1
+             (stacked ?o1) ; object_1 is now stacked
+             (not (furnitureAppliance-clear ?f)) ; The furniture piece is no longer clear
          )
    )
 
-   (:action Unstack Objects
+   (:action unstack
       :parameters (
-         ?o1 - householdObject
-         ?o2 - householdObject
-         ?f - furnitureAppliance
+         ?o1 ?o2 - householdObject ?f - furnitureAppliance
       )
       :precondition
          (and
-             (robot-at ?f)
-             (furnitureAppliance-clear ?f)
-             (object-stacked ?o1)
-             (object-in ?o1 ?f)
-             (object-in ?o2 ?f)
-             (object-pickupable ?o1)
+             (robot-at ?f) ; The robot is at some furniture or appliance
+             (furnitureAppliance-clear ?f) ; The furniture or appliance is clear
+             (stacked ?o1) ; The object to unstack is stacked on another object
+             (pickupable ?o1) ; The object to unstack is pickupable
+             (not (robot-holding ?o2)) ; The robot is not holding the object below
          )
       :effect
          (and
-             (not (object-stacked ?o1))
-             (not (object-in ?o1 ?f))
-             (not (object-in ?o2 ?f))
-             (robot-holding ?o1)
-             (object-in ?o2 ?f)
+             (not (stacked ?o1)) ; The object is no longer stacked
+             (not (pickupable ?o1)) ; The object is now being held, so it's not pickupable
+             (robot-holding ?o1) ; The robot is now holding the unstacked object
          )
    )
 
-   (:action Open a Furniture Piece or an Appliance
+   (:action open
       :parameters (
-         ?f - furnitureAppliance
-         ?o - householdObject
+         ?f - furnitureAppliance ?o - householdObject
       )
       :precondition
          (and
-             (robot-at ?f)
-             (furnitureAppliance-clear ?f)
-             (not (robot-holding ?o))  ; Ensure the robot is not holding any household object
+             (robot-at ?f) ; The robot is at the location of the furniture or appliance
+             (openable ?f) ; The furniture or appliance is openable
+             (furnitureAppliance-clear ?f) ; The furniture or appliance is clear for opening
+             (not (robot-holding ?o)) ; The robot is not holding any object
          )
       :effect
          (and
-             (not (furnitureAppliance-clear ?f))  ; The furniture or appliance is now open
-             (object-in ?o ?f)  ; The household object may now be accessible inside the furniture or appliance
+             (not (furnitureAppliance-clear ?f)) ; The furniture or appliance is no longer clear after opening
+             (opened ?f) ; The furniture or appliance is now opened
          )
    )
 
-   (:action Close a Furniture Piece or an Appliance
+   (:action close
       :parameters (
-         ?f - furnitureAppliance
-         ?o - householdObject
+         ?f - furnitureAppliance ?o - householdObject
       )
       :precondition
          (and
-             (robot-at ?f)
-             (furnitureAppliance-clear ?f)
-             (object-in ?o ?f)
-             (not (robot-holding ?o))
+             (robot-at ?f) ; The robot is at the location of the furniture or appliance
+             (opened ?f) ; The furniture or appliance is currently open
+             (furnitureAppliance-clear ?f) ; The furniture or appliance is clear for manipulation
+             (not (robot-holding ?o)) ; The robot is not holding any household object
          )
       :effect
          (and
-             (not (object-in ?o ?f))
-             (furnitureAppliance-clear ?f)
+             (not (opened ?f)) ; The furniture or appliance is now closed
+             (furnitureAppliance-clear ?f) ; The furniture or appliance remains clear after closing
          )
    )
 
-   (:action Toggle a Small Appliance On
+   (:action toggle-on
       :parameters (
-         ?o - householdObject
-         ?f - furnitureAppliance
+         ?a - householdObject ?f - furnitureAppliance
       )
       :precondition
          (and
-             (robot-at ?f)
-             (furnitureAppliance-clear ?f)
-             (object-pickupable ?o)
-             (not (robot-holding ?o))
-             (object-in ?o ?f)
+             (robot-at ?f) ; The robot is at the location of the furniture appliance
+             (furnitureAppliance-clear ?f) ; The furniture appliance is clear for manipulation
+             (pickupable ?a) ; The appliance is a small household object that can be picked up
+             (not (robot-holding ?a)) ; The robot is not holding any other object
          )
       :effect
          (and
-             (not (object-stacked ?o))
-             (robot-holding ?o)
+             (not (pickupable ?a)) ; The appliance is no longer pickupable after being toggled
+             (robot-holding ?a) ; The robot is now holding the appliance
+             (opened ?f) ; The appliance is toggled on, indicating it is now opened
          )
    )
 
-   (:action Toggle a Small Appliance Off
-      :parameters (
-         ?o - householdObject
-         ?f - furnitureAppliance
-      )
-      :precondition
-         (and
-             (robot-at ?f)
-             (furnitureAppliance-clear ?f)
-             (object-in ?o ?f)
-             (not (robot-holding ?o))
-         )
-      :effect
-         (and
-             (not (object-in ?o ?f))
-             (object-stacked ?o)
-         )
-   )
-
-   (:action Slice Objects
-      :parameters (
-         ?o - householdObject
-         ?k - householdObject
-         ?c - furnitureAppliance
-         ?f - furnitureAppliance
-      )
-      :precondition
-         (and
-             (robot-holding ?k)
-             (object-in ?o ?c)
-             (object-pickupable ?o)
-             (not (object-stacked ?o))
-             (robot-at ?f)
-             (furnitureAppliance-clear ?f)
-         )
-      :effect
-         (and
-             (not (object-in ?o ?c))
-             (not (robot-holding ?k))
-             (robot-holding ?o)
-             (object-stacked ?o)
-         )
-   )
-
-   (:action Heat Food with a Microwave
-      :parameters (
-         ?m - furnitureAppliance
-         ?r - smallReceptacle
-      )
-      :precondition
-         (and
-             (robot-at ?m)
-             (furnitureAppliance-clear ?m)
-             (object-in ?r ?m)
-             (robot-holding ?r)
-             (not (object-stacked ?r))
-         )
-      :effect
-         (and
-             (not (object-pickupable ?r))
-             (not (robot-holding ?r))
-             (not (object-in ?r ?m))
-             (object-in ?r ?m) ; The food is now considered heated and remains in the microwave
-         )
-   )
-
-   (:action Heat Food with Pan
+   (:action toggle-off
       :parameters (
          ?f - furnitureAppliance
-         ?p - furnitureAppliance
-         ?h - householdObject
       )
       :precondition
          (and
-             (robot-at ?f)
-             (furnitureAppliance-clear ?f)
-             (object-in ?p ?f)
-             (object-in ?h ?p)
-             (not (robot-holding ?h))
-             (object-pickupable ?h)
+             (robot-holding ?f) ; The robot must be holding the appliance
+             (pickupable ?f) ; The appliance must be a pickupable household object
+             (openable ?f) ; The appliance must be openable to toggle it off
          )
       :effect
          (and
-             (not (object-in ?h ?p))
-             (not (object-pickupable ?h))
-             (not (object-in ?p ?f))
-             (object-in ?h ?f)
-             (robot-holding ?p)
+             (not (robot-holding ?f)) ; The robot is no longer holding the appliance
+             (not (opened ?f)) ; The appliance is toggled off (considered as not opened)
          )
    )
 
-   (:action Transfer Food from One Small Receptacle to Another
+   (:action slice
       :parameters (
-         ?food - householdObject
-         ?receptacle_1 - smallReceptacle
-         ?receptacle_2 - smallReceptacle
-         ?furniture - furnitureAppliance
+         ?o ?k - householdObject ?c - furnitureAppliance
       )
       :precondition
          (and
-             (robot-at ?furniture)
-             (furnitureAppliance-clear ?furniture)
-             (object-in ?receptacle_1 ?furniture)
-             (object-in ?receptacle_2 ?furniture)
-             (not (object-stacked ?receptacle_1))
-             (not (object-stacked ?receptacle_2))
-             (object-pickupable ?food)
-             (robot-holding ?receptacle_1)
+             (robot-holding ?k) ; The robot is holding the knife
+             (pickupable ?o) ; The object to slice is a household object that can be picked up
+             (stacked ?o) ; The object to slice is stackable (indicating it can be placed on the cutting board)
+             (robot-at ?c) ; The robot is at the location of the cutting board
+             (furnitureAppliance-clear ?c) ; The cutting board must be clear for slicing
+             (not (stacked ?k)) ; The knife should not be stacked (it should be held)
          )
       :effect
          (and
-             (not (robot-holding ?receptacle_1))
-             (not (object-in ?food ?receptacle_1))
-             (object-in ?food ?receptacle_2)
-             (robot-holding ?receptacle_2)
+             (not (robot-holding ?k)) ; The robot is no longer holding the knife
+             (not (stacked ?o)) ; The object is now sliced and is no longer stackable
+             (sliced ?o ?k) ; The object has been sliced with the knife
          )
    )
 
-   (:action Puts an Object onto or into a Small Receptacle
+   (:action heat-microwave
       :parameters (
-         ?o - householdObject
-         ?r - smallReceptacle
-         ?f - furnitureAppliance
+         ?m - furnitureAppliance ?r - smallReceptacle
       )
       :precondition
          (and
-             (robot-holding ?o)
-             (object-pickupable ?o)
-             (robot-at ?f)
-             (furnitureAppliance-clear ?f)
-             (object-in ?r ?f)
-             (not (object-stacked ?r))
+             (robot-at ?m) ; The robot is at the microwave
+             (furnitureAppliance-clear ?m) ; The microwave is clear for operation
+             (robot-holding ?r) ; The robot is holding the small receptacle
+             (opened ?m) ; The microwave door is closed
+             (pickupable ?r) ; The small receptacle is pickupable
          )
       :effect
          (and
-             (not (robot-holding ?o))
-             (object-in ?o ?r)
-             (not (object-pickupable ?o))
-             (robot-hand-empty)
+             (not (robot-holding ?r)) ; The robot is no longer holding the small receptacle
+             (not (pickupable ?r)) ; The small receptacle is no longer pickupable after heating
+             (not (opened ?m)) ; The microwave door is now closed
+             (heated ?r ?m) ; The food in the small receptacle has been heated in the microwave
          )
    )
 
-   (:action Pick up an Object on or in a Small Receptacle
+   (:action heat-pan
       :parameters (
-         
+         ?f - householdObject ?p - smallReceptacle ?s - furnitureAppliance
       )
       :precondition
          (and
-             (robot-at ?f)
-             (furnitureAppliance-clear ?f)
-             (object-in ?o ?r)
-             (object-pickupable ?o)
-             (not (object-stacked ?o))
-             (not (robot-holding ?o))
+             (robot-at ?s) ; The robot is at the stove burner
+             (furnitureAppliance-clear ?s) ; The stove burner is clear
+             (robot-holding ?p) ; The robot is holding the pan
+             (pickupable ?f) ; The food is pickupable
+             (not (heated ?p ?s)) ; The pan is not already heated on the stove
          )
       :effect
          (and
-             (not (object-in ?o ?r))
-             (not (robot-holding ?o))
-             (robot-holding ?o)
+             (not (robot-holding ?p)) ; The robot is no longer holding the pan
+             (not (pickupable ?f)) ; The food is no longer pickupable after heating
+             (heated ?p ?s) ; The pan is now heated on the stove burner
          )
    )
 
-   (:action Open a Small Receptacle
+   (:action transfer-food
       :parameters (
-         ?r - smallReceptacle
-         ?f - furnitureAppliance
-         ?o - householdObject
+         ?f1 ?f2 - furnitureAppliance ?r1 ?r2 - smallReceptacle ?o - householdObject
       )
       :precondition
          (and
-             (robot-at ?f)
-             (furnitureAppliance-clear ?f)
-             (object-in ?r ?f)
-             (not (object-stacked ?r))
-             (object-pickupable ?r)
-             (not (robot-holding ?o))  ; where ?o is any householdObject
+             (robot-at ?f1) ; The robot must be at the location of receptacle_1
+             (furnitureAppliance-clear ?f1) ; The furniture piece must be clear
+             (furnitureAppliance-clear ?f2) ; The furniture piece must be clear
+             (opened ?f1) ; receptacle_1 must be open (checking the furniture appliance)
+             (opened ?f2) ; receptacle_2 must be open (checking the furniture appliance)
+             (not (stacked ?r1)) ; receptacle_1 must not be stacked on another object
+             (not (stacked ?r2)) ; receptacle_2 must not be stacked on another object
+             (robot-holding ?o) ; The robot must be holding the food object
+             (pickupable ?o) ; The food object must be pickupable
+             (heated ?r1 ?f1) ; receptacle_1 must be heated and on a flat surface
          )
       :effect
          (and
-             (not (object-in ?r ?f))
-             (robot-holding ?r)
+             (not (robot-holding ?o)) ; The robot is no longer holding the food object
+             (sliced ?o ?r2) ; The food object is now transferred to receptacle_2
+             (not (opened ?f1)) ; receptacle_1 is no longer open (checking the furniture appliance)
+             (opened ?f2) ; receptacle_2 remains open (checking the furniture appliance)
          )
    )
 
-   (:action Close a Small Receptacle
+   (:action put-on-or-in-small
       :parameters (
-         ?r - smallReceptacle
-         ?f - furnitureAppliance
-         ?o - householdObject
+         ?o - householdObject ?r - smallReceptacle ?f - furnitureAppliance
       )
       :precondition
          (and
-             (robot-at ?f)
-             (furnitureAppliance-clear ?f)
-             (object-in ?r ?f)
-             (not (object-stacked ?r))
-             (robot-holding ?o) ; the robot must be holding an object
+             (robot-holding ?o) ; The robot must be holding the object
+             (pickupable ?o) ; The object must be pickupable
+             (furnitureAppliance-clear ?f) ; The furniture must be clear for manipulation
+             (openable ?f) ; The furniture piece must be openable
+             (opened ?f) ; The furniture piece must be opened
+             (not (stacked ?r)) ; The receptacle must not be stacked on other objects
+             (robot-at ?f) ; The robot must be at the furniture piece
          )
       :effect
          (and
-             (not (object-in ?r ?f)) ; the receptacle is no longer in the open state
-             (object-in ?r ?f) ; assuming the receptacle is still in the same place after closing
+             (not (robot-holding ?o)) ; The robot is no longer holding the object
+             (sliced ?o ?r) ; The object is now in the receptacle
          )
    )
 
-   (:action Mash Food with a Blender
+   (:action pick-up-small
       :parameters (
-         ?f - furnitureAppliance
-         ?h - householdObject
+         ?o - householdObject ?r - smallReceptacle ?f - furnitureAppliance
       )
       :precondition
          (and
-             (robot-at ?f)
-             (furnitureAppliance-clear ?f)
-             (object-pickupable ?h)
-             (not (object-stacked ?h))
-             (object-in ?h ?f)
-             (robot-holding ?h)
+             (robot-at ?f) ; The robot is at the location of the furniture piece
+             (furnitureAppliance-clear ?f) ; The furniture piece is clear for manipulation
+             (pickupable ?o) ; The object is pickable
+             (not (stacked ?r)) ; The receptacle is not stacked on other objects
+             (openable ?f) ; The furniture piece is openable
+             (opened ?f) ; The furniture piece is opened to access the receptacle
+             (not (robot-holding ?o)) ; The robot is not holding any object
          )
       :effect
          (and
-             (not (robot-holding ?h))
-             (object-in ?h ?f)
-             (not (object-pickupable ?h))
+             (not (opened ?f)) ; The furniture piece is now closed after picking up the object
+             (robot-holding ?o) ; The robot is now holding the object
+             (not (pickupable ?o)) ; The object is no longer available to be picked up
          )
    )
 
-   (:action Wash an Object
+   (:action open-small
       :parameters (
-         ?o - householdObject
-         ?s - furnitureAppliance
+         ?r - smallReceptacle ?f - furnitureAppliance
       )
       :precondition
          (and
-             (robot-at ?s)
-             (furnitureAppliance-clear ?s)
-             (robot-holding ?o)
-             (object-pickupable ?o)
+             (robot-at ?f) ; The robot is at the location of the furniture piece
+             (furnitureAppliance-clear ?f) ; The furniture piece is clear for manipulation
+             (openable ?f) ; The furniture piece is openable
+             (pickupable ?r) ; The receptacle is a household object that can be picked up
+             (not (stacked ?r)) ; The receptacle is not stacked on top of other objects
          )
       :effect
          (and
-             (not (robot-holding ?o))
-             (object-in ?o ?s)
+             (not (robot-holding ?r)) ; The robot is not holding the receptacle anymore
+             (opened ?f) ; The receptacle is now opened, indicating the furniture piece is opened
          )
    )
 
-   (:action Wipe a Surface
+   (:action close-small
       :parameters (
-         ?f - furnitureAppliance
-         ?c - smallReceptacle
+         ?r - smallReceptacle ?f - furnitureAppliance
       )
       :precondition
          (and
-             (robot-at ?f)
-             (furnitureAppliance-clear ?f)
-             (robot-holding ?c)
-             (object-pickupable ?c)
+             (robot-at ?f) ; The robot is at the location of the furniture piece
+             (furnitureAppliance-clear ?f) ; The furniture piece is clear for manipulation
+             (pickupable ?r) ; The receptacle is a household object that can be picked up
+             (openable ?r) ; The receptacle is openable
+             (not (stacked ?r)) ; The receptacle is not stacked on top of other objects
+             (opened ?f) ; The furniture appliance is currently open
          )
       :effect
          (and
-             (not (robot-holding ?c))
-             (not (object-pickupable ?c))
-             (object-in ?c ?f)
-             (dirty ?c)
+             (not (opened ?f)) ; The receptacle is now closed
+             (robot-holding ?r) ; The robot is holding the receptacle while closing it
          )
    )
 
-   (:action Vacuum a Carpet
+   (:action mash-food
       :parameters (
-         ?v - householdObject
-         ?c - furnitureAppliance
+         ?b - smallReceptacle ?f - furnitureAppliance ?o - householdObject
       )
       :precondition
          (and
-             (robot-holding ?v)
-             (robot-at ?c)
-             (furnitureAppliance-clear ?c)
-             (not (dirty ?v))
+             (robot-at ?f) ; The robot is at the location of the blender
+             (furnitureAppliance-clear ?f) ; The blender is clear for use
+             (robot-holding ?o) ; The robot is holding the food to be mashed
+             (sliced ?o ?o) ; The food has been sliced beforehand, using itself as the second argument
          )
       :effect
          (and
-             (not (robot-holding ?v))
-             (dirty ?v)
+             (not (robot-holding ?o)) ; The robot is no longer holding the food
+             (heated ?b ?f) ; The food is now heated in the receptacle
          )
    )
 
-   (:action Empty a Vacuum Cleaner
+   (:action wash
       :parameters (
-         ?v - householdObject
-         ?t - smallReceptacle
-         ?f - furnitureAppliance
+         ?o - householdObject ?f - furnitureAppliance
       )
       :precondition
          (and
-             (robot-holding ?v)
-             (robot-at ?f)  ; The robot is at the furniture appliance
-             (furnitureAppliance-clear ?f)
-             (object-in ?v ?f)
+             (robot-holding ?o) ; The robot must be holding the object to wash
+             (pickupable ?o) ; The object must be a washable household object
+             (robot-at ?f) ; The robot must be at the location of the sink or basin
+             (furnitureAppliance-clear ?f) ; The sink or basin must be clear for washing
          )
       :effect
          (and
-             (not (object-in ?v ?f))
-             (dirty ?t)  ; The trash can is now dirty after emptying the vacuum cleaner
-             (robot-holding ?v)
+             (not (robot-holding ?o)) ; The robot is no longer holding the object after washing
+             (sliced ?o ?o) ; The object is now considered washed (sliced can represent a state change)
+             (not (pickupable ?o)) ; The object is no longer pickupable until it is dried or put away
+         )
+   )
+
+   (:action wipe
+      :parameters (
+         ?f - furnitureAppliance ?c - householdObject
+      )
+      :precondition
+         (and
+             (robot-at ?f) ; The robot is at the location of the furniture or appliance
+             (furnitureAppliance-clear ?f) ; The surface of the furniture or appliance is clear for cleaning
+             (robot-holding ?c) ; The robot is holding the cloth
+             (pickupable ?c) ; The cloth is a pickupable household object
+         )
+      :effect
+         (and
+             (not (robot-holding ?c)) ; The robot is no longer holding the cloth
+             (not (furnitureAppliance-clear ?f)) ; The surface of the furniture or appliance is now dirty
+             (dirty ?c) ; The cloth is now dirty after cleaning
+         )
+   )
+
+   (:action vacuum
+      :parameters (
+         ?v ?c - householdObject ?f - furnitureAppliance
+      )
+      :precondition
+         (and
+             (robot-holding ?v) ; The robot is holding the vacuum cleaner
+             (pickupable ?v) ; The vacuum cleaner is a small household item that can be picked up
+             (robot-at ?f) ; The robot is at the location of the furniture appliance
+             (furnitureAppliance-clear ?f) ; The furniture appliance is clear for vacuuming
+             (not (dirty ?c)) ; The carpet is not clean (indicating the dust bin is not full)
+         )
+      :effect
+         (and
+             (not (robot-holding ?v)) ; The robot is no longer holding the vacuum cleaner
+             (dirty ?c) ; The carpet is now considered dirty after vacuuming
+         )
+   )
+
+   (:action empty-vacuum
+      :parameters (
+         ?v - householdObject ?t - furnitureAppliance
+      )
+      :precondition
+         (and
+             (robot-holding ?v) ; The robot must be holding the vacuum cleaner
+             (robot-at ?t) ; The robot must be standing next to the trash can
+             (openable ?t) ; The trash can must be openable
+             (opened ?t) ; The trash can must be opened
+         )
+      :effect
+         (and
+             (not (dirty ?v)) ; The dust bin of the vacuum cleaner is now empty
+             (robot-holding ?v) ; The robot is still holding the vacuum cleaner
          )
    )
 )
