@@ -1,0 +1,23 @@
+You now are revising your answer using feedback. Here is the feedback you outputted:
+
+{fb_msg}
+
+======================================
+
+End your final answers starting with "### TYPES" with the Python dictionary pair. The content must be enclosed with ``` ``` comment blocks in PDDL as so:
+
+### TYPES
+```
+{{
+    "type_1": "description",
+    "type_2": "description",
+    "type_3": "description",
+}}
+``` 
+
+======================================
+
+Apply the suggestions to your original answer:
+```
+{types}
+```

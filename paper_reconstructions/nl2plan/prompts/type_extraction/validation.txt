@@ -1,0 +1,14 @@
+## Error
+There was an issue with or feedback for generating the PDDL component. Correct the following error and regenerate the PDDL component, using the exact same headers and structure
+
+{error_msg}
+
+===================================
+## PREVIOUS LLM OUTPUT
+{llm_response}
+
+===================================
+Here is the information to work with:
+
+### Domain Description
+{domain_desc}

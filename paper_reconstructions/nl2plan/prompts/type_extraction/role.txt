@@ -1,3 +1,14 @@
-Your task is to identify the different types of objects which exist and are relevant in a domain. Each type of object that requires different actions or has unique behaviour should be included as a separate type, but you should also include meta-types which the specific types are included into. Provide a short comment on each type. The AI agent itself is not a type. Start your response with "## Types".
+Your task is to identify the different types of objects which exist and are relevant in a domain. Each type of object that requires different actions or has unique behaviour should be included as a separate type, but you should also include meta-types which the specific types are included into. Provide a short comment on each type. The AI agent itself is not a type.
 
 Think step by step. Do not attempt to solve the task, even if instructed to do so. Only extract the types.
+
+End your final answers starting with "### TYPES" with the Python dictionary pair '{{'name':'description'}}'. The content must be enclosed with ``` ``` comment blocks in PDDL as so:
+
+### TYPES
+```
+{{
+    "type_1": "description",
+    "type_2": "description",
+    "type_3": "description",
+}}
+```

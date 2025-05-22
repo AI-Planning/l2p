@@ -52,15 +52,27 @@ class FeedbackBuilder:
             raise ValueError(
                 "Invalid feedback_type. Expected 'human', 'llm', or 'hybrid'."
             )
-
-        if "no feedback" in feedback_msg.lower() or len(feedback_msg.strip()) == 0:
+            
+        no_feedback = self.feedback_state(info=feedback_msg)
+        
+        if no_feedback:
             return True, feedback_msg
 
         return False, feedback_msg
     
+    
+    def feedback_state(self, info: str):
+        """Confirms if feedback is needed."""
+        judgement_head = parse_heading(info, "JUDGMENT")
+        judgement_raw = combine_blocks(judgement_head)
+        if "no feedback" in judgement_raw.lower():
+            return True
+        else:
+            return False
+    
 
     def human_feedback(self, info: str):
-        """This enables human-in-the-loop feedback mechanism"""
+        """This enables human-in-the-loop feedback mechanism."""
 
         print("START OF INFO\n", info)
         print("\nEND OF INFO\n\n")
@@ -230,7 +242,7 @@ class FeedbackBuilder:
         action_name: str = None,
         action_desc: str = None,
         types: dict[str, str] | list[dict[str,str]] = None,
-    ) -> tuple[OrderedDict, OrderedDict, str]:
+    ) -> tuple[bool,str]:
         """
         Provides feedback to initial LLM output of a PDDL action parameter.
 
@@ -283,7 +295,7 @@ class FeedbackBuilder:
         types: dict[str, str] | list[dict[str,str]] = None,
         predicates: list[Predicate] = None,
         functions: list[Function] = None,
-    ) -> tuple[str, list[Predicate], str]:
+    ) -> tuple[bool,str]:
         """
         Provides feedback to initial LLM output of a PDDL action precondition.
 
@@ -343,7 +355,7 @@ class FeedbackBuilder:
         types: dict[str, str] | list[dict[str,str]] = None,
         predicates: list[Predicate] = None,
         functions: list[Function] = None,
-    ) -> tuple[str, list[Predicate], str]:
+    ) -> tuple[bool,str]:
         """
         Provides feedback to initial LLM output of a PDDL action effect.
 
