@@ -1,5 +1,5 @@
 # Role
-You will be given a set of which are used for a PDDL domain. You should evaluate if they make up all the actions necessary for the given domain, or if any new actions have to be created or existing actions removed. Describe your thought process and comments your suggestions. Focus only on the actions currently, predicates will be specified at a later date. Be careful not to over complicate any domains, adding actions simply for complexity/completeness when they're not needed for the domain should be avoided, we're making a simplified model. Keep the essentials. If the actions are well defined, simply respond with "No feedback" under header '# JUDGEMENT'.
+You will be given a set of which are used for a PDDL domain. You should evaluate if they make up all the actions necessary for the given domain, or if any new actions have to be created or existing actions removed. Describe your thought process and comments your suggestions. Focus only on the actions currently, predicates will be specified at a later date. Be careful not to over complicate any domains, adding actions simply for complexity/completeness when they're not needed for the domain should be avoided, we're making a simplified model. Keep the essentials. If the actions are well defined, simply respond with "No feedback" under header '### JUDGMENT' enclosed by ``` ``` comment blocks.
 
 Go through the following checklist:
 1: Are there additional actions needed for this domain? Some actions might be hard to spot, such as needing an action to validate a partial result before moving on.
@@ -53,7 +53,8 @@ Currently, there are a couple of trucks at the Chicago depot and we're trying to
 6: Should any action examples be modified?
     In the "move_vehicle" action, the example only illustrates where the vehicle is movin from. It should also include where it is moving to. Hence: Yes.
 
-# JUDGEMENT
+### JUDGMENT
+```
 My concrete suggestions are the following:
     - Add the following two vehicle-related actions:
         - enter_vehicle: A worker enters a vehicle while at the vehicle's location. Example: worker_7 enters truck_4 at house_6.
@@ -65,6 +66,7 @@ My concrete suggestions are the following:
         - create_roof_order: An administrator creates an order to build a roof at a house. The administrator doesn't have to be there. Example: administrator_4 creates an order to build roofs at house_10.
         - create_finalize_order: An administrator creates an order to finalize a house. The administrator doesn't have to be there. Example: administrator_5 creates an order to finalizes house_11.
     - Change the example for "move_vehicle" to: "truck_1 moves from house_1 to depot 1"
+```
 
 ## Example 2
 ### Domain
@@ -102,12 +104,14 @@ In this domain, the AI agent is a wildlife conservation management system. It mo
 6: Should any action examples be modified?
     The examples are all good. Therefore: No.
 
-# JUDGEMENT
+### JUDGMENT
+```
 I'd advice you change the following:
     - Remove the "generate_relocation_strategy" action.
     - Change the description of the following:
         - guard_location: A ranger guards a location from poachers. The ranger has to be at the location. Example: ranger_3 guards plain_2.
         - move_animal: An animal is made to move from a location to another. Requires a ranger to accompany it. Example: ranger_1 moves deer_1 from hill_1 to plain_1.
+```
 
 ## Example 3
 ### Domain
@@ -142,10 +146,13 @@ I've got a building with five floors and two elevators, and I want you to plan t
 6: Should any action examples be modified?
     All examples involve the relevant objects and clearly specify what happens. Thereby: No.
 
-# JUDGEMENT
+### JUDGMENT
+```
 No feedback.
+```
 
-# Task
+===================================
+Here is the task to work with:
 
 ## Domain
 {domain_desc}
@@ -155,5 +162,3 @@ No feedback.
 
 ## Actions
 {nl_actions}
-
-### Feedback

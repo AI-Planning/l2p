@@ -1,6 +1,6 @@
-End your final answer starting with "## OUTPUT" and then the Python dictionary pair '{'action_name':'action_description'}' as so:
+End your final answer starting with "### ACTIONS" and then the Python dictionary pair '{'action_name':'action_description'}' enclosed by comment blocks as so:
 
-## OUTPUT
+### ACTIONS
 ```
 {
     "action_name_1": "action_description",

@@ -106,7 +106,7 @@ def run_nl2plan(args, domain: str, problem: str):
             task_path="paper_reconstructions/nl2plan/prompts/type_extraction/task.txt",
         )
 
-        types = type_extraction.type_extraction(
+        types, llm_output = type_extraction.type_extraction(
             model=model,
             domain_desc=load_file(
                 f"paper_reconstructions/nl2plan/domains/{domain}/desc.txt"
@@ -118,80 +118,96 @@ def run_nl2plan(args, domain: str, problem: str):
         )
         
         print(types)
+        print(llm_output)
 
-    #     log += f"STEP ONE: TYPE EXTRACTION\n\n{types}\n\n"
+        types = {
+            'block': 'The primary objects that can be picked and placed by the robot arm.', 
+            'table': 'A flat surface where blocks can be placed.', 
+            'stack': 'Represents the relationship between blocks when one is placed on top of another.'
+            }
+        
 
-    #     # B. Hierarchy Construction
-    #     hierarchy_construction = HierarchyConstruction()
-    #     hierarchy_construction.prompt_template = set_prompt(
-    #         hierarchy_construction.prompt_template,
-    #         role_path="paper_reconstructions/nl2plan/prompts/hierarchy_construction/role.txt",
-    #         examples_path="paper_reconstructions/nl2plan/prompts/hierarchy_construction/examples",
-    #         task_path="paper_reconstructions/nl2plan/prompts/hierarchy_construction/task.txt",
-    #     )
+        log += f"STEP ONE: TYPE EXTRACTION\n\n{types}\n\n"
 
-    #     type_hierarchy = hierarchy_construction.hierarchy_construction(
-    #         model=model,
-    #         domain_desc=load_file(
-    #             f"paper_reconstructions/nl2plan/domains/{domain}/desc.txt"
-    #         ),
-    #         type_hierarchy_prompt=hierarchy_construction.prompt_template,
-    #         types=types,
-    #         feedback_prompt=load_file(
-    #             "paper_reconstructions/nl2plan/prompts/hierarchy_construction/feedback.txt"
-    #         ),
-    #     )
+        # B. Hierarchy Construction
+        hierarchy_construction = HierarchyConstruction()
+        hierarchy_construction.prompt_template = set_prompt(
+            hierarchy_construction.prompt_template,
+            role_path="paper_reconstructions/nl2plan/prompts/hierarchy_construction/role.txt",
+            examples_path="paper_reconstructions/nl2plan/prompts/hierarchy_construction/examples",
+            task_path="paper_reconstructions/nl2plan/prompts/hierarchy_construction/task.txt",
+        )
 
-    #     log += f"{separator}\nSTEP TWO: HIERARCHY CONSTRUCTION\n\n{type_hierarchy}\n\n"
+        type_hierarchy, llm_output = hierarchy_construction.hierarchy_construction(
+            model=model,
+            domain_desc=load_file(
+                f"paper_reconstructions/nl2plan/domains/{domain}/desc.txt"
+            ),
+            type_hierarchy_prompt=hierarchy_construction.prompt_template,
+            types=types,
+            feedback_prompt=load_file(
+                "paper_reconstructions/nl2plan/prompts/hierarchy_construction/feedback.txt"
+            ),
+        )
 
-    #     # C. Action Extraction
-    #     action_extraction = ActionExtraction()
-    #     action_extraction.prompt_template = set_prompt(
-    #         action_extraction.prompt_template,
-    #         role_path="paper_reconstructions/nl2plan/prompts/action_extraction/role.txt",
-    #         examples_path="paper_reconstructions/nl2plan/prompts/action_extraction/examples",
-    #         task_path="paper_reconstructions/nl2plan/prompts/action_extraction/task.txt",
-    #     )
+        print(type_hierarchy)
+        print(llm_output)
 
-    #     nl_actions = action_extraction.action_extraction(
-    #         model=model,
-    #         domain_desc=load_file(
-    #             f"paper_reconstructions/nl2plan/domains/{domain}/desc.txt"
-    #         ),
-    #         action_extraction_prompt=action_extraction.prompt_template,
-    #         type_hierarchy=type_hierarchy,
-    #         feedback_prompt=load_file(
-    #             "paper_reconstructions/nl2plan/prompts/action_extraction/feedback.txt"
-    #         ),
-    #     )
+        log += f"{separator}\nSTEP TWO: HIERARCHY CONSTRUCTION\n\n{type_hierarchy}\n\n"
 
-    #     log += f"{separator}\nSTEP THREE: ACTION EXTRACTION\n\n{nl_actions}\n\n"
+        # C. Action Extraction
+        action_extraction = ActionExtraction()
+        action_extraction.prompt_template = set_prompt(
+            action_extraction.prompt_template,
+            role_path="paper_reconstructions/nl2plan/prompts/action_extraction/role.txt",
+            examples_path="paper_reconstructions/nl2plan/prompts/action_extraction/examples",
+            task_path="paper_reconstructions/nl2plan/prompts/action_extraction/task.txt",
+        )
 
-    #     # D. Action Construction
-    #     action_construction = ActionConstruction()
-    #     action_construction.prompt_template = set_prompt(
-    #         action_construction.prompt_template,
-    #         role_path="paper_reconstructions/nl2plan/prompts/action_construction/role.txt",
-    #         examples_path="paper_reconstructions/nl2plan/prompts/action_construction/examples",
-    #         task_path="paper_reconstructions/nl2plan/prompts/action_construction/task.txt",
-    #     )
+        nl_actions, llm_output = action_extraction.action_extraction(
+            model=model,
+            domain_desc=load_file(
+                f"paper_reconstructions/nl2plan/domains/{domain}/desc.txt"
+            ),
+            action_extraction_prompt=action_extraction.prompt_template,
+            type_hierarchy=type_hierarchy,
+            feedback_prompt=load_file(
+                "paper_reconstructions/nl2plan/prompts/action_extraction/feedback.txt"
+            ),
+        )
 
-    #     (
-    #         actions,
-    #         predicates,
-    #     ) = action_construction.action_construction(
-    #         model=model,
-    #         domain_desc=load_file(
-    #             f"paper_reconstructions/nl2plan/domains/{domain}/desc.txt"
-    #         ),
-    #         act_constr_prompt=action_construction.prompt_template,
-    #         nl_actions=nl_actions,
-    #         type_hierarchy=type_hierarchy,
-    #         feedback_prompt=load_file(
-    #             "paper_reconstructions/nl2plan/prompts/action_construction/feedback.txt"
-    #         ),
-    #         max_attempts=2,
-    #     )
+        log += f"{separator}\nSTEP THREE: ACTION EXTRACTION\n\n{nl_actions}\n\n"
+
+        print(nl_actions)
+        print(llm_output)
+
+        # D. Action Construction
+        action_construction = ActionConstruction()
+        action_construction.prompt_template = set_prompt(
+            action_construction.prompt_template,
+            role_path="paper_reconstructions/nl2plan/prompts/action_construction/role.txt",
+            examples_path="paper_reconstructions/nl2plan/prompts/action_construction/examples",
+            task_path="paper_reconstructions/nl2plan/prompts/action_construction/task.txt",
+        )
+
+        (
+            actions,
+            predicates,
+        ) = action_construction.action_construction(
+            model=model,
+            domain_desc=load_file(
+                f"paper_reconstructions/nl2plan/domains/{domain}/desc.txt"
+            ),
+            act_constr_prompt=action_construction.prompt_template,
+            nl_actions=nl_actions,
+            type_hierarchy=type_hierarchy,
+            feedback_prompt=load_file(
+                "paper_reconstructions/nl2plan/prompts/action_construction/feedback.txt"
+            )
+        )
+
+        print(format_actions(actions))
+        print(format_expression(predicates))
 
     #     log += f"{separator}\n"
     #     log += "STEP FOUR: ACTION CONSTRUCTION\n\n"
@@ -245,13 +261,15 @@ def run_nl2plan(args, domain: str, problem: str):
     #     types_str = "\n".join(pruned_types)
 
     #     # generate PDDL domain and problem file
-    #     pddl_domain = domain_builder.generate_domain(
-    #         domain_name=args.domain,
-    #         requirements=args.requirements,
-    #         types=types_str,
-    #         predicates=predicate_str,
-    #         actions=actions,
-    #     )
+        pddl_domain = domain_builder.generate_domain(
+            domain_name=args.domain,
+            requirements=args.requirements,
+            types=type_hierarchy,
+            predicates=predicates,
+            actions=actions,
+        )
+
+        print(pddl_domain)
 
     #     problem_name = args.domain + "_problem"
     #     pddl_problem = task_builder.generate_task(
@@ -266,11 +284,11 @@ def run_nl2plan(args, domain: str, problem: str):
     #     log += f"\n\nPDDL PROBLEM:\n{pddl_problem}"
 
     #     # write domain and problem files
-    #     domain_file = f"{main_directory}/domain.pddl"
+        # domain_file = f"{main_directory}/domain.pddl"
     #     problem_file = f"{main_directory}/problem.pddl"
 
-    #     with open(domain_file, "w") as f:
-    #         f.write(pddl_domain)
+        # with open(domain_file, "w") as f:
+        #     f.write(pddl_domain)
     #     with open(problem_file, "w") as f:
     #         f.write(pddl_problem)
 

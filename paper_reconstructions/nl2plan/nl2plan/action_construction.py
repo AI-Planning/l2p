@@ -20,21 +20,89 @@ class ActionConstruction:
         self.prompt_template = PromptBuilder()
         self.domain_builder = DomainBuilder()
         self.feedback_builder = FeedbackBuilder()
+        self.syntax_validator = SyntaxValidator()
+        self.syntax_validator.unsupported_keywords = []
+        self.syntax_validator.error_types = [
+            'validate_header', 'validate_duplicate_headers', 'validate_unsupported_keywords',
+            'validate_params', 'validate_duplicate_predicates', 'validate_types_predicates',
+            'validate_format_predicates', 'validate_usage_action'
+            ]
+        
+    def generate_validation_prompt(
+            self,
+            action_name: str,
+            action_desc: str,
+            types: list[dict[str,str]],
+            predicates: list[Predicate],
+            original_llm_output: str,
+            validation_info: tuple[bool, str]
+    ) -> str:
+        prompt = load_file("paper_reconstructions/nl2plan/prompts/action_construction/error.txt")
+
+        types_str = format_types_to_string(types) if types else "No types provided."
+        preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
+
+        prompt = (
+            prompt
+            .replace("{error_msg}", validation_info[1])
+            .replace("{llm_response}", original_llm_output)
+            .replace("{action_name}", action_name)
+            .replace("{action_desc}", action_desc)
+            .replace("{types}", types_str)
+            .replace("{predicates}", preds_str)
+        )
+
+        return prompt
+    
+
+    def generate_feedback_revision_prompt(
+            self,
+            fb_msg: str,
+            domain_desc: str,
+            action: Action,
+            action_desc: str,
+            predicates: list[Predicate],
+            types: list[dict[str,str]]
+    ) -> str:
+        prompt = load_file("paper_reconstructions/nl2plan/prompts/action_construction/feedback_revision.txt")
+
+        act_name_str = action["name"] if action else "No action name provided."
+        params_str = "\n".join([f"{name} - {type}" for name, type in action["params"].items()]) if action else "No parameters provided"
+        prec_str = action["preconditions"] if action else "No preconditions provided."
+        eff_str = action["effects"] if action else "No effects provided."
+
+        types_str = format_types_to_string(types) if types else "No types provided."
+        preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
+
+        prompt = (
+            prompt
+            .replace("{fb_msg}", fb_msg)
+            .replace("{domain_desc}", domain_desc)
+            .replace("{action_name}", act_name_str)
+            .replace("{action_desc}", action_desc)
+            .replace("{action_params}", params_str)
+            .replace("{action_preconditions}", prec_str)
+            .replace("{action_effects}", eff_str)
+            .replace("{predicates}", preds_str)
+            .replace("{types}", types_str)
+        )
+
+        return prompt
+
 
     def construct_action(
         self,
         model: BaseLLM,
         domain_desc: str,
         act_constr_prompt: PromptBuilder,
-        action_list: str,
+        action_list: list[str],
         action_name: str,
         action_desc: str,
         predicates: list[Predicate],
-        type_hierarchy: dict[str, str],
-        syntax_validator: SyntaxValidator,
+        type_hierarchy: list[dict[str, str]],
         feedback_prompt: str = None,
-        max_attempts=2,
-        feedback=True,
+        max_feedback_retries: int = 1,
+        max_syntax_retries: int = 3,
     ) -> tuple[Action, list[Predicate]]:
         """
         Construct a single action from a given action description using LLM language model.
@@ -49,7 +117,7 @@ class ActionConstruction:
             predicates (list[Predicate]): A list of predicates.
             syntax_validator (SyntaxValidator): The PDDL syntax validator.
             feedback_prompt (str): Feedback template.
-            max_iters (int): Maximum number of iterations to construct action. Defaults to 8.
+            max_attempts (int): Maximum number of iterations to construct action. Defaults to 3.
             feedback (bool): Whether to request feedback from LLM. Defaults to True.
 
         Returns:
@@ -75,81 +143,70 @@ class ActionConstruction:
             feedback_prompt = feedback_prompt.replace("{action_name}", action_name)
         elif feedback:
             raise ValueError("Feedback template is required when feedback is enabled.")
+        
 
-        # run through single action creation + feedback and validation check
-        for iter in range(1, max_attempts + 1 + (feedback is not None)):
+        i = 0
+        no_feedback = False
+        llm_input_prompt = action_prompt
+
+        while not no_feedback and i <= max_feedback_retries:
             print(f"Generating PDDL of action: `{action_name}`")
-
-            # syntax check runs directly inside L2P extraction function
-            try:
-                action, new_predicates, llm_response, validation_info = (
-                    self.domain_builder.formalize_pddl_action(
-                        model=model,
-                        domain_desc=domain_desc,
-                        prompt_template=action_prompt,
-                        action_name=action_name,
-                        action_desc=action_desc,
-                        action_list=action_list,
-                        predicates=predicates,
-                        types=format_types(type_hierarchy),
-                        syntax_validator=syntax_validator,
-                    )
+            
+            # inner loop: repeat until syntax validator passes
+            max_validation_retries = max_syntax_retries
+            valid = False
+            while not valid and max_validation_retries > 0:
+                action, new_predicates, llm_output, validation_info = self.domain_builder.formalize_pddl_action(
+                    model=model,
+                    domain_desc=domain_desc,
+                    prompt_template=llm_input_prompt,
+                    action_name=action_name,
+                    action_desc=action_desc,
+                    action_list=action_list,
+                    types=type_hierarchy,
+                    predicates=predicates,
+                    extract_new_preds=True,
+                    syntax_validator=self.syntax_validator
                 )
 
-                no_error, error_msg = validation_info
-
-            except Exception as e:
-                no_error = False
-                error_msg = str(e)
-
-            # if validation passes, go through feedback checklist
-            if no_error:
-                if feedback is not None:
-
-                    action, new_predicates, response_fb, _, no_fb = (
-                        self.feedback_builder.pddl_action_feedback(
-                            model=model,
-                            domain_desc=domain_desc,
-                            llm_response=llm_response,
-                            feedback_template=feedback_prompt,
-                            feedback_type="llm",
-                            action=action,
-                            predicates=predicates,
-                            types=type_hierarchy,
-                        )
-                    )
-
-                    # if no feedback, then action is complete
-                    if no_fb == True:
-                        break
-
-            # if validation does not pass, then generate error messages to run through LLM
-            else:
-                with open(
-                    "paper_reconstructions/nl2plan/prompts/action_construction/error.txt"
-                ) as f:
-                    error_template = f.read().strip()
-                error_prompt = error_template.replace("{action_name}", action_name)
-                error_prompt = error_prompt.replace("{action_desc}", action_desc)
-                error_prompt = error_prompt.replace("{predicates}", predicate_str)
-                error_prompt = error_prompt.replace("{error_msg}", error_msg)
-                error_prompt = error_prompt.replace("{llm_response}", llm_response)
-
-                action, new_predicates, llm_response, validation_info = (
-                    self.domain_builder.formalize_pddl_action(
-                        model=model,
-                        domain_desc=domain_desc,
-                        prompt_template=error_prompt,
+                valid = validation_info[0]
+                if not valid:
+                    llm_input_prompt = self.generate_validation_prompt(
                         action_name=action_name,
                         action_desc=action_desc,
-                        action_list=action_list,
-                        predicates=predicates,
                         types=type_hierarchy,
-                        syntax_validator=syntax_validator,
+                        predicates=predicates,
+                        original_llm_output=llm_output,
+                        validation_info=validation_info
                     )
+                    max_validation_retries -= 1
+            
+            if i < max_feedback_retries:
+                # feedback mechanism: after valid generation
+                no_feedback, fb_msg = self.feedback_builder.pddl_action_feedback(
+                    model=model,
+                    domain_desc=domain_desc,
+                    llm_output=llm_output,
+                    feedback_template=feedback_prompt,
+                    feedback_type="llm",
+                    action=action,
+                    types=type_hierarchy,
+                    predicates=predicates
                 )
+                if not no_feedback:
+                    llm_input_prompt = self.generate_feedback_revision_prompt(
+                        fb_msg=fb_msg,
+                        domain_desc=domain_desc,
+                        action=action,
+                        action_desc=action_desc,
+                        predicates=predicates,
+                        types=type_hierarchy
+                    )
+                    i += 1
+            else: break
 
         return action, new_predicates
+
 
     def action_construction(
         self,
@@ -157,10 +214,11 @@ class ActionConstruction:
         domain_desc: str,
         act_constr_prompt: PromptBuilder,
         nl_actions: dict[str, str],
-        type_hierarchy: dict[str, str],
+        type_hierarchy: list[dict[str, str]],
         feedback_prompt: str | None = None,
-        max_attempts: int = 2,
-        max_iters: int = 2,
+        max_syntax_retries: int = 3,
+        max_feedback_retries: int = 1,
+        max_iters: int = 1,
     ) -> tuple[list[Action], list[Predicate]]:
         """
         This function loops through all the natural language actions found in the
@@ -182,11 +240,7 @@ class ActionConstruction:
             - predicates (list[Predicates]): list of predicates
         """
 
-        action_list = "\n".join(
-            [f"- {name}: {desc}" for name, desc in nl_actions.items()]
-        )
-
-        syntax_validator = SyntaxValidator()  # create syntax validator to run checks on
+        action_list = [f"{name}: {desc}" for name, desc in nl_actions.items()]
 
         # run through main loop over each action
         predicates = []
@@ -205,10 +259,9 @@ class ActionConstruction:
                     action_desc=action_desc,
                     predicates=predicates,
                     type_hierarchy=type_hierarchy,
-                    syntax_validator=syntax_validator,
                     feedback_prompt=feedback_prompt,
-                    max_attempts=max_attempts,
-                    feedback=True,
+                    max_feedback_retries=max_feedback_retries,
+                    max_syntax_retries=max_syntax_retries,
                 )
                 actions.append(action)
                 predicates.extend(new_predicates)

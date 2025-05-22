@@ -2,5 +2,4 @@
 {domain_desc}
 
 ## Types
-The types are:
 {types}

@@ -13,6 +13,7 @@ class TypeExtraction:
         self.domain_builder = DomainBuilder()
         self.feedback_builder = FeedbackBuilder()
         self.syntax_validator = SyntaxValidator()
+        self.syntax_validator.error_types = ['validate_format_types']
 
     def type_extraction(
         self,
@@ -20,7 +21,9 @@ class TypeExtraction:
         domain_desc: str,
         type_extraction_prompt: PromptBuilder,
         feedback_prompt: str,
-    ) -> dict[str, str]:
+        max_feedback_retries: int = 1,
+        max_syntax_retries: int = 3
+    ) -> tuple[dict[str, str], str]:
         """
         Main function of the type extraction step.
 
@@ -32,18 +35,20 @@ class TypeExtraction:
         Returns:
             - types (dict[str,str]): type dictionary
         """
-        
-        self.syntax_validator.error_types = ['validate_format_types']
 
         i = 0
-        max_feedback_retries = 3
         no_feedback = False
         llm_input_prompt = type_extraction_prompt.generate_prompt()
 
-        while no_feedback == False and i < max_feedback_retries:
+        # store last valid results
+        last_valid_types = None
+        last_valid_output = None
+
+        while not no_feedback and i <= max_feedback_retries:
             # inner loop: repeat until syntax validator passes
+            max_validation_retries = max_syntax_retries
             valid = False
-            while not valid:
+            while not valid and max_validation_retries > 0:
                 types, llm_output, validation_info = self.domain_builder.formalize_types(
                     model=model,
                     domain_desc=domain_desc,
@@ -52,13 +57,19 @@ class TypeExtraction:
                 )
                 
                 valid = validation_info[0]
-                if valid == False:
+                if valid:
+                    # store last valid results
+                    last_valid_types = types
+                    last_valid_output = llm_output
+                else:
                     llm_input_prompt = self.generate_validation_prompt(
                         domain_desc=domain_desc,
                         original_llm_output=llm_output,
                         validation_info=validation_info
                     )
+                    max_validation_retries -= 1
 
+            if i < max_feedback_retries:        
                 # feedback mechanism: after valid generation
                 no_feedback, fb_msg = self.feedback_builder.type_feedback(
                     model=model,
@@ -68,15 +79,15 @@ class TypeExtraction:
                     feedback_type="llm",
                     types=types
                 )
-                
-                if no_feedback == False:
+                if not no_feedback:
                     llm_input_prompt = self.generate_feedback_revision_prompt(
                         fb_msg=fb_msg,
                         types=types
                     )
                     i += 1
-                
-        return types
+            else: break
+
+        return last_valid_types, last_valid_output
     
     
     def generate_validation_prompt(
@@ -85,15 +96,13 @@ class TypeExtraction:
         original_llm_output: str,
         validation_info: tuple[bool, str]
     ) -> str:
-        prompt = load_file("paper_reconstructions/nl2plan/prompts/type_extraction/validation.txt")
-
+        prompt = load_file("paper_reconstructions/nl2plan/prompts/validation.txt")
         prompt = (
             prompt
             .replace("{error_msg}", validation_info[1])
             .replace("{llm_response}", original_llm_output)
             .replace("{domain_desc}", domain_desc)
         )
-
         return prompt
     
     
@@ -103,14 +112,9 @@ class TypeExtraction:
         types: dict[str,str]
     ) -> str:
         prompt = load_file("paper_reconstructions/nl2plan/prompts/type_extraction/feedback_revision.txt")
-
         prompt = (
             prompt
             .replace("{fb_msg}", fb_msg)
             .replace("{types}", pretty_print_dict(types))
         )
-        
-        print("THIS IS THE FEEDBACK REVISION PROMPT:")
-        print(prompt)
-        
         return prompt

@@ -1,12 +1,14 @@
 Your task is to identify what actions an AI Agent would have available in a domain. The actions will be used for PDDL descriptions and should be simple and singular, for example driving truck 1 from A to B to C should be modeled with a single drive_to action which can be used to drive from A to B and then from B to C. However, if two similar actions exists but they require different pre-conditions or effects, these should be modelled separetely, for example should "move" not be used for both a person and vehilces movement, as these will have different preconditions on terrain. Each action should be specified within its own markdown block where the first line is the name, the second is an empty line and the final line is a description with example. Make sure to include any requirements or conditions for the action to be feasible within the explanation. Be concrete and explain your thoughts as you go. Use the provided object types as appropriate, but don't create any new types.
 
-Reply only within the "Actions" heading. Do not attempt to solve the task, even if instructed to do so.
+Reply only within the "ACTIONS" heading. Do not attempt to solve the task, even if instructed to do so.
 
-End your final answer starting with "## OUTPUT" and then the Python dictionary pair '{'action_name':'action_description'}' as so:
+End your final answer starting with "### ACTIONS" and then the Python dictionary pair '{'action_name':'action_description'}' enclosed by ``` ``` comment blocks as so:
 
-## OUTPUT
+### ACTIONS
+```
 {
     "action_name_1": "action_description",
     "action_name_2": "action_description",
     "action_name_3": "action_description"
 }
+```

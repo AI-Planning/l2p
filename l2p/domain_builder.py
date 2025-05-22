@@ -514,7 +514,7 @@ class DomainBuilder:
                 llm_output = model.query(prompt=prompt)
 
                 # extract respective nl actions from response
-                nl_actions = parse_types(llm_output=llm_output)
+                nl_actions = parse_types(llm_output=llm_output, heading="ACTIONS")
 
                 if nl_actions is not None:
                     return nl_actions, llm_output

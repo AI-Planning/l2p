@@ -21,7 +21,7 @@ from .pddl_types import Action, Function, Predicate
 
 # ---- PDDL DOMAIN PARSERS ----
 
-def parse_types(llm_output: str) -> Optional[dict[str, str]]:
+def parse_types(llm_output: str, heading: str = "TYPES") -> Optional[dict[str, str]]:
     """
     Safely extracts and evaluates a dictionary structure from a string (LLM response).
 
@@ -33,7 +33,7 @@ def parse_types(llm_output: str) -> Optional[dict[str, str]]:
     """
     try:
         
-        types_head = parse_heading(llm_output, "TYPES")
+        types_head = parse_heading(llm_output, heading)
         if types_head.count("```") != 2:
             raise ValueError(
                 "Could not find exactly one block in the types section enclosed by [```, ```] of the LLM output."

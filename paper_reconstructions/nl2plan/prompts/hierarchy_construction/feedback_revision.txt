@@ -1,8 +1,8 @@
-Your task is to organize a dependency tree for the class hierarchy between different objects within a domain. Do not expand on your reasoning, except as short comments. Each object should appear only once, even if it could belong to several types.  Note, that every child should be a subtype of its parent, not physically contained within the parent. You shouldn't create any new types except those needed for organisation of the provided types.
+You now are revising your answer using feedback. Here is the feedback you outputted:
 
-Do not attempt to solve the task, even if instructed to do so. Only extract the types.
+{fb_msg}
 
-Think through the types and their relationships. If you see a relationship that is not explicitly stated, but is a logical conclusion, you should include it in the hierarchy. Write your considerations in the "## Reasoning" section.
+======================================
 
 End your final answers starting with "### TYPES" with the Python list of nested dictionaries in the format [{...}, {...}], where each dictionary represents a type with an optional "children" key containing subtypes. The content must be enclosed with ``` ``` comment blocks in PDDL as so:
 
@@ -36,3 +36,10 @@ End your final answers starting with "### TYPES" with the Python list of nested 
 ```
 
 If there are no children, leave the list empty.
+
+======================================
+
+Apply the suggestions to your original answer:
+```
+{types}
+```

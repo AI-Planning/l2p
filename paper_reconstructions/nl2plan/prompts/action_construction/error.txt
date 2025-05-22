@@ -1,17 +1,27 @@
 ## Error
-There was an issue with or feedback for generating the specified action. Correct the following error and regenerate the action, using the exact same headers. Remember that you MUST reuse all the headers ("### Action Parameters", "### Action Preconditions", "### Action Effects" and "### New Predicates")
+There was an issue with or feedback for generating the specified action. Correct the following error and regenerate the action, using the exact same headers with its content enclosed by ``` ``` comment blocks. Remember that you MUST reuse all the headers ("### Action Parameters", "### Action Preconditions", "### Action Effects" and "### New Predicates")
 
 {error_msg}
 
 Make sure to reply with all four parts of the action: parameters, preconditions, effects and new predicates. Also, start your response with a "### Response" header to give your thoughts about this error message.
 
-## Action
+======================================
+
+## Action name
 {action_name}
 
+## Action description
 {action_desc}
+
+## Available Types
+{types}
 
 ### Available Predicates
 {predicates}
+
+======================================
+
+Please correct this:
 
 ### Original Response
 {llm_response}

@@ -1,5 +1,5 @@
 # Role
-You are a PDDL expert and will be given a set of PDDL actions to correct and give feedback and advice on. Consider not only if the actions are technically correct, but also whether they are defined following good standards such as flexibility and clarity. Overly specifying types by use of "is-type" predicates should generally be avoided. Remember that the preconditions should make sure that only valid objects are passed to the action, we can't assume anything except the provided types. Don't assume any restrictions beyond those specified by the domain itself.  Don't unnecessarily overcomplicate the actions. Note that creating new options isn't possible. If the action is well defined, respond with "No feedback" under header '# JUDGEMENT'. 
+You are a PDDL expert and will be given a set of PDDL actions to correct and give feedback and advice on. Consider not only if the actions are technically correct, but also whether they are defined following good standards such as flexibility and clarity. Overly specifying types by use of "is-type" predicates should generally be avoided. Remember that the preconditions should make sure that only valid objects are passed to the action, we can't assume anything except the provided types. Don't assume any restrictions beyond those specified by the domain itself.  Don't unnecessarily overcomplicate the actions. Note that creating new options isn't possible. If the action is well defined, respond with "no feedback" under header '### JUDGMENT'. 
 
 IMPORTANT: Duplicate predicates are acceptable and should not be considered as a suggestion/judge to fix.
 
@@ -41,7 +41,6 @@ A ranger guards a location from poachers. The ranger has to be at the location. 
 - ?l - location: The location to guard.
 ```
 
-
 #### Action Preconditions
 ```
 (and
@@ -79,7 +78,8 @@ A ranger guards a location from poachers. The ranger has to be at the location. 
 6: Should any predicate be used in a symmetrical manner?
     None of the predicates are symmetrical. Therefore: No.
 
-# JUDGEMENT
+### JUDGMENT
+```
 My concrete suggestions are:
     - Remove the check for "(at ?l ?l)" from the preconditions.
     - Remove "(not (at ?r ?l))" from the effect.
@@ -87,12 +87,13 @@ My concrete suggestions are:
         - (guarding ?r - ranger): True if the ranger ?r is guarding anything.
         - (guarded ?l - location): True if the location ?l is guarded by anyone.
     - This results in the following effect:
-        ```
+        """
         (and
             (guarding ?r)
             (guarded ?l)
         )
-        ```
+        """
+```
 
 ## Example 2
 ### Domain
@@ -160,17 +161,19 @@ A truck driver from point A to point B. They need to be connected by a road and 
 6: Should any predicate be used in a symmetrical manner?
     Since roads are undirected, we need to check if there is a road from ?from to ?to or vice versa. Not doing so creates brittle PDDL. This should always be done under symmetry. As such: Yes.
 
-# JUDGEMENT
+### JUDGMENT
+```
 You should take the following concrete steps:
     - Check that the truck is actually at the starting location by adding "(at ?t ?from)" to the precondition.
     - Make sure that both directions are checked for a road by replacing "(road_between ?from ?to)" with "(or (road_between ?from ?to) (road_between ?to ?from))"
     - This would result in the following precondition:
-        ```
+        """
         (and
             (at ?t ?from)
             (or (road_between ?from ?to) (road_between ?to ?from))
         )
-        ``` 
+        """
+```
 
 ## Example 3
 ### Domain
@@ -234,8 +237,10 @@ An elevator picks up a person at a floor where they both are. Example: elevator_
 6: Should any predicate be used in a symmetrical manner?
     None of the predicates have symmetries of that sort. The answer is: No. 
 
-# JUDGEMENT
+### JUDGMENT
+```
 Therefore: No feedback.
+```
 
 # Task
 ## Domain

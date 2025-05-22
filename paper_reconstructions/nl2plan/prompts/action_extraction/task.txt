@@ -1,6 +1,3 @@
-These are all the actions needed for the domain. 
-
-# Task
 ## Domain
 {domain_desc}
 

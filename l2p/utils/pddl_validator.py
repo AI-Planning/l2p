@@ -134,12 +134,12 @@ class SyntaxValidator:
 
                 if not any(param_type in t for t in types.keys()):
                     feedback_msg = (
-                        f"[ERROR]: There is an invalid object type `{param_type}` for the parameter `{param_name}` not found in the types {list(types.keys())}. Parameter types should align with the provided types, otherwise just leave parameter untyped."
-                        f"\n\nMake sure each line defines a parameter using the format:"
-                        f"\n?<parameter_name> - <type_name>: <description of parameter>"
-                        f"\n\nFor example:"
-                        f"\n`?c - car: a car that can drive`"
-                        f"\nor `?c: a car that can drive` if not using a type"
+                        f"[ERROR]: There is an invalid object type `{param_type}` for the parameter `{param_name}` not found in the types {list(types.keys())} found in the action parameters section. Parameter types should align with the provided types, otherwise just leave parameter untyped.\n\n"
+                        f"Make sure each line defines a parameter using the format: "
+                        f"`?<parameter_name> - <type_name>: <description of parameter>`\n\n"
+                        f"For example:\n"
+                        f"`?c - car: a car that can drive`\n"
+                        f"or `?c: a car that can drive` if not using a type"
                     )
                     return False, feedback_msg
 
@@ -956,8 +956,9 @@ class SyntaxValidator:
                     # validate if type exists in :types
                     if not var_type or var_type not in types:
                         return False, (
-                            f"[ERROR]: Unknown or missing type `{var_type}` for `{var}` in quantifier `{keyword}`\n\n"
-                            f"Parsed line: {format_pddl_expr(node)}"
+                            f"[ERROR]: Unknown type declared `{var_type}` for `{var}` in quantifier `{keyword}`\n\n"
+                            f"Parsed line: {format_pddl_expr(node)}\n\n"
+                            f"Make sure that the PDDL actions do not contain any type declarations. For example: `(drive ?c)` is correct, but `(drive ?c - car)` is invalid"
                         )
                     new_scope[var] = var_type # update variable scope environment
                 return traverse(body, new_scope)

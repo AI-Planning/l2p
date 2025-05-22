@@ -87,49 +87,49 @@ As such, the corrected hierarchy becomes:
         - depot: A type of location.
 ```
 
-Organize a dependency tree for the class hierarchy between different objects within a PDDL domain. Do not expand on your reasoning, except as short comments. Each object should appear only once, even if it could belong to several types.  Note, that every child should be a subtype of its parent, not physically contained within the parent. You shouldn't create any new types except those needed for organisation of the provided types.
-
-End your final answer starting with "## OUTPUT" and then the Python dictionary pair '{'name':'description'}' as so:
-
-## OUTPUT
-{
-    "object": "Object is always root, everything is an object",
-    "children": [
-        {
-            "worker": "A type of object consisting of humans who do things.",
-            "children": [
-                {"administrator": "A type of worker.", "children": []},
-                {"general_worker": "A type of worker.", "children": []}
-            ]
-        },
-        {
-            "order": "A type of object consisting of instructions.", "children": []
-        },
-        {
-            "vehicle": "A type of object consisting of vehicles.", "children": []
-        },
-        {
-            "house_component": "A type of object consisting of the components of a house.",
-            "children": [
-                {"wall": "A type of house_component.", "children": []},
-                {"floor": "A type of house_component.", "children": []},
-                {"roof": "A type of house_component.", "children": []}
-            ]
-        },
-        {
-            "location": "A type of object consisting of places which can be visited.",
-            "children": [
-                {
-                    "house": "A type of location.", 
-                    "children": [
-                        {"mansion": "A type of house.", "children": []},
-                        {"library": "A type of house.", "children": []},
-                    ]
-                },
-                {
-                    "depot": "A type of location.", "children": []
-                }
-            ]
-        }
-    ]
-}
+### TYPES
+```
+[
+    {
+        "object": "Object is always root, everything is an object",
+        "children": [
+            {
+                "worker": "A type of object consisting of humans who do things.",
+                "children": [
+                    {"administrator": "A type of worker.", "children": []},
+                    {"general_worker": "A type of worker.", "children": []}
+                ]
+            },
+            {
+                "order": "A type of object consisting of instructions.", "children": []
+            },
+            {
+                "vehicle": "A type of object consisting of vehicles.", "children": []
+            },
+            {
+                "house_component": "A type of object consisting of the components of a house.",
+                "children": [
+                    {"wall": "A type of house_component.", "children": []},
+                    {"floor": "A type of house_component.", "children": []},
+                    {"roof": "A type of house_component.", "children": []}
+                ]
+            },
+            {
+                "location": "A type of object consisting of places which can be visited.",
+                "children": [
+                    {
+                        "house": "A type of location.", 
+                        "children": [
+                            {"mansion": "A type of house.", "children": []},
+                            {"library": "A type of house.", "children": []},
+                        ]
+                    },
+                    {
+                        "depot": "A type of location.", "children": []
+                    }
+                ]
+            }
+        ]
+    }
+]
+```

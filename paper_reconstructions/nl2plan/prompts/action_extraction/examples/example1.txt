@@ -106,8 +106,6 @@ My concrete suggestions are the following:
 ## Response
 The feedback raises some valid points, but not all are correct. Splitting the "create_order" action is indeed better PDDL modelling. Similarly, the "enter_vehicle" and "exit_vehicle" do have to be provided. However, the build_floor action is needed for the domain and should be kept.
 
-## Actions
-
 ### Re-Iterated Actions
 These are the actions which are kept unchanged from before.
 
@@ -182,7 +180,10 @@ create_finalize_order
 An administrator creates an order to build the finalize at a location. Example: administrator_9 creates a finalize_order for house_14.
 ```
 
-## OUTPUT
+Here is the final output:
+
+### ACTIONS
+```
 {
     "build_floor": "A worker performs an order to build a floor. Requires the worker to be there and for a build_floor_order for the house to exist. Example: worker_1 builds a floor at house_1 given that a build_floor_order for it exists.",
     "build_wall": "A worker performs an order to build a wall. Requires the worker to be there and for a build_wall_order for the house to exist. Example: worker_2 builds a wall at house_2 given that a build_wall_order for it exists.",
@@ -196,3 +197,4 @@ An administrator creates an order to build the finalize at a location. Example: 
     "create_roof_order": "An administrator creates an order to build the roof at a location. Example: administrator_8 creates a build_roof_order for house_13.",
     "create_finalize_order": "An administrator creates an order to build the finalize at a location. Example: administrator_9 creates a finalize_order for house_14.",
 }
+```

@@ -1,0 +1,73 @@
+You now are revising your answer using feedback. Here is the feedback you outputted:
+
+{fb_msg}
+
+======================================
+
+End your final answers underneath the headers: '### Action Parameters,' '### Action Preconditions,' '### Action Effects,' and '### New Predicates' with ``` ``` comment blocks in PDDL as so:
+
+### Action Parameters
+```
+- ?t - type: 'parameter_description'
+```
+
+### Action Preconditions
+```
+(and
+    (predicate_name ?t1 ?t2) ; COMMENT DESCRIPTION
+)
+```
+
+### Action Effects
+```
+(and
+    (predicate_name ?t1 ?t2) ; COMMENT DESCRIPTION
+)
+```
+
+### New Predicates
+```
+- (predicate_name ?t1 - type_1 ?t2 - type_2): 'predicate_description'
+``` 
+
+If there are no new predicates created, keep an empty space enclosed ```  ``` with the '### New Predicates' header.
+
+======================================
+
+Here are the information to work with:
+
+## Domain
+{domain_desc}
+
+## Available Types
+{types}
+
+## Available Predicates
+The following are the predicates which could be used:
+{predicates}
+
+You can also suggest new predicates to add.
+
+## Action
+{action_name}
+
+{action_desc}
+
+======================================
+
+Apply the suggestions to your original answer:
+
+### Action Parameters
+```
+{action_params}
+```
+
+### Action Preconditions
+```
+{action_preconditions}
+```
+
+### Action Effects
+```
+{action_effects}
+```

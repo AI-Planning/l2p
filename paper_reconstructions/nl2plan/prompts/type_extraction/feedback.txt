@@ -165,5 +165,5 @@ Here is the task to work with:
 ## Domain
 {domain_desc}
 
-## Types generated
+## Types
 {types}
