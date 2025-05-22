@@ -41,7 +41,7 @@ class TaskBuilder:
         problem_desc: str,
         prompt_template: str,
         types: dict[str, str] | list[dict[str,str]] | None = None,
-        predicates: list[Predicate] = None,
+        constants: dict[str,str] = None,
         syntax_validator: SyntaxValidator = None,
         max_retries: int = 3,
     ) -> tuple[dict[str, str], str, tuple[bool, str]]:
@@ -53,7 +53,7 @@ class TaskBuilder:
             problem_desc (str): general problem description
             prompt_template (str): structured prompt template for :objects extraction
             types (dict[str,str] | list[dict[str,str]]): current types in specification, defaults to None
-            predicates (list[Predicate]): list of current predicates in specification, defaults to None
+            constants (dict[str,str]): current constants in specification, defaults to None
             syntax_validator (SyntaxValidator): syntax checker for generated objects, defaults to None
             max_retries (int): max # of retries if failure occurs
 
@@ -63,13 +63,15 @@ class TaskBuilder:
             validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
 
-        prompt_data = {
-            "problem_desc": problem_desc,
-            "types": format_types_to_string(types) if types else "No types provided.",
-            "predicates": "\n".join([f"- {pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
-        }
-        
-        prompt = prompt_template.format(**prompt_data)
+        types_str = format_types_to_string(types) if types else "No types provided."
+        const_str = format_constants(constants) if constants else "No constants provided."
+
+        prompt = (
+            prompt_template
+            .replace("{problem_desc}", problem_desc)
+            .replace("{types}", types_str)
+            .replace("{constants}", const_str)
+        )
 
         # iterate through attempts in case of extraction failure
         for attempt in range(max_retries):
@@ -119,7 +121,9 @@ class TaskBuilder:
         problem_desc: str,
         prompt_template: str,
         types: dict[str, str] | list[dict[str,str]] | None = None,
+        constants: dict[str,str] = None,
         predicates: list[Predicate] = None,
+        functions: list[Function] = None,
         objects: dict[str, str] = None,
         initial: list[dict[str, str]] = None,
         goal: list[dict[str, str]] = None,
@@ -134,7 +138,9 @@ class TaskBuilder:
             problem_desc (str): general problem description
             prompt_template (str): structured prompt template for :init extraction
             types (dict[str,str] | list[dict[str,str]]): current types in domain, defaults to None
+            constants (dict[str,str]): current constants in specification, defaults to None
             predicates (list[Predicate]): list of current predicates in domain, defaults to None
+            functions (list[Function]): list of current functions in specification, defaults to None
             objects (dict[str,str]): current dictionary of task :objects in specification, defaults to None
             initial (list[dict[str,str]]): current :init states in specification, defaults to None
             goal (list[dict[str,str]]): current :goal states in specification, defaults to None
@@ -149,16 +155,25 @@ class TaskBuilder:
             validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
 
-        prompt_data = {
-            "problem_desc": problem_desc,
-            "types": format_types_to_string(types) if types else "No types provided.",
-            "predicates": "\n".join([f"- {pred['raw']}" for pred in predicates]) if predicates else "No predicates provided.",
-            "objects": format_objects(objects) if objects else "No objects provided.",
-            "initial_state": format_initial(initial) if initial else "No initial state provided.",
-            "goal_state": format_goal(goal) if goal else "No goal state provided."
-        }
-        
-        prompt = prompt_template.format(**prompt_data)
+        types_str = format_types_to_string(types) if types else "No types provided."
+        const_str = format_constants(constants) if constants else "No constants provided."
+        preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
+        funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
+        obj_str = format_objects(objects) if objects else "No objects provided."
+        init_str = format_initial(initial) if initial else "No initial state provided."
+        goal_str = format_goal(goal) if goal else "No goal state provided."
+
+        prompt = (
+            prompt_template
+            .replace("{problem_desc}", problem_desc)
+            .replace("{types}", types_str)
+            .replace("{constants}", const_str)
+            .replace("{predicates}", preds_str)
+            .replace("{functions}", funcs_str)
+            .replace("{objects}", obj_str)
+            .replace("{initial_state}", init_str)
+            .replace("{goal_state}", goal_str)
+        )
 
         # iterate through attempts in case of extraction failure
         for attempt in range(max_retries):
@@ -208,7 +223,9 @@ class TaskBuilder:
         problem_desc: str,
         prompt_template: str,
         types: dict[str, str] | list[dict[str,str]] | None = None,
+        constants: dict[str,str] = None,
         predicates: list[Predicate] = None,
+        functions: list[Function] = None,
         objects: dict[str, str] = None,
         initial: list[dict[str, str]] = None,
         goal: list[dict[str, str]] = None,
@@ -223,7 +240,9 @@ class TaskBuilder:
             problem_desc (str): general problem description
             prompt_template (str): structured prompt template for :goal extraction
             types (dict[str,str] | list[dict[str,str]]): current :types in domain, defaults to None
-            predicates (list[Predicate]): list of current :predicates in domain, defaults to None
+            constants (dict[str,str]): current constants in specification, defaults to None
+            predicates (list[Predicate]): list of current predicates in domain, defaults to None
+            functions (list[Function]): list of current functions in specification, defaults to None
             objects (dict[str,str]): current dictionary of task :objects in specification, defaults to None
             initial (list[dict[str,str]]): current :init states in specification, defaults to None
             goal (list[dict[str,str]]): current :goal states in specification, defaults to None
@@ -238,16 +257,25 @@ class TaskBuilder:
             validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
 
-        prompt_data = {
-            "problem_desc": problem_desc,
-            "types": format_types_to_string(types) if types else "No types provided.",
-            "predicates": "\n".join([f"- {pred['raw']}" for pred in predicates]) if predicates else "No predicates provided.",
-            "objects": format_objects(objects) if objects else "No objects provided.",
-            "initial_state": format_initial(initial) if initial else "No initial state provided.",
-            "goal_state": format_goal(goal) if goal else "No goal state provided."
-        }
-        
-        prompt = prompt_template.format(**prompt_data)
+        types_str = format_types_to_string(types) if types else "No types provided."
+        const_str = format_constants(constants) if constants else "No constants provided."
+        preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
+        funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
+        obj_str = format_objects(objects) if objects else "No objects provided."
+        init_str = format_initial(initial) if initial else "No initial state provided."
+        goal_str = format_goal(goal) if goal else "No goal state provided."
+
+        prompt = (
+            prompt_template
+            .replace("{problem_desc}", problem_desc)
+            .replace("{types}", types_str)
+            .replace("{constants}", const_str)
+            .replace("{predicates}", preds_str)
+            .replace("{functions}", funcs_str)
+            .replace("{objects}", obj_str)
+            .replace("{initial_state}", init_str)
+            .replace("{goal_state}", goal_str)
+        )
 
         # iterate through attempts in case of extraction failure
         for attempt in range(max_retries):
@@ -296,8 +324,10 @@ class TaskBuilder:
         model: BaseLLM,
         problem_desc: str,
         prompt_template: str,
-        types: dict[str, str] = None,
+        types: dict[str, str] | list[dict[str,str]] | None = None,
+        constants: dict[str,str] = None,
         predicates: list[Predicate] = None,
+        functions: list[Function] = None,
         syntax_validator: SyntaxValidator = None,
         max_retries: int = 3,
     ) -> tuple[
@@ -312,8 +342,10 @@ class TaskBuilder:
             model (BaseLLM): LLM to query
             problem_desc (str): general problem description
             prompt_template (str): structured prompt template for :problem extraction
-            types (dict[str,str]): current :types in domain, defaults to None
-            predicates (list[Predicate]): list of current :predicates in domain, defaults to None
+            types (dict[str,str] | list[dict[str,str]]): current :types in domain, defaults to None
+            constants (dict[str,str]): current constants in specification, defaults to None
+            predicates (list[Predicate]): list of current predicates in domain, defaults to None
+            functions (list[Function]): list of current functions in specification, defaults to None
             syntax_validator (SyntaxValidator): syntax checker for generated :problem, defaults to None
             max_retries (int): max # of retries if failure occurs
 
@@ -325,13 +357,19 @@ class TaskBuilder:
             validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
 
-        prompt_data = {
-            "problem_desc": problem_desc,
-            "types": format_types_to_string(types) if types else "No types provided.",
-            "predicates": "\n".join([f"- {pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
-        }
-        
-        prompt = prompt_template.format(**prompt_data)
+        types_str = format_types_to_string(types) if types else "No types provided."
+        const_str = format_constants(constants) if constants else "No constants provided."
+        preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
+        funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
+
+        prompt = (
+            prompt_template
+            .replace("{problem_desc}", problem_desc)
+            .replace("{types}", types_str)
+            .replace("{constants}", const_str)
+            .replace("{predicates}", preds_str)
+            .replace("{functions}", funcs_str)
+        )
 
         # iterate through attempts in case of extraction failure
         for attempt in range(max_retries):

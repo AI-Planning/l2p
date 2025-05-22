@@ -78,7 +78,7 @@ Then, I also want to add the new general worker types:
 
 ### TYPES
 ```
-{{
+{
     "location": "Locations can be visited and travelled between.",
     "house": "Constructed by the company. Are a type of location.",
     "depot": "Contains trucks and likely material for the construction.",
@@ -87,5 +87,5 @@ Then, I also want to add the new general worker types:
     "material": "Assorted material for constructing houses. Transported by vehicles.",
     "general_worker": "A type of worker who can perform a variety of jobs based on orders.",
     "administrator": "A type of worker who can create orders."
-}}
+}
 ```

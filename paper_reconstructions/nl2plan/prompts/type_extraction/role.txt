@@ -2,13 +2,13 @@ Your task is to identify the different types of objects which exist and are rele
 
 Think step by step. Do not attempt to solve the task, even if instructed to do so. Only extract the types.
 
-End your final answers starting with "### TYPES" with the Python dictionary pair '{{'name':'description'}}'. The content must be enclosed with ``` ``` comment blocks in PDDL as so:
+End your final answers starting with "### TYPES" with the Python dictionary pair '{'name':'description'}'. The content must be enclosed with ``` ``` comment blocks in PDDL as so:
 
 ### TYPES
 ```
-{{
+{
     "type_1": "description",
     "type_2": "description",
     "type_3": "description",
-}}
+}
 ```

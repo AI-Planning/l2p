@@ -8,11 +8,11 @@ End your final answers starting with "### TYPES" with the Python dictionary pair
 
 ### TYPES
 ```
-{{
+{
     "type_1": "description",
     "type_2": "description",
     "type_3": "description",
-}}
+}
 ``` 
 
 ======================================

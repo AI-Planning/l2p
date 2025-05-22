@@ -69,9 +69,6 @@ class TypeExtraction:
                     types=types
                 )
                 
-                print(no_feedback)
-                print(fb_msg)
-                
                 if no_feedback == False:
                     llm_input_prompt = self.generate_feedback_revision_prompt(
                         fb_msg=fb_msg,
@@ -89,12 +86,14 @@ class TypeExtraction:
         validation_info: tuple[bool, str]
     ) -> str:
         prompt = load_file("paper_reconstructions/nl2plan/prompts/type_extraction/validation.txt")
-        prompt_data = {
-            "error_msg": validation_info[1],
-            "llm_response": original_llm_output,
-            "domain_desc": domain_desc,
-        }
-        prompt = prompt.format(**prompt_data)
+
+        prompt = (
+            prompt
+            .replace("{error_msg}", validation_info[1])
+            .replace("{llm_response}", original_llm_output)
+            .replace("{domain_desc}", domain_desc)
+        )
+
         return prompt
     
     
@@ -104,11 +103,12 @@ class TypeExtraction:
         types: dict[str,str]
     ) -> str:
         prompt = load_file("paper_reconstructions/nl2plan/prompts/type_extraction/feedback_revision.txt")
-        prompt_data = {
-            "fb_msg": fb_msg,
-            "types": pretty_print_dict(types),
-        }
-        prompt = prompt.format(**prompt_data)
+
+        prompt = (
+            prompt
+            .replace("{fb_msg}", fb_msg)
+            .replace("{types}", pretty_print_dict(types))
+        )
         
         print("THIS IS THE FEEDBACK REVISION PROMPT:")
         print(prompt)

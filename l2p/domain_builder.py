@@ -78,12 +78,13 @@ class DomainBuilder:
             validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
 
-        prompt_data = {
-            "domain_desc": domain_desc,
-            "types": format_types_to_string(types) if types else "No types provided."
-        }
-        
-        prompt = prompt_template.format(**prompt_data)
+        types_str = format_types_to_string(types) if types else "No types provided."
+
+        prompt = (
+            prompt_template
+            .replace("{domain_desc}", domain_desc)
+            .replace("{types}", types_str)
+        )
 
         # iterate through attempts in case of extraction failure
         for attempt in range(max_retries):
@@ -154,12 +155,13 @@ class DomainBuilder:
             validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
         
-        prompt_data = prompt_data = {
-            "domain_desc": domain_desc,
-            "types": format_types_to_string(types) if types else "No types provided."
-        }
+        types_str = format_types_to_string(types) if types else "No types provided."
 
-        prompt = prompt_template.format(**prompt_data)
+        prompt = (
+            prompt_template
+            .replace("{domain_desc}", domain_desc)
+            .replace("{types}", types_str)
+        )
 
         # iterate through attempts in case of extraction failure
         for attempt in range(max_retries):
@@ -239,14 +241,16 @@ class DomainBuilder:
             llm_output (str): the raw string BaseLLM response
             validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
-        
-        prompt_data = {
-            "domain_desc": domain_desc,
-            "types": format_types_to_string(types) if types else "No types provided.",
-            "constants": format_constants(constants) if constants else "No constants provided."
-        }
-        
-        prompt = prompt_template.format(**prompt_data)
+
+        types_str = format_types_to_string(types) if types else "No types provided."
+        const_str = format_constants(constants) if constants else "No constants provided."
+
+        prompt = (
+            prompt_template
+            .replace("{domain_desc}", domain_desc)
+            .replace("{types}", types_str)
+            .replace("{constants}", const_str)
+        )
         
         # iterate through attempts in case of extraction failure
         for attempt in range(max_retries):
@@ -290,7 +294,9 @@ class DomainBuilder:
         domain_desc: str,
         prompt_template: str,
         types: dict[str, str] | list[dict[str,str]] | None = None,
+        constants: dict[str,str] = None,
         predicates: list[Predicate] = None,
+        functions: list[Function] = None,
         syntax_validator: SyntaxValidator = None,
         max_retries: int = 3,
     ) -> tuple[list[Predicate], str, tuple[bool, str]]:
@@ -302,7 +308,9 @@ class DomainBuilder:
             domain_desc (str): general domain description
             prompt_template (str): structured prompt template for :predicates extraction
             types (dict[str,str] | list[dict[str,str]]): current types in specification, defaults to None
+            constants (dict[str,str]): current constants in specification, defaults to None
             predicates (list[Predicate]): list of current predicates in specification, defaults to None
+            functions (list[Function]): list of current functions in specification, defaults to None
             syntax_validator (SyntaxValidator): syntax checker for generated predicates, defaults to None
             max_retries (int): max # of retries if failure occurs
 
@@ -311,14 +319,20 @@ class DomainBuilder:
             llm_output (str): the raw string BaseLLM response
             validation_info (tuple[bool, str]): validation info containing pass flag and error message
         """
-        
-        prompt_data = {
-            "domain_desc": domain_desc,
-            "types": format_types_to_string(types) if types else "No types provided.",
-            "predicates": "\n".join([f"- {pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
-        }
-        
-        prompt = prompt_template.format(**prompt_data)
+
+        types_str = format_types_to_string(types) if types else "No types provided."
+        const_str = format_constants(constants) if constants else "No constants provided."
+        preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
+        funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
+
+        prompt = (
+            prompt_template
+            .replace("{domain_desc}", domain_desc)
+            .replace("{types}", types_str)
+            .replace("{constants}", const_str)
+            .replace("{predicates}", preds_str)
+            .replace("{functions}", funcs_str)
+        )
 
         # iterate through attempts in case of extraction failure
         for attempt in range(max_retries):
@@ -372,6 +386,9 @@ class DomainBuilder:
         domain_desc: str,
         prompt_template: str,
         types: dict[str, str] | list[dict[str,str]] | None = None,
+        constants: dict[str,str] = None,
+        predicates: list[Predicate] = None,
+        functions: list[Function] = None,
         syntax_validator: SyntaxValidator = None,
         max_retries = 3,
     ) -> tuple[list[Function], str, tuple[bool, str]]:
@@ -383,6 +400,9 @@ class DomainBuilder:
             domain_desc (str): general domain description
             prompt_template (str): structured prompt template for :functions extraction
             types (dict[str,str] | list[dict[str,str]]): current types in specification, defaults to None
+            constants (dict[str,str]): current constants in specification, defaults to None
+            predicates (list[Predicate]): list of current predicates in specification, defaults to None
+            functions (list[Function]): list of current functions in specification, defaults to None
             syntax_validator (SyntaxValidator): syntax checker for generated functions, defaults to None
             max_retries (int): max # of retries if failure occurs
 
@@ -391,13 +411,20 @@ class DomainBuilder:
             llm_output (str): the raw string BaseLLM response
             validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
-        
-        prompt_data = {
-            "domain_desc": domain_desc,
-            "types": format_types_to_string(types) if types else "No types provided.",
-        }
-        
-        prompt = prompt_template.format(**prompt_data)
+
+        types_str = format_types_to_string(types) if types else "No types provided."
+        const_str = format_constants(constants) if constants else "No constants provided."
+        preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
+        funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
+
+        prompt = (
+            prompt_template
+            .replace("{domain_desc}", domain_desc)
+            .replace("{types}", types_str)
+            .replace("{constants}", const_str)
+            .replace("{predicates}", preds_str)
+            .replace("{functions}", funcs_str)
+        )
         
         # iterate through attempts in case of extraction failure
         for attempt in range(max_retries):
@@ -470,13 +497,15 @@ class DomainBuilder:
             llm_output (str): the raw string BaseLLM response
         """
 
-        prompt_data = prompt_data = {
-            "domain_desc": domain_desc,
-            "types": format_types_to_string(types) if types else "No types provided.",
-            "nl_actions": "\n".join(f" - {name}: {desc}" for name, desc in nl_actions.items()) if nl_actions else "No actions provided."
-        }
+        types_str = format_types_to_string(types) if types else "No types provided."
+        nl_act_str = "\n".join(f" - {name}: {desc}" for name, desc in nl_actions.items()) if nl_actions else "No actions provided."
 
-        prompt = prompt_template.format(**prompt_data)
+        prompt = (
+            prompt_template
+            .replace("{domain_desc}", domain_desc)
+            .replace("{types}", types_str)
+            .replace("{nl_actions}", nl_act_str)
+        )
 
         # iterate through attempts in case of extraction failure
         for attempt in range(max_retries):
@@ -508,8 +537,9 @@ class DomainBuilder:
         action_name: str,
         action_desc: str = None,
         action_list: list[str] = None,
-        predicates: list[Predicate] = None,
         types: dict[str,str] | list[dict[str,str]] = None,
+        constants: dict[str,str] = None,
+        predicates: list[Predicate] = None,
         functions: list[Function] = None,
         extract_new_preds = False,
         syntax_validator: SyntaxValidator = None,
@@ -526,8 +556,10 @@ class DomainBuilder:
             action_name (str): action name
             action_desc (str): action description, defaults to None
             action_list (list[str]): list of other actions to be translated, defaults to None
-            predicates (list[Predicate]): list of predicates in current specification, defaults to None
             types (dict[str,str] | list[dict[str,str]]): types in current specification, defaults to None
+            constants (dict[str,str]): current constants in specification, defaults to None
+            predicates (list[Predicate]): list of current predicates in specification, defaults to None
+            functions (list[Function]): list of current functions in specification, defaults to None
             extract_new_preds (bool): flag for parsing new predicates generated from action, defaults to False
             syntax_validator (SyntaxValidator): syntax checker for generated actions
             max_retries (int): max # of retries if failure occurs
@@ -538,18 +570,24 @@ class DomainBuilder:
             llm_output (str): the raw string BaseLLM response
             validation_info (tuple[bool, str]): validation info containing pass flag and error message
         """
-        
-        prompt_data = {
-            "domain_desc": domain_desc,
-            "action_list": "\n".join([f"- {a}" for a in action_list]) if action_list else "No other actions provided.",
-            "action_name": action_name,
-            "action_desc": action_desc or "No description available.",
-            "types": format_types_to_string(types) if types else "No types provided.",
-            "predicates": "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided.",
-            "functions": "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
-        }
-        
-        prompt = prompt_template.format(**prompt_data)
+
+        act_list_str = "\n".join([f"- {a}" for a in action_list]) if action_list else "No other actions provided."
+        types_str = format_types_to_string(types) if types else "No types provided."
+        const_str = format_constants(constants) if constants else "No constants provided."
+        preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
+        funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
+
+        prompt = (
+            prompt_template
+            .replace("{domain_desc}", domain_desc)
+            .replace("{action_list}", act_list_str)
+            .replace("{action_name}", action_name)
+            .replace("{action_desc}", action_desc or "No description available.")
+            .replace("{types}", types_str)
+            .replace("{constants}", const_str)
+            .replace("{predicates}", preds_str)
+            .replace("{functions}", funcs_str)
+        )
         
         # iterate through attempts in case of extraction failure
         for attempt in range(max_retries):
@@ -613,8 +651,10 @@ class DomainBuilder:
         domain_desc: str,
         prompt_template: str,
         action_list: list[str] = None,
-        predicates: list[Predicate] = None,
         types: dict[str, str] | list[dict[str,str]] = None,
+        constants: dict[str,str] = None,
+        predicates: list[Predicate] = None,
+        functions: list[Function] = None,
         max_retries: int = 3
     ) -> tuple[list[Action], list[Predicate], str]:
         """
@@ -625,8 +665,10 @@ class DomainBuilder:
             domain_desc (str): domain description
             prompt_template (str): action construction prompt
             action_list (list[str]): list of other actions to be translated, defaults to None
-            predicates (list[Predicate]): list of predicates
-            types (dict[str,str]): current types in model
+            types (dict[str,str] | list[dict[str,str]]): current types in specification, defaults to None
+            constants (dict[str,str]): current constants in specification, defaults to None
+            predicates (list[Predicate]): list of current predicates in specification, defaults to None
+            functions (list[Function]): list of current functions in specification, defaults to None
             max_retries (int): max # of retries if failure occurs
 
         Returns:
@@ -634,15 +676,22 @@ class DomainBuilder:
             new_predicates (list[Predicate]): a list of new predicates
             llm_output (str): the raw string BaseLLM response
         """
-        
-        prompt_data = {
-            "domain_desc": domain_desc,
-            "action_list": "\n".join([f"- {a}" for a in action_list]) if action_list else "No other actions provided.",
-            "types": format_types_to_string(types) if types else "No types provided.",
-            "predicates": "\n".join([f"- {pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
-        }
-        
-        prompt = prompt_template.format(**prompt_data)
+
+        act_list_str = "\n".join([f"- {a}" for a in action_list]) if action_list else "No other actions provided."
+        types_str = format_types_to_string(types) if types else "No types provided."
+        const_str = format_constants(constants) if constants else "No constants provided."
+        preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
+        funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
+
+        prompt = (
+            prompt_template
+            .replace("{domain_desc}", domain_desc)
+            .replace("{action_list}", act_list_str)
+            .replace("{types}", types_str)
+            .replace("{constants}", const_str)
+            .replace("{predicates}", preds_str)
+            .replace("{functions}", funcs_str)
+        )
         
         # iterate through attempts in case of extraction failure
         for attempt in range(max_retries):
@@ -728,15 +777,16 @@ class DomainBuilder:
             llm_output (str): the raw string BaseLLM response
             validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
-        
-        prompt_data = {
-            "domain_desc": domain_desc,
-            "action_name": action_name,
-            "action_desc": action_desc or "No description available.",
-            "types": format_types_to_string(types) if types else "No types provided."
-        }
-        
-        prompt = prompt_template.format(**prompt_data)
+
+        types_str = format_types_to_string(types) if types else "No types provided."
+
+        prompt = (
+            prompt_template
+            .replace("{domain_desc}", domain_desc)
+            .replace("{action_name}", action_name)
+            .replace("{action_desc}", action_desc or "No description available.")
+            .replace("{types}", types_str)
+        )
 
         # iterate through attempts in case of extraction failure
         for attempt in range(max_retries):
@@ -789,7 +839,9 @@ class DomainBuilder:
         action_desc: str = None,
         params: OrderedDict = None,
         types: dict[str, str] | list[dict[str,str]] | None = None,
+        constants: dict[str,str] = None,
         predicates: list[Predicate] = None,
+        functions: list[Function] = None,
         extract_new_preds: bool = False,
         syntax_validator: SyntaxValidator = None,
         max_retries: int = 3,
@@ -805,7 +857,9 @@ class DomainBuilder:
             action_desc (str): action description, defaults to None
             params (OrderedDict): dictionary of parameters from action, defaults to None
             types (dict[str,str] | list(dict[str,str])): current types in specification, defaults to None
-            predicates (list[Predicate]): list of current predicates in specifications, defaults to None
+            constants (dict[str,str]): current constants in specification, defaults to None
+            predicates (list[Predicate]): list of current predicates in specification, defaults to None
+            functions (list[Function]): list of current functions in specification, defaults to None
             extract_new_preds (bool): flag for parsing new predicates generated from action, defaults to False
             syntax_validator (SyntaxValidator): syntax checker for generated preconditions, defaults to None
             max_retries (int): max # of retries if failure occurs
@@ -816,17 +870,24 @@ class DomainBuilder:
             llm_output (str): the raw string BaseLLM response
             validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
-        
-        prompt_data = {
-            "domain_desc": domain_desc,
-            "action_name": action_name,
-            "action_desc": action_desc or "No description available.",
-            "parameters": format_params(params) if params else "No parameters provided.",
-            "types": format_types_to_string(types) if types else "No types provided.",
-            "predicates": "\n".join([f"- {pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
-        }
-        
-        prompt = prompt_template.format(**prompt_data)
+
+        params_str = format_params(params) if params else "No parameters provided."
+        types_str = format_types_to_string(types) if types else "No types provided."
+        const_str = format_constants(constants) if constants else "No constants provided."
+        preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
+        funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
+
+        prompt = (
+            prompt_template
+            .replace("{domain_desc}", domain_desc)
+            .replace("{action_name}", action_name)
+            .replace("{action_desc}", action_desc or "No description available.")
+            .replace("{parameters}", params_str)
+            .replace("{types}", types_str)
+            .replace("{constants}", const_str)
+            .replace("{predicates}", preds_str)
+            .replace("{functions}", funcs_str)
+        )
 
         # iterate through attempts in case of extraction failure
         for attempt in range(max_retries):
@@ -887,9 +948,11 @@ class DomainBuilder:
         action_name: str,
         action_desc: str = None,
         params: OrderedDict = None,
-        types: dict[str,str] | list[dict[str,str]] | None = None,
         preconditions: str = None,
+        types: dict[str,str] | list[dict[str,str]] | None = None,
+        constants: dict[str,str] = None,
         predicates: list[Predicate] = None,
+        functions: list[Function] = None,
         extract_new_preds: bool = False,
         syntax_validator: SyntaxValidator = None,
         max_retries: int = 3,
@@ -904,9 +967,11 @@ class DomainBuilder:
             action_name (str): action name
             action_desc (str): action description, defaults to None
             params (list[str]): list of parameters from action, defaults to None
-            types (dict[str,str] | list(dict[str,str])): current types in model, defaults to None
             precondition (str): PDDL format of preconditions, defaults to None
-            predicates (list[Predicate]): list of current predicates in model, defaults to None
+            types (dict[str,str] | list(dict[str,str])): current types in model, defaults to None
+            constants (dict[str,str]): current constants in specification, defaults to None
+            predicates (list[Predicate]): list of current predicates in specification, defaults to None
+            functions (list[Function]): list of current functions in specification, defaults to None
             extract_new_preds (bool): flag for parsing new predicates generated from action, defaults to False
             syntax_validator (SyntaxValidator): syntax checker for generated effects, defaults to None
             max_retries (int): max # of retries if failure occurs
@@ -917,18 +982,25 @@ class DomainBuilder:
             llm_output (str): the raw string BaseLLM response
             validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
-        
-        prompt_data = {
-            "domain_desc": domain_desc,
-            "action_name": action_name,
-            "action_desc": action_desc or "No description available.",
-            "parameters": format_params(params) if params else "No parameters provided.",
-            "types": format_types_to_string(types) if types else "No types provided.",
-            "predicates": "\n".join([f"- {pred['raw']}" for pred in predicates]) if predicates else "No predicates provided.",
-            "preconditions": preconditions or "No precondition provided."
-        }
-        
-        prompt = prompt_template.format(**prompt_data)
+
+        params_str = format_params(params) if params else "No parameters provided."
+        types_str = format_types_to_string(types) if types else "No types provided."
+        const_str = format_constants(constants) if constants else "No constants provided."
+        preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
+        funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
+
+        prompt = (
+            prompt_template
+            .replace("{domain_desc}", domain_desc)
+            .replace("{action_name}", action_name)
+            .replace("{action_desc}", action_desc or "No description available.")
+            .replace("{parameters}", params_str)
+            .replace("{preconditions}", preconditions or "No precondition provided.")
+            .replace("{types}", types_str)
+            .replace("{constants}", const_str)
+            .replace("{predicates}", preds_str)
+            .replace("{functions}", funcs_str)
+        )
 
         # iterate through attempts in case of extraction failure
         for attempt in range(max_retries):
@@ -1013,9 +1085,8 @@ class DomainBuilder:
         """
         
         spec_results = {} # results dictionary of top-level PDDL domain specifications
-        
-        prompt_data = prompt_data = {"domain_desc": domain_desc}
-        prompt = prompt_template.format(**prompt_data)
+
+        prompt = prompt_template.replace("{domain_desc}", domain_desc)
 
         # iterate through attempts in case of extraction failure
         for attempt in range(max_retries):

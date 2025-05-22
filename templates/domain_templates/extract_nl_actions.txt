@@ -1,8 +1,10 @@
-End your final answer starting with "## OUTPUT" and then the Python dictionary pair '{{'action_name':'action_description'}}' as so:
+End your final answer starting with "## OUTPUT" and then the Python dictionary pair '{'action_name':'action_description'}' as so:
 
 ## OUTPUT
-{{
+```
+{
     "action_name_1": "action_description",
     "action_name_2": "action_description",
     "action_name_3": "action_description"
-}}
+}
+```

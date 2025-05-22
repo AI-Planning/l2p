@@ -117,13 +117,14 @@ class FeedbackBuilder:
             fb_msg (str): feedback message from assistant
         """
 
-        prompt_data = {
-            "domain_desc": domain_desc,
-            "types": format_types_to_string(types) if types else "No types provided.",
-            "llm_output": llm_output
-        }
+        types_str = format_types_to_string(types) if types else "No types provided."
 
-        prompt = feedback_template.format(**prompt_data)
+        prompt = (
+            feedback_template
+            .replace("{types}", types_str)
+            .replace("{domain_desc}", domain_desc)
+            .replace("{llm_output}", llm_output)
+        )
 
         # retrieve feedback for types
         no_fb, fb_msg = self.get_feedback(
@@ -161,14 +162,16 @@ class FeedbackBuilder:
             fb_msg (str): feedback message from assistant
         """
 
-        prompt_data = {
-            "domain_desc": domain_desc,
-            "types": format_types_to_string(types) if types else "No types provided.",
-            "nl_actions": pretty_print_dict(nl_actions) if nl_actions else "No actions provided.",
-            "llm_output": llm_output
-        }
+        types_str = format_types_to_string(types) if types else "No types provided."
+        nl_act_str = pretty_print_dict(nl_actions) if nl_actions else "No actions provided."
 
-        prompt = feedback_template.format(**prompt_data)
+        prompt = (
+            feedback_template
+            .replace("{domain_desc}", domain_desc)
+            .replace("{types}", types_str)
+            .replace("{nl_actions}", nl_act_str)
+            .replace("{llm_output}", llm_output)
+        )
 
         no_fb, fb_msg = self.get_feedback(
             model, prompt, feedback_type, llm_output
@@ -186,9 +189,10 @@ class FeedbackBuilder:
         feedback_template: str,
         feedback_type: str = "llm",
         action: Action = None,
+        types: dict[str, str] | list[dict[str,str]] = None,
+        constants: dict[str,str] = None,
         predicates: list[Predicate] = None,
         functions: list[Function] = None,
-        types: dict[str, str] | list[dict[str,str]] = None,
     ) -> tuple[bool, str]:
         """
         Provides feedback to initial LLM output of a PDDL action.
@@ -200,28 +204,39 @@ class FeedbackBuilder:
             feedback_template (str): prompt template to guide LLM to provide feedback to initial output
             feedback_type (str): type of feedback assistant - 'llm', 'human', 'hybrid' (both)
             action (Action): current action specifications
+            types (dict[str,str] | list[dict[str,str]]): PDDL types of current specification
+            constants (dict[str,str]): current constants in specification, defaults to None
             predicates (list[Predicate]): PDDL predicates of current specification
             functions (list[Function]): PDDL functions of current specification
-            types (dict[str,str] | list[dict[str,str]]): PDDL types of current specification
 
         Returns:
             no_fb (bool): flag that deems if feedback is not needed
             fb_msg (str): feedback message from assistant
         """
 
-        prompt_data = {
-            "domain_desc": domain_desc,
-            "action_name": action["name"] if action else "No action name provided",
-            "parameters": "\n".join([f"{name} - {type}" for name, type in action["params"].items()]) if action else "No parameters provided",
-            "preconditions": action["preconditions"] if action else "No preconditions provided.",
-            "effects": action["effects"] if action else "No effects provided.",
-            "types": format_types_to_string(types) if types else "No types provided.",
-            "predicates": "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided.",
-            "functions": "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided.",
-            "llm_output": llm_output
-        }
+        act_name_str = action["name"] if action else "No action name provided."
+        params_str = "\n".join([f"{name} - {type}" for name, type in action["params"].items()]) if action else "No parameters provided"
+        prec_str = action["preconditions"] if action else "No preconditions provided."
+        eff_str = action["effects"] if action else "No effects provided."
 
-        prompt = feedback_template.format(**prompt_data)
+        types_str = format_types_to_string(types) if types else "No types provided."
+        const_str = format_constants(constants) if constants else "No constants provided."
+        preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
+        funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
+
+        prompt = (
+            feedback_template
+            .replace("{domain_desc}", domain_desc)
+            .replace("{action_name}", act_name_str)
+            .replace("{parameters}", params_str)
+            .replace("{preconditions}", prec_str)
+            .replace("{effects}", eff_str)
+            .replace("{types}", types_str)
+            .replace("{constants}", const_str)
+            .replace("{predicates}", preds_str)
+            .replace("{functions}", funcs_str)
+            .replace("{llm_output}", llm_output)
+        )
 
         no_fb, fb_msg = self.get_feedback(
             model, prompt, feedback_type, llm_output
@@ -242,6 +257,7 @@ class FeedbackBuilder:
         action_name: str = None,
         action_desc: str = None,
         types: dict[str, str] | list[dict[str,str]] = None,
+        constants: dict[str,str] = None,
     ) -> tuple[bool,str]:
         """
         Provides feedback to initial LLM output of a PDDL action parameter.
@@ -256,22 +272,30 @@ class FeedbackBuilder:
             action_name (str): name of action
             action_desc (str): description of action
             types (dict[str,str] | list[dict[str,str]]): PDDL types of current specification
+            constants (dict[str,str]): current constants in specification, defaults to None
 
         Returns:
             no_fb (bool): flag that deems if feedback is not needed
             fb_msg (str): feedback message from assistant
         """
 
-        prompt_data = {
-            "domain_desc": domain_desc,
-            "action_name": action_name if action_name else "No action name provided",
-            "action_desc": action_desc if action_desc else "No action description provided",
-            "parameters": "\n".join([f"{name} - {type}" for name, type in parameter.items()]) if parameter else "No parameters provided",
-            "types": format_types_to_string(types) if types else "No types provided.",
-            "llm_output": llm_output
-        }
+        act_name_str = action_name if action_name else "No action name provided"
+        act_desc_str = action_desc if action_desc else "No action description provided"
+        params_str = "\n".join([f"{name} - {type}" for name, type in parameter.items()]) if parameter else "No parameters provided"
 
-        prompt = feedback_template.format(**prompt_data)
+        types_str = format_types_to_string(types) if types else "No types provided."
+        const_str = format_constants(constants) if constants else "No constants provided."
+
+        prompt = (
+            feedback_template
+            .replace("{domain_desc}", domain_desc)
+            .replace("{action_name}", act_name_str)
+            .replace("{action_desc}", act_desc_str)
+            .replace("{parameters}", params_str)
+            .replace("{types}", types_str)
+            .replace("{constants}", const_str)
+            .replace("{llm_output}", llm_output)
+        )
 
         no_fb, fb_msg = self.get_feedback(
             model, prompt, feedback_type, llm_output
@@ -293,6 +317,7 @@ class FeedbackBuilder:
         action_name: str = None,
         action_desc: str = None,
         types: dict[str, str] | list[dict[str,str]] = None,
+        constants: dict[str,str] = None,
         predicates: list[Predicate] = None,
         functions: list[Function] = None,
     ) -> tuple[bool,str]:
@@ -310,6 +335,7 @@ class FeedbackBuilder:
             action_name (str): name of action
             action_desc (str): description of action
             types (dict[str,str] | list[dict[str,str]]): dictionary of types currently in specification
+            constants (dict[str,str]): current constants in specification, defaults to None
             predicates (list[Predicate]): list of predicates currently in specification
             functions (list[Function]): list of functions currently in specification
 
@@ -318,19 +344,29 @@ class FeedbackBuilder:
             fb_msg (str): feedback message from assistant
         """
 
-        prompt_data = {
-            "domain_desc": domain_desc,
-            "action_name": action_name if action_name else "No action name provided",
-            "action_desc": action_desc if action_desc else "No action description provided",
-            "parameters": "\n".join([f"{name} - {type}" for name, type in parameter.items()]) if parameter else "No parameters provided",
-            "preconditions": preconditions if preconditions else "No preconditions provided.",
-            "types": format_types_to_string(types) if types else "No types provided.",
-            "predicates": "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided.",
-            "functions": "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided.",
-            "llm_output": llm_output
-        }
+        act_name_str = action_name if action_name else "No action name provided"
+        act_desc_str = action_desc if action_desc else "No action description provided"
+        params_str = "\n".join([f"{name} - {type}" for name, type in parameter.items()]) if parameter else "No parameters provided"
+        prec_str = preconditions if preconditions else "No preconditions provided."
 
-        prompt = feedback_template.format(**prompt_data)
+        types_str = format_types_to_string(types) if types else "No types provided."
+        const_str = format_constants(constants) if constants else "No constants provided."
+        preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
+        funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
+
+        prompt = (
+            feedback_template
+            .replace("{domain_desc}", domain_desc)
+            .replace("{action_name}", act_name_str)
+            .replace("{action_desc}", act_desc_str)
+            .replace("{parameters}", params_str)
+            .replace("{preconditions}", prec_str)
+            .replace("{types}", types_str)
+            .replace("{constants}", const_str)
+            .replace("{predicates}", preds_str)
+            .replace("{functions}", funcs_str)
+            .replace("{llm_output}", llm_output)
+        )
 
         no_fb, fb_msg = self.get_feedback(
             model, prompt, feedback_type, llm_output
@@ -353,6 +389,7 @@ class FeedbackBuilder:
         action_name: str = None,
         action_desc: str = None,
         types: dict[str, str] | list[dict[str,str]] = None,
+        constants: dict[str,str] = None,
         predicates: list[Predicate] = None,
         functions: list[Function] = None,
     ) -> tuple[bool,str]:
@@ -371,6 +408,7 @@ class FeedbackBuilder:
             action_name (str): name of action
             action_desc (str): description of action
             types (dict[str,str] | list[dict[str,str]]): dictionary of types currently in specification
+            constants (dict[str,str]): current constants in specification, defaults to None
             predicates (list[Predicate]): list of predicates currently in specification
             functions (list[Function]): list of functions currently in specification
 
@@ -379,20 +417,31 @@ class FeedbackBuilder:
             fb_msg (str): feedback message from assistant
         """
 
-        prompt_data = {
-            "domain_desc": domain_desc,
-            "action_name": action_name if action_name else "No action name provided",
-            "action_desc": action_desc if action_desc else "No action description provided",
-            "parameters": "\n".join([f"{name} - {type}" for name, type in parameter.items()]) if parameter else "No parameters provided",
-            "preconditions": preconditions if preconditions else "No preconditions provided.",
-            "effects": effects if effects else "No effects provided.",
-            "types": format_types_to_string(types) if types else "No types provided.",
-            "predicates": "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided.",
-            "functions": "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided.",
-            "llm_output": llm_output
-        }
+        act_name_str = action_name if action_name else "No action name provided"
+        act_desc_str = action_desc if action_desc else "No action description provided"
+        params_str = "\n".join([f"{name} - {type}" for name, type in parameter.items()]) if parameter else "No parameters provided"
+        prec_str = preconditions if preconditions else "No preconditions provided."
+        eff_str = effects if effects else "No effects provided."
 
-        prompt = feedback_template.format(**prompt_data)
+        types_str = format_types_to_string(types) if types else "No types provided."
+        const_str = format_constants(constants) if constants else "No constants provided."
+        preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
+        funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
+
+        prompt = (
+            feedback_template
+            .replace("{domain_desc}", domain_desc)
+            .replace("{action_name}", act_name_str)
+            .replace("{action_desc}", act_desc_str)
+            .replace("{parameters}", params_str)
+            .replace("{preconditions}", prec_str)
+            .replace("{effects}", eff_str)
+            .replace("{types}", types_str)
+            .replace("{constants}", const_str)
+            .replace("{predicates}", preds_str)
+            .replace("{functions}", funcs_str)
+            .replace("{llm_output}", llm_output)
+        )
 
         no_fb, fb_msg = self.get_feedback(
             model, prompt, feedback_type, llm_output
@@ -410,6 +459,7 @@ class FeedbackBuilder:
         feedback_template: str,
         feedback_type: str = "llm",
         types: dict[str, str] | list[dict[str,str]] = None,
+        constants: dict[str,str] = None,
         predicates: list[Predicate] = None,
     ) -> tuple[bool, str]:
         """
@@ -422,6 +472,7 @@ class FeedbackBuilder:
             feedback_template (str): prompt template to guide LLM to provide feedback to initial output
             feedback_type (str): type of feedback assistant - 'llm', 'human', 'hybrid' (both)
             types (dict[str,str] | list[dict[str,str]]): dictionary of types currently in specification
+            constants (dict[str,str]): current constants in specification, defaults to None
             predicates (list[Predicate]): list of predicates currently in specification
 
         Returns:
@@ -429,14 +480,18 @@ class FeedbackBuilder:
             fb_msg (str): feedback message from assistant
         """
 
-        prompt_data = {
-            "domain_desc": domain_desc,
-            "types": format_types_to_string(types) if types else "No types provided.",
-            "predicates": "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided.",
-            "llm_output": llm_output
-        }
+        types_str = format_types_to_string(types) if types else "No types provided."
+        const_str = format_constants(constants) if constants else "No constants provided."
+        preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
 
-        prompt = feedback_template.format(**prompt_data)
+        prompt = (
+            feedback_template
+            .replace("{domain_desc}", domain_desc)
+            .replace("{types}", types_str)
+            .replace("{constants}", const_str)
+            .replace("{predicates}", preds_str)
+            .replace("{llm_output}", llm_output)
+        )
 
         no_fb, fb_msg = self.get_feedback(
             model, prompt, feedback_type, llm_output
@@ -457,6 +512,7 @@ class FeedbackBuilder:
         initial: list[dict[str, str]] = None,
         goal: list[dict[str, str]] = None,
         types: dict[str, str] | list[dict[str,str]] = None,
+        constants: dict[str,str] = None,
         predicates: list[Predicate] = None,
         functions: list[Function] = None
     ) -> tuple[bool, str]:
@@ -465,7 +521,7 @@ class FeedbackBuilder:
 
         Args:
             model (BaseLLM): LLM to query
-            domain_desc (str): general domain information
+            problem_desc (str): general problem information
             llm_output (str): original LLM output
             feedback_template (str): prompt template to guide LLM to provide feedback to initial output
             feedback_type (str): type of feedback assistant - 'llm', 'human', 'hybrid' (both)
@@ -473,6 +529,7 @@ class FeedbackBuilder:
             initial (list[dict[str,str]]): initial states of current task specification
             goal (list[dict[str,str]]): goal states of current task specification
             types (dict[str,str] | list[dict[str,str]]): dictionary of types currently in specification
+            constants (dict[str,str]): current constants in specification, defaults to None
             predicates (list[Predicate]): list of predicates currently in specification
             functions (list[Function]): list of functions currently in specification
 
@@ -481,18 +538,27 @@ class FeedbackBuilder:
             fb_msg (str): feedback message from assistant
         """
 
-        prompt_data = {
-            "problem_desc": problem_desc,
-            "objects": "\n".join([f"{obj} - {type}" for obj, type in objects.items()]) if objects else "No objects provided.",
-            "initial_states": format_initial(initial) if initial else "No initial state provided.",
-            "goal_states": format_goal(goal) if goal else "No goal state provided.",
-            "types": format_types_to_string(types) if types else "No types provided.",
-            "predicates": "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided.",
-            "functions": "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided.",
-            "llm_output": llm_output
-        }
+        obj_str = "\n".join([f"{obj} - {type}" for obj, type in objects.items()]) if objects else "No objects provided."
+        init_str = format_initial(initial) if initial else "No initial state provided."
+        goal_str = format_goal(goal) if goal else "No goal state provided."
 
-        prompt = feedback_template.format(**prompt_data)
+        types_str = format_types_to_string(types) if types else "No types provided."
+        const_str = format_constants(constants) if constants else "No constants provided."
+        preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
+        funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
+
+        prompt = (
+            feedback_template
+            .replace("{problem_desc}", problem_desc)
+            .replace("{objects}", obj_str)
+            .replace("{initial_states}", init_str)
+            .replace("{goal_states}", goal_str)
+            .replace("{types}", types_str)
+            .replace("{constants}", const_str)
+            .replace("{predicates}", preds_str)
+            .replace("{functions}", funcs_str)
+            .replace("{llm_output}", llm_output)
+        )
 
         no_fb, fb_msg = self.get_feedback(
             model, prompt, feedback_type, llm_output
@@ -511,6 +577,7 @@ class FeedbackBuilder:
         feedback_type: str = "llm",
         objects: dict[str, str] = None,
         types: dict[str, str] | list[dict[str,str]] = None,
+        constants: dict[str,str] = None,
         predicates: list[Predicate] = None,
         functions: list[Function] = None,
     ) -> tuple[bool, str]:
@@ -525,6 +592,7 @@ class FeedbackBuilder:
             feedback_type (str): type of feedback assistant - 'llm', 'human', 'hybrid' (both)
             objects (dict[str,str]): objects of current task specification
             types (dict[str,str] | list[dict[str,str]]): dictionary of types currently in specification
+            constants (dict[str,str]): current constants in specification, defaults to None
             predicates (list[Predicate]): list of predicates currently in specification
             functions (list[Function]): list of functions currently in specification
 
@@ -533,16 +601,23 @@ class FeedbackBuilder:
             fb_msg (str): feedback message from assistant
         """
 
-        prompt_data = {
-            "problem_desc": problem_desc,
-            "objects": "\n".join([f"{obj} - {type}" for obj, type in objects.items()]) if objects else "No objects provided.",
-            "types": format_types_to_string(types) if types else "No types provided.",
-            "predicates": "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided.",
-            "functions": "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided.",
-            "llm_output": llm_output
-        }
+        obj_str = "\n".join([f"{obj} - {type}" for obj, type in objects.items()]) if objects else "No objects provided."
 
-        prompt = feedback_template.format(**prompt_data)
+        types_str = format_types_to_string(types) if types else "No types provided."
+        const_str = format_constants(constants) if constants else "No constants provided."
+        preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
+        funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
+
+        prompt = (
+            feedback_template
+            .replace("{problem_desc}", problem_desc)
+            .replace("{objects}", obj_str)
+            .replace("{types}", types_str)
+            .replace("{constants}", const_str)
+            .replace("{predicates}", preds_str)
+            .replace("{functions}", funcs_str)
+            .replace("{llm_output}", llm_output)
+        )
 
         no_fb, fb_msg = self.get_feedback(
             model, prompt, feedback_type, llm_output
@@ -562,6 +637,7 @@ class FeedbackBuilder:
         objects: dict[str, str] = None,
         initial: list[dict[str, str]] = None,
         types: dict[str, str] | list[dict[str,str]] = None,
+        constants: dict[str,str] = None,
         predicates: list[Predicate] = None,
         functions: list[Function] = None
     ) -> tuple[bool, str]:
@@ -577,6 +653,7 @@ class FeedbackBuilder:
             objects (dict[str,str]): objects of current task specification
             initial (list[dict[str,str]]): initial states of current task specification
             types (dict[str,str] | list[dict[str,str]]): dictionary of types currently in specification
+            constants (dict[str,str]): current constants in specification, defaults to None
             predicates (list[Predicate]): list of predicates currently in specification
             functions (list[Function]): list of functions currently in specification
 
@@ -585,17 +662,25 @@ class FeedbackBuilder:
             fb_msg (str): feedback message from assistant
         """
 
-        prompt_data = {
-            "problem_desc": problem_desc,
-            "objects": "\n".join([f"{obj} - {type}" for obj, type in objects.items()]) if objects else "No objects provided.",
-            "initial_states": format_initial(initial) if initial else "No initial state provided.",
-            "types": format_types_to_string(types) if types else "No types provided.",
-            "predicates": "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided.",
-            "functions": "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided.",
-            "llm_output": llm_output
-        }
+        obj_str = "\n".join([f"{obj} - {type}" for obj, type in objects.items()]) if objects else "No objects provided."
+        init_str = format_initial(initial) if initial else "No initial state provided."
 
-        prompt = feedback_template.format(**prompt_data)
+        types_str = format_types_to_string(types) if types else "No types provided."
+        const_str = format_constants(constants) if constants else "No constants provided."
+        preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
+        funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
+
+        prompt = (
+            feedback_template
+            .replace("{problem_desc}", problem_desc)
+            .replace("{objects}", obj_str)
+            .replace("{initial_states}", init_str)
+            .replace("{types}", types_str)
+            .replace("{constants}", const_str)
+            .replace("{predicates}", preds_str)
+            .replace("{functions}", funcs_str)
+            .replace("{llm_output}", llm_output)
+        )
 
         no_fb, fb_msg = self.get_feedback(
             model, prompt, feedback_type, llm_output
@@ -616,6 +701,7 @@ class FeedbackBuilder:
         initial: list[dict[str, str]] = None,
         goal: list[dict[str, str]] = None,
         types: dict[str, str] | list[dict[str,str]] = None,
+        constants: dict[str,str] = None,
         predicates: list[Predicate] = None,
         functions: list[Function] = None
     ) -> tuple[bool, str]:
@@ -632,6 +718,7 @@ class FeedbackBuilder:
             initial (list[dict[str,str]]): initial states of current task specification
             goal (list[dict[str,str]]): goal states of current task specification
             types (dict[str,str] | list[dict[str,str]]): dictionary of types currently in specification
+            constants (dict[str,str]): current constants in specification, defaults to None
             predicates (list[Predicate]): list of predicates currently in specification
             functions (list[Function]): list of functions currently in specification
 
@@ -640,18 +727,27 @@ class FeedbackBuilder:
             fb_msg (str): feedback message from assistant
         """
 
-        prompt_data = {
-            "problem_desc": problem_desc,
-            "objects": "\n".join([f"{obj} - {type}" for obj, type in objects.items()]) if objects else "No objects provided.",
-            "initial_states": format_initial(initial) if initial else "No initial state provided.",
-            "goal_states": format_goal(goal) if goal else "No goal state provided.",
-            "types": format_types_to_string(types) if types else "No types provided.",
-            "predicates": "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided.",
-            "functions": "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided.",
-            "llm_output": llm_output
-        }
+        obj_str = "\n".join([f"{obj} - {type}" for obj, type in objects.items()]) if objects else "No objects provided."
+        init_str = format_initial(initial) if initial else "No initial state provided."
+        goal_str = format_goal(goal) if goal else "No goal state provided."
 
-        prompt = feedback_template.format(**prompt_data)
+        types_str = format_types_to_string(types) if types else "No types provided."
+        const_str = format_constants(constants) if constants else "No constants provided."
+        preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
+        funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
+
+        prompt = (
+            feedback_template
+            .replace("{problem_desc}", problem_desc)
+            .replace("{objects}", obj_str)
+            .replace("{initial_states}", init_str)
+            .replace("{goal_states}", goal_str)
+            .replace("{types}", types_str)
+            .replace("{constants}", const_str)
+            .replace("{predicates}", preds_str)
+            .replace("{functions}", funcs_str)
+            .replace("{llm_output}", llm_output)
+        )
 
         no_fb, fb_msg = self.get_feedback(
             model, prompt, feedback_type, llm_output
