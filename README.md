@@ -1,6 +1,6 @@
 # l2p : LLM-driven Planning Model library kit
 
-This library is a collection of tools for PDDL model generation extracted from natural language driven by large language models. This library is an expansion from the survey paper [**LLMs as Planning Modelers: A Survey for Leveraging Large Language Models to Construct Automated Planning Models**](https://arxiv.org/abs/2503.18971v1)
+This library is a collection of tools for PDDL model generation extracted from natural language driven by large language models. This library is an expansion from the survey paper [**LLMs as Planning Formalizers: A Survey for Leveraging Large Language Models to Construct Automated Planning Specifications**](https://arxiv.org/abs/2503.18971v1)
 
 L2P is an offline, natural language-to-planning model system that supports domain-agnostic planning. It does this via creating an intermediate [PDDL](https://planning.wiki/guide/whatis/pddl) representation of the domain and task, which can then be solved by a classical planner.
 
@@ -21,64 +21,57 @@ llm = OPENAI(model="gpt-4o-mini", api_key=api_key)
 # retrieve prompt information
 base_path='tests/usage/prompts/domain/'
 domain_desc = load_file(f'{base_path}blocksworld_domain.txt')
-extract_predicates_prompt = load_file(f'{base_path}extract_predicates.txt')
+predicates_prompt = load_file(f'{base_path}formalize_predicates.txt')
 types = load_file(f'{base_path}types.json')
 action = load_file(f'{base_path}action.json')
 
 # extract predicates via LLM
-predicates, llm_output = domain_builder.extract_predicates(
+predicates, llm_output, validation_info = domain_builder.formalize_predicates(
     model=llm,
     domain_desc=domain_desc,
-    prompt_template=extract_predicates_prompt,
-    types=types,
-    nl_actions={action['action_name']: action['action_desc']}
+    prompt_template=predicates_prompt,
+    types=types
     )
 
 # format key info into PDDL strings
-predicate_str = "\n".join([pred["clean"].replace(":", " ; ") for pred in predicates])
+predicate_str = "\n".join([pred["raw"].replace(":", " ; ") for pred in predicates])
 
 print(f"PDDL domain predicates:\n{predicate_str}")
 ```
 
 Here is how you would setup a PDDL problem:
 ```python
-from typing import List
 from l2p.utils.pddl_types import Predicate
 from l2p.task_builder import TaskBuilder
 
-task_builder = TaskBuilder()
+task_builder = TaskBuilder() # initialize task builder class
 
 api_key = os.environ.get('OPENAI_API_KEY')
 llm = OPENAI(model="gpt-4o-mini", api_key=api_key)
 
 # load in assumptions
 problem_desc = load_file(r'tests/usage/prompts/problem/blocksworld_problem.txt')
-extract_task_prompt = load_file(r'tests/usage/prompts/problem/extract_task.txt')
+task_prompt = load_file(r'tests/usage/prompts/problem/formalize_task.txt')
 types = load_file(r'tests/usage/prompts/domain/types.json')
 predicates_json = load_file(r'tests/usage/prompts/domain/predicates.json')
-predicates: List[Predicate] = [Predicate(**item) for item in predicates_json]
+predicates: list[Predicate] = [Predicate(**item) for item in predicates_json]
 
 # extract PDDL task specifications via LLM
-objects, initial_states, goal_states, llm_response = task_builder.extract_task(
+objects, init, goal, llm_response, validation_info = task_builder.formalize_task(
     model=llm,
     problem_desc=problem_desc,
-    prompt_template=extract_task_prompt,
+    prompt_template=task_prompt,
     types=types,
     predicates=predicates
     )
 
-# format key info into PDDL strings
-objects_str = task_builder.format_objects(objects)
-initial_str = task_builder.format_initial(initial_states)
-goal_str = task_builder.format_goal(goal_states)
-
 # generate task file
 pddl_problem = task_builder.generate_task(
-    domain="blocksworld",
-    problem="blocksworld_problem",
-    objects=objects_str,
-    initial=initial_str,
-    goal=goal_str)
+    domain_name="blocksworld",
+    problem_name="blocksworld_problem",
+    objects=objects,
+    initial=init,
+    goal=goal)
 
 print(f"### LLM OUTPUT:\n {pddl_problem}")
 ```
@@ -96,7 +89,7 @@ problem_desc = load_file(r'tests/usage/prompts/problem/blocksworld_problem.txt')
 types = load_file(r'tests/usage/prompts/domain/types.json')
 feedback_template = load_file(r'tests/usage/prompts/problem/feedback.txt')
 predicates_json = load_file(r'tests/usage/prompts/domain/predicates.json')
-predicates: List[Predicate] = [Predicate(**item) for item in predicates_json]
+predicates: list[Predicate] = [Predicate(**item) for item in predicates_json]
 llm_response = load_file(r'tests/usage/prompts/domain/llm_output_task.txt')
 
 fb_pass, feedback_response = feedback_builder.task_feedback(
@@ -108,7 +101,7 @@ fb_pass, feedback_response = feedback_builder.task_feedback(
     predicates=predicates,
     types=types)
 
-print("FEEDBACK:\n", feedback_response)
+print("[FEEDBACK]\n", feedback_response)
 ```
 
 

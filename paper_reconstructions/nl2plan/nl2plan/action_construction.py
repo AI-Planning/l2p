@@ -27,67 +27,6 @@ class ActionConstruction:
             'validate_params', 'validate_duplicate_predicates', 'validate_types_predicates',
             'validate_format_predicates', 'validate_usage_action'
             ]
-        
-    def generate_validation_prompt(
-            self,
-            action_name: str,
-            action_desc: str,
-            types: list[dict[str,str]],
-            predicates: list[Predicate],
-            original_llm_output: str,
-            validation_info: tuple[bool, str]
-    ) -> str:
-        prompt = load_file("paper_reconstructions/nl2plan/prompts/action_construction/error.txt")
-
-        types_str = pretty_print_types(types) if types else "No types provided."
-        preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
-
-        prompt = (
-            prompt
-            .replace("{error_msg}", validation_info[1])
-            .replace("{llm_response}", original_llm_output)
-            .replace("{action_name}", action_name)
-            .replace("{action_desc}", action_desc)
-            .replace("{types}", types_str)
-            .replace("{predicates}", preds_str)
-        )
-
-        return prompt
-    
-
-    def generate_feedback_revision_prompt(
-            self,
-            fb_msg: str,
-            domain_desc: str,
-            action: Action,
-            action_desc: str,
-            predicates: list[Predicate],
-            types: list[dict[str,str]]
-    ) -> str:
-        prompt = load_file("paper_reconstructions/nl2plan/prompts/action_construction/feedback_revision.txt")
-
-        act_name_str = action["name"] if action else "No action name provided."
-        params_str = "\n".join([f"{name} - {type}" for name, type in action["params"].items()]) if action else "No parameters provided"
-        prec_str = action["preconditions"] if action else "No preconditions provided."
-        eff_str = action["effects"] if action else "No effects provided."
-
-        types_str = pretty_print_types(types) if types else "No types provided."
-        preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
-
-        prompt = (
-            prompt
-            .replace("{fb_msg}", fb_msg)
-            .replace("{domain_desc}", domain_desc)
-            .replace("{action_name}", act_name_str)
-            .replace("{action_desc}", action_desc)
-            .replace("{action_params}", params_str)
-            .replace("{action_preconditions}", prec_str)
-            .replace("{action_effects}", eff_str)
-            .replace("{predicates}", preds_str)
-            .replace("{types}", types_str)
-        )
-
-        return prompt
 
 
     def construct_action(
@@ -274,3 +213,64 @@ class ActionConstruction:
             print("Reached maximum iterations. Stopping action construction.")
 
         return actions, predicates
+
+
+    def generate_validation_prompt(
+            self,
+            action_name: str,
+            action_desc: str,
+            types: list[dict[str,str]],
+            predicates: list[Predicate],
+            original_llm_output: str,
+            validation_info: tuple[bool, str]
+    ) -> str:
+        prompt = load_file("paper_reconstructions/nl2plan/prompts/action_construction/error.txt")
+
+        types_str = pretty_print_types(types) if types else "No types provided."
+        preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
+
+        prompt = (
+            prompt
+            .replace("{error_msg}", validation_info[1])
+            .replace("{llm_response}", original_llm_output)
+            .replace("{action_name}", action_name)
+            .replace("{action_desc}", action_desc)
+            .replace("{types}", types_str)
+            .replace("{predicates}", preds_str)
+        )
+
+        return prompt
+
+    def generate_feedback_revision_prompt(
+            self,
+            fb_msg: str,
+            domain_desc: str,
+            action: Action,
+            action_desc: str,
+            predicates: list[Predicate],
+            types: list[dict[str,str]]
+    ) -> str:
+        prompt = load_file("paper_reconstructions/nl2plan/prompts/action_construction/feedback_revision.txt")
+
+        act_name_str = action["name"] if action else "No action name provided."
+        params_str = "\n".join([f"{name} - {type}" for name, type in action["params"].items()]) if action else "No parameters provided"
+        prec_str = action["preconditions"] if action else "No preconditions provided."
+        eff_str = action["effects"] if action else "No effects provided."
+
+        types_str = pretty_print_types(types) if types else "No types provided."
+        preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
+
+        prompt = (
+            prompt
+            .replace("{fb_msg}", fb_msg)
+            .replace("{domain_desc}", domain_desc)
+            .replace("{action_name}", act_name_str)
+            .replace("{action_desc}", action_desc)
+            .replace("{action_params}", params_str)
+            .replace("{action_preconditions}", prec_str)
+            .replace("{action_effects}", eff_str)
+            .replace("{predicates}", preds_str)
+            .replace("{types}", types_str)
+        )
+
+        return prompt

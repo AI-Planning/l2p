@@ -148,8 +148,6 @@ def construct_action(
             error_prompt = error_prompt.replace("{llm_response}", llm_response)
             
             act_pred_prompt = error_prompt
-            
-            print(error_prompt)
         
         # break the loop if no syntax error was made
         else:

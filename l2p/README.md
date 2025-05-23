@@ -1,37 +1,37 @@
 # L2P: LLM-Powered PDDL Planning
 
 **Official Documentation:**  
-For detailed function references, visit our website: [Official API Documentation]().  
+For detailed function references, visit our website: **[Full documentation coming soon...]**.  
 The L2P classes can be divided as follows:
 
 ---
 
 ## `domain_builder.py`
 This class is responsible for generating PDDL domain information via LLMs.  
-For full API reference, see the [documentation](docs/build/html/modules.html).
+Full API reference: **[Full documentation coming soon...]**.
 
 ### Features Supported:
-- [x] **Types** (PDDL 1.2+): Defines types for objects to organize and restrict possible object assignments in actions.
-- [x] **Predicates** (PDDL 1.2+): Defines the truth values of propositions (true/false).
-- [x] **Natural Language Actions** (PDDL 1.2+): Describes actions in natural language and converts them into formal PDDL actions.
-- [x] **Basic Full PDDL Actions** (PDDL 1.2+): Complete actions with parameters, preconditions, and effects.
-- [x] **Basic Action Parameters** (PDDL 1.2+): Defines parameters for actions.
-- [x] **Basic Action Preconditions** (PDDL 1.2+): Specifies the conditions for actions.
-- [x] **Basic Action Effects** (PDDL 1.2+): Defines the effects of actions on the state.
-- [x] **Full Set of Basic PDDL Actions** (PDDL 1.2+): A complete specification of actions.
-- [ ] **Action Costs** (PDDL 2.1+): Allows cost specifications for actions (e.g., optimizing time/resources).
-- [ ] **Temporal Constraints** (PDDL 2.2+): Specifies time-related constraints on actions.
-- [ ] **Disjunctive Preconditions** (PDDL 2.2+): Alternative conditions for action preconditions.
-- [ ] **Derived Predicates** (PDDL 2.1+): Inferred predicates based on other conditions.
-- [ ] **Non-deterministic Actions** (PDDL 2.2+): Models actions with multiple outcomes.
-- [ ] **Conditional Effects/Quantifications** (PDDL 2.2+): Conditional action effects and use of quantifiers.
-- [ ] **Mutex Relations** (PDDL 2.2+): Defines mutual exclusions between actions or predicates.
+- [x] **Types** (PDDL 1.2+)
+- [x] **Constants** (PDDL 1.2+)
+- [x] **Predicates** (PDDL 1.2+)
+- [x] **Functions / Numerical Fluents** (PDDL 2.1+)
+- [x] **Basic Action Parameters** (PDDL 1.2+)
+- [x] **Basic Action Preconditions** (PDDL 1.2+)
+- [x] **Basic Action Effects** (PDDL 1.2+)
+- [x] **Quantified Preconditions and Effects** (PDDL 2.2+)
+- [x] **Conditional Effects** (PDDL 2.2+)
+- [x] **Disjunctive Preconditions** (PDDL 2.2+)
+- [ ] **Action Costs** (PDDL 2.1+)
+- [ ] **Temporal Constraints** (PDDL 2.2+)
+- [ ] **Derived Predicates** (PDDL 2.1+)
+- [ ] **Non-deterministic Actions** (PDDL 2.2+)
+- [ ] **Mutex Relations** (PDDL 2.2+)
 
 ---
 
 ## `task_builder.py`
 Responsible for generating PDDL task information via LLMs.  
-Full API reference: See [documentation](docs/build/html/modules.html).
+Full API reference: **[Full documentation coming soon...]**.
 
 ### Features Supported:
 - [x] **Objects** (PDDL 1.2+): Defines objects involved in the problem.
@@ -58,16 +58,15 @@ Returns feedback information via LLMs.
 
 ### Domain Feedback Functions:
 - **`type_feedback()`**: Feedback on revised types.
-- **`type_hierarchy_feedback()`**: Feedback on revised type hierarchy.
+- **`predicate_feedback()`**: Feedback on predicates.
 - **`nl_action_feedback()`**: Feedback on natural language actions.
 - **`pddl_action_feedback()`**: Feedback on PDDL actions.
 - **`parameter_feedback()`**: Feedback on action parameters.
 - **`precondition_feedback()`**: Feedback on action preconditions.
 - **`effect_feedback()`**: Feedback on action effects.
-- **`predicate_feedback()`**: Feedback on predicates.
-- **`task_feedback()`**: Complete feedback on revised PDDL tasks.
 
 ### Problem Feedback Functions:
+- **`task_feedback()`**: Complete feedback on revised PDDL tasks.
 - **`objects_feedback()`**: Feedback on objects.
 - **`initial_state_feedback()`**: Feedback on initial states.
 - **`goal_state_feedback()`**: Feedback on goal states.
