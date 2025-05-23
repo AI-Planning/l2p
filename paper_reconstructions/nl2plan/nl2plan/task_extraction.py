@@ -15,17 +15,22 @@ class TaskExtraction:
         self.task_builder = TaskBuilder()
         self.feedback_builder = FeedbackBuilder()
         self.syntax_validator = SyntaxValidator()
+        self.syntax_validator.headers = ['OBJECTS', 'INITIAL', 'GOAL']
+        self.syntax_validator.error_types = [
+            'validate_header', 'validate_duplicate_headers',
+            'validate_unsupported_keywords', 'validate_task_states',
+            'validate_task_objects', 'validate_task_states']
 
     def task_extraction(
         self,
         model: BaseLLM,
         problem_desc: str,
         task_extraction_prompt: PromptBuilder,
-        types: dict[str, str],
+        types: dict[str, str] | list[dict[str,str]],
         predicates: list[Predicate],
         feedback_prompt: str,
-        error_prompt: str,
-        max_attempts: int = 8,
+        max_feedback_retries: int = 1,
+        max_syntax_retries: int = 3
     ) -> tuple[dict[str, str], list[dict[str, str]], list[dict[str, str]]]:
         """
         Main function to run task extraction. Specifically, extracts objects,
@@ -47,76 +52,145 @@ class TaskExtraction:
             - goal (list[dict[str,str]]): desired state of problem
                 ex: state_1 = {'name': 'on_top', 'params': ['blue_block', 'red_block'], 'neg': False}
         """
-
-        # initial extraction of task
-        objects, initial, goal, llm_response = self.task_builder.formalize_task(
-            model=model,
-            problem_desc=problem_desc,
-            prompt_template=task_extraction_prompt.generate_prompt(),
-            types=format_types(types),
-            predicates=predicates,
-        )
-
-        # keep iterating until output passes all syntax validation checks
-        all_valid = True
-        for _ in range(max_attempts):
-
-            feedback_msgs = []
-            all_valid = True
-            types_list = format_types(types)
-            types_list = {k: types_list[k] for i, k in enumerate(types_list) if i != 0}
-
-            # list of validation checks
-            validation_checks = [
-                self.syntax_validator.validate_task_objects(objects, types_list),
-                self.syntax_validator.validate_task_states(
-                    initial, objects, predicates, "initial"
-                ),
-                self.syntax_validator.validate_task_states(
-                    goal, objects, predicates, "goal"
-                ),
-            ]
-
-            # perform each validation check
-            for validator, args in validation_checks:
-                is_valid, feedback_msg = validator, args
-                if not is_valid:
-                    all_valid = False
-                    feedback_msgs.append(feedback_msg)
-
-            # if any check fails, append feedback messages
-            if not all_valid:
-                error_prompt = error_prompt.replace("{error_msg}", str(feedback_msgs))
-                error_prompt = error_prompt.replace(
-                    "{task}", "goal and state extraction"
-                )
-                objects, initial, goal, _ = self.feedback_builder.task_feedback(
+        
+        i = 0
+        no_feedback = False
+        llm_input_prompt = task_extraction_prompt.generate_prompt()
+        
+        # store last valid results
+        last_valid_obj = None
+        last_valid_init = None
+        last_valid_goal = None
+        
+        while not no_feedback and i <= max_feedback_retries:
+            # inner loop: repeat until syntax validator passes
+            max_validation_retries = max_syntax_retries
+            valid = False
+            while not valid and max_validation_retries > 0:
+                objects, initial, goal, llm_output, validation_info = self.task_builder.formalize_task(
                     model=model,
                     problem_desc=problem_desc,
-                    llm_response=llm_response,
-                    feedback_template=error_prompt,
-                    feedback_type="llm",
+                    prompt_template=llm_input_prompt,
+                    types=types,
+                    predicates=predicates,
+                    syntax_validator=self.syntax_validator
                 )
-
-            # if valid, break attempt loop
-            else:
-                break
-
-        if not all_valid:
-            raise ValueError(f"Validation failed: {feedback_msgs}")
-
-        # extract feedback
-        objects, initial, goal, _ = self.feedback_builder.task_feedback(
-            model=model,
-            problem_desc=problem_desc,
-            llm_response=llm_response,
-            feedback_template=feedback_prompt,
-            feedback_type="llm",
-            predicates=predicates,
-            types=types,
-            objects=objects,
-            initial=initial,
-            goal=goal,
+                
+                print("*"*50)
+                print(llm_output)
+                print(objects)
+                print(initial)
+                print(goal)
+                print("*"*50)
+                
+                valid = validation_info[0]
+                if valid:
+                    # store last valid results
+                    last_valid_obj = objects
+                    last_valid_init = initial
+                    last_valid_goal = goal
+                else:
+                    llm_input_prompt = self.generate_validation_prompt(
+                        problem_desc=problem_desc,
+                        types=types,
+                        predicates=predicates,
+                        objects=objects,
+                        initial=initial,
+                        goal=goal,
+                        original_llm_output=llm_output,
+                        validation_info=validation_info
+                    )
+                    max_validation_retries -= 1
+                    
+            if i < max_feedback_retries:
+                # feedback mechanism: after valid generation
+                no_feedback, fb_msg = self.feedback_builder.task_feedback(
+                    model=model,
+                    problem_desc=problem_desc,
+                    llm_output=llm_output,
+                    feedback_template=feedback_prompt,
+                    feedback_type="llm",
+                    objects=objects,
+                    initial=initial,
+                    goal=goal,
+                    types=types,
+                    predicates=predicates
+                )
+                if not no_feedback:
+                    llm_input_prompt = self.generate_feedback_revision_prompt(
+                        fb_msg=fb_msg,
+                        problem_desc=problem_desc,
+                        types=types,
+                        predicates=predicates,
+                        objects=objects,
+                        initial=initial,
+                        goal=goal
+                    )
+                    i += 1
+            else: break
+            
+        return last_valid_obj, last_valid_init, last_valid_goal
+    
+    def generate_validation_prompt(
+        self,
+        problem_desc: str,
+        types: dict[str,str] | list[dict[str,str]],
+        predicates: list[Predicate],
+        objects: dict[str, str],
+        initial: list[dict[str, str]],
+        goal: list[dict[str, str]],
+        original_llm_output: str,
+        validation_info: tuple[bool, str]
+    ) -> str:
+        
+        types_str = pretty_print_types(types) if types else "No types provided."
+        preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
+        
+        prompt = load_file("paper_reconstructions/nl2plan/prompts/task_extraction/error.txt")
+        prompt = (
+            prompt
+            .replace("{error_msg}", validation_info[1])
+            .replace("{llm_response}", original_llm_output)
+            .replace("{problem_desc}", problem_desc)
+            .replace("{types}", types_str)
+            .replace("{predicates}", preds_str)
+            .replace("{objects}", format_objects(objects))
+            .replace("{initial_states}", format_initial(initial))
+            .replace("{goal_states}", format_goal(goal))
         )
-
-        return objects, initial, goal
+        
+        print("VALIDATION PROMPT:")
+        print(prompt)
+        
+        return prompt
+    
+    def generate_feedback_revision_prompt(
+        self,
+        fb_msg: str,
+        problem_desc: str,
+        types: dict[str,str] | list[dict[str,str]],
+        predicates: list[Predicate],
+        objects: dict[str,str],
+        initial: list[dict[str,str]],
+        goal: list[dict[str,str]]
+    ) -> str:
+        
+        types_str = pretty_print_types(types) if types else "No types provided."
+        preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
+        
+        prompt = load_file("paper_reconstructions/nl2plan/prompts/task_extraction/feedback_revision.txt")
+        prompt = (
+            prompt
+            .replace("{fb_msg}", fb_msg)
+            .replace("{problem_desc}", problem_desc)
+            .replace("{types}", types_str)
+            .replace("{predicates}", preds_str)
+            .replace("{objects}", format_objects(objects))
+            .replace("{initial_states}", format_initial(initial))
+            .replace("{goal_states}", format_goal(goal))
+        )
+        
+        print("FEEDBACK PROMPT:")
+        print(prompt)
+        
+        return prompt

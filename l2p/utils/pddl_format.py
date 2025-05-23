@@ -209,6 +209,7 @@ def format_goal(goal_states: list[dict[str, str]]) -> str:
     full_str = []
 
     for state in goal_states:
+        
          # if function statement
         if state.get("func_name"):
             state_op, state_func, state_params, state_value = state["op"], state['func_name'], ' '.join(state['params']), state['value']
@@ -225,8 +226,6 @@ def format_goal(goal_states: list[dict[str, str]]) -> str:
         goal_states_str = "\n".join(
         full_str
     )  # combine the states into a single string
-
-    goal_states_str = f"(and \n{indent(goal_states_str, 1)}\n)"
 
     return goal_states_str
 
@@ -263,6 +262,13 @@ def format_pddl_expr(expr):
         return "(" + " ".join(format_pddl_expr(e) for e in expr) + ")"
     else:
         return str(expr)
+    
+def pretty_print_types(types: dict[str,str] | list[dict[str,str]]) -> str:
+    """Formats types nicely."""
+    return "\n".join(
+        f" - {type_name}: {description.lstrip('; ').strip()}"
+        for type_name, description in format_types(types).items()
+    )
     
 def pretty_print_dict(data):
     """Formats dictionary or list of dictionaries in JSON format for readability."""

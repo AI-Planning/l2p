@@ -1,3 +1,1 @@
-Input error in translate phase.
-
-THIS PLAN FAILED BECAUSE OF THE ACTION EXTRACTION STEP: CONSTRUCTED ONLY 3 ACTIONS NOT SUFFICIENT TO MODEL PROBLEM
+[Errno 2] No such file or directory: 'downward/fast-downward.py'

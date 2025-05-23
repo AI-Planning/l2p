@@ -24,7 +24,6 @@ Currently, there are a couple of trucks at the Chicago depot and we're trying to
 - (finalized ?h - house): true if the house ?h has been completed. 
 - (connected ?l1 - location ?l2 - location): true if there is a road between l1 and l2 allowing travel between them.
 
-## Object Instances
 We assume that there are two trucks since the description said "a couple".
 ```
 truck1 - the first truck at the Chicago depot
@@ -46,7 +45,6 @@ emma - general_worker: The first worker, Emma
 bob - general_worker: The second worker, Bob
 ```
 
-## State
 Let's start by specifying where everyone is. It's a reasonable assumption that everyone starts at the Chicago depot.
 ```
 (at truck1 chicago_depot): truck1 is at the chicago_depot
@@ -71,14 +69,13 @@ Finally, the "connected" predicate states that two locations are connected if th
 (connected chicago_depot house3): chicago_depot is connected to house3
 ```
 
-## Goal
+Hence, we get our goal:
 ```
-(AND ; all the following should be done
-   (finalised house1) ; house 1 is done
-   (finalised house2) ; house 2 is done
-   (finalised house3) ; house 3 is done
-   (truck1 house1) ; truck1 is at house1 
-)
+; all the following should be done
+(finalised house1) ; house 1 is done
+(finalised house2) ; house 2 is done
+(finalised house3) ; house 3 is done
+(truck1 house1) ; truck1 is at house1 
 ```
 
 ## Error
@@ -116,11 +113,9 @@ My concrete suggestions are the following:
         - (at bob chicago_depot)
     - Remove the requirement for truck1:s location in the goal. This results in the following goal:
         ```
-        (AND ; all the houses should be done
-            (finalized house1) ; house 1 is done
-            (finalized house2) ; house 2 is done
-            (finalized house3) ; house 3 is done
-        )
+         (finalized house1) ; house 1 is done
+         (finalized house2) ; house 2 is done
+         (finalized house3) ; house 3 is done
         ```
 Regenerate an entire response correcting the above error. Make sure to use the exact same headers as requested before, but start with a "## Response" header to analyze the error.
 
@@ -131,7 +126,6 @@ Adding the starting location for Bob as well as removing the goal condition for 
 
 Now I'll reiterate the corrected initialization with the exact same headers.
 
-## Object Instances
 The feedback suggested to use more trucks, but this would be wrong since the domain only specifies "A couple". So, we stick with the two trucks.
 ```
 truck1 - the first truck at the Chicago depot
@@ -153,7 +147,6 @@ emma - general_worker: The first worker, Emma
 bob - general_worker: The second worker, Bob
 ```
 
-## State
 Let's start by specifying where everyone is again. This time, we  make sure to include Bob.
 ```
 (at truck1 chicago_depot): truck1 is at the chicago_depot
@@ -175,51 +168,48 @@ The connections between the locations are the same bi-directional connections as
 (connected chicago_depot house3): chicago_depot is connected to house3
 ```
 
-## Goal
+Hence, we get our goal:
 For the goal, we remove the "truck1" location predicate, but still check that all the houses are finalised. 
 ```
-(AND ; all the following should be done
-   (finalised house1) ; house 1 is done
-   (finalised house2) ; house 2 is done
-   (finalised house3) ; house 3 is done
-)
+; all the following should be done
+(finalised house1) ; house 1 is done
+(finalised house2) ; house 2 is done
+(finalised house3) ; house 3 is done
 ```
 
-Thus, we get:
+Our final answer is:
 
 ### OBJECTS
 ```
-truck1 - the first truck at the Chicago depot
-truck2 - the second truck at the Chicago depot
-chicago_depot - location: The Chicago depot
-house1 - The first house to build
-house2 - The second house to build
-house3 - The third house to build
-jamie - administrator: The administrator Jamie
-emma - general_worker: The first worker, Emma
-bob - general_worker: The second worker, Bob
+truck1 - vehicle ; the first truck at the Chicago depot
+truck2 - vehicle ; the second truck at the Chicago depot
+chicago_depot - location ; The Chicago depot
+house1 - house ; The first house to build
+house2 - house ; The second house to build
+house3 - house ; The third house to build
+jamie - administrator ; The administrator Jamie
+emma - general_worker ; The first worker, Emma
+bob - general_worker ; The second worker, Bob
 ```
 
 ### INITIAL
 ```
-(at truck1 chicago_depot): truck1 is at the chicago_depot
-(at truck2 chicago_depot): truck2 is at the chicago_depot
-(at jamie chicago_depot): Jamie is at the depot
-(at emma chicago_depot): Emma is at the depot
-(at bob chicago_depot): Bob is at the depot
-(connected house1 chicago_depot): house1 is connected to the chicago_depot
-(connected house2 chicago_depot): house2 is connected to the chicago_depot
-(connected house3 chicago_depot): house3 is connected to the chicago_depot
-(connected chicago_depot house1): chicago_depot is connected to house1
-(connected chicago_depot house2): chicago_depot is connected to house2
-(connected chicago_depot house3): chicago_depot is connected to house3
+(at truck1 chicago_depot) ; truck1 is at the chicago_depot
+(at truck2 chicago_depot) ; truck2 is at the chicago_depot
+(at jamie chicago_depot) ; Jamie is at the depot
+(at emma chicago_depot) ; Emma is at the depot
+(at bob chicago_depot) ; Bob is at the depot
+(connected house1 chicago_depot) ; house1 is connected to the chicago_depot
+(connected house2 chicago_depot) ; house2 is connected to the chicago_depot
+(connected house3 chicago_depot) ; house3 is connected to the chicago_depot
+(connected chicago_depot house1) ; chicago_depot is connected to house1
+(connected chicago_depot house2) ; chicago_depot is connected to house2
+(connected chicago_depot house3) ; chicago_depot is connected to house3
 ```
 
 ### GOAL
 ```
-(AND ; all the following should be done
-   (finalised house1) ; house 1 is done
-   (finalised house2) ; house 2 is done
-   (finalised house3) ; house 3 is done
-)
+(finalised house1) ; house 1 is done
+(finalised house2) ; house 2 is done
+(finalised house3) ; house 3 is done
 ```

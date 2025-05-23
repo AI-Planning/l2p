@@ -1,6 +1,5 @@
 # Role
-
-You are a PDDL expert and will be given the parts of a PDDL problem file to give feedback on. Consider your response and that the domain should be correctly initiated and that the goal should be accurate based on the domain description. It's impossible to create new predicates, you can only use what's already available. Think through your feedback step by step. If the action is well defined, respond with "No feedback" under header '# JUDGEMENT'.
+You are a PDDL expert and will be given the parts of a PDDL problem file to give feedback on. Consider your response and that the domain should be correctly initiated and that the goal should be accurate based on the domain description. It's impossible to create new predicates, you can only use what's already available. Think through your feedback step by step. If the action is well defined, respond with "no feedback" under header '### JUDGMENT' enclosed by ``` ``` comment blocks.
 
 Use the following checklist:
 1. Are any necessary objects missing? Keep in mind that a type might have to be included even if it isn't mentioned.
@@ -45,33 +44,29 @@ The following are the available predicates which can be used:
 This is the state to give feedback on based on the domain and predicates above.
 
 #### Objects
-truck1 - truck - the truck at the Chicago depot
-chicago_depot - house: The Chicago depot
-house1 - The first house to build
-house2 - The second house to build
-house3 - The third house to build
-jamie - administrator: The administrator Jamie
-emma - general_worker: The first worker, Emma
-bob - general_worker: The second worker, Bob
+truck1 - truck ; the truck at the Chicago depot
+chicago_depot - house ; The Chicago depot
+house1 - house ; The first house to build
+house2 - house ; The second house to build
+house3 - house ; The third house to build
+jamie - administrator ; The administrator Jamie
+emma - general_worker ; The first worker, Emma
+bob - general_worker ; The second worker, Bob
 
 #### Initial State
-(at truck1 chicago_depot): the truck is at the chicago_depot
-(at jamie chicago_depot): Jamie is at the depot
-(at emma chicago_depot): Emma is at the depot
-(connected house1 chicago_depot): house1 is connected to the chicago_depot
-(connected house2 chicago_depot): house2 is connected to the chicago_depot
-(connected house3 chicago_depot): house3 is connected to the chicago_depot
+(at truck1 chicago_depot) ; the truck is at the chicago_depot
+(at jamie chicago_depot) ; Jamie is at the depot
+(at emma chicago_depot) ; Emma is at the depot
+(connected house1 chicago_depot) ; house1 is connected to the chicago_depot
+(connected house2 chicago_depot) ; house2 is connected to the chicago_depot
+(connected house3 chicago_depot) ; house3 is connected to the chicago_depot
 
 #### Goal State
 ```
-(AND ; all the following should be done
-   (AND ; all the houses should be done
-      (finalized house1) ; house 1 is done
-      (finalized house2) ; house 2 is done
-      (finalized house3) ; house 3 is done
-   )
-   (at truck1 chicago_depot); the truck is returned
-)
+(finalized house1) ; house 1 is done
+(finalized house2) ; house 2 is done
+(finalized house3) ; house 3 is done
+(at truck1 chicago_depot); the truck is returned
 ```
 
 ### Feedback
@@ -102,7 +97,8 @@ bob - general_worker: The second worker, Bob
     Even though this could have been handled by the actions, we can't guarantee that it is and as such we have to mirror all these predicates.
     Thereby: Yes.
 
-# JUDGEMENT
+### JUDGMENT
+```
 My concrete suggestions are the following:
     - Add a second truck ("truck2"). Initialize it with the following:
         - (at truck2 chicago_depot)
@@ -110,21 +106,21 @@ My concrete suggestions are the following:
         - chicago_depot - location
     - The starting location for "bob" is missing. Add this in with the following predicate:
         - (at bob chicago_depot)
-    - Remove the requirement for truck1:s location in the goal. This results in the following goal:
-        ```
-        (AND ; all the houses should be done
-            (finalized house1) ; house 1 is done
-            (finalized house2) ; house 2 is done
-            (finalized house3) ; house 3 is done
-        )
-        ```
+    - Remove the requirement for truck1 and location in the goal. This results in the following goal:
+        """
+        ; all the houses should be done
+        (finalized house1) ; house 1 is done
+        (finalized house2) ; house 2 is done
+        (finalized house3) ; house 3 is done
+        """
     - Make sure that the "connected" predicates are all used symmetrically. For this, you need to include all the following in the initial state:
-        - (connected house1 chicago_depot): house1 is connected to the chicago_depot
-        - (connected chicago_depot house1): chicago_depot is connected to house1
-        - (connected house2 chicago_depot): house2 is connected to the chicago_depot
-        - (connected chicago_depot house2): chicago_depot is connected to house2
-        - (connected house3 chicago_depot): house3 is connected to the chicago_depot
-        - (connected chicago_depot house3): chicago_depot is connected to house3
+        - (connected house1 chicago_depot); house1 is connected to the chicago_depot
+        - (connected chicago_depot house1); chicago_depot is connected to house1
+        - (connected house2 chicago_depot); house2 is connected to the chicago_depot
+        - (connected chicago_depot house2); chicago_depot is connected to house2
+        - (connected house3 chicago_depot); house3 is connected to the chicago_depot
+        - (connected chicago_depot house3); chicago_depot is connected to house3
+```
 
 ## Example 2
 ### Domain
@@ -149,18 +145,18 @@ The following are the available predicates which can be used:
 This is the state to give feedback on based on the domain and predicates above.
 
 #### Objects
-outer1 - habitat: The first outer habitat
-outer2 - habitat: The second outer habitat
-outer3 - habitat: The third outer habitat
-outer4 - habitat: The fourth outer habitat
-center - habitat: The central habitat
-base - location: The location where the rangers currently are
-deer1 - animal: The animal living in outer1
-deer2 - animal: The animal living in outer2
-deer3 - animal: The animal living in outer3
-deer4 - animal: The animal living in outer4
-ranger1 - ranger: One of the available rangers
-ranger2 - ranger: One of the available rangers
+outer1 - habitat ; The first outer habitat
+outer2 - habitat ; The second outer habitat
+outer3 - habitat ; The third outer habitat
+outer4 - habitat ; The fourth outer habitat
+center - habitat ; The central habitat
+base - location ; The location where the rangers currently are
+deer1 - animal ; The animal living in outer1
+deer2 - animal ; The animal living in outer2
+deer3 - animal ; The animal living in outer3
+deer4 - animal ; The animal living in outer4
+ranger1 - ranger ; One of the available rangers
+ranger2 - ranger ; One of the available rangers
 
 #### Initial state
 (at deer1 outer1)
@@ -173,20 +169,14 @@ ranger2 - ranger: One of the available rangers
 
 #### Goal State
 ```
-(AND ; all the following should be done
-    (AND ; all the deer should be centered
-        (at deer1 center) ; deer1 is at center
-        (at deer2 center) ; deer2 is at center
-        (at deer3 center) ; deer3 is at center
-        (at deer4 center) ; deer4 is at center
-    )
-    (AND ; all the outer locations should be protected
-        (protected outer1) ; outer1 is protected
-        (protected outer2) ; outer2 is protected
-        (protected outer3) ; outer3 is protected
-        (protected outer4) ; outer4 is protected
-    )
-)
+(at deer1 center) ; deer1 is at center
+(at deer2 center) ; deer2 is at center
+(at deer3 center) ; deer3 is at center
+(at deer4 center) ; deer4 is at center
+(protected outer1) ; outer1 is protected
+(protected outer2) ; outer2 is protected
+(protected outer3) ; outer3 is protected
+(protected outer4) ; outer4 is protected
 ```
 
 ### Feedback
@@ -217,27 +207,26 @@ ranger2 - ranger: One of the available rangers
 8. Should any predicate be used in a symmetrical manner?
     While the "at" predicate could accept two locations, this is clearly not the intent. Hence: No.
 
-# JUDGEMENT
+### JUDGMENT
+```
 My concrete suggestions are the following:
     - Remove the "deer4" and "outer4" objects from the domain entirely. They're incorrectly included.
     - Add at least one more ranger object. For example, "ranger3" could be added an initalized like this:
         - (at ranger3 base)
     - Remove the specification that base is protected ("(protected base)").
     - The updated goal state with outer4 and deer4 removed should be:
-        ```
-        (AND ; all the following should be done
-            (AND ; all the deer should be centered
-                (at deer1 center) ; deer1 is at center
-                (at deer2 center) ; deer2 is at center
-                (at deer3 center) ; deer3 is at center
-            )
-            (AND ; all the outer locations should be protected
-                (protected outer1) ; outer1 is protected
-                (protected outer2) ; outer2 is protected
-                (protected outer3) ; outer3 is protected
-            )
-        )
-        ```
+        """
+        ; all the following should be done
+        ; all the deer should be centered
+        (at deer1 center) ; deer1 is at center
+        (at deer2 center) ; deer2 is at center
+        (at deer3 center) ; deer3 is at center
+        ; all the outer locations should be protected
+        (protected outer1) ; outer1 is protected
+        (protected outer2) ; outer2 is protected
+        (protected outer3) ; outer3 is protected
+        """
+```
 
 ## Example 3
 ### Domain
@@ -258,13 +247,13 @@ The following are the available predicates which can be used:
 This is the state to give feedback on based on the domain and predicates above.
 
 #### Objects
-bob - person: One of the two people who should meet. His exact floor is unknown.
-sally - person: The other person who should meet. Her exact floor is unknown.
-floor_bob - floor: The floor bob is on. Which (1-5) this is we don't know, so model generally.
-floor_sally - floor: The floor sally is on. Which (1-5) this is we don't know, so model generally.
-floor_5 - floor: The floor they should meet up at.
-elevator_1 - elevator: The first elevator in the building.
-elevator_2 - elevator: The second elevator in the building.
+bob - person ; One of the two people who should meet. His exact floor is unknown.
+sally - person ; The other person who should meet. Her exact floor is unknown.
+floor_bob - floor ; The floor bob is on. Which (1-5) this is we don't know, so model generally.
+floor_sally - floor ; The floor sally is on. Which (1-5) this is we don't know, so model generally.
+floor_5 - floor ; The floor they should meet up at.
+elevator_1 - elevator ; The first elevator in the building.
+elevator_2 - elevator ; The second elevator in the building.
 
 #### Initial State
 (at bob floor_bob)
@@ -274,10 +263,9 @@ elevator_2 - elevator: The second elevator in the building.
 
 #### Goal State
 ```
-(AND ; all the following should be done
-    (at bob floor_5) ; bob is at floor 5
-    (at sally floor_5) ; sally is at floor 5
-)
+; all the following should be done
+(at bob floor_5) ; bob is at floor 5
+(at sally floor_5) ; sally is at floor 5
 ```
 
 ### Feedback
@@ -305,13 +293,16 @@ elevator_2 - elevator: The second elevator in the building.
 8. Should any predicate be used in a symmetrical manner?
     All the predicates are clearly intended to be one-directional, and that is how they're used. So: No.
 
-# JUDGEMENT
+### JUDGMENT
+```
 Based on this, the response is: No feedback.
+```
 
-# Task
+===================================
+Here is the task to work with:
 
-## Domain
-{domain_desc}
+## Problem
+{problem_desc}
 
 ## Available Types
 {types}
@@ -323,13 +314,17 @@ The following are the available predicates which can be used:
 ## State
 This is the state to give feedback on based on the domain and predicates above.
 
-### Objects
+### OBJECTS
+```
 {objects}
+```
 
-### Initial State
+### INITIAL
+```
 {initial_states}
+```
 
-### Goal State
+### GOAL
+```
 {goal_states}
-
-## Feedback
+```

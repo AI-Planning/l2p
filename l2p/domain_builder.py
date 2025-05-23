@@ -78,7 +78,7 @@ class DomainBuilder:
             validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
 
-        types_str = format_types_to_string(types) if types else "No types provided."
+        types_str = pretty_print_types(types) if types else "No types provided."
 
         prompt = (
             prompt_template
@@ -155,7 +155,7 @@ class DomainBuilder:
             validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
         
-        types_str = format_types_to_string(types) if types else "No types provided."
+        types_str = pretty_print_types(types) if types else "No types provided."
 
         prompt = (
             prompt_template
@@ -242,7 +242,7 @@ class DomainBuilder:
             validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
 
-        types_str = format_types_to_string(types) if types else "No types provided."
+        types_str = pretty_print_types(types) if types else "No types provided."
         const_str = format_constants(constants) if constants else "No constants provided."
 
         prompt = (
@@ -320,7 +320,7 @@ class DomainBuilder:
             validation_info (tuple[bool, str]): validation info containing pass flag and error message
         """
 
-        types_str = format_types_to_string(types) if types else "No types provided."
+        types_str = pretty_print_types(types) if types else "No types provided."
         const_str = format_constants(constants) if constants else "No constants provided."
         preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
         funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
@@ -412,7 +412,7 @@ class DomainBuilder:
             validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
 
-        types_str = format_types_to_string(types) if types else "No types provided."
+        types_str = pretty_print_types(types) if types else "No types provided."
         const_str = format_constants(constants) if constants else "No constants provided."
         preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
         funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
@@ -497,7 +497,7 @@ class DomainBuilder:
             llm_output (str): the raw string BaseLLM response
         """
 
-        types_str = format_types_to_string(types) if types else "No types provided."
+        types_str = pretty_print_types(types) if types else "No types provided."
         nl_act_str = "\n".join(f" - {name}: {desc}" for name, desc in nl_actions.items()) if nl_actions else "No actions provided."
 
         prompt = (
@@ -572,7 +572,7 @@ class DomainBuilder:
         """
 
         act_list_str = "\n".join([f"- {a}" for a in action_list]) if action_list else "No other actions provided."
-        types_str = format_types_to_string(types) if types else "No types provided."
+        types_str = pretty_print_types(types) if types else "No types provided."
         const_str = format_constants(constants) if constants else "No constants provided."
         preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
         funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
@@ -678,7 +678,7 @@ class DomainBuilder:
         """
 
         act_list_str = "\n".join([f"- {a}" for a in action_list]) if action_list else "No other actions provided."
-        types_str = format_types_to_string(types) if types else "No types provided."
+        types_str = pretty_print_types(types) if types else "No types provided."
         const_str = format_constants(constants) if constants else "No constants provided."
         preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
         funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
@@ -778,7 +778,7 @@ class DomainBuilder:
             validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
 
-        types_str = format_types_to_string(types) if types else "No types provided."
+        types_str = pretty_print_types(types) if types else "No types provided."
 
         prompt = (
             prompt_template
@@ -872,7 +872,7 @@ class DomainBuilder:
         """
 
         params_str = format_params(params) if params else "No parameters provided."
-        types_str = format_types_to_string(types) if types else "No types provided."
+        types_str = pretty_print_types(types) if types else "No types provided."
         const_str = format_constants(constants) if constants else "No constants provided."
         preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
         funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
@@ -984,7 +984,7 @@ class DomainBuilder:
         """
 
         params_str = format_params(params) if params else "No parameters provided."
-        types_str = format_types_to_string(types) if types else "No types provided."
+        types_str = pretty_print_types(types) if types else "No types provided."
         const_str = format_constants(constants) if constants else "No constants provided."
         preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
         funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."

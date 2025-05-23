@@ -1,26 +1,26 @@
 Your task is to estimate the initial state and the goal state for a PDDL problem based on a domain description and the available actions. Consider that if a predicate is checked by an action for an object, it should probably somehow be possible to make true or start true. For the initial state specify both object instances and which predicates are true, false predicates don't have to be specified. For the goal, specify the states which need to have specific values regardless if those are true or false. Do it step-by-step and explain your thoughts. Respond with the exact headings provided. You can't assume that any object, regardless of type, already exists. Everything you wish to use should be defined here. Also, remember that any symmetrical predicates likely should be defined both ways. 
 
-End your final answer starting with headers (in order) "### OBJECTS" (with no brackets) "### INITIAL" and "### GOAL" containg respective content with ''' ''' comment blocks in PDDL as so:
+End your final answer starting with headers (in order) "### OBJECTS", "### INITIAL" and "### GOAL" containing respective content within the ``` ``` comment blocks in PDDL as so:
 
 ### OBJECTS
 ```
-object1 - type_1
-object2 - type_2
-object3 - type_1
+object1 - type_1 ; comment for object1
+object2 - type_2 ; comment for object2
+object3 - type_1 ; comment for object3
 ```
+
+Each object must be declared separately with their type and not grouped - even if objects share the same type.
 
 ### INITIAL
 ```
-(predicate_name object1 object2) ; comment for initial state predicate 1
-(predicate_name object3 object4) ; comment for initial state predicate 2
-(predicate_name object5) ; comment for initial state predicate 3
+(<predicate_name> <object1> <object2>) ; comment for initial state predicate
+(<predicate_name> <object3> <object4>) ; comment for initial state predicate
+(<predicate_name> <object5>) ; comment for initial state predicate
+(= (<function_name> <object6>) <value>) ; comment for a numeric assignment
 ```
 
 ### GOAL
 ```
-(and
-   (predicate_name object) ; comment
-)
+(<predicate_name> <object>) ; comment for goal state predicate
+(<operator> (<function_name> <object>) <value>) ; comment for a numeric assignment
 ```
-
-Even if there is one goal state, it must contain the PDDL 'and' syntax. Each object must be declared separately with their type and not grouped - even if objects share the same type.

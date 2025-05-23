@@ -117,7 +117,7 @@ class FeedbackBuilder:
             fb_msg (str): feedback message from assistant
         """
 
-        types_str = format_types_to_string(types) if types else "No types provided."
+        types_str = pretty_print_types(types) if types else "No types provided."
 
         prompt = (
             feedback_template
@@ -162,7 +162,7 @@ class FeedbackBuilder:
             fb_msg (str): feedback message from assistant
         """
 
-        types_str = format_types_to_string(types) if types else "No types provided."
+        types_str = pretty_print_types(types) if types else "No types provided."
         nl_act_str = pretty_print_dict(nl_actions) if nl_actions else "No actions provided."
 
         prompt = (
@@ -219,7 +219,7 @@ class FeedbackBuilder:
         prec_str = action["preconditions"] if action else "No preconditions provided."
         eff_str = action["effects"] if action else "No effects provided."
 
-        types_str = format_types_to_string(types) if types else "No types provided."
+        types_str = pretty_print_types(types) if types else "No types provided."
         const_str = format_constants(constants) if constants else "No constants provided."
         preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
         funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
@@ -283,7 +283,7 @@ class FeedbackBuilder:
         act_desc_str = action_desc if action_desc else "No action description provided"
         params_str = "\n".join([f"{name} - {type}" for name, type in parameter.items()]) if parameter else "No parameters provided"
 
-        types_str = format_types_to_string(types) if types else "No types provided."
+        types_str = pretty_print_types(types) if types else "No types provided."
         const_str = format_constants(constants) if constants else "No constants provided."
 
         prompt = (
@@ -349,7 +349,7 @@ class FeedbackBuilder:
         params_str = "\n".join([f"{name} - {type}" for name, type in parameter.items()]) if parameter else "No parameters provided"
         prec_str = preconditions if preconditions else "No preconditions provided."
 
-        types_str = format_types_to_string(types) if types else "No types provided."
+        types_str = pretty_print_types(types) if types else "No types provided."
         const_str = format_constants(constants) if constants else "No constants provided."
         preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
         funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
@@ -423,7 +423,7 @@ class FeedbackBuilder:
         prec_str = preconditions if preconditions else "No preconditions provided."
         eff_str = effects if effects else "No effects provided."
 
-        types_str = format_types_to_string(types) if types else "No types provided."
+        types_str = pretty_print_types(types) if types else "No types provided."
         const_str = format_constants(constants) if constants else "No constants provided."
         preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
         funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
@@ -480,7 +480,7 @@ class FeedbackBuilder:
             fb_msg (str): feedback message from assistant
         """
 
-        types_str = format_types_to_string(types) if types else "No types provided."
+        types_str = pretty_print_types(types) if types else "No types provided."
         const_str = format_constants(constants) if constants else "No constants provided."
         preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
 
@@ -542,7 +542,7 @@ class FeedbackBuilder:
         init_str = format_initial(initial) if initial else "No initial state provided."
         goal_str = format_goal(goal) if goal else "No goal state provided."
 
-        types_str = format_types_to_string(types) if types else "No types provided."
+        types_str = pretty_print_types(types) if types else "No types provided."
         const_str = format_constants(constants) if constants else "No constants provided."
         preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
         funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
@@ -603,7 +603,7 @@ class FeedbackBuilder:
 
         obj_str = "\n".join([f"{obj} - {type}" for obj, type in objects.items()]) if objects else "No objects provided."
 
-        types_str = format_types_to_string(types) if types else "No types provided."
+        types_str = pretty_print_types(types) if types else "No types provided."
         const_str = format_constants(constants) if constants else "No constants provided."
         preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
         funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
@@ -665,7 +665,7 @@ class FeedbackBuilder:
         obj_str = "\n".join([f"{obj} - {type}" for obj, type in objects.items()]) if objects else "No objects provided."
         init_str = format_initial(initial) if initial else "No initial state provided."
 
-        types_str = format_types_to_string(types) if types else "No types provided."
+        types_str = pretty_print_types(types) if types else "No types provided."
         const_str = format_constants(constants) if constants else "No constants provided."
         preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
         funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
@@ -731,7 +731,7 @@ class FeedbackBuilder:
         init_str = format_initial(initial) if initial else "No initial state provided."
         goal_str = format_goal(goal) if goal else "No goal state provided."
 
-        types_str = format_types_to_string(types) if types else "No types provided."
+        types_str = pretty_print_types(types) if types else "No types provided."
         const_str = format_constants(constants) if constants else "No constants provided."
         preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
         funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."

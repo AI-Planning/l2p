@@ -1,4 +1,10 @@
-End your final answer starting with headers (in order) "### OBJECTS" (with no brackets) "### INITIAL" and "### GOAL" containing respective content within the ``` ``` comment blocks in PDDL as so:
+You now are revising your answer using feedback. Here is the feedback you outputted:
+
+{fb_msg}
+
+======================================
+
+End your final answer starting with headers (in order) "### OBJECTS", "### INITIAL" and "### GOAL" containing respective content within the ``` ``` comment blocks in PDDL as so:
 
 ### OBJECTS
 ```
@@ -21,4 +27,37 @@ Each object must be declared separately with their type and not grouped - even i
 ```
 (<predicate_name> <object>) ; comment for goal state predicate
 (<operator> (<function_name> <object>) <value>) ; comment for a numeric assignment
+```
+
+======================================
+
+Here are the information to work with:
+
+## Problem
+{problem_desc}
+
+## Available Types
+{types}
+
+## Predicates
+The following are the available predicates which can be used:
+{predicates}
+
+======================================
+
+Apply the suggestions to your original answer:
+
+### OBJECTS
+```
+{objects}
+```
+
+### INITIAL
+```
+{initial_states}
+```
+
+### GOAL
+```
+{goal_states}
 ```

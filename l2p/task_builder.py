@@ -63,7 +63,7 @@ class TaskBuilder:
             validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
 
-        types_str = format_types_to_string(types) if types else "No types provided."
+        types_str = pretty_print_types(types) if types else "No types provided."
         const_str = format_constants(constants) if constants else "No constants provided."
 
         prompt = (
@@ -155,7 +155,7 @@ class TaskBuilder:
             validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
 
-        types_str = format_types_to_string(types) if types else "No types provided."
+        types_str = pretty_print_types(types) if types else "No types provided."
         const_str = format_constants(constants) if constants else "No constants provided."
         preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
         funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
@@ -257,7 +257,7 @@ class TaskBuilder:
             validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
 
-        types_str = format_types_to_string(types) if types else "No types provided."
+        types_str = pretty_print_types(types) if types else "No types provided."
         const_str = format_constants(constants) if constants else "No constants provided."
         preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
         funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
@@ -357,7 +357,7 @@ class TaskBuilder:
             validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
 
-        types_str = format_types_to_string(types) if types else "No types provided."
+        types_str = pretty_print_types(types) if types else "No types provided."
         const_str = format_constants(constants) if constants else "No constants provided."
         preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
         funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
@@ -400,9 +400,19 @@ class TaskBuilder:
                         elif error_type == "validate_task_objects":
                             validation_info = validator(objects, types)
                         elif error_type == "validate_task_states":
-                            validation_info = validator(initial, objects, predicates, "initial")
+                            validation_info = validator(
+                                states=initial, 
+                                objects=objects, 
+                                predicates=predicates, 
+                                functions=functions,
+                                state_type="initial")
                             if validation_info[0]:
-                                validation_info = validator(goal, objects, predicates, "goal")
+                                validation_info = validator(
+                                    states=goal, 
+                                    objects=objects, 
+                                    predicates=predicates, 
+                                    functions=functions,
+                                    state_type="goal")
                         
                         if not validation_info[0]:
                             return objects, initial, goal, llm_output, validation_info
@@ -490,13 +500,15 @@ class TaskBuilder:
         Returns:
             desc (str): PDDL problem in string format
         """
+        
+        goal_str = f"(and \n{indent(format_goal(goal), 1)}\n)"
 
         desc = "(define\n"
         desc += f"   (problem {problem_name})\n"
         desc += f"   (:domain {domain_name})\n\n"
         desc += f"   (:objects \n{indent(format_objects(objects))}\n   )\n\n"
         desc += f"   (:init\n{indent(format_initial(initial))}\n   )\n\n"
-        desc += f"   (:goal\n{indent(format_goal(goal))}\n   )\n"
+        desc += f"   (:goal\n{indent(goal_str)}\n   )\n"
         desc += ")"
         desc = desc.replace("AND", "and").replace("OR", "or")
         return desc

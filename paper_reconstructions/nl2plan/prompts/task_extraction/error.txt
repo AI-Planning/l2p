@@ -1,7 +1,25 @@
 ## Error
-There was a at least one error during {task}. Address the following errors and regenerate your entire response:
+There was an issue with or feedback for generating the specified PDDL task. Correct the following error and regenerate the task, using the exact same headers with its content enclosed by ``` ``` comment blocks. Remember that you MUST reuse all the headers ("### OBJECTS", "### INITIAL", and "### GOAL")
+
 {error_msg}
 
 Regenerate an entire response correcting the above error. Make sure to use the exact same headers as requested before, but start with a "## Response" header to analyze the error.
 
-## Response
+======================================
+
+## Problem
+{problem_desc}
+
+## Available Types
+{types}
+
+## Predicates
+The following are the available predicates which can be used:
+{predicates}
+
+======================================
+
+Please correct this:
+
+### Original Response
+{llm_response}

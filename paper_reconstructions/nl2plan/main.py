@@ -120,13 +120,6 @@ def run_nl2plan(args, domain: str, problem: str):
         print(types)
         print(llm_output)
 
-        types = {
-            'block': 'The primary objects that can be picked and placed by the robot arm.', 
-            'table': 'A flat surface where blocks can be placed.', 
-            'stack': 'Represents the relationship between blocks when one is placed on top of another.'
-            }
-        
-
         log += f"STEP ONE: TYPE EXTRACTION\n\n{types}\n\n"
 
         # B. Hierarchy Construction
@@ -154,7 +147,7 @@ def run_nl2plan(args, domain: str, problem: str):
         print(llm_output)
 
         log += f"{separator}\nSTEP TWO: HIERARCHY CONSTRUCTION\n\n{type_hierarchy}\n\n"
-
+        
         # C. Action Extraction
         action_extraction = ActionExtraction()
         action_extraction.prompt_template = set_prompt(
@@ -207,60 +200,43 @@ def run_nl2plan(args, domain: str, problem: str):
         )
 
         print(format_actions(actions))
-        print(format_expression(predicates))
+        print(predicates)
 
-    #     log += f"{separator}\n"
-    #     log += "STEP FOUR: ACTION CONSTRUCTION\n\n"
-    #     log += "ACTIONS:\n"
-    #     log += "\n".join([str(action) for action in actions]) + "\n\n"
-    #     log += "PREDICATES:\n"
-    #     log += "\n".join([str(predicate) for predicate in predicates]) + "\n\n"
+        log += f"{separator}\n"
+        log += "STEP FOUR: ACTION CONSTRUCTION\n\n"
+        log += "ACTIONS:\n"
+        log += "\n".join([str(action) for action in actions]) + "\n\n"
+        log += "PREDICATES:\n"
+        log += "\n".join([str(predicate) for predicate in predicates]) + "\n\n"
 
-    #     # E. Task Extraction
-    #     task_extraction = TaskExtraction()
-    #     task_extraction.prompt_template = set_prompt(
-    #         task_extraction.prompt_template,
-    #         role_path="paper_reconstructions/nl2plan/prompts/task_extraction/role.txt",
-    #         examples_path="paper_reconstructions/nl2plan/prompts/task_extraction/examples",
-    #         task_path="paper_reconstructions/nl2plan/prompts/task_extraction/task.txt",
-    #     )
+        # E. Task Extraction
+        task_extraction = TaskExtraction()
+        task_extraction.prompt_template = set_prompt(
+            task_extraction.prompt_template,
+            role_path="paper_reconstructions/nl2plan/prompts/task_extraction/role.txt",
+            examples_path="paper_reconstructions/nl2plan/prompts/task_extraction/examples",
+            task_path="paper_reconstructions/nl2plan/prompts/task_extraction/task.txt",
+        )
 
-    #     objects, initial, goal = task_extraction.task_extraction(
-    #         model=model,
-    #         problem_desc=load_file(
-    #             f"paper_reconstructions/nl2plan/domains/{domain}/{problem}.txt"
-    #         ),
-    #         task_extraction_prompt=task_extraction.prompt_template,
-    #         types=type_hierarchy,
-    #         predicates=predicates,
-    #         feedback_prompt=load_file(
-    #             "paper_reconstructions/nl2plan/prompts/task_extraction/feedback.txt"
-    #         ),
-    #         error_prompt=load_file(
-    #             "paper_reconstructions/nl2plan/prompts/task_extraction/error.txt"
-    #         ),
-    #     )
+        objects, initial, goal = task_extraction.task_extraction(
+            model=model,
+            problem_desc=load_file(f"paper_reconstructions/nl2plan/domains/{domain}/{problem}.txt"),
+            task_extraction_prompt=task_extraction.prompt_template,
+            types=type_hierarchy,
+            predicates=predicates,
+            feedback_prompt=load_file("paper_reconstructions/nl2plan/prompts/task_extraction/feedback.txt"),
+        )
+        
+        print(objects)
+        print(initial)
+        print(goal)
 
-    #     log += f"{separator}\nSTEP FIVE: TASK EXTRACTION\n\n"
-    #     log += f"OBJECTS:\n{objects}\n"
-    #     log += f"INITIAL STATES:\n{initial}\n"
-    #     log += f"GOAL STATES:\n{goal}\n"
+        log += f"{separator}\nSTEP FIVE: TASK EXTRACTION\n\n"
+        log += f"OBJECTS:\n{objects}\n"
+        log += f"INITIAL STATES:\n{initial}\n"
+        log += f"GOAL STATES:\n{goal}\n"
 
-    #     predicate_str = "\n".join(
-    #         [pred["clean"].replace(":", " ; ") for pred in predicates]
-    #     )
-
-    #     types = format_types(type_hierarchy)  # retrieve types
-    #     pruned_types = {
-    #         name: description
-    #         for name, description in types.items()
-    #         if name not in UNSUPPORTED_KEYWORDS
-    #     }  # remove unsupported words
-
-    #     # format strings
-    #     types_str = "\n".join(pruned_types)
-
-    #     # generate PDDL domain and problem file
+        # generate PDDL domain and problem file
         pddl_domain = domain_builder.generate_domain(
             domain_name=args.domain,
             requirements=args.requirements,
@@ -271,52 +247,54 @@ def run_nl2plan(args, domain: str, problem: str):
 
         print(pddl_domain)
 
-    #     problem_name = args.domain + "_problem"
-    #     pddl_problem = task_builder.generate_task(
-    #         domain_name=args.domain,
-    #         problem_name=problem_name,
-    #         objects=objects,
-    #         initial=initial,
-    #         goal=goal,
-    #     )
+        problem_name = args.domain + "_problem"
+        pddl_problem = task_builder.generate_task(
+            domain_name=args.domain,
+            problem_name=problem_name,
+            objects=objects,
+            initial=initial,
+            goal=goal,
+        )
+        
+        print(pddl_problem)
 
-    #     log += f"\n\nPDDL DOMAIN:\n{pddl_domain}"
-    #     log += f"\n\nPDDL PROBLEM:\n{pddl_problem}"
+        log += f"\n\nPDDL DOMAIN:\n{pddl_domain}"
+        log += f"\n\nPDDL PROBLEM:\n{pddl_problem}"
 
-    #     # write domain and problem files
-        # domain_file = f"{main_directory}/domain.pddl"
-    #     problem_file = f"{main_directory}/problem.pddl"
+        # write domain and problem files
+        domain_file = f"{main_directory}/domain.pddl"
+        problem_file = f"{main_directory}/problem.pddl"
 
-        # with open(domain_file, "w") as f:
-        #     f.write(pddl_domain)
-    #     with open(problem_file, "w") as f:
-    #         f.write(pddl_problem)
+        with open(domain_file, "w") as f:
+            f.write(pddl_domain)
+        with open(problem_file, "w") as f:
+            f.write(pddl_problem)
 
-    #     # run planner
-    #     _, plan = planner.run_fast_downward(
-    #         domain_file=domain_file, problem_file=problem_file
-    #     )
+        # run planner
+        _, plan = planner.run_fast_downward(
+            domain_file=domain_file, problem_file=problem_file
+        )
 
-    #     # record plan results
-    #     plan_file = f"{main_directory}/plan.txt"
-    #     with open(plan_file, "w") as f:
-    #         f.write(plan)
+        # record plan results
+        plan_file = f"{main_directory}/plan.txt"
+        with open(plan_file, "w") as f:
+            f.write(plan)
 
     except Exception as e:
-        # with open(log_file, "w") as f:
-        #     f.write(log)
+        with open(log_file, "w") as f:
+            f.write(log)
         raise e  # re-raise the exception after logging
-    # else:
-    #     # write the log file if everything succeeds
-    #     with open(log_file, "w") as f:
-    #         f.write(log)
+    else:
+        # write the log file if everything succeeds
+        with open(log_file, "w") as f:
+            f.write(log)
 
 
 if __name__ == "__main__":
 
     # load in arguments to run program
     parser = argparse.ArgumentParser(description="NL2Plan")
-    parser.add_argument("--model", type=str, default="gpt-4o-mini")
+    parser.add_argument("--model", type=str, default="o1-mini")
     parser.add_argument("--domain", type=str, choices=DOMAINS, default="blocksworld")
     parser.add_argument("--requirements", type=list[str], default=REQUIREMENTS)
     parser.add_argument("--planner", type=str, default="downward/fast-downward.py")

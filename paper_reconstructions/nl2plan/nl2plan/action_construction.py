@@ -39,7 +39,7 @@ class ActionConstruction:
     ) -> str:
         prompt = load_file("paper_reconstructions/nl2plan/prompts/action_construction/error.txt")
 
-        types_str = format_types_to_string(types) if types else "No types provided."
+        types_str = pretty_print_types(types) if types else "No types provided."
         preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
 
         prompt = (
@@ -71,7 +71,7 @@ class ActionConstruction:
         prec_str = action["preconditions"] if action else "No preconditions provided."
         eff_str = action["effects"] if action else "No effects provided."
 
-        types_str = format_types_to_string(types) if types else "No types provided."
+        types_str = pretty_print_types(types) if types else "No types provided."
         preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
 
         prompt = (

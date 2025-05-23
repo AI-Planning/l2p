@@ -662,17 +662,24 @@ def parse_goal(llm_output: str) -> list[dict[str, str]]:
     goal_raw = combine_blocks(goal_head)
     goal_clean = remove_comments(goal_raw)
     goal_parsed = parse_pddl(f"({goal_clean})")
+    
+    print("GOAL PARSED:", goal_parsed)
 
     return parse_task_states(goal_parsed)
 
 def parse_task_states(parsed_states: list) -> list[dict]:
     states = []
     for line in parsed_states:
+        
+        if isinstance(line, str):
+            line = [line]
 
         # only parse lines
         if isinstance(line, list):
             name = line[0].split(" ")[0]
-
+            
+            if name == "and":
+                continue
             # if comparsion operator
             if name in ["=", ">", "<", ">=", "<="]:
                 op = name
