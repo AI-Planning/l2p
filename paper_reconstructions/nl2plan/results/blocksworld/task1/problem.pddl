@@ -1,30 +1,6 @@
-(define
-   (problem blocksworld_problem)
-   (:domain blocksworld)
-
-   (:objects 
-      blue_block - block
-      red_block - block
-      yellow_block - block
-      green_block - block
-      fixed_table - table
-   )
-
-   (:init
-      (on blue_block red_block)
-      (on red_block yellow_block)
-      (on_table yellow_block)
-      (on_table green_block)
-      (clear green_block)
-      (not (clear yellow_block))
-      (not (clear blue_block))
-      (not (clear red_block))
-   )
-
-   (:goal
-      (and 
-         (on red_block green_block)
-         (clear green_block)
-      )
-   )
+(define (problem blocksworld_problem)
+    (:domain blocksworld)
+    (:objects blue green red yellow - block table1 - table)
+    (:init (clear blue) (clear green) (on_block blue red) (on_block red yellow) (on_table green) (on_table yellow))
+    (:goal (and (on_block red green) (clear blue)))
 )

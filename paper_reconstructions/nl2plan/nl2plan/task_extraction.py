@@ -76,13 +76,6 @@ class TaskExtraction:
                     syntax_validator=self.syntax_validator
                 )
                 
-                print("*"*50)
-                print(llm_output)
-                print(objects)
-                print(initial)
-                print(goal)
-                print("*"*50)
-                
                 valid = validation_info[0]
                 if valid:
                     # store last valid results
@@ -94,9 +87,6 @@ class TaskExtraction:
                         problem_desc=problem_desc,
                         types=types,
                         predicates=predicates,
-                        objects=objects,
-                        initial=initial,
-                        goal=goal,
                         original_llm_output=llm_output,
                         validation_info=validation_info
                     )
@@ -136,9 +126,6 @@ class TaskExtraction:
         problem_desc: str,
         types: dict[str,str] | list[dict[str,str]],
         predicates: list[Predicate],
-        objects: dict[str, str],
-        initial: list[dict[str, str]],
-        goal: list[dict[str, str]],
         original_llm_output: str,
         validation_info: tuple[bool, str]
     ) -> str:
@@ -154,13 +141,7 @@ class TaskExtraction:
             .replace("{problem_desc}", problem_desc)
             .replace("{types}", types_str)
             .replace("{predicates}", preds_str)
-            .replace("{objects}", format_objects(objects))
-            .replace("{initial_states}", format_initial(initial))
-            .replace("{goal_states}", format_goal(goal))
         )
-        
-        print("VALIDATION PROMPT:")
-        print(prompt)
         
         return prompt
     
@@ -189,8 +170,5 @@ class TaskExtraction:
             .replace("{initial_states}", format_initial(initial))
             .replace("{goal_states}", format_goal(goal))
         )
-        
-        print("FEEDBACK PROMPT:")
-        print(prompt)
         
         return prompt

@@ -249,8 +249,6 @@ class TestTaskBuilder(unittest.TestCase):
             initial=initial,
             goal=goal
         )
-        
-        print(result)
 
         self.assertEqual(self.normalize(result), self.normalize(expected_output))
 

@@ -1,7 +1,7 @@
 # Role
-You are a PDDL expert and will be given a set of PDDL actions to correct and give feedback and advice on. Consider not only if the actions are technically correct, but also whether they are defined following good standards such as flexibility and clarity. Overly specifying types by use of "is-type" predicates should generally be avoided. Remember that the preconditions should make sure that only valid objects are passed to the action, we can't assume anything except the provided types. Don't assume any restrictions beyond those specified by the domain itself.  Don't unnecessarily overcomplicate the actions. Note that creating new options isn't possible. If the action is well defined, respond with "no feedback" under header '### JUDGMENT'. 
+You are a PDDL expert and will be given a set of PDDL actions to correct and give feedback and advice on. Consider not only if the actions are technically correct, but also whether they are defined following good standards such as flexibility and clarity. Overly specifying types by use of "is-type" predicates should generally be avoided. Remember that the preconditions should make sure that only valid objects are passed to the action, we can't assume anything except the provided types. Don't assume any restrictions beyond those specified by the domain itself.  Don't unnecessarily overcomplicate the actions. Note that creating new options isn't possible. 
 
-IMPORTANT: Duplicate predicates are acceptable and should not be considered as a suggestion/judge to fix.
+If the action is well defined, respond with "no feedback" under header '### JUDGMENT' enclosed by ``` ``` comment blocks. Otherwise add the feedback into the block.
 
 Use the following checklist:
 1: Are any necessary precondition checks missing? For example, does the action simply assume that two things are at the same location?
@@ -242,6 +242,9 @@ An elevator picks up a person at a floor where they both are. Example: elevator_
 Therefore: No feedback.
 ```
 
+===================================
+Here is the task to work with:
+
 # Task
 ## Domain
 {domain_desc}
@@ -274,5 +277,3 @@ You can also suggest new predicates to add.
 ```
 {action_effects}
 ```
-
-### Feedback

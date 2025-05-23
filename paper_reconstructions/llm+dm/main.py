@@ -274,7 +274,7 @@ def run_llm_dm(
     with open(domain_file, "w") as f:
         f.write(pddl_domain)
 
-    
+    # prints out final check parsed domain
     domain = check_parse_domain(file_path=domain_file)
     print(domain)
 

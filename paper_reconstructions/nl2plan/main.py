@@ -42,6 +42,7 @@ REQUIREMENTS = [
     ":disjunctive-preconditions",
     ":universal-preconditions",
     ":conditional-effects",
+    ":existential-preconditions"
 ]
 
 UNSUPPORTED_KEYWORDS = ["object", "pddl", "lisp"]
@@ -58,7 +59,7 @@ def set_prompt(
     role = load_file(role_path)
     examples = load_files(examples_path)
     task = load_file(task_path)
-
+    
     # set prompts to prompt builder class
     prompt_builder.set_role(role=role)
     for ex in examples:
@@ -116,9 +117,6 @@ def run_nl2plan(args, domain: str, problem: str):
                 "paper_reconstructions/nl2plan/prompts/type_extraction/feedback.txt"
             ),
         )
-        
-        print(types)
-        print(llm_output)
 
         log += f"STEP ONE: TYPE EXTRACTION\n\n{types}\n\n"
 
@@ -143,11 +141,8 @@ def run_nl2plan(args, domain: str, problem: str):
             ),
         )
 
-        print(type_hierarchy)
-        print(llm_output)
-
         log += f"{separator}\nSTEP TWO: HIERARCHY CONSTRUCTION\n\n{type_hierarchy}\n\n"
-        
+
         # C. Action Extraction
         action_extraction = ActionExtraction()
         action_extraction.prompt_template = set_prompt(
@@ -170,9 +165,6 @@ def run_nl2plan(args, domain: str, problem: str):
         )
 
         log += f"{separator}\nSTEP THREE: ACTION EXTRACTION\n\n{nl_actions}\n\n"
-
-        print(nl_actions)
-        print(llm_output)
 
         # D. Action Construction
         action_construction = ActionConstruction()
@@ -199,9 +191,6 @@ def run_nl2plan(args, domain: str, problem: str):
             )
         )
 
-        print(format_actions(actions))
-        print(predicates)
-
         log += f"{separator}\n"
         log += "STEP FOUR: ACTION CONSTRUCTION\n\n"
         log += "ACTIONS:\n"
@@ -226,10 +215,6 @@ def run_nl2plan(args, domain: str, problem: str):
             predicates=predicates,
             feedback_prompt=load_file("paper_reconstructions/nl2plan/prompts/task_extraction/feedback.txt"),
         )
-        
-        print(objects)
-        print(initial)
-        print(goal)
 
         log += f"{separator}\nSTEP FIVE: TASK EXTRACTION\n\n"
         log += f"OBJECTS:\n{objects}\n"
@@ -245,8 +230,6 @@ def run_nl2plan(args, domain: str, problem: str):
             actions=actions,
         )
 
-        print(pddl_domain)
-
         problem_name = args.domain + "_problem"
         pddl_problem = task_builder.generate_task(
             domain_name=args.domain,
@@ -255,8 +238,6 @@ def run_nl2plan(args, domain: str, problem: str):
             initial=initial,
             goal=goal,
         )
-        
-        print(pddl_problem)
 
         log += f"\n\nPDDL DOMAIN:\n{pddl_domain}"
         log += f"\n\nPDDL PROBLEM:\n{pddl_problem}"
@@ -269,6 +250,14 @@ def run_nl2plan(args, domain: str, problem: str):
             f.write(pddl_domain)
         with open(problem_file, "w") as f:
             f.write(pddl_problem)
+            
+        pddl_domain_cleaned = check_parse_domain(file_path=domain_file)
+        pddl_problem_cleaned = check_parse_problem(file_path=problem_file)
+        
+        with open(domain_file, "w") as f:
+            f.write(pddl_domain_cleaned)
+        with open(problem_file, "w") as f:
+            f.write(pddl_problem_cleaned)
 
         # run planner
         _, plan = planner.run_fast_downward(
@@ -294,7 +283,7 @@ if __name__ == "__main__":
 
     # load in arguments to run program
     parser = argparse.ArgumentParser(description="NL2Plan")
-    parser.add_argument("--model", type=str, default="o1-mini")
+    parser.add_argument("--model", type=str, default="gpt-4o")
     parser.add_argument("--domain", type=str, choices=DOMAINS, default="blocksworld")
     parser.add_argument("--requirements", type=list[str], default=REQUIREMENTS)
     parser.add_argument("--planner", type=str, default="downward/fast-downward.py")

@@ -212,8 +212,11 @@ def parse_new_predicates(llm_output) -> list[Predicate]:
             continue
 
         # extract predicate signature and description
-        if ": " in p_line:
-            pred_part, desc = p_line.split(": ", 1)
+        if ":" in p_line:
+            pred_part, desc = p_line.split(":", 1)
+            predicate_desc = desc.strip().strip("'\"")
+        elif ";" in p_line:
+            pred_part, desc = p_line.split(";", 1)
             predicate_desc = desc.strip().strip("'\"")
         else:
             pred_part = p_line
@@ -309,8 +312,11 @@ def parse_functions(llm_output: str) -> list[Function]:
             continue
 
         # extract function signature and description
-        if ": " in f_line:
-            func_part, desc = f_line.split(": ", 1)
+        if ":" in f_line:
+            func_part, desc = f_line.split(":", 1)
+            function_desc = desc.strip().strip("'\"")
+        elif ";" in f_line:
+            func_part, desc = f_line.split(";", 1)
             function_desc = desc.strip().strip("'\"")
         else:
             func_part = f_line
@@ -662,8 +668,6 @@ def parse_goal(llm_output: str) -> list[dict[str, str]]:
     goal_raw = combine_blocks(goal_head)
     goal_clean = remove_comments(goal_raw)
     goal_parsed = parse_pddl(f"({goal_clean})")
-    
-    print("GOAL PARSED:", goal_parsed)
 
     return parse_task_states(goal_parsed)
 

@@ -9,12 +9,12 @@ class PromptBuilder:
         self,
         role: str = None,
         technique: str = None,
-        examples: list = [],
+        examples: list = None,
         task: str = None,
     ):
         self.role = role  # role for LLM to follow (i.e. PDDL predicate constructor)
         self.technique = technique  # prompting technique (i.e. CoT)
-        self.examples = examples  # n-shot examples for LLM to follow
+        self.examples = examples if examples is not None else []  # n-shot examples for LLM to follow
         self.task = task  # dynamic placeholder given information to LLM
 
     def set_role(self, role):
