@@ -6,11 +6,9 @@
 
 ### GOAL
 ```
-(and
-    (ontable phone)
-    (on plate phone)
-    (on notebook plate)
-    (on textbook notebook)
-    (clear textbook)
-)
+(ontable phone)
+(on plate phone)
+(on notebook plate)
+(on textbook notebook)
+(clear textbook)
 ```

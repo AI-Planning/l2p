@@ -277,3 +277,5 @@ You can also suggest new predicates to add.
 ```
 {action_effects}
 ```
+
+### JUDGMENT

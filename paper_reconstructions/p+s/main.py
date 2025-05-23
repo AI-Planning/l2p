@@ -9,8 +9,6 @@ In this paper, they are tasking the LLM to translate natural language initial an
 """
 
 from l2p import *
-from itertools import combinations
-
 
 def run_parse_and_solve(
     model: BaseLLM,
@@ -32,33 +30,25 @@ def run_parse_and_solve(
         objects (dict[str,str]): objects of task file
     """
 
+    task_builder = TaskBuilder()
+
     # extract initial states
-    initial_states, _ = task_builder.formalize_initial_state(
+    initial_states, _, _ = task_builder.formalize_initial_state(
         model=model, problem_desc="", prompt_template=prompt_initial, objects=""
     )
 
     # extract goal states
-    goal_states, _ = task_builder.formalize_goal_state(
+    goal_states, _, _ = task_builder.formalize_goal_state(
         model=model, problem_desc="", prompt_template=prompt_goal, objects=""
     )
-
-    # convert Python components to string
-    objects_str = task_builder.format_objects(objects)
-    initial_state_str = task_builder.format_initial(initial_states)
-    goal_state_str = task_builder.format_goal(goal_states)
-
-    # insert `(noteq)` predicate  manually (due to domain from paper)
-    objects = objects_str.split("\n")
-    for obj1, obj2 in combinations(objects, 2):  # create all combinations
-        initial_state_str += f"\n(noteq {obj1} {obj2})"
 
     # take components and generate PDDL task format
     pddl_problem = task_builder.generate_task(
         "simple-blocks",
         problem_name,
-        objects=objects_str,
-        initial=initial_state_str,
-        goal=goal_state_str,
+        objects=objects,
+        initial=initial_states,
+        goal=goal_states,
     )
 
     # write the problem file to respective directory

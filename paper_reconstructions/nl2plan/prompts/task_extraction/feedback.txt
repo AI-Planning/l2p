@@ -328,3 +328,5 @@ This is the state to give feedback on based on the domain and predicates above.
 ```
 {goal_states}
 ```
+
+### JUDGMENT

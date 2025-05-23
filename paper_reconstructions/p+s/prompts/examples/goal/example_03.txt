@@ -8,13 +8,11 @@
 
 ### GOAL
 ```
-(and
-    (ontable phone)
-    (on plate phone)
-    (clear plate)
-    (ontable novel)
-    (clear novel)
-    (ontable writing-pad)
-    (clear writing-pad)
-)
+(ontable phone)
+(on plate phone)
+(clear plate)
+(ontable novel)
+(clear novel)
+(ontable writing-pad)
+(clear writing-pad)
 ```

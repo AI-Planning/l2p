@@ -7,12 +7,10 @@
 
 ### GOAL
 ```
-(and
-    (ontable newspaper)
-    (on plate newspaper)
-    (clear plate)
-    (ontable tissue-box)
-    (on textbook tissue-box)
-    (clear textbook)
-)
+(ontable newspaper)
+(on plate newspaper)
+(clear plate)
+(ontable tissue-box)
+(on textbook tissue-box)
+(clear textbook)
 ```

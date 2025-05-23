@@ -15,19 +15,13 @@
       (on keyboard sweatshirt)
       (on novel keyboard)
       (clear novel)
-      (noteq sketchbook sweatshirt)
-      (noteq sketchbook keyboard)
-      (noteq sketchbook novel)
-      (noteq sweatshirt keyboard)
-      (noteq sweatshirt novel)
-      (noteq keyboard novel)
    )
 
    (:goal
       (and 
-         (on keyboard sketchbook) 
-         (ontable sweatshirt) 
+         (on keyboard sketchbook)
+         (ontable sweatshirt)
+         (clear sweatshirt)
       )
    )
-
 )

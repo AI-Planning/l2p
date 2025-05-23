@@ -713,7 +713,7 @@ def parse_heading(llm_output: str, heading: str) -> str:
         print(llm_output)
         print("#" * 30)
         raise ValueError(
-            f"Could not find heading {heading} in the LLM output. Likely this is caused by a too long response and limited context length. If so, try to shorten the message and exclude objects which aren't needed for the task."
+            f"Could not find heading {heading} in the LLM output. Likely this is caused by a too long response and limited context length. If so, try to shorten the message and exclude objects which aren't needed for the task"
         )
     heading_str = (
         llm_output.split(heading)[1].split("\n### ")[0].strip()

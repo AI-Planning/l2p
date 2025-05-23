@@ -6,26 +6,28 @@ Run: python3 -m paper_reconstructions.proc2pddl.main
 
 import os
 from l2p import *
-
-
-engine = "gpt-4o-mini"
-api_key = os.environ.get("OPENAI_API_KEY")
-openai_llm = OPENAI(model=engine, api_key=api_key)
-
-domain_builder = DomainBuilder()
-task_builder = TaskBuilder()
-feedback_builder = FeedbackBuilder()
-prompt_builder = PromptBuilder()
-planner = FastDownward(planner_path="downward/fast-downward.py")
-
-# annotated original domain header
-types = load_file("paper_reconstructions/proc2pddl/prompts/types.json")
-predicates = load_file("paper_reconstructions/proc2pddl/prompts/predicates.json")
-nl_actions = load_file("paper_reconstructions/proc2pddl/prompts/nl_actions.json")
+import ast
 
 if __name__ == "__main__":
 
     UNSUPPORTED_KEYWORDS = ["object", "pddl", "lisp"]
+
+    engine = "gpt-4o"
+    api_key = os.environ.get("OPENAI_API_KEY")
+    openai_llm = OPENAI(model=engine, api_key=api_key)
+
+    domain_builder = DomainBuilder()
+    task_builder = TaskBuilder()
+    feedback_builder = FeedbackBuilder()
+    prompt_builder = PromptBuilder()
+    planner = FastDownward(planner_path="downward/fast-downward.py")
+
+    # annotated original domain header
+    types = load_file("paper_reconstructions/proc2pddl/prompts/types.json")
+    predicates = load_file("paper_reconstructions/proc2pddl/prompts/predicates.json")
+
+    with open("paper_reconstructions/proc2pddl/prompts/nl_actions.json", 'r') as file:
+        nl_actions = json.load(file)
 
     # retrieve wikihow text
     domain_desc = load_file("paper_reconstructions/proc2pddl/prompts/wikihow.txt")
@@ -66,12 +68,14 @@ if __name__ == "__main__":
     task += "\n\nhere are the action descriptions to use:\n" + action_descriptions
     pddl_formalize_prompt = PromptBuilder(role=role, examples=[example], task=task)
 
+    action_list = [f"{name}: {desc.rstrip('.')}" for action in nl_actions for name, desc in action.items()]
+
     # (2) extract PDDL requirements
     actions, _, llm_response = domain_builder.formalize_pddl_actions(
         model=openai_llm,
         domain_desc=domain_desc,
         prompt_template=pddl_formalize_prompt.generate_prompt(),
-        nl_actions=nl_actions,
+        action_list=action_list,
         predicates=predicates,
         types=types,
     )
@@ -83,9 +87,9 @@ if __name__ == "__main__":
         if name not in UNSUPPORTED_KEYWORDS
     }  # remove unsupported words
 
-    # format strings
-    predicate_str = "\n".join([pred["clean"] for pred in predicates])
-    types_str = "\n".join(pruned_types)
+    # # format strings
+    # predicate_str = "\n".join([pred["clean"] for pred in predicates])
+    # types_str = "\n".join(pruned_types)
 
     requirements = [
         ":strips",
@@ -101,8 +105,8 @@ if __name__ == "__main__":
     pddl_domain = domain_builder.generate_domain(
         domain_name="survive_deserted_island",
         requirements=requirements,
-        types=types_str,
-        predicates=predicate_str,
+        types=pruned_types,
+        predicates=predicates,
         actions=actions,
     )
 

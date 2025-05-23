@@ -283,11 +283,11 @@ if __name__ == "__main__":
 
     # load in arguments to run program
     parser = argparse.ArgumentParser(description="NL2Plan")
-    parser.add_argument("--model", type=str, default="gpt-4o")
+    parser.add_argument("--model", type=str, default="o1-mini")
     parser.add_argument("--domain", type=str, choices=DOMAINS, default="blocksworld")
     parser.add_argument("--requirements", type=list[str], default=REQUIREMENTS)
     parser.add_argument("--planner", type=str, default="downward/fast-downward.py")
     args = parser.parse_args()
 
     # run NL2Plan
-    run_nl2plan(args=args, domain="blocksworld", problem="task1")
+    run_nl2plan(args=args, domain="blocksworld", problem="task2")

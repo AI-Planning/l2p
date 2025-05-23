@@ -655,6 +655,7 @@ class DomainBuilder:
         constants: dict[str,str] = None,
         predicates: list[Predicate] = None,
         functions: list[Function] = None,
+        extract_new_preds = False,
         max_retries: int = 3
     ) -> tuple[list[Action], list[Predicate], str]:
         """
@@ -669,6 +670,7 @@ class DomainBuilder:
             constants (dict[str,str]): current constants in specification, defaults to None
             predicates (list[Predicate]): list of current predicates in specification, defaults to None
             functions (list[Function]): list of current functions in specification, defaults to None
+            extract_new_preds (bool): flag for parsing new predicates generated from action, defaults to False
             max_retries (int): max # of retries if failure occurs
 
         Returns:
@@ -723,7 +725,10 @@ class DomainBuilder:
 
                 # if user queries predicate creation via LLM
                 try:
-                    new_predicates = parse_new_predicates(llm_output)
+                    if extract_new_preds:
+                        new_predicates = parse_new_predicates(llm_output)
+                    else:
+                        new_predicates = []
 
                     if predicates:
                         new_predicates = [
