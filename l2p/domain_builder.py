@@ -1081,7 +1081,7 @@ class DomainBuilder:
             formalize_types (bool): flag for extracting :types, defaults to False
             formalize_constants (bool): flag for extracting :constants, defaults to False
             formalize_predicates (bool): flag for extracting :predicates, defaults to False
-            formalize_predicates (bool): flag for extracting :functions, defaults to False
+            formalize_functions (bool): flag for extracting :functions, defaults to False
             max_retries (int): max # of retries if failure occurs
 
         Returns:

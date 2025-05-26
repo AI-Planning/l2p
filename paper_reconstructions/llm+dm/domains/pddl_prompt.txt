@@ -112,6 +112,9 @@ No new predicates were needed, thus we leave empty
 =====================================
 Here is the task to model:
 
-Domain information: {domain_desc}
+## Domain information: {domain_desc}
+
+## Available predicates, you can construct new ones if necessary
+{predicates}
 
 Action:
