@@ -224,7 +224,7 @@ def run_nl2plan(args, domain: str, problem: str):
         # generate PDDL domain and problem file
         pddl_domain = domain_builder.generate_domain(
             domain_name=args.domain,
-            requirements=args.requirements,
+            # requirements=args.requirements,
             types=type_hierarchy,
             predicates=predicates,
             actions=actions,
@@ -290,4 +290,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # run NL2Plan
-    run_nl2plan(args=args, domain="blocksworld", problem="task2")
+    run_nl2plan(args=args, domain="blocksworld", problem="task3")

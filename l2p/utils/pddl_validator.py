@@ -28,7 +28,7 @@ from .pddl_types import Predicate, Function
 ORDINAL_SUFFIXES = {1: "st", 2: "nd", 3: "rd"}
 
 # constant declarations for PDDL types
-LOGICAL_CONNECTIVES = {"and", "not", "or"}
+LOGICAL_CONNECTIVES = {"and", "not", "or", "imply"}
 QUANTIFIERS = {"forall", "exists"}
 CONDITIONAL_EFFECTS = {"when"}
 
@@ -66,86 +66,6 @@ class SyntaxValidator:
             default_unsupported if unsupported_keywords 
             is None else unsupported_keywords
         )
-
-    # ---- PDDL PARAMETER CHECKS ----
-
-    def validate_params(
-        self, 
-        parameters: OrderedDict, 
-        types: dict[str, str] | list[dict[str,str]] | None = None
-    ) -> tuple[bool, str]:
-        """
-        Checks whether a PDDL action parameter is correctly 
-        formatted and type declaration assigned correctly.
-
-        Args:
-            parameters (OrderedDict): parameters of an action
-            types (dict[str,str] | list[dict[str,str]]): current types in domain
-
-        Returns:
-            validation_info (tuple[bool,str]): validation info containing pass flag and error message
-        """
-
-        # check if parameter names (i.e. ?a) contains '?'
-        invalid_param_names = list()
-        for param_name, param_type in parameters.items():
-            if not param_name.startswith("?"):
-                invalid_param_names.append(f"{param_name} - {param_type}")
-        
-        if invalid_param_names:
-            feedback_msg = (
-                f'[ERROR]: Character `?` is not found in parameter(s) `{invalid_param_names}` '
-                'Please insert `?` in front of the parameter names (i.e. ?boat - vehicle)'
-            )
-            return False, feedback_msg
-        
-        # catch if dash is used but type is missing
-        missing_type_after_dash = list()
-        for param_name, param_type in parameters.items():
-            if "-" in param_name:
-                parts = param_name.split("-")
-                if len(parts) < 2 or parts[1].strip() == "":
-                    missing_type_after_dash.append(param_name)
-        
-        if missing_type_after_dash:
-            feedback_msg = (
-                f"[ERROR]: One or more parameters use `-` but do not specify a type: {missing_type_after_dash}. "
-                "Each parameter using `-` must be followed by a valid type (e.g., `?c - car`)."
-            )
-            return False, feedback_msg
-
-        types = format_types(types)
-        # if no types are defined, check if parameters contain types
-        if not types:
-            for param_name, param_type in parameters.items():
-                if param_type is not None and param_type != "":
-                    feedback_msg = (
-                        f'[ERROR]: The parameter `{param_name}` has an object type `{param_type}` '
-                        'while no types are defined. Please remove the object type from this parameter.'
-                    )
-                    return False, feedback_msg
-            
-            # if all parameter names do not contain a type
-            return True, "[PASS]: All parameters are valid."
-
-        # otherwise check that parameter types are valid in the given types
-        else:
-            for param_name, param_type in parameters.items():
-
-                if not any(param_type in t for t in types.keys()):
-                    feedback_msg = (
-                        f"[ERROR]: There is an invalid object type `{param_type}` for the parameter `{param_name}` not found in the types {list(types.keys())} found in the action parameters section. Parameter types should align with the provided types, otherwise just leave parameter untyped.\n\n"
-                        f"Make sure each line defines a parameter using the format: "
-                        f"`?<parameter_name> - <type_name>: <description of parameter>`\n\n"
-                        f"For example:\n"
-                        f"`?c - car: a car that can drive`\n"
-                        f"or `?c: a car that can drive` if not using a type"
-                    )
-                    return False, feedback_msg
-
-            feedback_msg = "[PASS]: All parameter types found in object types."
-            return True, feedback_msg
-
     
     # ---- PDDL TYPE CHECKS ----
 
@@ -213,7 +133,7 @@ class SyntaxValidator:
     
     def validate_format_types(
         self, 
-        types: dict[str,str] | list[dict[str,str]]
+        types: dict[str,str] | list[dict[str,str]] | None = None
     ) -> tuple[bool, str]: 
         """
         Checks if type variables contain `?` characters.
@@ -224,6 +144,9 @@ class SyntaxValidator:
         Returns:
             validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
+
+        if not types:
+            return True, "[PASS]: no types provided."
 
         # flatten types if it is in a hierarchy
         types = format_types(types)
@@ -301,8 +224,8 @@ class SyntaxValidator:
             return True, "", ""
         
         # if no types are provided, return invalid
-        if types is None:
-            return False, "No types provided."
+        if not types:
+            return True, "[PASS]: no types provided."
 
         if isinstance(types, dict):
             types = [{k: v} for k, v in types.items()]
@@ -331,7 +254,7 @@ class SyntaxValidator:
     
     def validate_constant_types(
         self, 
-        constants: dict[str,str],
+        constants: dict[str,str] | None = None,
         types: dict[str,str] | list[dict[str,str]] | None = None
     ) -> tuple[bool, str]:
         """
@@ -344,6 +267,9 @@ class SyntaxValidator:
         Returns:
             validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
+
+        if not constants:
+            return True, "[PASS]: no constants provided."
     
         types = format_types(types) # flatten type hierarchy
         
@@ -354,7 +280,7 @@ class SyntaxValidator:
                         False,
                         f"[ERROR]: constant `{const_name}` contains type `{const_type}` "
                         f"that is not found in list of available types:\n"
-                        f"{pretty_print_types(types)}\n\n"
+                        f"{pretty_print_dict(types)}\n\n"
                         f"Make sure that constants only point to types that exist."
                     )
         
@@ -365,7 +291,7 @@ class SyntaxValidator:
     
     def validate_format_functions(
         self,
-        functions: list[Function],
+        functions: list[Function] | None = None,
         types: dict[str,str] | list[dict[str,str]] | None = None
     ) -> tuple[bool, str]:
         """
@@ -378,6 +304,9 @@ class SyntaxValidator:
         Returns:
             validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
+
+        if not functions:
+            return True, "[PASS]: no functions provided."
         
         # retrieve types
         valid_types = list()
@@ -481,7 +410,7 @@ class SyntaxValidator:
         """
         
         if not predicates:
-            return True, "[PASS]: no predicates passed."
+            return True, "[PASS]: no predicates provided."
         
         # if types is None or empty, return true
         if not types:
@@ -638,7 +567,7 @@ class SyntaxValidator:
         """
         
         if not predicates:
-            return True, "[PASS: no predicates passed."
+            return True, "[PASS: no predicates provided."
 
         valid_types = list()
         # flatten type hierarchy if exists
@@ -932,7 +861,7 @@ class SyntaxValidator:
             # (2) if keyword is a quantifier (forall, exists)
             if keyword in QUANTIFIERS:
                 
-                # validates correct arguments passed into quantifier
+                # validates correct arguments provided into quantifier
                 if len(node) != 3:
                     return (
                         False,
@@ -1133,6 +1062,84 @@ class SyntaxValidator:
 
         # resurively invoked function to branch nested list
         return traverse(pddl, scoped_params=action_params.copy())
+    
+
+    def validate_params(
+        self, 
+        parameters: OrderedDict, 
+        types: dict[str, str] | list[dict[str,str]] | None = None
+    ) -> tuple[bool, str]:
+        """
+        Checks whether a PDDL action parameter is correctly 
+        formatted and type declaration assigned correctly.
+
+        Args:
+            parameters (OrderedDict): parameters of an action
+            types (dict[str,str] | list[dict[str,str]]): current types in domain
+
+        Returns:
+            validation_info (tuple[bool,str]): validation info containing pass flag and error message
+        """
+
+        # check if parameter names (i.e. ?a) contains '?'
+        invalid_param_names = list()
+        for param_name, param_type in parameters.items():
+            if not param_name.startswith("?"):
+                invalid_param_names.append(f"{param_name} - {param_type}")
+        
+        if invalid_param_names:
+            feedback_msg = (
+                f'[ERROR]: Character `?` is not found in parameter(s) `{invalid_param_names}` '
+                'Please insert `?` in front of the parameter names (i.e. ?boat - vehicle)'
+            )
+            return False, feedback_msg
+        
+        # catch if dash is used but type is missing
+        missing_type_after_dash = list()
+        for param_name, param_type in parameters.items():
+            if "-" in param_name:
+                parts = param_name.split("-")
+                if len(parts) < 2 or parts[1].strip() == "":
+                    missing_type_after_dash.append(param_name)
+        
+        if missing_type_after_dash:
+            feedback_msg = (
+                f"[ERROR]: One or more parameters use `-` but do not specify a type: {missing_type_after_dash}. "
+                "Each parameter using `-` must be followed by a valid type (e.g., `?c - car`)."
+            )
+            return False, feedback_msg
+
+        types = format_types(types)
+        # if no types are defined, check if parameters contain types
+        if not types:
+            for param_name, param_type in parameters.items():
+                if param_type is not None and param_type != "":
+                    feedback_msg = (
+                        f'[ERROR]: The parameter `{param_name}` has an object type `{param_type}` '
+                        'while no types are defined. Please remove the object type from this parameter.'
+                    )
+                    return False, feedback_msg
+            
+            # if all parameter names do not contain a type
+            return True, "[PASS]: All parameters are valid."
+
+        # otherwise check that parameter types are valid in the given types
+        else:
+            for param_name, param_type in parameters.items():
+
+                if not any(param_type in t for t in types.keys()):
+                    feedback_msg = (
+                        f"[ERROR]: There is an invalid object type `{param_type}` for the parameter `{param_name}` not found in the types {list(types.keys())} found in the action parameters section. Parameter types should align with the provided types, otherwise just leave parameter untyped.\n\n"
+                        f"Make sure each line defines a parameter using the format: "
+                        f"`?<parameter_name> - <type_name>: <description of parameter>`\n\n"
+                        f"For example:\n"
+                        f"`?c - car: a car that can drive`\n"
+                        f"or `?c: a car that can drive` if not using a type"
+                    )
+                    return False, feedback_msg
+
+            feedback_msg = "[PASS]: All parameter types found in object types."
+            return True, feedback_msg
 
 
     def validate_usage_action(

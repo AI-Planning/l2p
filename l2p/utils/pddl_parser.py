@@ -84,9 +84,14 @@ def parse_type_hierarchy(llm_output: str) -> Optional[list[dict[str,str]]]:
             )
 
         types_raw = combine_blocks(types_head)
+
+        # catch if types is empty
+        if not types_raw:
+            return None
+
         types_parsed = ast.literal_eval(types_raw)
 
-        # Ensure it's a list of dicts with proper structure
+        # ensure it's a list of dicts with proper structure
         if not isinstance(types_parsed, list):
             return None
 
@@ -131,7 +136,7 @@ def parse_constants(llm_output: str) -> Optional[dict[str, str]]:
 
         constants_raw = combine_blocks(constant_head)
         
-        # Regex to extract the first dictionary-like structure
+        # regex to extract the first dictionary-like structure
         dict_pattern = re.compile(r"{[^{}]*}", re.DOTALL)
         match = dict_pattern.search(constants_raw)
 
@@ -142,7 +147,7 @@ def parse_constants(llm_output: str) -> Optional[dict[str, str]]:
         dict_str = match.group(0)
         constants_parsed = ast.literal_eval(dict_str)
 
-        # Validate it is a flat dictionary with string keys and values
+        # validate it is a flat dictionary with string keys and values
         if isinstance(constants_parsed, dict) and all(
             isinstance(k, str) and isinstance(v, str) for k, v in constants_parsed.items()
         ):
@@ -709,11 +714,8 @@ def parse_task_states(parsed_states: list) -> list[dict]:
 def parse_heading(llm_output: str, heading: str) -> str:
     """Extract the text between the heading and the next second level heading in the LLM output."""
     if heading not in llm_output:
-        print("#" * 10, "LLM Output", "#" * 10)
-        print(llm_output)
-        print("#" * 30)
         raise ValueError(
-            f"Could not find heading {heading} in the LLM output. Likely this is caused by a too long response and limited context length. If so, try to shorten the message and exclude objects which aren't needed for the task"
+            f"Could not find heading {heading} in the LLM output:\n{llm_output}\n. Likely this is caused by a too long response and limited context length. If so, try to shorten the message and exclude objects which aren't needed for the task"
         )
     heading_str = (
         llm_output.split(heading)[1].split("\n### ")[0].strip()

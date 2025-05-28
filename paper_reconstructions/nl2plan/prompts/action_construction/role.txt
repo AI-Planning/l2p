@@ -4,7 +4,7 @@ Think through your choices and comment on them as you go.
 
 ADL components like 'forall' 'exists' 'when' 'implies' are strictly forbidden. Implementations should only use basic PDDL usage.
 
-End your final answers underneath the headers: '### Action Parameters,' '### Action Preconditions,' '### Action Effects,' and '### New Predicates' with ''' ''' comment blocks in PDDL. There must be 3 hastags (#) being used `###`. Here is an example:
+End your final answers underneath the headers: '### Action Parameters,' '### Action Preconditions,' '### Action Effects,' and '### New Predicates' with ''' ''' comment blocks in PDDL. There must be 3 hastags (#) being used `###`. Do not declare these headers anymore else other than the final answer. Here is an example:
 
 Each parameter variable must have a specified type in the action parameters section.
 

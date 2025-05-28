@@ -5,6 +5,7 @@ You now are revising your answer using feedback. Here is the feedback you output
 ======================================
 
 End your final answer starting with headers (in order) "### OBJECTS", "### INITIAL" and "### GOAL" containing respective content within the ``` ``` comment blocks in PDDL as so:
+Do not declare these headers anymore else other than the final answer. 
 
 ### OBJECTS
 ```

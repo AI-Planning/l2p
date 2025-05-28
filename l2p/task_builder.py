@@ -41,7 +41,7 @@ class TaskBuilder:
         problem_desc: str,
         prompt_template: str,
         types: dict[str, str] | list[dict[str,str]] | None = None,
-        constants: dict[str,str] = None,
+        constants: dict[str,str] | None = None,
         syntax_validator: SyntaxValidator = None,
         max_retries: int = 3,
     ) -> tuple[dict[str, str], str, tuple[bool, str]]:
@@ -63,7 +63,7 @@ class TaskBuilder:
             validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
 
-        types_str = pretty_print_types(types) if types else "No types provided."
+        types_str = pretty_print_dict(types) if types else "No types provided."
         const_str = format_constants(constants) if constants else "No constants provided."
 
         prompt = (
@@ -121,12 +121,12 @@ class TaskBuilder:
         problem_desc: str,
         prompt_template: str,
         types: dict[str, str] | list[dict[str,str]] | None = None,
-        constants: dict[str,str] = None,
-        predicates: list[Predicate] = None,
-        functions: list[Function] = None,
-        objects: dict[str, str] = None,
-        initial: list[dict[str, str]] = None,
-        goal: list[dict[str, str]] = None,
+        constants: dict[str,str] | None = None,
+        predicates: list[Predicate] | None = None,
+        functions: list[Function] | None = None,
+        objects: dict[str, str] | None = None,
+        initial: list[dict[str, str]] | None = None,
+        goal: list[dict[str, str]] | None = None,
         syntax_validator: SyntaxValidator = None,
         max_retries: int = 3,
     ) -> tuple[list[dict[str, str]], str, tuple[bool, str]]:
@@ -155,7 +155,7 @@ class TaskBuilder:
             validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
 
-        types_str = pretty_print_types(types) if types else "No types provided."
+        types_str = pretty_print_dict(types) if types else "No types provided."
         const_str = format_constants(constants) if constants else "No constants provided."
         preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
         funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
@@ -223,12 +223,12 @@ class TaskBuilder:
         problem_desc: str,
         prompt_template: str,
         types: dict[str, str] | list[dict[str,str]] | None = None,
-        constants: dict[str,str] = None,
-        predicates: list[Predicate] = None,
-        functions: list[Function] = None,
-        objects: dict[str, str] = None,
-        initial: list[dict[str, str]] = None,
-        goal: list[dict[str, str]] = None,
+        constants: dict[str,str] | None = None,
+        predicates: list[Predicate] | None = None,
+        functions: list[Function] | None = None,
+        objects: dict[str, str] | None = None,
+        initial: list[dict[str, str]] | None = None,
+        goal: list[dict[str, str]] | None = None,
         syntax_validator: SyntaxValidator = None,
         max_retries: int = 3,
     ) -> tuple[list[dict[str, str]], str, tuple[bool,str]]:
@@ -257,7 +257,7 @@ class TaskBuilder:
             validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
 
-        types_str = pretty_print_types(types) if types else "No types provided."
+        types_str = pretty_print_dict(types) if types else "No types provided."
         const_str = format_constants(constants) if constants else "No constants provided."
         preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
         funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
@@ -325,9 +325,9 @@ class TaskBuilder:
         problem_desc: str,
         prompt_template: str,
         types: dict[str, str] | list[dict[str,str]] | None = None,
-        constants: dict[str,str] = None,
-        predicates: list[Predicate] = None,
-        functions: list[Function] = None,
+        constants: dict[str,str] | None = None,
+        predicates: list[Predicate] | None = None,
+        functions: list[Function] | None = None,
         syntax_validator: SyntaxValidator = None,
         max_retries: int = 3,
     ) -> tuple[
@@ -357,7 +357,7 @@ class TaskBuilder:
             validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
 
-        types_str = pretty_print_types(types) if types else "No types provided."
+        types_str = pretty_print_dict(types) if types else "No types provided."
         const_str = format_constants(constants) if constants else "No constants provided."
         preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
         funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."

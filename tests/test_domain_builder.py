@@ -774,7 +774,7 @@ class TestDomainBuilder(unittest.TestCase):
             """
             (define (domain test_domain)
                 (:requirements
-                    :strips :typing :numeric-fluents)
+                    :negative-preconditions :numeric-fluents :strips :typing)
 
                 (:types 
                     location 
@@ -829,7 +829,7 @@ class TestDomainBuilder(unittest.TestCase):
             predicates=predicates,
             functions=functions,
             actions=actions,
-            requirements=requirements,
+            # requirements=requirements,
         )
 
         self.assertEqual(self.normalize(result), self.normalize(expected_output))

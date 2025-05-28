@@ -1,6 +1,6 @@
 (define (problem blocksworld_problem)
     (:domain blocksworld)
     (:objects blue green red yellow - block table1 - table)
-    (:init (clear blue) (clear green) (on_block blue red) (on_block red yellow) (on_table green) (on_table yellow))
-    (:goal (and (on_block red green) (clear blue)))
+    (:init (clear blue) (clear green) (hand_empty) (on blue red) (on red yellow) (on_table green table1) (on_table yellow table1))
+    (:goal (on red green))
 )

@@ -1,0 +1,186 @@
+You are a PDDL assistant to help me create the domain-level specifications based off of the natural language description I will present.
+
+You may use :types, :constants, and :functions if absolutely necessary for the task, but :predicates need to be declared.
+
+The following is the format I want you to declare:
+
+===================================
+
+[:types]
+Organize a dependency tree for the class hierarchy between different objects within a PDDL domain. Do not expand on your reasoning, except as short comments. Each object should appear only once, even if it could belong to several types.  Note, that every child should be a subtype of its parent, not physically contained within the parent.
+
+End your final answers starting with "### TYPES" with the Python list of nested dictionaries in the format [{{...}}, {{...}}], where each dictionary represents a type with an optional "children" key containing subtypes. The content must be enclosed with ``` ``` comment blocks in PDDL as so:
+
+### TYPES
+```
+[
+    {{
+        "parent_type_1": "description for parent type 1",
+        "children": [
+            {{
+                "child_type_1": "description for child type 1",
+                "children": [
+                    {{"child_child_type_1": "description for child type 1", "children": []}},
+                    {{"child_child_type_2": "description for child type 1", "children": []}}
+                ]
+            }}
+        ]
+    }},
+    {{
+        "parent_type_2": "description for parent type 2",
+        "children": [
+            {{
+                "child_type_2": "description for child type 2",
+                "children": [
+                    {{"child_child_type_3": "description for child type 2", "children": []}}
+                ]
+            }}
+        ]
+    }}
+]
+```
+
+If there are no children, leave the list empty. If no types need to be declared, leave it empty like so:
+### TYPES
+```
+```
+
+===================================
+
+[:constants]
+End your final answers starting with "### CONSTANTS" with the Python dictionary pair '{'name':'type'}'. The content must be enclosed with ``` ``` comment blocks in PDDL as so:
+
+### CONSTANTS
+```
+{
+    "const_1": "<type_1>",
+    "const_2": "<type_2>",
+    "const_3": "<type_3>",
+}
+```
+
+If no constants need to be declared, leave it empty like so:
+
+### CONSTANTS
+```
+``` 
+
+===================================
+
+[:predicates]
+List predicate variable types separately. Do not group them if they share the same types.
+
+End your final answers starting with "### New Predicates" with ``` ``` comment blocks in PDDL as so:
+
+### New Predicates
+```
+- (predicate_name_1 ?t1 - type_1 ?t2 - type_2): 'predicate_description'
+- (predicate_name_2 ?t3 - type_3 ?t4 - type_4): 'predicate_description'
+- (predicate_name_3 ?t5 - type_5): 'predicate_description'
+``` 
+
+===================================
+
+[:functions]
+End your final answers starting with "### FUNCTIONS" with ``` ``` comment blocks in PDDL as so:
+
+### FUNCTIONS
+```
+- (function_name_1 ?t1 - type_1 ?t2 - type_2): 'function_description'
+- (function_name_2 ?t3 - type_3 ?t4 - type_4): 'function_description'
+- (function_name_3 ?t5 - type_5): 'function_description'
+``` 
+
+If no functions need to be declared, leave it empty like so:
+
+### FUNCTIONS
+```
+``` 
+
+===================================
+
+Here is an example:
+## DOMAIN DESCRIPTION
+You are modeling a robot delivery system within a smart warehouse. The warehouse contains shelves, packages, and robots. Robots can navigate between locations, pick up and drop packages, and recharge at charging stations. Packages can be fragile or non-fragile. Some robots are designed specifically to carry fragile packages. Each location in the warehouse is connected to other locations, and shelves are located at specific locations.
+
+### TYPES
+```
+[
+    {
+        "object": "Generic object in the domain",
+        "children": [
+            {
+                "robot": "Autonomous mobile unit for transporting packages",
+                "children": [
+                    {"fragile_robot": "Robot designed to carry fragile packages", "children": []}
+                ]
+            },
+            {
+                "package": "Item to be delivered",
+                "children": [
+                    {"fragile_package": "Package that is fragile and needs special handling", "children": []}
+                ]
+            },
+            {"shelf": "Static storage unit for packages", "children": []},
+            {"location": "Point in the warehouse that can be navigated to", "children": []},
+            {"charging_station": "Designated location where robots can recharge", "children": []}
+        ]
+    }
+]
+```
+
+### CONSTANTS
+```
+{
+    "charging_area_1": "charging_station",
+    "loading_zone": "location"
+}
+```
+
+### New Predicates
+```
+- (at ?r - robot ?l - location): 'Robot is at a given location'
+- (package_at ?p - package ?l - location): 'Package is at a given location'
+- (carrying ?r - robot ?p - package): 'Robot is carrying the package'
+- (is_fragile ?p - package): 'Package is fragile'
+- (connected ?l1 - location ?l2 - location): 'Two locations are directly connected'
+- (shelf_at ?s - shelf ?l - location): 'Shelf is located at a specific location'
+- (on_shelf ?p - package ?s - shelf): 'Package is on a specific shelf'
+- (available ?r - robot): 'Robot is available for a task'
+- (charged ?r - robot): 'Robot is fully charged'
+- (can_carry_fragile ?r - robot): 'Robot is designed to carry fragile packages'
+```
+
+### FUNCTIONS
+```
+- (battery_level ?r - robot): 'Current battery level of the robot'
+```
+
+===================================
+
+Here is your task:
+
+## DOMAIN DESCRIPTION 
+```
+{domain_desc}
+```
+
+### TYPES
+```
+[insert here]
+```
+
+### CONSTANTS
+```
+[insert here]
+```
+
+### New Predicates
+```
+[insert here]
+```
+
+### FUNCTIONS
+```
+[insert here]
+```

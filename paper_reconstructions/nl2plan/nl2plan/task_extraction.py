@@ -130,7 +130,7 @@ class TaskExtraction:
         validation_info: tuple[bool, str]
     ) -> str:
         
-        types_str = pretty_print_types(types) if types else "No types provided."
+        types_str = pretty_print_dict(types) if types else "No types provided."
         preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
         
         prompt = load_file("paper_reconstructions/nl2plan/prompts/task_extraction/error.txt")
@@ -156,7 +156,7 @@ class TaskExtraction:
         goal: list[dict[str,str]]
     ) -> str:
         
-        types_str = pretty_print_types(types) if types else "No types provided."
+        types_str = pretty_print_dict(types) if types else "No types provided."
         preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
         
         prompt = load_file("paper_reconstructions/nl2plan/prompts/task_extraction/feedback_revision.txt")

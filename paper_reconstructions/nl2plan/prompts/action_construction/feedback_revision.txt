@@ -5,6 +5,7 @@ You now are revising your answer using feedback. Here is the feedback you output
 ======================================
 
 End your final answers underneath the headers: '### Action Parameters,' '### Action Preconditions,' '### Action Effects,' and '### New Predicates' with ``` ``` comment blocks in PDDL as so:
+Do not declare these headers anymore else other than the final answer. 
 
 ### Action Parameters
 ```
