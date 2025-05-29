@@ -2,6 +2,7 @@
 
 **Official Documentation:**  
 For detailed function references, visit our website: [**L2P Documention**](https://marcustantakoun.github.io/l2p.github.io/)
+
 The L2P classes can be divided as follows:
 
 ---

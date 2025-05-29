@@ -4,6 +4,8 @@ This library is a collection of tools for PDDL model generation extracted from n
 
 L2P is an offline, natural language-to-planning model system that supports domain-agnostic planning. It does this via creating an intermediate [PDDL](https://planning.wiki/guide/whatis/pddl) representation of the domain and task, which can then be solved by a classical planner.
 
+Full documentation can be found: [**L2P Documention**](https://marcustantakoun.github.io/l2p.github.io/)
+
 ## Usage
 
 This is the general setup to build domain predicates:
