@@ -177,7 +177,7 @@ The following are papers that have been reconstructed so far. *Checked* boxes ar
 This section presents a taxonomy of research within Model Construction, organized into three broad categories: *Model Generation*, *Model Editing*, and *Model Benchmarks*. Within each category, the most recent contributions are listed last.
 
 ### Model Generation
-This category can be further divided into: *Task Modelling*, ; *Domain Modelling*, *Hybrid Modelling*
+This category can be further divided into: *Task Modeling*, ; *Domain Modeling*, *Hybrid Modeling*
 
 ***Task Translation Frameworks***
 - **"Structured, flexible, and robust: benchmarking and improving large language models towards more human-like behaviour in out-of-distribution reasoning tasks"** Collins et al. (2022) [[paper]](https://arxiv.org/abs/2205.05718) [[code]](https://github.com/collinskatie/structured_flexible_and_robust)

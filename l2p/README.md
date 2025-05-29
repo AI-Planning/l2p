@@ -1,14 +1,14 @@
 # L2P: LLM-Powered PDDL Planning
 
 **Official Documentation:**  
-For detailed function references, visit our website: **[Full documentation coming soon...]**.  
+For detailed function references, visit our website: [**L2P Documention**](https://marcustantakoun.github.io/l2p.github.io/)
 The L2P classes can be divided as follows:
 
 ---
 
 ## `domain_builder.py`
 This class is responsible for generating PDDL domain information via LLMs.  
-Full API reference: **[Full documentation coming soon...]**.
+Full API reference: [**L2P Documention**](https://marcustantakoun.github.io/l2p.github.io/l2p.html)
 
 ### Features Supported:
 - [x] **Types** (PDDL 1.2+)
@@ -30,8 +30,7 @@ Full API reference: **[Full documentation coming soon...]**.
 ---
 
 ## `task_builder.py`
-Responsible for generating PDDL task information via LLMs.  
-Full API reference: **[Full documentation coming soon...]**.
+Responsible for generating PDDL task information via LLMs. 
 
 ### Features Supported:
 - [x] **Objects** (PDDL 1.2+): Defines objects involved in the problem.
