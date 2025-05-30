@@ -6,7 +6,6 @@ Run: python3 -m paper_reconstructions.proc2pddl.main
 
 import os
 from l2p import *
-import ast
 
 if __name__ == "__main__":
 
@@ -19,7 +18,6 @@ if __name__ == "__main__":
     domain_builder = DomainBuilder()
     task_builder = TaskBuilder()
     feedback_builder = FeedbackBuilder()
-    prompt_builder = PromptBuilder()
     planner = FastDownward(planner_path="downward/fast-downward.py")
 
     # annotated original domain header

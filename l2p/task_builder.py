@@ -500,15 +500,13 @@ class TaskBuilder:
         Returns:
             desc (str): PDDL problem in string format
         """
-        
-        goal_str = f"(and \n{indent(format_goal(goal), 1)}\n)"
 
         desc = "(define\n"
         desc += f"   (problem {problem_name})\n"
         desc += f"   (:domain {domain_name})\n\n"
         desc += f"   (:objects \n{indent(format_objects(objects))}\n   )\n\n"
         desc += f"   (:init\n{indent(format_initial(initial))}\n   )\n\n"
-        desc += f"   (:goal\n{indent(goal_str)}\n   )\n"
+        desc += f"   (:goal\n{indent(format_goal(goal))}\n   )\n"
         desc += ")"
         desc = desc.replace("AND", "and").replace("OR", "or")
         return desc

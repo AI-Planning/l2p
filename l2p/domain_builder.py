@@ -1074,7 +1074,7 @@ class DomainBuilder:
         formalize_functions: bool = False,
         syntax_validator: SyntaxValidator = None,
         max_retries: int = 3
-    ) -> tuple[dict[str, Any], str]:
+    ) -> tuple[dict[str,Any], str, tuple[bool,str]]:
         """
         Formalizes domain-level specifications (i.e. :types, :constants, :predicates, :functions) via LLM.
 

@@ -1,6 +1,8 @@
 """
 This file uses inputted NL descriptions to generate prompts for LLM. The user does not
 have to use this class, but it is generally advisable for ease of use.
+
+    - format (str) should be fixed prompt from: /templates
 """
 
 
@@ -8,12 +10,12 @@ class PromptBuilder:
     def __init__(
         self,
         role: str = None,
-        technique: str = None,
+        format: str = None,
         examples: list = None,
         task: str = None,
     ):
         self.role = role  # role for LLM to follow (i.e. PDDL predicate constructor)
-        self.technique = technique  # prompting technique (i.e. CoT)
+        self.format = format  # prompting format
         self.examples = examples if examples is not None else []  # n-shot examples for LLM to follow
         self.task = task  # dynamic placeholder given information to LLM
 
@@ -21,9 +23,9 @@ class PromptBuilder:
         """Sets the role for the LLM to perform task"""
         self.role = role
 
-    def set_technique(self, technique):
-        """Sets the prompting technique for LLM to perform task"""
-        self.technique = technique
+    def set_format(self, format):
+        """Sets the prompting format for LLM to perform task"""
+        self.format = format
 
     def set_examples(self, example):
         """Appends a shot examples for LLM to follow"""
@@ -52,9 +54,9 @@ class PromptBuilder:
         """Returns role of the prompt given"""
         return self.role
 
-    def get_technique(self):
-        """Returns prompting technique of the prompt given"""
-        return self.technique
+    def get_format(self):
+        """Returns prompting format of the prompt given"""
+        return self.format
 
     def get_examples(self):
         """Returns list of n-examples of the prompt given"""
@@ -68,9 +70,9 @@ class PromptBuilder:
         """Removes role prompt"""
         self.role = None
 
-    def remove_technique(self):
-        """Removes technique prompt"""
-        self.technique = None
+    def remove_format(self):
+        """Removes format prompt"""
+        self.format = None
 
     def remove_examples(self, idx):
         """Removes specific index of example list"""
@@ -88,8 +90,8 @@ class PromptBuilder:
             prompt += f"[ROLE]: {self.role}\n\n"
             prompt += "------------------------------------------------\n"
 
-        if self.technique:
-            prompt += f"[TECHNIQUE]: {self.technique}\n\n"
+        if self.format:
+            prompt += f"[FORMAT]: {self.format}\n\n"
             prompt += "------------------------------------------------\n"
 
         if len(self.examples) > 0:

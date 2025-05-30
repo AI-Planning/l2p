@@ -1,0 +1,6 @@
+End your response with ### JUDGMENT, followed by feedback enclosed in triple backticks (```) or no feedback if there's nothing to add.
+
+### JUDGMENT
+```
+[content of feedback] or [no feedback]
+```

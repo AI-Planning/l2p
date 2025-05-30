@@ -653,7 +653,7 @@ class TestDomainBuilder(unittest.TestCase):
             """
         )
         
-        results, _ = self.domain_builder.formalize_domain_level_specs(
+        results, _, _ = self.domain_builder.formalize_domain_level_specs(
             model=self.mock_llm,
             domain_desc="",
             prompt_template="",

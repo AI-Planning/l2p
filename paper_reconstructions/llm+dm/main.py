@@ -284,6 +284,6 @@ if __name__ == "__main__":
     domain_builder = DomainBuilder()
 
     # run LLM+DM method on all domains
-    # run_llm_dm(model=gpt_model, domain="logistics")
+    run_llm_dm(model=gpt_model, domain="logistics")
     run_llm_dm(model=gpt_model, domain="household")
-    # run_llm_dm(model=gpt_model, domain="tyreworld")
+    run_llm_dm(model=gpt_model, domain="tyreworld")
