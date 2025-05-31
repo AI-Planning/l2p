@@ -10,8 +10,10 @@ from collections import OrderedDict
 from dataclasses import dataclass
 from typing import TypedDict, NewType, Optional
 
-ParameterList = NewType("ParameterList", OrderedDict[str, str]) # {param_name: param_type}
-ObjectList = NewType("ObjectList", dict[str, str]) # {obj_name: obj_type}
+ParameterList = NewType(
+    "ParameterList", OrderedDict[str, str]
+)  # {param_name: param_type}
+ObjectList = NewType("ObjectList", dict[str, str])  # {obj_name: obj_type}
 
 
 class PDDLType(TypedDict):
@@ -48,7 +50,7 @@ class Action(TypedDict):
     params: ParameterList
     preconditions: str
     effects: str
-    
+
 
 # Domain details data class including predicates and actions
 @dataclass
@@ -57,8 +59,8 @@ class DomainDetails:
     domain_desc: str
     domain_pddl: str
     requirements: list[str]
-    types: dict[str,str] | list[dict[str,str]]
-    constants: dict[str,str]
+    types: dict[str, str] | list[dict[str, str]]
+    constants: dict[str, str]
     predicates: list[Predicate]  # List of Predicate objects
     functions: list[Function]
     actions: list[Action]  # List of Action objects

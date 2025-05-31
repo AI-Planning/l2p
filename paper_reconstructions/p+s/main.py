@@ -3,12 +3,13 @@ Paper: "Structured, flexible, and robust: benchmarking and improving large langu
 Source code: https://github.com/collinskatie/structured_flexible_and_robust
 Run: python3 -m paper_reconstructions.p+s.main
 
-This framework (Part II of paper) utilizes "Language-of-Thought" (LOT) prompting where thinking operates like formal language. 
-Mental representations are structured symbolically with rules for logical reasoning and problem-solving. L2P follows this paradigm. 
+This framework (Part II of paper) utilizes "Language-of-Thought" (LOT) prompting where thinking operates like formal language.
+Mental representations are structured symbolically with rules for logical reasoning and problem-solving. L2P follows this paradigm.
 In this paper, they are tasking the LLM to translate natural language initial and goal states to PDDL via few shot prompting.
 """
 
 from l2p import *
+
 
 def run_parse_and_solve(
     model: BaseLLM,

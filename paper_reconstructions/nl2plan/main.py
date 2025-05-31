@@ -9,12 +9,12 @@ Each component of NL2Plan framework can be found in ./nl2plan. Specifically, thi
     3. Action Extraction - high-level extraction of actions + descriptions
     4. Action Construction - coverted actions into PDDL format
     5. Task Extraction - build PDDL problem specification
-        
+
 Step 1-4 is concerned with PDDL domain; step 5 involves PDDL problem.
 
 Each step contains a feedback mechanism (either LLM or human). In this case, we chose to do full
 automation and let LLM run a feedback checklist on its outputs. There are also validators found
-in step 4 (action construction) and step 5 (task extraction) for PDDL syntax. 
+in step 4 (action construction) and step 5 (task extraction) for PDDL syntax.
 """
 
 import argparse
@@ -42,7 +42,7 @@ REQUIREMENTS = [
     ":disjunctive-preconditions",
     ":universal-preconditions",
     ":conditional-effects",
-    ":existential-preconditions"
+    ":existential-preconditions",
 ]
 
 UNSUPPORTED_KEYWORDS = ["object", "pddl", "lisp"]
@@ -59,7 +59,7 @@ def set_prompt(
     role = load_file(role_path)
     examples = load_files(examples_path)
     task = load_file(task_path)
-    
+
     # set prompts to prompt builder class
     prompt_builder.set_role(role=role)
     for ex in examples:
@@ -188,7 +188,7 @@ def run_nl2plan(args, domain: str, problem: str):
             type_hierarchy=type_hierarchy,
             feedback_prompt=load_file(
                 "paper_reconstructions/nl2plan/prompts/action_construction/feedback.txt"
-            )
+            ),
         )
 
         log += f"{separator}\n"
@@ -209,11 +209,15 @@ def run_nl2plan(args, domain: str, problem: str):
 
         objects, initial, goal = task_extraction.task_extraction(
             model=model,
-            problem_desc=load_file(f"paper_reconstructions/nl2plan/domains/{domain}/{problem}.txt"),
+            problem_desc=load_file(
+                f"paper_reconstructions/nl2plan/domains/{domain}/{problem}.txt"
+            ),
             task_extraction_prompt=task_extraction.prompt_template,
             types=type_hierarchy,
             predicates=predicates,
-            feedback_prompt=load_file("paper_reconstructions/nl2plan/prompts/task_extraction/feedback.txt"),
+            feedback_prompt=load_file(
+                "paper_reconstructions/nl2plan/prompts/task_extraction/feedback.txt"
+            ),
         )
 
         log += f"{separator}\nSTEP FIVE: TASK EXTRACTION\n\n"
@@ -250,10 +254,10 @@ def run_nl2plan(args, domain: str, problem: str):
             f.write(pddl_domain)
         with open(problem_file, "w") as f:
             f.write(pddl_problem)
-            
+
         pddl_domain_cleaned = check_parse_domain(file_path=domain_file)
         pddl_problem_cleaned = check_parse_problem(file_path=problem_file)
-        
+
         with open(domain_file, "w") as f:
             f.write(pddl_domain_cleaned)
         with open(problem_file, "w") as f:

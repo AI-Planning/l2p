@@ -2,7 +2,7 @@
 PDDL Problem Formalization/Generation Functions
 
 This module defines the `TaskBuilder` class and related utilities for constructing
-PDDL problem specifications programatically. 
+PDDL problem specifications programatically.
 
 Refer to /docs for more information how to use class funcions. Refer to /templates
 for how to structurally prompt LLMs so they are compatible with class function parsing.
@@ -11,6 +11,7 @@ for how to structurally prompt LLMs so they are compatible with class function p
 import time
 from .llm import BaseLLM, require_llm
 from .utils import *
+
 
 class TaskBuilder:
     def __init__(
@@ -40,8 +41,8 @@ class TaskBuilder:
         model: BaseLLM,
         problem_desc: str,
         prompt_template: str,
-        types: dict[str, str] | list[dict[str,str]] | None = None,
-        constants: dict[str,str] | None = None,
+        types: dict[str, str] | list[dict[str, str]] | None = None,
+        constants: dict[str, str] | None = None,
         syntax_validator: SyntaxValidator = None,
         max_retries: int = 3,
     ) -> tuple[dict[str, str], str, tuple[bool, str]]:
@@ -64,11 +65,12 @@ class TaskBuilder:
         """
 
         types_str = pretty_print_dict(types) if types else "No types provided."
-        const_str = format_constants(constants) if constants else "No constants provided."
+        const_str = (
+            format_constants(constants) if constants else "No constants provided."
+        )
 
         prompt = (
-            prompt_template
-            .replace("{problem_desc}", problem_desc)
+            prompt_template.replace("{problem_desc}", problem_desc)
             .replace("{types}", types_str)
             .replace("{constants}", const_str)
         )
@@ -89,7 +91,7 @@ class TaskBuilder:
                         validator = getattr(syntax_validator, f"{error_type}", None)
                         if not callable(validator):
                             continue
-                        
+
                         # dispatch based on expected arguments
                         if error_type == "validate_header":
                             validation_info = validator(llm_output)
@@ -99,7 +101,7 @@ class TaskBuilder:
                             validation_info = validator(llm_output)
                         elif error_type == "validate_task_objects":
                             validation_info = validator(objects, types)
-                        
+
                         if not validation_info[0]:
                             return objects, llm_output, validation_info
 
@@ -120,8 +122,8 @@ class TaskBuilder:
         model: BaseLLM,
         problem_desc: str,
         prompt_template: str,
-        types: dict[str, str] | list[dict[str,str]] | None = None,
-        constants: dict[str,str] | None = None,
+        types: dict[str, str] | list[dict[str, str]] | None = None,
+        constants: dict[str, str] | None = None,
         predicates: list[Predicate] | None = None,
         functions: list[Function] | None = None,
         objects: dict[str, str] | None = None,
@@ -156,16 +158,25 @@ class TaskBuilder:
         """
 
         types_str = pretty_print_dict(types) if types else "No types provided."
-        const_str = format_constants(constants) if constants else "No constants provided."
-        preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
-        funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
+        const_str = (
+            format_constants(constants) if constants else "No constants provided."
+        )
+        preds_str = (
+            "\n".join([f"{pred['raw']}" for pred in predicates])
+            if predicates
+            else "No predicates provided."
+        )
+        funcs_str = (
+            "\n".join([f"{func['raw']}" for func in functions])
+            if functions
+            else "No functions provided."
+        )
         obj_str = format_objects(objects) if objects else "No objects provided."
         init_str = format_initial(initial) if initial else "No initial state provided."
         goal_str = format_goal(goal) if goal else "No goal state provided."
 
         prompt = (
-            prompt_template
-            .replace("{problem_desc}", problem_desc)
+            prompt_template.replace("{problem_desc}", problem_desc)
             .replace("{types}", types_str)
             .replace("{constants}", const_str)
             .replace("{predicates}", preds_str)
@@ -191,7 +202,7 @@ class TaskBuilder:
                         validator = getattr(syntax_validator, f"{error_type}", None)
                         if not callable(validator):
                             continue
-                        
+
                         # dispatch based on expected arguments
                         if error_type == "validate_header":
                             validation_info = validator(llm_output)
@@ -200,8 +211,10 @@ class TaskBuilder:
                         elif error_type == "validate_unsupported_keywords":
                             validation_info = validator(llm_output)
                         elif error_type == "validate_task_states":
-                            validation_info = validator(initial, objects, predicates, "initial")
-                        
+                            validation_info = validator(
+                                initial, objects, predicates, "initial"
+                            )
+
                         if not validation_info[0]:
                             return initial, llm_output, validation_info
 
@@ -222,8 +235,8 @@ class TaskBuilder:
         model: BaseLLM,
         problem_desc: str,
         prompt_template: str,
-        types: dict[str, str] | list[dict[str,str]] | None = None,
-        constants: dict[str,str] | None = None,
+        types: dict[str, str] | list[dict[str, str]] | None = None,
+        constants: dict[str, str] | None = None,
         predicates: list[Predicate] | None = None,
         functions: list[Function] | None = None,
         objects: dict[str, str] | None = None,
@@ -231,7 +244,7 @@ class TaskBuilder:
         goal: list[dict[str, str]] | None = None,
         syntax_validator: SyntaxValidator = None,
         max_retries: int = 3,
-    ) -> tuple[list[dict[str, str]], str, tuple[bool,str]]:
+    ) -> tuple[list[dict[str, str]], str, tuple[bool, str]]:
         """
         Formalizes PDDL :goal states via LLM.
 
@@ -258,16 +271,25 @@ class TaskBuilder:
         """
 
         types_str = pretty_print_dict(types) if types else "No types provided."
-        const_str = format_constants(constants) if constants else "No constants provided."
-        preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
-        funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
+        const_str = (
+            format_constants(constants) if constants else "No constants provided."
+        )
+        preds_str = (
+            "\n".join([f"{pred['raw']}" for pred in predicates])
+            if predicates
+            else "No predicates provided."
+        )
+        funcs_str = (
+            "\n".join([f"{func['raw']}" for func in functions])
+            if functions
+            else "No functions provided."
+        )
         obj_str = format_objects(objects) if objects else "No objects provided."
         init_str = format_initial(initial) if initial else "No initial state provided."
         goal_str = format_goal(goal) if goal else "No goal state provided."
 
         prompt = (
-            prompt_template
-            .replace("{problem_desc}", problem_desc)
+            prompt_template.replace("{problem_desc}", problem_desc)
             .replace("{types}", types_str)
             .replace("{constants}", const_str)
             .replace("{predicates}", preds_str)
@@ -293,7 +315,7 @@ class TaskBuilder:
                         validator = getattr(syntax_validator, f"{error_type}", None)
                         if not callable(validator):
                             continue
-                        
+
                         # dispatch based on expected arguments
                         if error_type == "validate_header":
                             validation_info = validator(llm_output)
@@ -302,8 +324,10 @@ class TaskBuilder:
                         elif error_type == "validate_unsupported_keywords":
                             validation_info = validator(llm_output)
                         elif error_type == "validate_task_states":
-                            validation_info = validator(goal, objects, predicates, "goal")
-                        
+                            validation_info = validator(
+                                goal, objects, predicates, "goal"
+                            )
+
                         if not validation_info[0]:
                             return goal, llm_output, validation_info
 
@@ -324,17 +348,19 @@ class TaskBuilder:
         model: BaseLLM,
         problem_desc: str,
         prompt_template: str,
-        types: dict[str, str] | list[dict[str,str]] | None = None,
-        constants: dict[str,str] | None = None,
+        types: dict[str, str] | list[dict[str, str]] | None = None,
+        constants: dict[str, str] | None = None,
         predicates: list[Predicate] | None = None,
         functions: list[Function] | None = None,
         syntax_validator: SyntaxValidator = None,
         max_retries: int = 3,
     ) -> tuple[
-            dict[str, str], 
-            list[dict[str, str]], 
-            list[dict[str, str]], 
-            str, tuple[bool, str]]:
+        dict[str, str],
+        list[dict[str, str]],
+        list[dict[str, str]],
+        str,
+        tuple[bool, str],
+    ]:
         """
         Formalizes whole task specification via LLM.
 
@@ -358,13 +384,22 @@ class TaskBuilder:
         """
 
         types_str = pretty_print_dict(types) if types else "No types provided."
-        const_str = format_constants(constants) if constants else "No constants provided."
-        preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
-        funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
+        const_str = (
+            format_constants(constants) if constants else "No constants provided."
+        )
+        preds_str = (
+            "\n".join([f"{pred['raw']}" for pred in predicates])
+            if predicates
+            else "No predicates provided."
+        )
+        funcs_str = (
+            "\n".join([f"{func['raw']}" for func in functions])
+            if functions
+            else "No functions provided."
+        )
 
         prompt = (
-            prompt_template
-            .replace("{problem_desc}", problem_desc)
+            prompt_template.replace("{problem_desc}", problem_desc)
             .replace("{types}", types_str)
             .replace("{constants}", const_str)
             .replace("{predicates}", preds_str)
@@ -389,7 +424,7 @@ class TaskBuilder:
                         validator = getattr(syntax_validator, f"{error_type}", None)
                         if not callable(validator):
                             continue
-                        
+
                         # dispatch based on expected arguments
                         if error_type == "validate_header":
                             validation_info = validator(llm_output)
@@ -401,19 +436,21 @@ class TaskBuilder:
                             validation_info = validator(objects, types)
                         elif error_type == "validate_task_states":
                             validation_info = validator(
-                                states=initial, 
-                                objects=objects, 
-                                predicates=predicates, 
+                                states=initial,
+                                objects=objects,
+                                predicates=predicates,
                                 functions=functions,
-                                state_type="initial")
+                                state_type="initial",
+                            )
                             if validation_info[0]:
                                 validation_info = validator(
-                                    states=goal, 
-                                    objects=objects, 
-                                    predicates=predicates, 
+                                    states=goal,
+                                    objects=objects,
+                                    predicates=predicates,
                                     functions=functions,
-                                    state_type="goal")
-                        
+                                    state_type="goal",
+                                )
+
                         if not validation_info[0]:
                             return objects, initial, goal, llm_output, validation_info
 
@@ -428,10 +465,9 @@ class TaskBuilder:
 
         raise RuntimeError("Max retries exceeded. Failed to extract task.")
 
-
     """Delete functions"""
 
-    def delete_objects(self, object: dict[str,str]):
+    def delete_objects(self, object: dict[str, str]):
         """Deletes specific item in :objects from current specification"""
         if self.objects is not None:
             self.objects = {
@@ -448,7 +484,6 @@ class TaskBuilder:
         if self.goal is not None:
             self.goal = [s for s in self.goal if s != state]
 
-
     """Set functions"""
 
     def set_objects(self, objects: dict[str, str]):
@@ -459,10 +494,9 @@ class TaskBuilder:
         """Sets PDDL :init states for current specification"""
         self.initial = initial
 
-    def set_goal(self, goal: list[dict[str,str]]):
+    def set_goal(self, goal: list[dict[str, str]]):
         """Sets PDDL :goal states for current specification"""
         self.goal = goal
-
 
     """Get functions"""
 
@@ -474,18 +508,17 @@ class TaskBuilder:
         """Returns PDDL :init states from current specification"""
         return self.initial
 
-    def get_goal(self) -> list[dict[str,str]]:
+    def get_goal(self) -> list[dict[str, str]]:
         """Returns PDDL :goal states from current specification"""
         return self.goal
 
-
     def generate_task(
-        self, 
-        domain_name: str, 
-        problem_name: str, 
-        objects: dict[str,str], 
-        initial: list[dict[str,str]], 
-        goal: list[dict[str,str]]
+        self,
+        domain_name: str,
+        problem_name: str,
+        objects: dict[str, str],
+        initial: list[dict[str, str]],
+        goal: list[dict[str, str]],
     ) -> str:
         """
         Generates PDDL problem from given information.

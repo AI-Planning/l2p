@@ -1,7 +1,7 @@
 """
-L2P is compatible with FastDownward: https://www.fast-downward.org 
+L2P is compatible with FastDownward: https://www.fast-downward.org
 
-For usage, users must clone or download the submodule /downward separately and direct the 
+For usage, users must clone or download the submodule /downward separately and direct the
 `planner_path` to the folder. This module is not necessary to use L2P, but for ease of use
 to produce plans from generated domain and problem PDDL specifications via LLMs.
 """

@@ -2,7 +2,7 @@
 PDDL Domain Formalization/Generation Functions
 
 This module defines the `DomainBuilder` class and related utilities for constructing
-PDDL domain specifications programatically. 
+PDDL domain specifications programatically.
 
 Refer to /docs for more information how to use class funcions. Refer to /templates
 for how to structurally prompt LLMs so they are compatible with class function parsing.
@@ -17,13 +17,14 @@ from typing import Any
 from .llm import BaseLLM, require_llm
 from .utils import *
 
+
 class DomainBuilder:
     def __init__(
         self,
         requirements: list[str] = None,
         types: dict[str, str] = None,
         type_hierarchy: list[dict[str, str]] = None,
-        constants: dict[str,str] = None,
+        constants: dict[str, str] = None,
         predicates: list[Predicate] = None,
         functions: list[Function] = None,
         pddl_actions: list[Action] = None,
@@ -57,13 +58,13 @@ class DomainBuilder:
         model: BaseLLM,
         domain_desc: str,
         prompt_template: str,
-        types: dict[str,str] | list[dict[str,str]] | None = None,
+        types: dict[str, str] | list[dict[str, str]] | None = None,
         check_invalid_obj_usage: bool = True,
         syntax_validator: SyntaxValidator = None,
         max_retries: int = 3,
-    ) -> tuple[dict[str,str], str, tuple[bool, str]]:
+    ) -> tuple[dict[str, str], str, tuple[bool, str]]:
         """
-        Formalizes PDDL :types in singular flat hierarchy via LLM. It is recommended to use 
+        Formalizes PDDL :types in singular flat hierarchy via LLM. It is recommended to use
         `formalize_type_hierarchy()` for sub-type support.
 
         Args:
@@ -83,10 +84,8 @@ class DomainBuilder:
 
         types_str = pretty_print_dict(types) if types else "No types provided."
 
-        prompt = (
-            prompt_template
-            .replace("{domain_desc}", domain_desc)
-            .replace("{types}", types_str)
+        prompt = prompt_template.replace("{domain_desc}", domain_desc).replace(
+            "{types}", types_str
         )
 
         # iterate through attempts in case of extraction failure
@@ -114,12 +113,12 @@ class DomainBuilder:
                         # dispatch based on expected arguments
                         if error_type == "validate_format_types":
                             validation_info = validator(types)
-                        
+
                         if not validation_info[0]:
                             return types, llm_output, validation_info
-                
+
                 return types, llm_output, validation_info
-            
+
             except Exception as e:
                 print(
                     f"Error encountered during attempt {attempt + 1}/{max_retries}: {e}. "
@@ -135,11 +134,11 @@ class DomainBuilder:
         model: BaseLLM,
         domain_desc: str,
         prompt_template: str,
-        types: dict[str,str] | list[dict[str,str]] | None = None,
+        types: dict[str, str] | list[dict[str, str]] | None = None,
         check_invalid_obj_usage: bool = True,
         syntax_validator: SyntaxValidator = None,
         max_retries: int = 3,
-    ) -> tuple[list[dict[str,str]], str, tuple[bool,str]]:
+    ) -> tuple[list[dict[str, str]], str, tuple[bool, str]]:
         """
         Formalizes PDDL :types in hierarchy format via LLM. Recommended to use over `formalize_types()`
 
@@ -157,13 +156,11 @@ class DomainBuilder:
             llm_output (str): the raw string BaseLLM response
             validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
-        
+
         types_str = pretty_print_dict(types) if types else "No types provided."
 
-        prompt = (
-            prompt_template
-            .replace("{domain_desc}", domain_desc)
-            .replace("{types}", types_str)
+        prompt = prompt_template.replace("{domain_desc}", domain_desc).replace(
+            "{types}", types_str
         )
 
         # iterate through attempts in case of extraction failure
@@ -187,7 +184,7 @@ class DomainBuilder:
                             else:
                                 new_hierarchy.append(entry)
                         type_hierarchy = new_hierarchy
-                
+
                 # run syntax validation if applicable
                 validation_info = (True, "All validations passed.")
                 if syntax_validator:
@@ -204,7 +201,7 @@ class DomainBuilder:
 
                         if not validation_info[0]:
                             return type_hierarchy, llm_output, validation_info
-                
+
                 return type_hierarchy, llm_output, validation_info
 
             except Exception as e:
@@ -215,18 +212,18 @@ class DomainBuilder:
                 time.sleep(2)  # add a delay before retrying
 
         raise RuntimeError("Max retries exceeded. Failed to extract types.")
-    
+
     @require_llm
     def formalize_constants(
         self,
         model: BaseLLM,
         domain_desc: str,
         prompt_template: str,
-        types: dict[str,str] | list[dict[str,str]] | None = None,
-        constants: dict[str,str] | None = None,
+        types: dict[str, str] | list[dict[str, str]] | None = None,
+        constants: dict[str, str] | None = None,
         syntax_validator: SyntaxValidator = None,
-        max_retries: int = 3
-    ) -> tuple[dict[str,str], str, tuple[bool,str]]:
+        max_retries: int = 3,
+    ) -> tuple[dict[str, str], str, tuple[bool, str]]:
         """
         Formalizes PDDL :constants in flat dictionary format via LLM.
 
@@ -246,24 +243,25 @@ class DomainBuilder:
         """
 
         types_str = pretty_print_dict(types) if types else "No types provided."
-        const_str = format_constants(constants) if constants else "No constants provided."
+        const_str = (
+            format_constants(constants) if constants else "No constants provided."
+        )
 
         prompt = (
-            prompt_template
-            .replace("{domain_desc}", domain_desc)
+            prompt_template.replace("{domain_desc}", domain_desc)
             .replace("{types}", types_str)
             .replace("{constants}", const_str)
         )
-        
+
         # iterate through attempts in case of extraction failure
         for attempt in range(max_retries):
             try:
                 model.reset_tokens()
                 llm_output = model.query(prompt=prompt)
-                
+
                 # parse LLM output into constants
                 constants = parse_constants(llm_output=llm_output)
-                
+
                 # run syntax validation if applicable
                 validation_info = (True, "All validations passed.")
                 if syntax_validator:
@@ -271,16 +269,16 @@ class DomainBuilder:
                         validator = getattr(syntax_validator, f"{error_type}", None)
                         if not callable(validator):
                             continue
-                        
+
                         # dispatch based on expected arguments
                         if error_type == "validate_constant_types":
                             validation_info = validator(constants, types)
-                        
+
                         if not validation_info[0]:
                             return constants, llm_output, validation_info
-                
+
                 return constants, llm_output, validation_info
-            
+
             except Exception as e:
                 print(
                     f"Error encountered during attempt {attempt + 1}/{max_retries}: {e}. "
@@ -296,8 +294,8 @@ class DomainBuilder:
         model: BaseLLM,
         domain_desc: str,
         prompt_template: str,
-        types: dict[str, str] | list[dict[str,str]] | None = None,
-        constants: dict[str,str] | None = None,
+        types: dict[str, str] | list[dict[str, str]] | None = None,
+        constants: dict[str, str] | None = None,
         predicates: list[Predicate] = None,
         functions: list[Function] = None,
         syntax_validator: SyntaxValidator = None,
@@ -324,13 +322,22 @@ class DomainBuilder:
         """
 
         types_str = pretty_print_dict(types) if types else "No types provided."
-        const_str = format_constants(constants) if constants else "No constants provided."
-        preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
-        funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
+        const_str = (
+            format_constants(constants) if constants else "No constants provided."
+        )
+        preds_str = (
+            "\n".join([f"{pred['raw']}" for pred in predicates])
+            if predicates
+            else "No predicates provided."
+        )
+        funcs_str = (
+            "\n".join([f"{func['raw']}" for func in functions])
+            if functions
+            else "No functions provided."
+        )
 
         prompt = (
-            prompt_template
-            .replace("{domain_desc}", domain_desc)
+            prompt_template.replace("{domain_desc}", domain_desc)
             .replace("{types}", types_str)
             .replace("{constants}", const_str)
             .replace("{predicates}", preds_str)
@@ -345,7 +352,7 @@ class DomainBuilder:
 
                 # extract new predicates from response
                 new_predicates = parse_new_predicates(llm_output=llm_output)
-                
+
                 # run syntax validation if applicable
                 validation_info = (True, "All validations passed.")
                 if syntax_validator:
@@ -353,7 +360,7 @@ class DomainBuilder:
                         validator = getattr(syntax_validator, f"{error_type}", None)
                         if not callable(validator):
                             continue
-                        
+
                         # dispatch based on expected arguments
                         if error_type == "validate_header":
                             validation_info = validator(llm_output)
@@ -367,7 +374,7 @@ class DomainBuilder:
                             validation_info = validator(new_predicates, types)
                         elif error_type == "validate_duplicate_predicates":
                             validation_info = validator(predicates, new_predicates)
-                        
+
                         if not validation_info[0]:
                             return new_predicates, llm_output, validation_info
 
@@ -388,12 +395,12 @@ class DomainBuilder:
         model: BaseLLM,
         domain_desc: str,
         prompt_template: str,
-        types: dict[str, str] | list[dict[str,str]] | None = None,
-        constants: dict[str,str] | None = None,
+        types: dict[str, str] | list[dict[str, str]] | None = None,
+        constants: dict[str, str] | None = None,
         predicates: list[Predicate] = None,
         functions: list[Function] = None,
         syntax_validator: SyntaxValidator = None,
-        max_retries = 3,
+        max_retries=3,
     ) -> tuple[list[Function], str, tuple[bool, str]]:
         """
         Formalizes PDDL :functions via LLM
@@ -416,28 +423,37 @@ class DomainBuilder:
         """
 
         types_str = pretty_print_dict(types) if types else "No types provided."
-        const_str = format_constants(constants) if constants else "No constants provided."
-        preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
-        funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
+        const_str = (
+            format_constants(constants) if constants else "No constants provided."
+        )
+        preds_str = (
+            "\n".join([f"{pred['raw']}" for pred in predicates])
+            if predicates
+            else "No predicates provided."
+        )
+        funcs_str = (
+            "\n".join([f"{func['raw']}" for func in functions])
+            if functions
+            else "No functions provided."
+        )
 
         prompt = (
-            prompt_template
-            .replace("{domain_desc}", domain_desc)
+            prompt_template.replace("{domain_desc}", domain_desc)
             .replace("{types}", types_str)
             .replace("{constants}", const_str)
             .replace("{predicates}", preds_str)
             .replace("{functions}", funcs_str)
         )
-        
+
         # iterate through attempts in case of extraction failure
         for attempt in range(max_retries):
             try:
                 model.reset_tokens()
                 llm_output = model.query(prompt=prompt)
-                
+
                 # extract functions from response
                 functions = parse_functions(llm_output=llm_output)
-                
+
                 # run syntax validation if applicable
                 validation_info = (True, "All validations passed.")
                 if syntax_validator:
@@ -445,7 +461,7 @@ class DomainBuilder:
                         validator = getattr(syntax_validator, f"{error_type}", None)
                         if not callable(validator):
                             continue
-                        
+
                         # dispatch based on expected arguments
                         if error_type == "validate_header":
                             validation_info = validator(llm_output)
@@ -455,12 +471,12 @@ class DomainBuilder:
                             validation_info = validator(llm_output)
                         elif error_type == "validate_format_functions":
                             validation_info = validator(functions, types)
-                            
+
                         if not validation_info[0]:
                             return functions, llm_output, validation_info
-                
+
                 return functions, llm_output, validation_info
-        
+
             except Exception as e:
                 print(
                     f"Error encountered during attempt {attempt + 1}/{max_retries}: {e}. "
@@ -469,7 +485,6 @@ class DomainBuilder:
                 time.sleep(2)  # add a delay before retrying
 
         raise RuntimeError("Max retries exceeded. Failed to extract functions.")
-                
 
     @require_llm
     def extract_nl_actions(
@@ -477,14 +492,14 @@ class DomainBuilder:
         model: BaseLLM,
         domain_desc: str,
         prompt_template: str,
-        types: dict[str, str] | list[dict[str,str]] = None,
+        types: dict[str, str] | list[dict[str, str]] = None,
         nl_actions: dict[str, str] = None,
         max_retries: int = 3,
     ) -> tuple[dict[str, str], str]:
         """
-        Extract actions in natural language given domain description using BaseLLM. 
-        
-        NOTE: This is not an official formalize function. It is inspired by the NL2PLAN framework 
+        Extract actions in natural language given domain description using BaseLLM.
+
+        NOTE: This is not an official formalize function. It is inspired by the NL2PLAN framework
         (Gestrin et al., 2024) and is designed to guide the LLM in constructing appropriate actions.
 
         Args:
@@ -501,11 +516,14 @@ class DomainBuilder:
         """
 
         types_str = pretty_print_dict(types) if types else "No types provided."
-        nl_act_str = "\n".join(f" - {name}: {desc}" for name, desc in nl_actions.items()) if nl_actions else "No actions provided."
+        nl_act_str = (
+            "\n".join(f" - {name}: {desc}" for name, desc in nl_actions.items())
+            if nl_actions
+            else "No actions provided."
+        )
 
         prompt = (
-            prompt_template
-            .replace("{domain_desc}", domain_desc)
+            prompt_template.replace("{domain_desc}", domain_desc)
             .replace("{types}", types_str)
             .replace("{nl_actions}", nl_act_str)
         )
@@ -530,7 +548,7 @@ class DomainBuilder:
                 time.sleep(2)  # add a delay before retrying
 
         raise RuntimeError("Max retries exceeded. Failed to extract NL actions.")
-    
+
     @require_llm
     def formalize_pddl_action(
         self,
@@ -540,13 +558,13 @@ class DomainBuilder:
         action_name: str,
         action_desc: str = None,
         action_list: list[str] = None,
-        types: dict[str,str] | list[dict[str,str]] = None,
-        constants: dict[str,str] | None = None,
+        types: dict[str, str] | list[dict[str, str]] = None,
+        constants: dict[str, str] | None = None,
         predicates: list[Predicate] | None = None,
         functions: list[Function] | None = None,
-        extract_new_preds = False,
+        extract_new_preds=False,
         syntax_validator: SyntaxValidator = None,
-        max_retries: int = 3
+        max_retries: int = 3,
     ) -> tuple[Action, list[Predicate], str, tuple[bool, str]]:
         """
         Formalizes an :action and new :predicates from a given action description using BaseLLM.
@@ -574,15 +592,28 @@ class DomainBuilder:
             validation_info (tuple[bool, str]): validation info containing pass flag and error message
         """
 
-        act_list_str = "\n".join([f"- {a}" for a in action_list]) if action_list else "No other actions provided."
+        act_list_str = (
+            "\n".join([f"- {a}" for a in action_list])
+            if action_list
+            else "No other actions provided."
+        )
         types_str = pretty_print_dict(types) if types else "No types provided."
-        const_str = format_constants(constants) if constants else "No constants provided."
-        preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
-        funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
+        const_str = (
+            format_constants(constants) if constants else "No constants provided."
+        )
+        preds_str = (
+            "\n".join([f"{pred['raw']}" for pred in predicates])
+            if predicates
+            else "No predicates provided."
+        )
+        funcs_str = (
+            "\n".join([f"{func['raw']}" for func in functions])
+            if functions
+            else "No functions provided."
+        )
 
         prompt = (
-            prompt_template
-            .replace("{domain_desc}", domain_desc)
+            prompt_template.replace("{domain_desc}", domain_desc)
             .replace("{action_list}", act_list_str)
             .replace("{action_name}", action_name)
             .replace("{action_desc}", action_desc or "No description available.")
@@ -591,21 +622,21 @@ class DomainBuilder:
             .replace("{predicates}", preds_str)
             .replace("{functions}", funcs_str)
         )
-        
+
         # iterate through attempts in case of extraction failure
         for attempt in range(max_retries):
             try:
                 model.reset_tokens()
                 llm_output = model.query(prompt=prompt)
-                
+
                 # parse LLM output into action and predicates
                 action = parse_action(llm_output=llm_output, action_name=action_name)
-                
+
                 if extract_new_preds:
                     new_predicates = parse_new_predicates(llm_output=llm_output)
                 else:
                     new_predicates = []
-                
+
                 # run syntax validation if applicable
                 validation_info = (True, "All validations passed.")
                 if syntax_validator:
@@ -613,7 +644,7 @@ class DomainBuilder:
                         validator = getattr(syntax_validator, f"{error_type}", None)
                         if not callable(validator):
                             continue
-                        
+
                         # dispatch based on expected arguments
                         if error_type == "validate_header":
                             validation_info = validator(llm_output)
@@ -630,13 +661,19 @@ class DomainBuilder:
                         elif error_type == "validate_format_predicates":
                             validation_info = validator(new_predicates, types)
                         elif error_type == "validate_usage_action":
-                            validation_info = validator(llm_output, predicates, types, functions, extract_new_preds)
-                        
+                            validation_info = validator(
+                                llm_output,
+                                predicates,
+                                types,
+                                functions,
+                                extract_new_preds,
+                            )
+
                         if not validation_info[0]:
                             return action, new_predicates, llm_output, validation_info
-                
+
                 return action, new_predicates, llm_output, validation_info
-            
+
             except Exception as e:
                 print(
                     f"Error on attempt {attempt + 1}/{max_retries}: {e}\n"
@@ -654,15 +691,15 @@ class DomainBuilder:
         domain_desc: str,
         prompt_template: str,
         action_list: list[str] = None,
-        types: dict[str, str] | list[dict[str,str]] = None,
-        constants: dict[str,str] | None = None,
+        types: dict[str, str] | list[dict[str, str]] = None,
+        constants: dict[str, str] | None = None,
         predicates: list[Predicate] | None = None,
         functions: list[Function] | None = None,
-        extract_new_preds = False,
-        max_retries: int = 3
+        extract_new_preds=False,
+        max_retries: int = 3,
     ) -> tuple[list[Action], list[Predicate], str]:
         """
-        Formalizes several :actions via LLM. 
+        Formalizes several :actions via LLM.
 
         Args:
             model (BaseLLM): LLM to query
@@ -682,22 +719,35 @@ class DomainBuilder:
             llm_output (str): the raw string BaseLLM response
         """
 
-        act_list_str = "\n".join([f"- {a}" for a in action_list]) if action_list else "No other actions provided."
+        act_list_str = (
+            "\n".join([f"- {a}" for a in action_list])
+            if action_list
+            else "No other actions provided."
+        )
         types_str = pretty_print_dict(types) if types else "No types provided."
-        const_str = format_constants(constants) if constants else "No constants provided."
-        preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
-        funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
+        const_str = (
+            format_constants(constants) if constants else "No constants provided."
+        )
+        preds_str = (
+            "\n".join([f"{pred['raw']}" for pred in predicates])
+            if predicates
+            else "No predicates provided."
+        )
+        funcs_str = (
+            "\n".join([f"{func['raw']}" for func in functions])
+            if functions
+            else "No functions provided."
+        )
 
         prompt = (
-            prompt_template
-            .replace("{domain_desc}", domain_desc)
+            prompt_template.replace("{domain_desc}", domain_desc)
             .replace("{action_list}", act_list_str)
             .replace("{types}", types_str)
             .replace("{constants}", const_str)
             .replace("{predicates}", preds_str)
             .replace("{functions}", funcs_str)
         )
-        
+
         # iterate through attempts in case of extraction failure
         for attempt in range(max_retries):
             try:
@@ -744,7 +794,7 @@ class DomainBuilder:
                     new_predicates = None
 
                 return actions, new_predicates, llm_output
-            
+
             except Exception as e:
                 print(
                     f"Error on attempt {attempt + 1}/{max_retries}: {e}\n"
@@ -762,7 +812,7 @@ class DomainBuilder:
         prompt_template: str,
         action_name: str,
         action_desc: str = None,
-        types: dict[str, str] | list[dict[str,str]] | None = None,
+        types: dict[str, str] | list[dict[str, str]] | None = None,
         syntax_validator: SyntaxValidator = None,
         max_retries: int = 3,
     ) -> tuple[OrderedDict, list, str, tuple[bool, str]]:
@@ -789,8 +839,7 @@ class DomainBuilder:
         types_str = pretty_print_dict(types) if types else "No types provided."
 
         prompt = (
-            prompt_template
-            .replace("{domain_desc}", domain_desc)
+            prompt_template.replace("{domain_desc}", domain_desc)
             .replace("{action_name}", action_name)
             .replace("{action_desc}", action_desc or "No description available.")
             .replace("{types}", types_str)
@@ -804,7 +853,7 @@ class DomainBuilder:
 
                 # extract respective types from response
                 param, param_raw = parse_params(llm_output=llm_output)
-                
+
                 # run syntax validation if applicable
                 validation_info = (True, "All validations passed.")
                 if syntax_validator:
@@ -812,7 +861,7 @@ class DomainBuilder:
                         validator = getattr(syntax_validator, f"{error_type}", None)
                         if not callable(validator):
                             continue
-                        
+
                         # dispatch based on expected arguments
                         if error_type == "validate_header":
                             validation_info = validator(llm_output)
@@ -822,7 +871,7 @@ class DomainBuilder:
                             validation_info = validator(param_raw)
                         elif error_type == "validate_params":
                             validation_info = validator(param, types)
-                            
+
                         if not validation_info[0]:
                             return param, param_raw, llm_output, validation_info
 
@@ -846,14 +895,14 @@ class DomainBuilder:
         action_name: str,
         action_desc: str = None,
         params: OrderedDict = None,
-        types: dict[str, str] | list[dict[str,str]] | None = None,
-        constants: dict[str,str] | None = None,
+        types: dict[str, str] | list[dict[str, str]] | None = None,
+        constants: dict[str, str] | None = None,
         predicates: list[Predicate] | None = None,
         functions: list[Function] | None = None,
         extract_new_preds: bool = False,
         syntax_validator: SyntaxValidator = None,
         max_retries: int = 3,
-    ) -> tuple[str, list[Predicate], str, tuple[bool,str]]:
+    ) -> tuple[str, list[Predicate], str, tuple[bool, str]]:
         """
         Formalizes PDDL :preconditions from a single action via LLM.
 
@@ -881,13 +930,22 @@ class DomainBuilder:
 
         params_str = format_params(params) if params else "No parameters provided."
         types_str = pretty_print_dict(types) if types else "No types provided."
-        const_str = format_constants(constants) if constants else "No constants provided."
-        preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
-        funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
+        const_str = (
+            format_constants(constants) if constants else "No constants provided."
+        )
+        preds_str = (
+            "\n".join([f"{pred['raw']}" for pred in predicates])
+            if predicates
+            else "No predicates provided."
+        )
+        funcs_str = (
+            "\n".join([f"{func['raw']}" for func in functions])
+            if functions
+            else "No functions provided."
+        )
 
         prompt = (
-            prompt_template
-            .replace("{domain_desc}", domain_desc)
+            prompt_template.replace("{domain_desc}", domain_desc)
             .replace("{action_name}", action_name)
             .replace("{action_desc}", action_desc or "No description available.")
             .replace("{parameters}", params_str)
@@ -918,7 +976,7 @@ class DomainBuilder:
                         validator = getattr(syntax_validator, f"{error_type}", None)
                         if not callable(validator):
                             continue
-                        
+
                         # dispatch based on expected arguments
                         if error_type == "validate_header":
                             validation_info = validator(llm_output)
@@ -931,10 +989,21 @@ class DomainBuilder:
                         elif error_type == "validate_pddl_action":
                             all_predicates = predicates
                             all_predicates.extend(new_predicates)
-                            validation_info = validator(preconditions, all_predicates, params, types, "preconditions")
-                            
+                            validation_info = validator(
+                                preconditions,
+                                all_predicates,
+                                params,
+                                types,
+                                "preconditions",
+                            )
+
                         if not validation_info[0]:
-                            return preconditions, new_predicates, llm_output, validation_info
+                            return (
+                                preconditions,
+                                new_predicates,
+                                llm_output,
+                                validation_info,
+                            )
 
                 return preconditions, new_predicates, llm_output, validation_info
 
@@ -957,14 +1026,14 @@ class DomainBuilder:
         action_desc: str = None,
         params: OrderedDict = None,
         preconditions: str = None,
-        types: dict[str,str] | list[dict[str,str]] | None = None,
-        constants: dict[str,str] | None = None,
+        types: dict[str, str] | list[dict[str, str]] | None = None,
+        constants: dict[str, str] | None = None,
         predicates: list[Predicate] | None = None,
         functions: list[Function] | None = None,
         extract_new_preds: bool = False,
         syntax_validator: SyntaxValidator = None,
         max_retries: int = 3,
-    ) -> tuple[str, list[Predicate], str, tuple[bool,str]]:
+    ) -> tuple[str, list[Predicate], str, tuple[bool, str]]:
         """
         Formalizes PDDL :effects from a single action via LLM
 
@@ -993,13 +1062,22 @@ class DomainBuilder:
 
         params_str = format_params(params) if params else "No parameters provided."
         types_str = pretty_print_dict(types) if types else "No types provided."
-        const_str = format_constants(constants) if constants else "No constants provided."
-        preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
-        funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
+        const_str = (
+            format_constants(constants) if constants else "No constants provided."
+        )
+        preds_str = (
+            "\n".join([f"{pred['raw']}" for pred in predicates])
+            if predicates
+            else "No predicates provided."
+        )
+        funcs_str = (
+            "\n".join([f"{func['raw']}" for func in functions])
+            if functions
+            else "No functions provided."
+        )
 
         prompt = (
-            prompt_template
-            .replace("{domain_desc}", domain_desc)
+            prompt_template.replace("{domain_desc}", domain_desc)
             .replace("{action_name}", action_name)
             .replace("{action_desc}", action_desc or "No description available.")
             .replace("{parameters}", params_str)
@@ -1018,12 +1096,12 @@ class DomainBuilder:
 
                 # extract respective effects from response
                 effects = parse_effects(llm_output=llm_output)
-                
+
                 if extract_new_preds:
                     new_predicates = parse_new_predicates(llm_output=llm_output)
                 else:
                     new_predicates = None
-                
+
                 # run syntax validation if applicable
                 validation_info = (True, "All validations passed.")
                 if syntax_validator:
@@ -1031,7 +1109,7 @@ class DomainBuilder:
                         validator = getattr(syntax_validator, f"{error_type}", None)
                         if not callable(validator):
                             continue
-                        
+
                         # dispatch based on expected arguments
                         if error_type == "validate_header":
                             validation_info = validator(llm_output)
@@ -1044,8 +1122,10 @@ class DomainBuilder:
                         elif error_type == "validate_pddl_action":
                             all_predicates = predicates
                             all_predicates.extend(new_predicates)
-                            validation_info = validator(effects, all_predicates, params, types, "effects")
-                            
+                            validation_info = validator(
+                                effects, all_predicates, params, types, "effects"
+                            )
+
                         if not validation_info[0]:
                             return effects, new_predicates, llm_output, validation_info
 
@@ -1059,7 +1139,6 @@ class DomainBuilder:
                 time.sleep(2)  # add a delay before retrying
 
         raise RuntimeError("Max retries exceeded. Failed to extract effects.")
-                
 
     # NOTE: This function is experimental and may be subject to change in future versions.
     @require_llm
@@ -1073,8 +1152,8 @@ class DomainBuilder:
         formalize_predicates: bool = False,
         formalize_functions: bool = False,
         syntax_validator: SyntaxValidator = None,
-        max_retries: int = 3
-    ) -> tuple[dict[str,Any], str, tuple[bool,str]]:
+        max_retries: int = 3,
+    ) -> tuple[dict[str, Any], str, tuple[bool, str]]:
         """
         Formalizes domain-level specifications (i.e. :types, :constants, :predicates, :functions) via LLM.
 
@@ -1093,8 +1172,8 @@ class DomainBuilder:
             spec_results (dict[str, Any]): domain-level specifications of user requirements
             llm_output (str): the raw string BaseLLM response
         """
-        
-        spec_results = {} # results dictionary of top-level PDDL domain specifications
+
+        spec_results = {}  # results dictionary of top-level PDDL domain specifications
 
         prompt = prompt_template.replace("{domain_desc}", domain_desc)
 
@@ -1103,7 +1182,7 @@ class DomainBuilder:
             try:
                 model.reset_tokens()
                 llm_output = model.query(prompt=prompt)
-        
+
                 if formalize_types:
                     types = parse_type_hierarchy(llm_output=llm_output)
                 if formalize_constants:
@@ -1125,7 +1204,7 @@ class DomainBuilder:
                         validator = getattr(syntax_validator, f"{error_type}", None)
                         if not callable(validator):
                             continue
-                        
+
                         # dispatch based on expected arguments
                         if error_type == "validate_format_types":
                             validation_info = validator(types)
@@ -1139,12 +1218,12 @@ class DomainBuilder:
                             validation_info = validator(predicates, types)
                         elif error_type == "validate_format_functions":
                             validation_info = validator(functions, types)
-                            
+
                         if not validation_info[0]:
                             return spec_results, llm_output, validation_info
-                    
+
                 return spec_results, llm_output, validation_info
-                            
+
             except Exception as e:
                 print(
                     f"Error encountered during attempt {attempt + 1}/{max_retries}: {e}. "
@@ -1152,18 +1231,20 @@ class DomainBuilder:
                 )
                 time.sleep(2)  # add a delay before retrying
 
-        raise RuntimeError("Max retries exceeded. Failed to extract domain specification.")
-            
-
+        raise RuntimeError(
+            "Max retries exceeded. Failed to extract domain specification."
+        )
 
     """Delete functions"""
-    
+
     def delete_type(self, name: str):
         """Deletes a specific type from both `self.types` and `self.type_hierarchy`."""
-        
+
         # remove from flat types dictionary if present
         if self.types is not None:
-            self.types = {type_: desc for type_, desc in self.types.items() if type_ != name}
+            self.types = {
+                type_: desc for type_, desc in self.types.items() if type_ != name
+            }
 
         def remove_and_promote(node_list):
             updated_list = []
@@ -1181,10 +1262,7 @@ class DomainBuilder:
                 else:
                     # recursively clean the children
                     children = remove_and_promote(node.get("children", []))
-                    updated_node = {
-                        type_name: node[type_name],
-                        "children": children
-                    }
+                    updated_node = {type_name: node[type_name], "children": children}
                     updated_list.append(updated_node)
 
             return updated_list
@@ -1192,19 +1270,21 @@ class DomainBuilder:
         # update the type_hierarchy if it exists
         if self.type_hierarchy is not None:
             self.type_hierarchy = remove_and_promote(self.type_hierarchy)
-            
+
     def delete_constants(self, name: str):
         """Deletes specific constant from current specification"""
         if self.constants is not None:
-            self.constants = {cons_: type_ for cons_, type_ in self.constants.items() if cons_ != name}
-            
+            self.constants = {
+                cons_: type_ for cons_, type_ in self.constants.items() if cons_ != name
+            }
+
     def delete_predicate(self, name: str):
         """Deletes specific predicate from current specification"""
         if self.predicates is not None:
             self.predicates = [
                 predicate for predicate in self.predicates if predicate["name"] != name
             ]
-            
+
     def delete_function(self, name: str):
         """Deletes specific function from current specification"""
         if self.functions is not None:
@@ -1219,7 +1299,6 @@ class DomainBuilder:
                 action for action in self.pddl_actions if action["name"] != name
             ]
 
-
     """Set functions"""
 
     def set_types(self, types: dict[str, str]):
@@ -1229,15 +1308,15 @@ class DomainBuilder:
     def set_type_hierarchy(self, type_hierarchy: list[dict[str, str]]):
         """Sets type hierarchy for current specification"""
         self.type_hierarchy = type_hierarchy
-        
-    def set_constants(self, constants: dict[str,str]):
+
+    def set_constants(self, constants: dict[str, str]):
         """Sets constants for current specification"""
         self.constants = constants
-        
+
     def set_predicate(self, predicate: Predicate):
         """Appends a predicate for current specification"""
         self.predicates.append(predicate)
-        
+
     def set_function(self, function: Function):
         """Appends a function for current specification"""
         self.functions.append(function)
@@ -1246,25 +1325,24 @@ class DomainBuilder:
         """Appends a PDDL action for current specification"""
         self.pddl_actions.append(pddl_action)
 
-
     """Get functions"""
 
-    def get_types(self) -> dict[str,str]:
+    def get_types(self) -> dict[str, str]:
         """Returns types from current specification"""
         return self.types
 
-    def get_type_hierarchy(self) -> list[dict[str,str]]:
+    def get_type_hierarchy(self) -> list[dict[str, str]]:
         """Returns type hierarchy from current specification"""
         return self.type_hierarchy
-    
-    def get_constants(self) -> dict[str,str]:
+
+    def get_constants(self) -> dict[str, str]:
         """Returns constants from current specification"""
         return self.constants
-    
+
     def get_predicates(self) -> list[Predicate]:
         """Returns predicates from current specification"""
         return self.predicates
-    
+
     def get_functions(self) -> list[Function]:
         """Returns functions from current specification"""
         return self.functions
@@ -1272,13 +1350,12 @@ class DomainBuilder:
     def get_pddl_actions(self) -> list[Action]:
         """Returns PDDL actions from current specification"""
         return self.pddl_actions
-    
 
     def generate_requirements(
-            self,
-            types: dict[str,str] | list[dict[str,str]] | None = None,
-            functions: list[Function] | None = None,
-            actions: list[Action] = None,
+        self,
+        types: dict[str, str] | list[dict[str, str]] | None = None,
+        functions: list[Function] | None = None,
+        actions: list[Action] = None,
     ) -> list[str]:
         """
         Generates necessary PDDL requirements based off of rest of domain specification.
@@ -1290,11 +1367,11 @@ class DomainBuilder:
             types (dict[str,str] | list(dict[str,str])): current types in specification, defaults to None
             functions (list[Function]): list of current functions in specification, defaults to None
             actions (list[Action]): domain :action(s), defaults to None
-        
+
         Returns:
             requirements (list[str]): list of PDDL requirements
         """
-        
+
         requirements = set()
         requirements.add(":strips")
 
@@ -1303,11 +1380,15 @@ class DomainBuilder:
             requirements.add(":typing")
         if functions:
             requirements.add(":numeric-fluents")
-        
+
         # go through actions and checks if it needs a :requirement
         for action in actions:
-            preconditions = "\n".join(line for line in action['preconditions'].splitlines() if line.strip())
-            effects = "\n".join(line for line in action['effects'].splitlines() if line.strip())
+            preconditions = "\n".join(
+                line for line in action["preconditions"].splitlines() if line.strip()
+            )
+            effects = "\n".join(
+                line for line in action["effects"].splitlines() if line.strip()
+            )
 
             if "not" in preconditions:
                 requirements.add(":negative-preconditions")
@@ -1332,21 +1413,20 @@ class DomainBuilder:
             ":disjunctive-preconditions",
             ":equality",
             ":quantified-preconditions",
-            ":conditional-effects"
+            ":conditional-effects",
         }
         if adl_components.issubset(requirements):
             requirements -= adl_components
             requirements.add(":adl")
 
-        requirements = list(sorted(requirements)) # convert set back into list
+        requirements = list(sorted(requirements))  # convert set back into list
         return requirements
-    
 
     def generate_domain(
         self,
         domain_name: str,
-        types: dict[str,str] | list[dict[str,str]] | None = None,
-        constants: dict[str,str] | None = None,
+        types: dict[str, str] | list[dict[str, str]] | None = None,
+        constants: dict[str, str] | None = None,
         predicates: list[Predicate] | None = None,
         functions: list[Function] | None = None,
         actions: list[Action] = [],
@@ -1371,9 +1451,7 @@ class DomainBuilder:
         # generates requirements if not set
         if not requirements:
             requirements = self.generate_requirements(
-                types=types,
-                functions=functions,
-                actions=actions
+                types=types, functions=functions, actions=actions
             )
 
         desc = ""
@@ -1382,23 +1460,27 @@ class DomainBuilder:
         if types:
             types_str = format_types_to_string(types)
             desc += f"\n\n   (:types \n{indent(string=types_str, level=2)}\n   )"
-            
+
         if constants:
             const_str = format_constants(constants)
             desc += f"\n\n   (:constants \n{indent(string=const_str, level=2)}\n   )"
-            
+
         if not predicates:
-            print("[WARNING]: Domain has no predicates. This may cause planners to reject the domain or behave unexpectedly.")
+            print(
+                "[WARNING]: Domain has no predicates. This may cause planners to reject the domain or behave unexpectedly."
+            )
         else:
             pred_str = format_expression(predicates)
             desc += f"\n\n   (:predicates \n{indent(string=pred_str, level=2)}\n   )"
-            
+
         if functions:
             func_str = format_expression(functions)
             desc += f"\n\n   (:functions \n{indent(string=func_str, level=2)}\n   )"
-            
+
         if not actions:
-            print("[WARNING]: Domain has no actions. The planner will not be able to generate any plan unless the goal is already satisfied.")
+            print(
+                "[WARNING]: Domain has no actions. The planner will not be able to generate any plan unless the goal is already satisfied."
+            )
         else:
             desc += format_actions(actions)
         desc += "\n)"

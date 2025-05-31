@@ -16,7 +16,9 @@ class PromptBuilder:
     ):
         self.role = role  # role for LLM to follow (i.e. PDDL predicate constructor)
         self.format = format  # prompting format
-        self.examples = examples if examples is not None else []  # n-shot examples for LLM to follow
+        self.examples = (
+            examples if examples is not None else []
+        )  # n-shot examples for LLM to follow
         self.task = task  # dynamic placeholder given information to LLM
 
     def set_role(self, role):

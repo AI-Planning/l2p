@@ -24,7 +24,7 @@ if __name__ == "__main__":
     types = load_file("paper_reconstructions/proc2pddl/prompts/types.json")
     predicates = load_file("paper_reconstructions/proc2pddl/prompts/predicates.json")
 
-    with open("paper_reconstructions/proc2pddl/prompts/nl_actions.json", 'r') as file:
+    with open("paper_reconstructions/proc2pddl/prompts/nl_actions.json", "r") as file:
         nl_actions = json.load(file)
 
     # retrieve wikihow text
@@ -66,7 +66,11 @@ if __name__ == "__main__":
     task += "\n\nhere are the action descriptions to use:\n" + action_descriptions
     pddl_formalize_prompt = PromptBuilder(role=role, examples=[example], task=task)
 
-    action_list = [f"{name}: {desc.rstrip('.')}" for action in nl_actions for name, desc in action.items()]
+    action_list = [
+        f"{name}: {desc.rstrip('.')}"
+        for action in nl_actions
+        for name, desc in action.items()
+    ]
 
     # (2) extract PDDL requirements
     actions, _, llm_response = domain_builder.formalize_pddl_actions(

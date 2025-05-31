@@ -38,15 +38,22 @@ ASSIGNMENT_OPERATORS = {"assign", "increase", "decrease", "scale-up", "scale-dow
 
 # TODO: implement preferences and temporal features
 TEMPORAL_KEYWORDS = {"at", "over", "start", "end"}
-PREFERENCE_KEYWORDS = {"sometime-after", "sometime-before", "always-within", "hold-during", "hold-after", "at end"}
+PREFERENCE_KEYWORDS = {
+    "sometime-after",
+    "sometime-before",
+    "always-within",
+    "hold-during",
+    "hold-after",
+    "at end",
+}
 
 
 class SyntaxValidator:
     def __init__(
-        self, 
+        self,
         headers: list[str] | None = None,
         error_types: list[str] | None = None,
-        unsupported_keywords: list[str] | None = None
+        unsupported_keywords: list[str] | None = None,
     ) -> None:
         """
         Initializes an L2P custom syntax validator checker object.
@@ -59,21 +66,22 @@ class SyntaxValidator:
 
         # assign default unsupported keywords
         default_unsupported = ["pddl", "lisp", "python"]
-        
+
         self.headers = headers if headers else []
         self.error_types = error_types if error_types else []
         self.unsupported_keywords = (
-            default_unsupported if unsupported_keywords 
-            is None else unsupported_keywords
+            default_unsupported
+            if unsupported_keywords is None
+            else unsupported_keywords
         )
-    
+
     # ---- PDDL TYPE CHECKS ----
 
     def validate_type(
-        self, 
-        target_type: str, 
-        claimed_type: str, 
-        types: dict[str,str] | list[dict[str,str]] | None = None
+        self,
+        target_type: str,
+        claimed_type: str,
+        types: dict[str, str] | list[dict[str, str]] | None = None,
     ) -> tuple[bool, str]:
         """
         Check if the claimed_type is valid for the target_type according to the type hierarchy.
@@ -92,7 +100,7 @@ class SyntaxValidator:
             feedback_msg = "[PASS]: claimed type matches target type definition."
             return True, feedback_msg
 
-        types = format_types(types) # flatten hierarchy
+        types = format_types(types)  # flatten hierarchy
 
         # extract all types from the keys in the types dictionary
         all_types = set()
@@ -101,14 +109,14 @@ class SyntaxValidator:
             all_types.add(main_type.strip())
             if subtype:
                 all_types.add(subtype[0].strip())
-             
+
         # check if target type is not found in all types
         if target_type not in all_types:
             feedback_msg = f"[ERROR]: target type `{target_type}` is not found in :types definition: {all_types}."
             return False, feedback_msg
 
         # iterate through the types hierarchy to check if claimed_type is a subtype of target_type
-        current_type = claimed_type   
+        current_type = claimed_type
         while current_type in all_types:
             # find the key that starts with the current type
 
@@ -121,7 +129,9 @@ class SyntaxValidator:
                 super_type = parent_type_entry.split(" - ")[1].strip()
 
                 if super_type == target_type:
-                    feedback_msg = "[PASS]: claimed type matches target type definition."
+                    feedback_msg = (
+                        "[PASS]: claimed type matches target type definition."
+                    )
                     return True, feedback_msg
                 current_type = super_type
             else:
@@ -129,12 +139,10 @@ class SyntaxValidator:
 
         feedback_msg = f"[ERROR]: claimed type `{claimed_type}` does not match target `{target_type}` or any of its possible sub-types."
         return False, feedback_msg
-    
-    
+
     def validate_format_types(
-        self, 
-        types: dict[str,str] | list[dict[str,str]] | None = None
-    ) -> tuple[bool, str]: 
+        self, types: dict[str, str] | list[dict[str, str]] | None = None
+    ) -> tuple[bool, str]:
         """
         Checks if type variables contain `?` characters.
 
@@ -155,7 +163,7 @@ class SyntaxValidator:
         for t_name, _ in types.items():
             if t_name.startswith("?"):
                 invalid_types.append(f" - {t_name}")
-        
+
         if invalid_types:
             invalid_types_str = "\n".join(invalid_types)
             feedback_msg = (
@@ -166,70 +174,77 @@ class SyntaxValidator:
                 f"\n - <type_name>: <description of type>"
                 f"\n\nFor example:"
                 f"\n - car: a car that can drive"
-                )
+            )
             return False, feedback_msg
-        
+
         feedback_msg = "[PASS]: all types are formatted correctly."
         return True, feedback_msg
-    
-    
+
     def validate_cyclic_types(
         self,
-        types: dict[str,str] | list[dict[str,str]] | None = None,
+        types: dict[str, str] | list[dict[str, str]] | None = None,
     ) -> tuple[bool, str]:
         """
         Checks if the types given contain an invalid cyclic hierarchy.
-        
+
         Args:
             types (dict[str,str] | list[dict[str,str]]): current types in domain
 
         Returns:
             validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
-        
+
         def visit_type(node, visited, path, all_types):
             """Traverses the type hierarchy and check for cycles."""
 
             node_key = next(iter(node))  # get first type
-            
+
             # if already visited this type, it indicates a cycle
             if node_key in visited:
-                cycle_path = ' -> '.join(path[path.index(node_key):] + [node_key])
+                cycle_path = " -> ".join(path[path.index(node_key) :] + [node_key])
                 violated_type = node_key  # type that caused the cycle
                 return False, cycle_path, violated_type
-            
+
             # mark the current type as visited in this traversal path
             visited.add(node_key)
             path.append(node_key)
-            
+
             # visit all children of the current node
             if "children" in node:
                 for child in node["children"]:
-                    result, cycle, violated_type = visit_type(child, visited, path, all_types)
+                    result, cycle, violated_type = visit_type(
+                        child, visited, path, all_types
+                    )
                     if not result:
                         return result, cycle, violated_type
-            
+
             # also check if type appears elsewhere in the hierarchy with children
             for other_type in all_types:
                 other_key = next(iter(other_type))
-                if other_key == node_key and "children" in other_type and other_type["children"]:
+                if (
+                    other_key == node_key
+                    and "children" in other_type
+                    and other_type["children"]
+                ):
                     for child in other_type["children"]:
-                        result, cycle, violated_type = visit_type(child, visited, path, all_types)
+                        result, cycle, violated_type = visit_type(
+                            child, visited, path, all_types
+                        )
                         if not result:
                             return result, cycle, violated_type
-            
+
             # remove the type from the visited once its children are processed
             visited.remove(node_key)
             path.pop()
             return True, "", ""
-        
+
         # if no types are provided, return invalid
         if not types:
             return True, "[PASS]: no types provided."
 
         if isinstance(types, dict):
             types = [{k: v} for k, v in types.items()]
-        
+
         # iterate over all the top-level types
         for type_node in types:
             visited = set()
@@ -250,17 +265,16 @@ class SyntaxValidator:
 
         feedback_msg = "[PASS]: Type hierarchy is valid."
         return True, feedback_msg
-    
-    
+
     def validate_constant_types(
-        self, 
-        constants: dict[str,str] | None = None,
-        types: dict[str,str] | list[dict[str,str]] | None = None
+        self,
+        constants: dict[str, str] | None = None,
+        types: dict[str, str] | list[dict[str, str]] | None = None,
     ) -> tuple[bool, str]:
         """
         Checks if constant types are found in current :types.
 
-        Args: 
+        Args:
             constants (dict[str,str]): current :constants in domain
             types (dict[str,str] | list[dict[str,str]]): current types in domain
 
@@ -270,9 +284,9 @@ class SyntaxValidator:
 
         if not constants:
             return True, "[PASS]: no constants provided."
-    
-        types = format_types(types) # flatten type hierarchy
-        
+
+        types = format_types(types)  # flatten type hierarchy
+
         if types:
             for const_name, const_type in constants.items():
                 if const_type not in types.keys():
@@ -281,18 +295,17 @@ class SyntaxValidator:
                         f"[ERROR]: constant `{const_name}` contains type `{const_type}` "
                         f"that is not found in list of available types:\n"
                         f"{pretty_print_dict(types)}\n\n"
-                        f"Make sure that constants only point to types that exist."
+                        f"Make sure that constants only point to types that exist.",
                     )
-        
+
         return True, "[PASS]: all constants are valid."
-    
-    
+
     # ---- PDDL FUNCTION CHECKS ----
-    
+
     def validate_format_functions(
         self,
         functions: list[Function] | None = None,
-        types: dict[str,str] | list[dict[str,str]] | None = None
+        types: dict[str, str] | list[dict[str, str]] | None = None,
     ) -> tuple[bool, str]:
         """
         Check for any PDDL syntax found within functions, allowing untyped variables.
@@ -307,48 +320,49 @@ class SyntaxValidator:
 
         if not functions:
             return True, "[PASS]: no functions provided."
-        
+
         # retrieve types
         valid_types = list()
         if types:
             types = format_types(types)
             valid_types = [
-                type_key.split(" - ")[0].strip()
-                for type_key in types.keys()
+                type_key.split(" - ")[0].strip() for type_key in types.keys()
             ]
         else:
             valid_types = []
-        
+
         all_invalid_params = []
-        
+
         for func in functions:
             func_def = func["clean"]
-            func_def = func_def.strip(" ()`") # discard parentheses and similar
-            
+            func_def = func_def.strip(" ()`")  # discard parentheses and similar
+
             # check if function name declared
-            if func_def.startswith("?") or func['name'].startswith("?"):
+            if func_def.startswith("?") or func["name"].startswith("?"):
                 return (
                     False,
-                    f"[ERROR]: Line `({func_def})` does not contain a function name. Function names must not start with `?`. Revise function to include name. For example: `(battery-level ?c - car)` where `battery-level` is the function name."
+                    f"[ERROR]: Line `({func_def})` does not contain a function name. Function names must not start with `?`. Revise function to include name. For example: `(battery-level ?c - car)` where `battery-level` is the function name.",
                 )
 
-            split_function = func_def.split(" ")[1:] # discard function name
+            split_function = func_def.split(" ")[1:]  # discard function name
             split_function = [e for e in split_function if e != ""]
-            
+
             i = 0
             while i < len(split_function):
                 f = split_function[i]
                 # variable name must start with `?`
                 if "?" not in f:
                     # catches random character declarations
-                    if re.match(r"^[^\w\s]+$", f) or re.match(r"^[^\w]", f):  # all non-word or starts with symbol
+                    if re.match(r"^[^\w\s]+$", f) or re.match(
+                        r"^[^\w]", f
+                    ):  # all non-word or starts with symbol
                         return (
                             False,
-                            f"[ERROR]: For PDDL, function `({func_def})` appears to contain invalid or unexpected symbol `{f}`. This might be a parsing error or stray character. Make sure each parameter follows the format `?name - type`."
+                            f"[ERROR]: For PDDL, function `({func_def})` appears to contain invalid or unexpected symbol `{f}`. This might be a parsing error or stray character. Make sure each parameter follows the format `?name - type`.",
                         )
-                    
-                    raw_func = func['raw']
-                    
+
+                    raw_func = func["raw"]
+
                     feedback_msg = (
                         f"[ERROR]: For PDDL, there is a syntax issue in the function definition."
                         f"\n`{f}` appears where a variable is expected in function `{raw_func}`."
@@ -356,47 +370,52 @@ class SyntaxValidator:
                         f"\n(1) `{f}` is intended to be a variable but is missing the `?` prefix. All variables must start with `?`, like `?block`."
                         f"\n(2) `{f}` is actually a type, in which case it should appear after a `-` in a declaration like `?x - {f}`."
                     )
-                    
+
                     return False, feedback_msg
-                
+
                 # check if variable is followed by `- type` or nothing (untyped)
-                if i + 1 < len(split_function) and split_function[i+1] == "-":
+                if i + 1 < len(split_function) and split_function[i + 1] == "-":
                     if i + 2 >= len(split_function):
                         return (
                             False,
-                            f"[ERROR]: For PDDL, there is a missing type after the `-` for parameter `{f}` in function `{func_def}`. Make sure each parameter follows the format `?name - type`."
+                            f"[ERROR]: For PDDL, there is a missing type after the `-` for parameter `{f}` in function `{func_def}`. Make sure each parameter follows the format `?name - type`.",
                         )
-                        
+
                     param_obj_type = split_function[i + 2]
-                    
+
                     if param_obj_type not in valid_types:
                         all_invalid_params.append((param_obj_type, f, func_def))
-                        
-                    i += 3 # skip ?var - type
+
+                    i += 3  # skip ?var - type
                 else:
                     # untyped variable
-                    i += 1 # move to next token
-                    
+                    i += 1  # move to next token
+
         if all_invalid_params:
-            feedback_msg = "[ERROR]: For PDDL, there are invalid object types in the functions:"
+            feedback_msg = (
+                "[ERROR]: For PDDL, there are invalid object types in the functions:"
+            )
             for param_obj_type, f, func_def in all_invalid_params:
                 feedback_msg += (
-                f"\n - `{param_obj_type}` for the parameter `{f}` in the definition of the function `{func_def}` "
-                + (f"not found in types: {valid_types}." if valid_types else "contain types when no types are available.")
+                    f"\n - `{param_obj_type}` for the parameter `{f}` in the definition of the function `{func_def}` "
+                    + (
+                        f"not found in types: {valid_types}."
+                        if valid_types
+                        else "contain types when no types are available."
+                    )
                 )
             feedback_msg += "\n\nRevise function parameters such that their types are assigned correctly. Otherwise leave variable untyped."
             return False, feedback_msg
 
         feedback_msg = "[PASS]: All functions are formatted correctly."
         return True, feedback_msg
-            
 
     # ---- PDDL PREDICATE CHECKS ----
 
     def validate_types_predicates(
-        self, 
-        predicates: list[Predicate] | None = None, 
-        types: dict[str, str] | list[dict[str,str]] | None = None
+        self,
+        predicates: list[Predicate] | None = None,
+        types: dict[str, str] | list[dict[str, str]] | None = None,
     ) -> tuple[bool, str]:
         """
         Check if predicate name is found within any type definitions.
@@ -408,15 +427,15 @@ class SyntaxValidator:
         Returns:
             validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
-        
+
         if not predicates:
             return True, "[PASS]: no predicates provided."
-        
+
         # if types is None or empty, return true
         if not types:
             feedback_msg = "[PASS]: No types declared, all predicate names are unique."
             return True, feedback_msg
-        
+
         types = format_types(types)
 
         invalid_predicates = list()
@@ -440,11 +459,10 @@ class SyntaxValidator:
         feedback_msg = "[PASS]: All predicate names are unique to object type names"
         return True, feedback_msg
 
-
     def validate_duplicate_predicates(
-        self, 
-        curr_predicates: list[Predicate] | None = None, 
-        new_predicates: list[Predicate] | None = None
+        self,
+        curr_predicates: list[Predicate] | None = None,
+        new_predicates: list[Predicate] | None = None,
     ) -> tuple[bool, str]:
         """
         Checks if predicates have the same name but different parameters.
@@ -456,10 +474,10 @@ class SyntaxValidator:
         Returns:
             validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
-        
+
         if not new_predicates:
             return True, "[PASS]: no new predicates were created."
-        
+
         if curr_predicates:
             curr_pred_dict = {pred["name"]: pred for pred in curr_predicates}
 
@@ -472,9 +490,7 @@ class SyntaxValidator:
                     if len(curr["params"]) != len(new_pred["params"]) or any(
                         t1 != t2 for t1, t2 in zip(curr["params"], new_pred["params"])
                     ):
-                        duplicated_predicates.append(
-                            (new_pred["raw"], curr["raw"])
-                        )
+                        duplicated_predicates.append((new_pred["raw"], curr["raw"]))
 
             if duplicated_predicates:
                 feedback_msg = "[ERROR]: Duplicate predicate name(s) found with mismatched parameters.\n"
@@ -492,13 +508,13 @@ class SyntaxValidator:
 
                 return False, feedback_msg
 
-        return True, "[PASS]: All predicates are uniquely named and consistently defined."
-
+        return (
+            True,
+            "[PASS]: All predicates are uniquely named and consistently defined.",
+        )
 
     def validate_overflow_predicates(
-        self, 
-        llm_response: str, 
-        limit: int = 30
+        self, llm_response: str, limit: int = 30
     ) -> tuple[bool, str]:
         """
         Checks if LLM output contains too many predicates in precondition/effects (based on users assigned limit).
@@ -507,17 +523,17 @@ class SyntaxValidator:
         Args:
             llm_response (str): raw LLM output
             limit (int): max number of states declared, default to 30
-        
+
         Returns:
             validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
 
-        spacer = "="*50
+        spacer = "=" * 50
 
         assert "Preconditions" in llm_response, llm_response
-        precond_str = (llm_response.split("Preconditions")[1].split("```\n")[1].strip())
+        precond_str = llm_response.split("Preconditions")[1].split("```\n")[1].strip()
         precond_str = remove_comments(precond_str)
-        num_prec_pred = len(precond_str.split("\n")) - 2 # for outer brackets
+        num_prec_pred = len(precond_str.split("\n")) - 2  # for outer brackets
         if num_prec_pred > limit:
             feedback_msg = (
                 f"[ERROR]: You seem to have generated an action model with an unusually long list of precondition predicates.\n\n"
@@ -530,7 +546,7 @@ class SyntaxValidator:
             return False, feedback_msg
 
         eff_str = llm_response.split("Effects")[1].split("```\n")[1].strip()
-        num_eff_pred = len(eff_str.split("\n")) - 2 # for outer brackets
+        num_eff_pred = len(eff_str.split("\n")) - 2  # for outer brackets
         if num_eff_pred > limit:
             feedback_msg = (
                 f"[ERROR]: You seem to have generated an action model with an unusually long list of effect predicates.\n\n"
@@ -549,11 +565,10 @@ class SyntaxValidator:
         )
         return True, feedback_msg
 
-
     def validate_format_predicates(
         self,
         predicates: list[dict] | None = None,
-        types: dict[str, str] | list[dict[str, str]] | None = None
+        types: dict[str, str] | list[dict[str, str]] | None = None,
     ) -> tuple[bool, str]:
         """
         Checks for any PDDL syntactic errors found within predicates, allowing untyped variables.
@@ -565,7 +580,7 @@ class SyntaxValidator:
         Returns:
             validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
-        
+
         if not predicates:
             return True, "[PASS: no predicates provided."
 
@@ -574,9 +589,8 @@ class SyntaxValidator:
         if types:
             types = format_types(types)
             valid_types = [
-                            type_key.split(" - ")[0].strip()
-                            for type_key in types.keys()
-                        ]
+                type_key.split(" - ")[0].strip() for type_key in types.keys()
+            ]
         else:
             valid_types = []
 
@@ -585,9 +599,9 @@ class SyntaxValidator:
         for pred in predicates:
             pred_def = pred["clean"]
             pred_def = pred_def.strip(" ()`")  # discard parentheses and similar
-            
+
             # check if predicate name declared
-            if pred_def.startswith("?") or pred['name'].startswith("?"):
+            if pred_def.startswith("?") or pred["name"].startswith("?"):
                 feedback_msg = f"[ERROR]: Line `({pred_def})` does not contain a predicate name. Predicate names must not start with `?`. Revise predicate to include name. For example: `(stack ?b - block ?t - table)` where `stack` is the predicate name."
                 return False, feedback_msg
 
@@ -600,12 +614,14 @@ class SyntaxValidator:
                 # variable name must start with `?`
                 if "?" not in p:
                     # catches random character declarations
-                    if re.match(r"^[^\w\s]+$", p) or re.match(r"^[^\w]", p):  # all non-word or starts with symbol
+                    if re.match(r"^[^\w\s]+$", p) or re.match(
+                        r"^[^\w]", p
+                    ):  # all non-word or starts with symbol
                         feedback_msg = f"[ERROR]: For PDDL, predicate `({pred_def})` appears to contain invalid or unexpected symbol `{p}`. This might be a parsing error or stray character. Make sure each parameter follows the format `?name - type`."
                         return False, feedback_msg
-                    
+
                     raw_pred = pred["raw"]
-                    
+
                     feedback_msg = (
                         f"[ERROR]: For PDDL, there is a syntax issue in the predicate definition."
                         f"\n`{p}` appears where a variable is expected in predicate `{raw_pred}`."
@@ -616,9 +632,8 @@ class SyntaxValidator:
 
                     return False, feedback_msg
 
-
                 # check if variable is followed by `- type` or nothing (untyped)
-                if i + 1 < len(split_predicate) and split_predicate[i+1] == "-":
+                if i + 1 < len(split_predicate) and split_predicate[i + 1] == "-":
                     if i + 2 >= len(split_predicate):
                         feedback_msg = f"[ERROR]: For PDDL, there is a missing type after the `-` for parameter `{p}` in new predicate `{pred_def}`. Make sure each parameter follows the format `?name - type`."
                         return False, feedback_msg
@@ -634,11 +649,17 @@ class SyntaxValidator:
                     i += 1  # move to next token
 
         if all_invalid_params:
-            feedback_msg = "[ERROR]: For PDDL, there are invalid object types in the predicates:"
+            feedback_msg = (
+                "[ERROR]: For PDDL, there are invalid object types in the predicates:"
+            )
             for param_obj_type, p, pred_def in all_invalid_params:
                 feedback_msg += (
-                f"\n - `{param_obj_type}` for the parameter `{p}` in the definition of the predicate `{pred_def}` "
-                + (f"not found in types: {valid_types}." if valid_types else "contain types when no types are available.")
+                    f"\n - `{param_obj_type}` for the parameter `{p}` in the definition of the predicate `{pred_def}` "
+                    + (
+                        f"not found in types: {valid_types}."
+                        if valid_types
+                        else "contain types when no types are available."
+                    )
                 )
             feedback_msg += "\n\nRevise predicate parameters such that their types are assigned correctly. Otherwise leave variable untyped."
             return False, feedback_msg
@@ -646,9 +667,7 @@ class SyntaxValidator:
         feedback_msg = "[PASS]: All predicates are formatted correctly."
         return True, feedback_msg
 
-
     # ---- PDDL ACTION CHECKS ----
-
 
     def validate_pddl_action(
         self,
@@ -680,7 +699,7 @@ class SyntaxValidator:
             validation_info (tuple[bool,str]): validation info containing pass flag and error message
         """
 
-        pddl = parse_pddl(pddl) # parse into nested list
+        pddl = parse_pddl(pddl)  # parse into nested list
 
         # retrieve dict comprehension for each predicate/function
         pred_index = {pred["name"]: pred for pred in predicates}
@@ -688,8 +707,12 @@ class SyntaxValidator:
 
         def get_ordinal_suffix(num):
             """Helper function that appends parameter index to string"""
-            return ORDINAL_SUFFIXES.get(num % 10, "th") if num % 100 not in (11, 12, 13) else "th"
-        
+            return (
+                ORDINAL_SUFFIXES.get(num % 10, "th")
+                if num % 100 not in (11, 12, 13)
+                else "th"
+            )
+
         def is_value(s):
             """Helper function that checks if a string is numeric"""
             try:
@@ -707,7 +730,7 @@ class SyntaxValidator:
             for i, token in enumerate(tokens):
                 if token == "-":
                     continue
-                if current_vars and i > 0 and tokens[i-1] == "-":
+                if current_vars and i > 0 and tokens[i - 1] == "-":
                     var_type = token
                     result.extend(f"{v} - {var_type}" for v in current_vars)
                     current_vars = []
@@ -724,24 +747,24 @@ class SyntaxValidator:
                 # (1) if term is a numeric operator
                 head_parts = term[0].strip().split()
                 head = head_parts[0]
-                
+
                 if head in NUMERIC_OPERATORS:
                     terms_ = term[0].split(" ") + term[1:]
-                    
+
                     if len(terms_) != 3:
                         return (
-                            False, 
+                            False,
                             f"[ERROR]: Numeric operator `{head}` requires two arguments: {format_pddl_expr(terms_)}\n\n"
                             f"Parsed line: {format_pddl_expr(node)}\n\n"
-                            f"Make sure that only fluents are used and not variables."
+                            f"Make sure that only fluents are used and not variables.",
                         )
-                    
+
                     for arg in term[1:]:
                         valid, msg = validate_term(node, arg, scoped_params)
                         if not valid:
                             return False, msg
                     return True, "[PASS]"
-                
+
                 # (2) if term is a function or nested expression
                 func_ = term[0].split(" ")
                 func_name = func_[0]
@@ -749,30 +772,39 @@ class SyntaxValidator:
 
                 # checks if function name in pddl not found in :function list
                 if func_name not in func_index:
-                    
+
                     # extra catch - could be predicate but used as a function!
                     if func_name in pred_index:
                         return (
                             False,
                             f"[ERROR]: `{func_name}` is a predicate, not a function. Predicates cannot be used to return numeric values but instead as standalone conditions.\n\n"
                             f"Parsed line: {format_pddl_expr(node)}\n\n"
-                            f"Predicates can only be used within a boolean context—that is, they must appear inside logical expressions like `and`, `or`, `not`, `when`, or standalone conditions in PDDL actions."
+                            f"Predicates can only be used within a boolean context—that is, they must appear inside logical expressions like `and`, `or`, `not`, `when`, or standalone conditions in PDDL actions.",
                         )
-                        
+
                     available_funcs = (
-                        " - " + "\n - ".join(
-                            [f"{f['name']}: {f['desc']}" for f in functions]
+                        (
+                            " - "
+                            + "\n - ".join(
+                                [f"{f['name']}: {f['desc']}" for f in functions]
+                            )
                         )
-                    ) if functions else "No functions available."    
-                    
-                    available_funcs = "List of available function(s) are:\n - " + "\n - ".join([f["raw"] for f in functions]) if functions else "Numeric fluents cannot be used because no functions are declared in the :functions section of the domain."
+                        if functions
+                        else "No functions available."
+                    )
+
+                    available_funcs = (
+                        "List of available function(s) are:\n - "
+                        + "\n - ".join([f["raw"] for f in functions])
+                        if functions
+                        else "Numeric fluents cannot be used because no functions are declared in the :functions section of the domain."
+                    )
                     return False, (
                         f"[ERROR]: Undeclared function `({func_name})` found in {part}.\n\n"
                         f"{available_funcs}\n\n"
                         f"Parsed line: {format_pddl_expr(node)}"
-                        
                     )
-                
+
                 # retrieve target function arguments
                 target_func = func_index[func_name]
                 expected_args = list(target_func["params"].keys())
@@ -783,9 +815,9 @@ class SyntaxValidator:
                     return (
                         False,
                         f"[ERROR]: Function `{target_func['clean']}` expects {len(expected_args)} variable parameter(s), "
-                        f"but found {len(term[1:])} in {part}.\n\nParsed line: ({format_pddl_expr(node)})"
+                        f"but found {len(term[1:])} in {part}.\n\nParsed line: ({format_pddl_expr(node)})",
                     )
-                
+
                 # recursively checks if function argument is nested
                 for i, arg in enumerate(func_args):
                     if isinstance(arg, list):
@@ -802,11 +834,13 @@ class SyntaxValidator:
                             if not types:
                                 return (
                                     False,
-                                    f"[ERROR]: Types declared but type dictionary is empty."
+                                    f"[ERROR]: Types declared but type dictionary is empty.",
                                 )
-                            
+
                             # validates if variable type aligns with target :type
-                            flag, _ = self.validate_type(expected_type, actual_type, types)
+                            flag, _ = self.validate_type(
+                                expected_type, actual_type, types
+                            )
                             if not flag:
                                 param_number = i + 1
                                 suffix = get_ordinal_suffix(param_number)
@@ -815,9 +849,9 @@ class SyntaxValidator:
                                     f"[ERROR]: The {param_number}{suffix} parameter of `{target_func['clean']}` "
                                     f"should be of type `{expected_type}`, but `{arg}` is `{actual_type}`\n\n"
                                     f"Parsed line: {format_pddl_expr(term)}\n"
-                                    f"Found in: {format_pddl_expr(node)}"
-                                )     
-                        
+                                    f"Found in: {format_pddl_expr(node)}",
+                                )
+
                         # checks if variable is in the scope of available variables
                         if arg not in scoped_params and not is_value(arg):
                             return (
@@ -825,16 +859,16 @@ class SyntaxValidator:
                                 f"[ERROR]: Argument `{arg}` not found in scope for function `{func_name}`.\nScope: {list(scoped_params.keys())}\n\n"
                                 f"Parsed line: {format_pddl_expr(term)}\n"
                                 f"Found in: {format_pddl_expr(node)}\n\n"
-                                f"Make sure the function uses the correct variables from its scope. Otherwise, you may need to add a new variable to the parameters section."
+                                f"Make sure the function uses the correct variables from its scope. Otherwise, you may need to add a new variable to the parameters section.",
                             )
                 return True, "[PASS]"
-            
+
             # if not nested expression, it is a variable or constant
             else:
                 if term not in scoped_params and not is_value(term):
                     return (
                         False,
-                        f"[ERROR]: Variable `{term}` not in scope: {list(scoped_params.keys())}"
+                        f"[ERROR]: Variable `{term}` not in scope: {list(scoped_params.keys())}",
                     )
                 return True, "[PASS]"
 
@@ -845,11 +879,11 @@ class SyntaxValidator:
             if isinstance(node, str) or not isinstance(node, list) or len(node) == 0:
                 return True, "[PASS]"
 
-            keyword = node[0].split(" ")[0] # extract keyword from node
+            keyword = node[0].split(" ")[0]  # extract keyword from node
 
             # (1) if keyword is a logical connective (and, not, or)
             if keyword in LOGICAL_CONNECTIVES:
-                
+
                 # recursively branch child nodes
                 children = node[1:] if keyword != "not" else [node[1]]
                 for child in children:
@@ -860,7 +894,7 @@ class SyntaxValidator:
 
             # (2) if keyword is a quantifier (forall, exists)
             if keyword in QUANTIFIERS:
-                
+
                 # validates correct arguments provided into quantifier
                 if len(node) != 3:
                     return (
@@ -870,9 +904,9 @@ class SyntaxValidator:
                         f"Parsed line: {format_pddl_expr(node)}\n\n"
                         f"Possible solutions:\n"
                         f"  (1) Always wrap the list of variables with their types in parentheses, even for a single variable.\n"
-                        f"  (2) The second argument of {keyword} should be a valid condition, or a use of `and/or` expression to wrap multiple conditions."
+                        f"  (2) The second argument of {keyword} should be a valid condition, or a use of `and/or` expression to wrap multiple conditions.",
                     )
-                
+
                 # parse quantified variable declarations
                 param_spec = split_var_type_pairs(node[1])
                 body = node[2]
@@ -889,7 +923,7 @@ class SyntaxValidator:
                             f"Parsed line: {format_pddl_expr(node)}\n\n"
                             f"Make sure that the PDDL actions do not contain any type declarations. For example: `(drive ?c)` is correct, but `(drive ?c - car)` is invalid"
                         )
-                    new_scope[var] = var_type # update variable scope environment
+                    new_scope[var] = var_type  # update variable scope environment
                 return traverse(body, new_scope)
 
             # (3) if keyword is a conditional effect (when)
@@ -899,18 +933,18 @@ class SyntaxValidator:
                     return (
                         False,
                         f"[ERROR]: `{keyword}` is only allowed in the :effects section, but found in {part}.\n\n"
-                        f"Parsed line: {format_pddl_expr(node)}"
+                        f"Parsed line: {format_pddl_expr(node)}",
                     )
-                
+
                 if len(node) != 3:
                     return (
-                        False, 
+                        False,
                         f"[ERROR]: malformed usage of `{keyword}` statement. There should be 3 main arguments, but {len(node)} was given."
                         f"\nMake sure to adhere to valid PDDL syntax. For example: `({keyword} (<condition(s)>) (<effect(s)>))`\n\n"
                         f"Parsed line: {format_pddl_expr(node)}\n\n"
                         f"Possible solutions:\n"
                         f"  (1) `{keyword}` must have two arguments: `(when <condition> <effect>)` where both condition and effect must be wrapped in parentheses.\n"
-                        f"  (2) If there are multiple conditions or effects, they must use a logical connective like `and` expression to wrap arguments."
+                        f"  (2) If there are multiple conditions or effects, they must use a logical connective like `and` expression to wrap arguments.",
                     )
                 valid, msg = traverse(node[1], scoped_params)
                 if not valid:
@@ -921,15 +955,18 @@ class SyntaxValidator:
                 return True, "[PASS]"
 
             # (4) if keyword is a numeric-fluent operator
-            if keyword in COMPARISON_OPERATORS | NUMERIC_OPERATORS | ASSIGNMENT_OPERATORS:
+            if (
+                keyword
+                in COMPARISON_OPERATORS | NUMERIC_OPERATORS | ASSIGNMENT_OPERATORS
+            ):
                 # ensures assignment operators only found in :effects
                 if part != "effects" and keyword in ASSIGNMENT_OPERATORS:
                     return (
                         False,
                         f"[ERROR]: `{keyword}` is only allowed in the :effects section, but found in {part}.\n\n"
-                        f"Parsed line: {format_pddl_expr(node)}"
+                        f"Parsed line: {format_pddl_expr(node)}",
                     )
-                    
+
                 # check if equality is doing object comparison
                 if keyword == "=":
                     parts = node[0].split(" ")
@@ -946,35 +983,35 @@ class SyntaxValidator:
                                         f"Parsed line: {format_pddl_expr(node)}\n\n"
                                         f"Possible solutions:\n"
                                         f"  (1) Revise line to only use variables in scope.\n"
-                                        f"  (2) If necessary, create new variables in the parameters or consider using quantifiers."
+                                        f"  (2) If necessary, create new variables in the parameters or consider using quantifiers.",
                                     )
-                                
+
                             # check if the arguments are the same type
                             if scoped_params[arg_1] != scoped_params[arg_2]:
                                 return (
                                     False,
                                     f"[ERROR]: invalid object equality usage in the {part} section.\nVariable `{arg_1}` points to type `{scoped_params[arg_1]}`. However, variable `{arg_2}` points to type `{scoped_params[arg_2]}`\n\n"
                                     f"Parsed line: {format_pddl_expr(node)}\n\n"
-                                    f"Make sure that when using object equality, the variables share the same types."
+                                    f"Make sure that when using object equality, the variables share the same types.",
                                 )
-                            
+
                             return True, "[PASS]"
-                
+
                 if len(node) != 3:
                     return (
-                        False, 
+                        False,
                         f"[ERROR]: `{keyword}` operator requires exactly two arguments.\n\n"
                         f"Parsed line: {format_pddl_expr(node)}\n\n"
                         f"Verify that the expression has exactly two arguments in the form: ({keyword} (<arg1>) (<arg2>)),\n"
                         f"where both <arg1> and <arg2> can be numeric constants (e.g., 5, 3.14, -2)\n"
-                        f"or numeric function expressions (e.g., (total-cost), (fuel-level ?v))."
+                        f"or numeric function expressions (e.g., (total-cost), (fuel-level ?v)).",
                     )
                 for term in node[1:]:
                     # traverse terms of operator statement
                     valid, msg = validate_term(node, term, scoped_params)
                     if not valid:
                         return False, msg
-                    
+
                 return True, "[PASS]"
 
             # (5) if keyword is a predicate
@@ -983,27 +1020,32 @@ class SyntaxValidator:
 
             # validate if predicate is found in :predicates
             if pred_name not in pred_index:
-                
+
                 # extra catch - could be function but used as a predicate!
                 if pred_name in func_index:
                     return (
                         False,
                         f"[ERROR]: `{pred_name}` is a function, not a predicate. Functions return numeric values and cannot be used as standalone conditions.\n\n"
                         f"Parsed line: {format_pddl_expr(node)}\n\n"
-                        f"Functions can only be used within a numeric context such as comparison (e.g., `(= (<function_name> <?var>) <numeric_expression>)`)"
+                        f"Functions can only be used within a numeric context such as comparison (e.g., `(= (<function_name> <?var>) <numeric_expression>)`)",
                     )
-                
+
                 available_preds = (
-                    " - " + "\n - ".join(
-                        [f"{p['name']}: {p['desc']}" for p in predicates]
+                    (
+                        " - "
+                        + "\n - ".join(
+                            [f"{p['name']}: {p['desc']}" for p in predicates]
+                        )
                     )
-                ) if predicates else "No predicates available."
-                
+                    if predicates
+                    else "No predicates available."
+                )
+
                 return (
                     False,
                     f"[ERROR]: Undeclared predicate `({pred_name})` found in {part}.\n\n"
                     f"Available predicates:\n{available_preds}\n\n"
-                    f"Parsed line: {format_pddl_expr(node)}"
+                    f"Parsed line: {format_pddl_expr(node)}",
                 )
 
             # retrieve target predicate arguments
@@ -1013,12 +1055,12 @@ class SyntaxValidator:
 
             # checks if predicate arguments align with :predicates list
             if len(pred_args) != len(expected_args):
-                
+
                 return (
                     False,
                     f"[ERROR]: Predicate `{target_pred['clean']}` expects {len(expected_args)} parameters, "
                     f"but found {len(pred_args)} in {part}.\n\nParsed line: {format_pddl_expr(node)}\n\n"
-                    f"Make sure that only variables (i.e. `?var`) is being passed through a predicate argument and not its type. For example: `(pred_name ?var)` is correct; `(pred_name ?var - object)` is incorrect."
+                    f"Make sure that only variables (i.e. `?var`) is being passed through a predicate argument and not its type. For example: `(pred_name ?var)` is correct; `(pred_name ?var - object)` is incorrect.",
                 )
 
             for i, arg in enumerate(pred_args):
@@ -1034,9 +1076,9 @@ class SyntaxValidator:
                             False,
                             f"[ERROR]: Variable `{arg}` not found in scope for predicate `{pred_name}`.\n\nAvailable variables in scope: {list(scoped_params.keys())}\n\n"
                             f"Parsed line: {format_pddl_expr(node)}\n\n"
-                            f"Make sure the predicate uses the correct variables from its scope. Otherwise, you may need to add a new variable to the parameters section."
+                            f"Make sure the predicate uses the correct variables from its scope. Otherwise, you may need to add a new variable to the parameters section.",
                         )
-                    
+
                     # check if type of variable matches predicate type
                     expected_type = expected_types[i]
                     actual_type = scoped_params[arg]
@@ -1046,7 +1088,7 @@ class SyntaxValidator:
                         if not types:
                             return (
                                 False,
-                                f"[ERROR]: Types declared in predicate, but types list is empty."
+                                f"[ERROR]: Types declared in predicate, but types list is empty.",
                             )
                         flag, _ = self.validate_type(expected_type, actual_type, types)
                         if not flag:
@@ -1055,22 +1097,21 @@ class SyntaxValidator:
                                 False,
                                 f"[ERROR]: The {i+1}{suffix} parameter of `{target_pred['clean']}` "
                                 f"should be of type `{expected_type}`, but `{arg}` is `{actual_type}`\n\n"
-                                f"Parsed line: {format_pddl_expr(node)}"
+                                f"Parsed line: {format_pddl_expr(node)}",
                             )
-                        
+
             return True, "[PASS]"
 
         # resurively invoked function to branch nested list
         return traverse(pddl, scoped_params=action_params.copy())
-    
 
     def validate_params(
-        self, 
-        parameters: OrderedDict, 
-        types: dict[str, str] | list[dict[str,str]] | None = None
+        self,
+        parameters: OrderedDict,
+        types: dict[str, str] | list[dict[str, str]] | None = None,
     ) -> tuple[bool, str]:
         """
-        Checks whether a PDDL action parameter is correctly 
+        Checks whether a PDDL action parameter is correctly
         formatted and type declaration assigned correctly.
 
         Args:
@@ -1086,14 +1127,14 @@ class SyntaxValidator:
         for param_name, param_type in parameters.items():
             if not param_name.startswith("?"):
                 invalid_param_names.append(f"{param_name} - {param_type}")
-        
+
         if invalid_param_names:
             feedback_msg = (
-                f'[ERROR]: Character `?` is not found in parameter(s) `{invalid_param_names}` '
-                'Please insert `?` in front of the parameter names (i.e. ?boat - vehicle)'
+                f"[ERROR]: Character `?` is not found in parameter(s) `{invalid_param_names}` "
+                "Please insert `?` in front of the parameter names (i.e. ?boat - vehicle)"
             )
             return False, feedback_msg
-        
+
         # catch if dash is used but type is missing
         missing_type_after_dash = list()
         for param_name, param_type in parameters.items():
@@ -1101,7 +1142,7 @@ class SyntaxValidator:
                 parts = param_name.split("-")
                 if len(parts) < 2 or parts[1].strip() == "":
                     missing_type_after_dash.append(param_name)
-        
+
         if missing_type_after_dash:
             feedback_msg = (
                 f"[ERROR]: One or more parameters use `-` but do not specify a type: {missing_type_after_dash}. "
@@ -1115,11 +1156,11 @@ class SyntaxValidator:
             for param_name, param_type in parameters.items():
                 if param_type is not None and param_type != "":
                     feedback_msg = (
-                        f'[ERROR]: The parameter `{param_name}` has an object type `{param_type}` '
-                        'while no types are defined. Please remove the object type from this parameter.'
+                        f"[ERROR]: The parameter `{param_name}` has an object type `{param_type}` "
+                        "while no types are defined. Please remove the object type from this parameter."
                     )
                     return False, feedback_msg
-            
+
             # if all parameter names do not contain a type
             return True, "[PASS]: All parameters are valid."
 
@@ -1141,18 +1182,17 @@ class SyntaxValidator:
             feedback_msg = "[PASS]: All parameter types found in object types."
             return True, feedback_msg
 
-
     def validate_usage_action(
-        self, 
-        llm_response: str, 
-        curr_predicates: list[Predicate] | None = None, 
-        types: dict[str, str] | list[dict[str,str]] | None = None,
+        self,
+        llm_response: str,
+        curr_predicates: list[Predicate] | None = None,
+        types: dict[str, str] | list[dict[str, str]] | None = None,
         functions: list[Function] | None = None,
-        extract_new_preds: bool = False
+        extract_new_preds: bool = False,
     ) -> tuple[bool, str]:
         """
         Higher level function that performs checks over whether the predicates/functions are used in a
-        valid way in the PDDL action. Invokes `validate_pddl_action` to perform deep syntax checks. 
+        valid way in the PDDL action. Invokes `validate_pddl_action` to perform deep syntax checks.
 
         Args:
             llm_response (str): raw LLM output
@@ -1170,7 +1210,7 @@ class SyntaxValidator:
             new_predicates = parse_new_predicates(llm_response)
         else:
             new_predicates = []
-        
+
         if curr_predicates is None:
             curr_predicates = new_predicates
         else:
@@ -1183,14 +1223,16 @@ class SyntaxValidator:
         # check preconditions
         precond_str = parse_preconditions(llm_response)
         precond_str = remove_comments(precond_str)
-        precond_str = precond_str.replace("\n", " ").replace("(", " ( ").replace(")", " ) ")
+        precond_str = (
+            precond_str.replace("\n", " ").replace("(", " ( ").replace(")", " ) ")
+        )
         validation_info = self.validate_pddl_action(
-            pddl=precond_str, 
-            predicates=curr_predicates, 
-            action_params=params_info[0], 
-            functions=functions, 
-            types=types, 
-            part="preconditions"
+            pddl=precond_str,
+            predicates=curr_predicates,
+            action_params=params_info[0],
+            functions=functions,
+            types=types,
+            part="preconditions",
         )
 
         if not validation_info[0]:
@@ -1201,27 +1243,26 @@ class SyntaxValidator:
         eff_str = remove_comments(eff_str)
         eff_str = eff_str.replace("\n", " ").replace("(", " ( ").replace(")", " ) ")
         return self.validate_pddl_action(
-            pddl=eff_str, 
-            predicates=curr_predicates, 
-            action_params=params_info[0], 
-            functions=functions, 
-            types=types, 
-            part="effects"
+            pddl=eff_str,
+            predicates=curr_predicates,
+            action_params=params_info[0],
+            functions=functions,
+            types=types,
+            part="effects",
         )
-
 
     # ---- PDDL TASK CHECKS ----
 
     def validate_task_objects(
-        self, 
-        objects: dict[str, str], 
-        types: dict[str, str] | list[dict[str,str]] | None = None
+        self,
+        objects: dict[str, str],
+        types: dict[str, str] | list[dict[str, str]] | None = None,
     ) -> tuple[bool, str]:
         """
         Checks if task objects are declared correctly. Performs the following cases:
             (i) if object type is found within list of available types
             (ii) if object name is the same as a type (invalid)
-        
+
         Args:
             objects (dict[str,str]): task objects generated from LLM
             types (dict[str,str] | list[dict[str,str]]): current types in domain
@@ -1249,7 +1290,9 @@ class SyntaxValidator:
                     parent_type = None
 
                 # Match object type to current or parent
-                if obj_type == current_type or (parent_type and obj_type == parent_type):
+                if obj_type == current_type or (
+                    parent_type and obj_type == parent_type
+                ):
                     obj_type_found = True
 
                 # Check for name conflict with types
@@ -1258,7 +1301,7 @@ class SyntaxValidator:
                     return (
                         False,
                         f"[ERROR]: Object variable '{obj_name}' matches the type name '{current_type}', change it to be unique from types: {list(type_keys)}\n"
-                        f"Violated object declaration: ({parsed_line if obj_type else obj_name})\n"
+                        f"Violated object declaration: ({parsed_line if obj_type else obj_name})\n",
                     )
 
                 if parent_type and obj_name == parent_type:
@@ -1266,7 +1309,7 @@ class SyntaxValidator:
                     return (
                         False,
                         f"[ERROR]: Object variable '{obj_name}' matches the type name '{parent_type}', change it to be unique from types: {list(type_keys)}\n"
-                        f"Violated object declaration: ({parsed_line if obj_type else obj_name})\n"
+                        f"Violated object declaration: ({parsed_line if obj_type else obj_name})\n",
                     )
 
             # if object does not contain a type
@@ -1274,17 +1317,20 @@ class SyntaxValidator:
                 continue
 
             if not obj_type_found:
-                message = f"not found in types: {list(type_keys)}" if type_keys else "but there are no types declared."
+                message = (
+                    f"not found in types: {list(type_keys)}"
+                    if type_keys
+                    else "but there are no types declared."
+                )
                 return (
                     False,
                     f"[ERROR]: Object variable '{obj_name}' has an invalid type '{obj_type}' {message}\n"
                     f"If an object variable requires a type, it must be assigned to the given types. If there are no types, leave object variable untyped.\n\n"
-                    f"Parsed line: ({obj_name} - {obj_type})\n"
+                    f"Parsed line: ({obj_name} - {obj_type})\n",
                 )
 
         feedback_msg = "[PASS]: All objects are valid."
         return True, feedback_msg
-
 
     def validate_task_states(
         self,
@@ -1312,7 +1358,7 @@ class SyntaxValidator:
         """
 
         for state in states:
-            
+
             # new check: function states
             state_name = state.get("func_name", None)
             if state_name:
@@ -1321,15 +1367,18 @@ class SyntaxValidator:
                 state_op = state["op"]
 
                 # (i) check if function name exists in domain functions
-                if not functions: functions = []
+                if not functions:
+                    functions = []
                 function_names = [f["name"] for f in functions]
                 if state_name not in function_names:
-                    function_names_str = function_names if functions else "No functions provided"
+                    function_names_str = (
+                        function_names if functions else "No functions provided"
+                    )
                     return (
                         False,
                         f"[ERROR]: In the {state_type} state, '({state_op} ({state_name} {' '.join(state_params)}) {state_val})' "
                         f"uses function '{state_name}', which is not defined in the domain: {function_names_str}.\n\n"
-                        f"If there are no functions, do not include this state."
+                        f"If there are no functions, do not include this state.",
                     )
 
                 # (ii) Check if all parameters exist in the task objects
@@ -1338,14 +1387,16 @@ class SyntaxValidator:
                     return (
                         False,
                         f"[ERROR]: In the {state_type} state, '({state_name} {' '.join(state_params)})' "
-                        f"contains parameter(s) {missing_params} not found in task objects {list(objects.keys())}."
+                        f"contains parameter(s) {missing_params} not found in task objects {list(objects.keys())}.",
                     )
 
                 # (iii) Check if object types match expected predicate types
                 target_func = next(f for f in functions if f["name"] == state_name)
                 expected_types = list(target_func["params"].values())
                 actual_types = [objects[param] for param in state_params]
-                actual_name_type_pairs = [f"'{param}' is type: '{objects[param]}'" for param in state_params]
+                actual_name_type_pairs = [
+                    f"'{param}' is type: '{objects[param]}'" for param in state_params
+                ]
 
                 if expected_types != actual_types:
                     return (
@@ -1354,7 +1405,7 @@ class SyntaxValidator:
                         f"Declared objects: {[f'{obj_name} - {obj_type}' for obj_name, obj_type in objects.items()]}\n\n"
                         f"Function `{target_pred['clean']}` expects type(s): {expected_types}\n"
                         f"Parsed line: ({state_op} ({state_name} {' '.join(state_params)}) {state_val}) contains type(s): {actual_types}, where [{', '.join(actual_name_type_pairs)}]\n\n"
-                        f"Revise the state such that their parameter types align with the original function definition types."
+                        f"Revise the state such that their parameter types align with the original function definition types.",
                     )
 
             else:
@@ -1367,7 +1418,7 @@ class SyntaxValidator:
                     return (
                         False,
                         f"[ERROR]: In the {state_type} state, '({state_name} {' '.join(state_params)})' "
-                        f"uses predicate '{state_name}', which is not defined in the domain ({predicate_names})."
+                        f"uses predicate '{state_name}', which is not defined in the domain ({predicate_names}).",
                     )
 
                 # (ii) Check if all parameters exist in the task objects
@@ -1376,14 +1427,16 @@ class SyntaxValidator:
                     return (
                         False,
                         f"[ERROR]: In the {state_type} state, '({state_name} {' '.join(state_params)})' "
-                        f"contains parameter(s) {missing_params} not found in task objects {list(objects.keys())}."
+                        f"contains parameter(s) {missing_params} not found in task objects {list(objects.keys())}.",
                     )
 
                 # (iii) Check if object types match expected predicate types
                 target_pred = next(p for p in predicates if p["name"] == state_name)
                 expected_types = list(target_pred["params"].values())
                 actual_types = [objects[param] for param in state_params]
-                actual_name_type_pairs = [f"'{param}' is type: '{objects[param]}'" for param in state_params]
+                actual_name_type_pairs = [
+                    f"'{param}' is type: '{objects[param]}'" for param in state_params
+                ]
 
                 if expected_types != actual_types:
                     return (
@@ -1392,7 +1445,7 @@ class SyntaxValidator:
                         f"Declared objects: {[f'{obj_name} - {obj_type}' for obj_name, obj_type in objects.items()]}\n\n"
                         f"Predicate `{target_pred['clean']}` expects type(s): {expected_types}\n"
                         f"Parsed line: ({state_name} {' '.join(state_params)}) contains type(s): {actual_types}, where [{', '.join(actual_name_type_pairs)}]\n\n"
-                        f"Revise the state predicates to match the original predicate parameter types. Do not include type annotations in the predicate—e.g., use (drive ?c), not (drive ?c - car)."
+                        f"Revise the state predicates to match the original predicate parameter types. Do not include type annotations in the predicate—e.g., use (drive ?c), not (drive ?c - car).",
                     )
 
         feedback_msg = "[PASS]: All task states are valid."
@@ -1401,7 +1454,7 @@ class SyntaxValidator:
     # ---- COMMON CHECKS ----
 
     def validate_header(
-        self, 
+        self,
         llm_response: str,
     ) -> tuple[bool, str]:
         """
@@ -1423,10 +1476,10 @@ class SyntaxValidator:
                     f"### {header}\n"
                     f"```\n"
                     f"[CONTENT]\n"
-                    f"```"    
-                    )
+                    f"```"
+                )
                 return False, feedback_msg
-        
+
             # catches if the section does not contain correct code block format
             if llm_response.split(f"{header}")[1].split("###")[0].count("```") < 2:
                 feedback_msg = (
@@ -1435,16 +1488,15 @@ class SyntaxValidator:
                     f"```\n"
                     f"[CONTENT]\n"
                     f"```"
-                    f"\n\n Source of error may be that keyword `{header}` was used somewhere else. Make sure the header is only stated once in your response."          
+                    f"\n\n Source of error may be that keyword `{header}` was used somewhere else. Make sure the header is only stated once in your response."
                 )
                 return False, feedback_msg
 
         feedback_msg = "[PASS]: headers are identified properly in LLM output."
         return True, feedback_msg
-    
-    
+
     def validate_duplicate_headers(
-        self, 
+        self,
         llm_response: str,
     ) -> tuple[bool, str]:
         """
@@ -1465,24 +1517,24 @@ class SyntaxValidator:
             count = llm_response.count(f"### {header}")
             if count > 1:
                 invalid = True
-                duplicate_headers.append({'header': f'`### {header}`', 'count': count})
+                duplicate_headers.append({"header": f"`### {header}`", "count": count})
 
         if invalid:
             feedback_msg = (
                 "[ERROR]: Detected multiple definitions of the following header(s):\n"
-                + "\n".join(f"- {item['header']} found {item['count']} times" for item in duplicate_headers)
+                + "\n".join(
+                    f"- {item['header']} found {item['count']} times"
+                    for item in duplicate_headers
+                )
                 + "\n\nEach header section should only be declared once in your response for: "
-                + ", ".join(item['header'] for item in duplicate_headers) + "."
+                + ", ".join(item["header"] for item in duplicate_headers)
+                + "."
             )
             return False, feedback_msg
 
         return True, "[PASS]: no duplicate sections created."
 
-
-    def validate_unsupported_keywords(
-        self, 
-        llm_response: str
-    ) -> tuple[bool, str]:
+    def validate_unsupported_keywords(self, llm_response: str) -> tuple[bool, str]:
         """
         Checks whether PDDL model uses unsupported logic keywords
         Unsupported keywords to check must be declared as `self.unsupported_keywords = ['lisp']`
@@ -1500,9 +1552,7 @@ class SyntaxValidator:
 
         for key in self.unsupported_keywords:
             if f"{key}" in llm_response:
-                feedback_msg = (
-                    f"[ERROR]: The PDDL model contains the keyword `{key}`. Revise the model so that it does not use this keyword."
-                )
+                feedback_msg = f"[ERROR]: The PDDL model contains the keyword `{key}`. Revise the model so that it does not use this keyword."
                 return False, feedback_msg
 
         feedback_msg = "[PASS]: Unsupported keywords not found in PDDL model."

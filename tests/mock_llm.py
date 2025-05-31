@@ -1,5 +1,6 @@
 from l2p.llm.base import BaseLLM
 
+
 class MockLLM(BaseLLM):
     def __init__(self):
         """

@@ -10,9 +10,11 @@ import yaml
 
 LOG: logging.Logger = logging.getLogger(__name__)
 
+
 def load_yaml(config_path: str) -> dict[str, Any]:
-    with open(config_path, 'r') as f:
+    with open(config_path, "r") as f:
         return yaml.safe_load(f)
+
 
 def require_llm(func):
     """

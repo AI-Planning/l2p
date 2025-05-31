@@ -4,7 +4,7 @@ PDDL Feedback Generation Utilities
 This module provides tools for generating feedback on LLM-generated PDDL domains and tasks.
 It supports multiple feedback strategies including human-written or LLM-generated feedback.
 
-NOTE: is worth noting that the usefulness of LLM feedback is uncertain. It is inspired by the NL2PLAN framework 
+NOTE: is worth noting that the usefulness of LLM feedback is uncertain. It is inspired by the NL2PLAN framework
     (Gestrin et al., 2024) and is designed to provide feedback to LLM output w/o human intervention.
 """
 
@@ -21,11 +21,11 @@ class FeedbackBuilder:
 
     @require_llm
     def get_feedback(
-        self, 
-        model: BaseLLM, 
-        feedback_template: str, 
-        feedback_type: str, 
-        llm_output: str
+        self,
+        model: BaseLLM,
+        feedback_template: str,
+        feedback_type: str,
+        llm_output: str,
     ) -> tuple[bool, str]:
         """
         This retrieves the type of feedback user requests and returns feedack message.
@@ -38,18 +38,15 @@ class FeedbackBuilder:
             model.reset_tokens()
             feedback_msg = model.query(prompt=feedback_template)
         else:
-            raise ValueError(
-                "Invalid feedback_type. Expected 'human' or 'llm'"
-            )
-            
+            raise ValueError("Invalid feedback_type. Expected 'human' or 'llm'")
+
         no_feedback = self.feedback_state(info=feedback_msg)
-        
+
         if no_feedback:
             return True, feedback_msg
 
         return False, feedback_msg
-    
-    
+
     def feedback_state(self, info: str):
         """Confirms if feedback is needed."""
         try:
@@ -62,7 +59,6 @@ class FeedbackBuilder:
         except ValueError as e:
             # if heading is not found no feedback is needed
             return True
-    
 
     def human_feedback(self, info: str):
         """This enables human-in-the-loop feedback mechanism."""
@@ -83,7 +79,6 @@ class FeedbackBuilder:
 
         return resp
 
-
     @require_llm
     def type_feedback(
         self,
@@ -92,7 +87,7 @@ class FeedbackBuilder:
         feedback_template: str,
         feedback_type: str = "llm",
         llm_output: str = "",
-        types: dict[str, str] | list[dict[str,str]] = None,
+        types: dict[str, str] | list[dict[str, str]] = None,
     ) -> tuple[bool, str]:
         """
         Provides feedback to initial LLM output for :types.
@@ -113,19 +108,15 @@ class FeedbackBuilder:
         types_str = pretty_print_dict(types) if types else "No types provided."
 
         prompt = (
-            feedback_template
-            .replace("{types}", types_str)
+            feedback_template.replace("{types}", types_str)
             .replace("{domain_desc}", domain_desc)
             .replace("{llm_output}", llm_output)
         )
 
         # retrieve feedback for types
-        no_fb, fb_msg = self.get_feedback(
-            model, prompt, feedback_type, llm_output
-        )
+        no_fb, fb_msg = self.get_feedback(model, prompt, feedback_type, llm_output)
 
         return no_fb, fb_msg
-
 
     @require_llm
     def nl_action_feedback(
@@ -135,7 +126,7 @@ class FeedbackBuilder:
         llm_output: str,
         feedback_template: str,
         feedback_type: str = "llm",
-        types: dict[str, str] | list[dict[str,str]] = None,
+        types: dict[str, str] | list[dict[str, str]] = None,
         nl_actions: dict[str, str] = None,
     ) -> tuple[bool, str]:
         """
@@ -156,22 +147,20 @@ class FeedbackBuilder:
         """
 
         types_str = pretty_print_dict(types) if types else "No types provided."
-        nl_act_str = pretty_print_dict(nl_actions) if nl_actions else "No actions provided."
+        nl_act_str = (
+            pretty_print_dict(nl_actions) if nl_actions else "No actions provided."
+        )
 
         prompt = (
-            feedback_template
-            .replace("{domain_desc}", domain_desc)
+            feedback_template.replace("{domain_desc}", domain_desc)
             .replace("{types}", types_str)
             .replace("{nl_actions}", nl_act_str)
             .replace("{llm_output}", llm_output)
         )
 
-        no_fb, fb_msg = self.get_feedback(
-            model, prompt, feedback_type, llm_output
-        )
+        no_fb, fb_msg = self.get_feedback(model, prompt, feedback_type, llm_output)
 
         return no_fb, fb_msg
-
 
     @require_llm
     def pddl_action_feedback(
@@ -182,8 +171,8 @@ class FeedbackBuilder:
         feedback_type: str = "llm",
         llm_output: str = "",
         action: Action = None,
-        types: dict[str, str] | list[dict[str,str]] = None,
-        constants: dict[str,str] = None,
+        types: dict[str, str] | list[dict[str, str]] = None,
+        constants: dict[str, str] = None,
         predicates: list[Predicate] = None,
         functions: list[Function] = None,
     ) -> tuple[bool, str]:
@@ -208,18 +197,31 @@ class FeedbackBuilder:
         """
 
         act_name_str = action["name"] if action else "No action name provided."
-        params_str = "\n".join([f"{name} - {type}" for name, type in action["params"].items()]) if action else "No parameters provided"
+        params_str = (
+            "\n".join([f"{name} - {type}" for name, type in action["params"].items()])
+            if action
+            else "No parameters provided"
+        )
         prec_str = action["preconditions"] if action else "No preconditions provided."
         eff_str = action["effects"] if action else "No effects provided."
 
         types_str = pretty_print_dict(types) if types else "No types provided."
-        const_str = format_constants(constants) if constants else "No constants provided."
-        preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
-        funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
+        const_str = (
+            format_constants(constants) if constants else "No constants provided."
+        )
+        preds_str = (
+            "\n".join([f"{pred['raw']}" for pred in predicates])
+            if predicates
+            else "No predicates provided."
+        )
+        funcs_str = (
+            "\n".join([f"{func['raw']}" for func in functions])
+            if functions
+            else "No functions provided."
+        )
 
         prompt = (
-            feedback_template
-            .replace("{domain_desc}", domain_desc)
+            feedback_template.replace("{domain_desc}", domain_desc)
             .replace("{action_name}", act_name_str)
             .replace("{action_params}", params_str)
             .replace("{action_preconditions}", prec_str)
@@ -231,12 +233,9 @@ class FeedbackBuilder:
             .replace("{llm_output}", llm_output)
         )
 
-        no_fb, fb_msg = self.get_feedback(
-            model, prompt, feedback_type, llm_output
-        )
+        no_fb, fb_msg = self.get_feedback(model, prompt, feedback_type, llm_output)
 
         return no_fb, fb_msg
-
 
     @require_llm
     def parameter_feedback(
@@ -249,9 +248,9 @@ class FeedbackBuilder:
         parameter: OrderedDict = None,
         action_name: str = None,
         action_desc: str = None,
-        types: dict[str, str] | list[dict[str,str]] = None,
-        constants: dict[str,str] = None,
-    ) -> tuple[bool,str]:
+        types: dict[str, str] | list[dict[str, str]] = None,
+        constants: dict[str, str] = None,
+    ) -> tuple[bool, str]:
         """
         Provides feedback to initial LLM output of a PDDL action parameter.
 
@@ -274,14 +273,19 @@ class FeedbackBuilder:
 
         act_name_str = action_name if action_name else "No action name provided"
         act_desc_str = action_desc if action_desc else "No action description provided"
-        params_str = "\n".join([f"{name} - {type}" for name, type in parameter.items()]) if parameter else "No parameters provided"
+        params_str = (
+            "\n".join([f"{name} - {type}" for name, type in parameter.items()])
+            if parameter
+            else "No parameters provided"
+        )
 
         types_str = pretty_print_dict(types) if types else "No types provided."
-        const_str = format_constants(constants) if constants else "No constants provided."
+        const_str = (
+            format_constants(constants) if constants else "No constants provided."
+        )
 
         prompt = (
-            feedback_template
-            .replace("{domain_desc}", domain_desc)
+            feedback_template.replace("{domain_desc}", domain_desc)
             .replace("{action_name}", act_name_str)
             .replace("{action_desc}", act_desc_str)
             .replace("{action_params}", params_str)
@@ -290,12 +294,9 @@ class FeedbackBuilder:
             .replace("{llm_output}", llm_output)
         )
 
-        no_fb, fb_msg = self.get_feedback(
-            model, prompt, feedback_type, llm_output
-        )
+        no_fb, fb_msg = self.get_feedback(model, prompt, feedback_type, llm_output)
 
         return no_fb, fb_msg
-
 
     @require_llm
     def precondition_feedback(
@@ -309,11 +310,11 @@ class FeedbackBuilder:
         preconditions: str = None,
         action_name: str = None,
         action_desc: str = None,
-        types: dict[str, str] | list[dict[str,str]] = None,
-        constants: dict[str,str] = None,
+        types: dict[str, str] | list[dict[str, str]] = None,
+        constants: dict[str, str] = None,
         predicates: list[Predicate] = None,
         functions: list[Function] = None,
-    ) -> tuple[bool,str]:
+    ) -> tuple[bool, str]:
         """
         Provides feedback to initial LLM output of a PDDL action precondition.
 
@@ -339,17 +340,30 @@ class FeedbackBuilder:
 
         act_name_str = action_name if action_name else "No action name provided"
         act_desc_str = action_desc if action_desc else "No action description provided"
-        params_str = "\n".join([f"{name} - {type}" for name, type in parameter.items()]) if parameter else "No parameters provided"
+        params_str = (
+            "\n".join([f"{name} - {type}" for name, type in parameter.items()])
+            if parameter
+            else "No parameters provided"
+        )
         prec_str = preconditions if preconditions else "No preconditions provided."
 
         types_str = pretty_print_dict(types) if types else "No types provided."
-        const_str = format_constants(constants) if constants else "No constants provided."
-        preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
-        funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
+        const_str = (
+            format_constants(constants) if constants else "No constants provided."
+        )
+        preds_str = (
+            "\n".join([f"{pred['raw']}" for pred in predicates])
+            if predicates
+            else "No predicates provided."
+        )
+        funcs_str = (
+            "\n".join([f"{func['raw']}" for func in functions])
+            if functions
+            else "No functions provided."
+        )
 
         prompt = (
-            feedback_template
-            .replace("{domain_desc}", domain_desc)
+            feedback_template.replace("{domain_desc}", domain_desc)
             .replace("{action_name}", act_name_str)
             .replace("{action_desc}", act_desc_str)
             .replace("{action_params}", params_str)
@@ -361,12 +375,9 @@ class FeedbackBuilder:
             .replace("{llm_output}", llm_output)
         )
 
-        no_fb, fb_msg = self.get_feedback(
-            model, prompt, feedback_type, llm_output
-        )
+        no_fb, fb_msg = self.get_feedback(model, prompt, feedback_type, llm_output)
 
         return no_fb, fb_msg
-
 
     @require_llm
     def effect_feedback(
@@ -381,11 +392,11 @@ class FeedbackBuilder:
         effects: str = None,
         action_name: str = None,
         action_desc: str = None,
-        types: dict[str, str] | list[dict[str,str]] = None,
-        constants: dict[str,str] = None,
+        types: dict[str, str] | list[dict[str, str]] = None,
+        constants: dict[str, str] = None,
         predicates: list[Predicate] = None,
         functions: list[Function] = None,
-    ) -> tuple[bool,str]:
+    ) -> tuple[bool, str]:
         """
         Provides feedback to initial LLM output of a PDDL action effect.
 
@@ -412,18 +423,31 @@ class FeedbackBuilder:
 
         act_name_str = action_name if action_name else "No action name provided"
         act_desc_str = action_desc if action_desc else "No action description provided"
-        params_str = "\n".join([f"{name} - {type}" for name, type in parameter.items()]) if parameter else "No parameters provided"
+        params_str = (
+            "\n".join([f"{name} - {type}" for name, type in parameter.items()])
+            if parameter
+            else "No parameters provided"
+        )
         prec_str = preconditions if preconditions else "No preconditions provided."
         eff_str = effects if effects else "No effects provided."
 
         types_str = pretty_print_dict(types) if types else "No types provided."
-        const_str = format_constants(constants) if constants else "No constants provided."
-        preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
-        funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
+        const_str = (
+            format_constants(constants) if constants else "No constants provided."
+        )
+        preds_str = (
+            "\n".join([f"{pred['raw']}" for pred in predicates])
+            if predicates
+            else "No predicates provided."
+        )
+        funcs_str = (
+            "\n".join([f"{func['raw']}" for func in functions])
+            if functions
+            else "No functions provided."
+        )
 
         prompt = (
-            feedback_template
-            .replace("{domain_desc}", domain_desc)
+            feedback_template.replace("{domain_desc}", domain_desc)
             .replace("{action_name}", act_name_str)
             .replace("{action_desc}", act_desc_str)
             .replace("{action_params}", params_str)
@@ -436,12 +460,9 @@ class FeedbackBuilder:
             .replace("{llm_output}", llm_output)
         )
 
-        no_fb, fb_msg = self.get_feedback(
-            model, prompt, feedback_type, llm_output
-        )
+        no_fb, fb_msg = self.get_feedback(model, prompt, feedback_type, llm_output)
 
         return no_fb, fb_msg
-
 
     @require_llm
     def predicate_feedback(
@@ -451,8 +472,8 @@ class FeedbackBuilder:
         feedback_template: str,
         feedback_type: str = "llm",
         llm_output: str = "",
-        types: dict[str, str] | list[dict[str,str]] = None,
-        constants: dict[str,str] = None,
+        types: dict[str, str] | list[dict[str, str]] = None,
+        constants: dict[str, str] = None,
         predicates: list[Predicate] = None,
     ) -> tuple[bool, str]:
         """
@@ -474,24 +495,26 @@ class FeedbackBuilder:
         """
 
         types_str = pretty_print_dict(types) if types else "No types provided."
-        const_str = format_constants(constants) if constants else "No constants provided."
-        preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
+        const_str = (
+            format_constants(constants) if constants else "No constants provided."
+        )
+        preds_str = (
+            "\n".join([f"{pred['raw']}" for pred in predicates])
+            if predicates
+            else "No predicates provided."
+        )
 
         prompt = (
-            feedback_template
-            .replace("{domain_desc}", domain_desc)
+            feedback_template.replace("{domain_desc}", domain_desc)
             .replace("{types}", types_str)
             .replace("{constants}", const_str)
             .replace("{predicates}", preds_str)
             .replace("{llm_output}", llm_output)
         )
 
-        no_fb, fb_msg = self.get_feedback(
-            model, prompt, feedback_type, llm_output
-        )
+        no_fb, fb_msg = self.get_feedback(model, prompt, feedback_type, llm_output)
 
         return no_fb, fb_msg
-
 
     @require_llm
     def task_feedback(
@@ -504,10 +527,10 @@ class FeedbackBuilder:
         objects: dict[str, str] = None,
         initial: list[dict[str, str]] = None,
         goal: list[dict[str, str]] = None,
-        types: dict[str, str] | list[dict[str,str]] = None,
-        constants: dict[str,str] = None,
+        types: dict[str, str] | list[dict[str, str]] = None,
+        constants: dict[str, str] = None,
         predicates: list[Predicate] = None,
-        functions: list[Function] = None
+        functions: list[Function] = None,
     ) -> tuple[bool, str]:
         """
         Provides feedback to initial LLM output of a PDDL task.
@@ -531,18 +554,31 @@ class FeedbackBuilder:
             fb_msg (str): feedback message from assistant
         """
 
-        obj_str = "\n".join([f"{obj} - {type}" for obj, type in objects.items()]) if objects else "No objects provided."
+        obj_str = (
+            "\n".join([f"{obj} - {type}" for obj, type in objects.items()])
+            if objects
+            else "No objects provided."
+        )
         init_str = format_initial(initial) if initial else "No initial state provided."
         goal_str = format_goal(goal) if goal else "No goal state provided."
 
         types_str = pretty_print_dict(types) if types else "No types provided."
-        const_str = format_constants(constants) if constants else "No constants provided."
-        preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
-        funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
+        const_str = (
+            format_constants(constants) if constants else "No constants provided."
+        )
+        preds_str = (
+            "\n".join([f"{pred['raw']}" for pred in predicates])
+            if predicates
+            else "No predicates provided."
+        )
+        funcs_str = (
+            "\n".join([f"{func['raw']}" for func in functions])
+            if functions
+            else "No functions provided."
+        )
 
         prompt = (
-            feedback_template
-            .replace("{problem_desc}", problem_desc)
+            feedback_template.replace("{problem_desc}", problem_desc)
             .replace("{objects}", obj_str)
             .replace("{initial_states}", init_str)
             .replace("{goal_states}", goal_str)
@@ -553,12 +589,9 @@ class FeedbackBuilder:
             .replace("{llm_output}", llm_output)
         )
 
-        no_fb, fb_msg = self.get_feedback(
-            model, prompt, feedback_type, llm_output
-        )
+        no_fb, fb_msg = self.get_feedback(model, prompt, feedback_type, llm_output)
 
         return no_fb, fb_msg
-
 
     @require_llm
     def objects_feedback(
@@ -569,8 +602,8 @@ class FeedbackBuilder:
         feedback_type: str = "llm",
         llm_output: str = "",
         objects: dict[str, str] = None,
-        types: dict[str, str] | list[dict[str,str]] = None,
-        constants: dict[str,str] = None,
+        types: dict[str, str] | list[dict[str, str]] = None,
+        constants: dict[str, str] = None,
         predicates: list[Predicate] = None,
         functions: list[Function] = None,
     ) -> tuple[bool, str]:
@@ -594,16 +627,29 @@ class FeedbackBuilder:
             fb_msg (str): feedback message from assistant
         """
 
-        obj_str = "\n".join([f"{obj} - {type}" for obj, type in objects.items()]) if objects else "No objects provided."
+        obj_str = (
+            "\n".join([f"{obj} - {type}" for obj, type in objects.items()])
+            if objects
+            else "No objects provided."
+        )
 
         types_str = pretty_print_dict(types) if types else "No types provided."
-        const_str = format_constants(constants) if constants else "No constants provided."
-        preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
-        funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
+        const_str = (
+            format_constants(constants) if constants else "No constants provided."
+        )
+        preds_str = (
+            "\n".join([f"{pred['raw']}" for pred in predicates])
+            if predicates
+            else "No predicates provided."
+        )
+        funcs_str = (
+            "\n".join([f"{func['raw']}" for func in functions])
+            if functions
+            else "No functions provided."
+        )
 
         prompt = (
-            feedback_template
-            .replace("{problem_desc}", problem_desc)
+            feedback_template.replace("{problem_desc}", problem_desc)
             .replace("{objects}", obj_str)
             .replace("{types}", types_str)
             .replace("{constants}", const_str)
@@ -612,12 +658,9 @@ class FeedbackBuilder:
             .replace("{llm_output}", llm_output)
         )
 
-        no_fb, fb_msg = self.get_feedback(
-            model, prompt, feedback_type, llm_output
-        )
+        no_fb, fb_msg = self.get_feedback(model, prompt, feedback_type, llm_output)
 
         return no_fb, fb_msg
-
 
     @require_llm
     def initial_state_feedback(
@@ -629,10 +672,10 @@ class FeedbackBuilder:
         llm_output: str = "",
         objects: dict[str, str] = None,
         initial: list[dict[str, str]] = None,
-        types: dict[str, str] | list[dict[str,str]] = None,
-        constants: dict[str,str] = None,
+        types: dict[str, str] | list[dict[str, str]] = None,
+        constants: dict[str, str] = None,
         predicates: list[Predicate] = None,
-        functions: list[Function] = None
+        functions: list[Function] = None,
     ) -> tuple[bool, str]:
         """
         Provides feedback to initial LLM output of PDDL task initial states.
@@ -655,17 +698,30 @@ class FeedbackBuilder:
             fb_msg (str): feedback message from assistant
         """
 
-        obj_str = "\n".join([f"{obj} - {type}" for obj, type in objects.items()]) if objects else "No objects provided."
+        obj_str = (
+            "\n".join([f"{obj} - {type}" for obj, type in objects.items()])
+            if objects
+            else "No objects provided."
+        )
         init_str = format_initial(initial) if initial else "No initial state provided."
 
         types_str = pretty_print_dict(types) if types else "No types provided."
-        const_str = format_constants(constants) if constants else "No constants provided."
-        preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
-        funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
+        const_str = (
+            format_constants(constants) if constants else "No constants provided."
+        )
+        preds_str = (
+            "\n".join([f"{pred['raw']}" for pred in predicates])
+            if predicates
+            else "No predicates provided."
+        )
+        funcs_str = (
+            "\n".join([f"{func['raw']}" for func in functions])
+            if functions
+            else "No functions provided."
+        )
 
         prompt = (
-            feedback_template
-            .replace("{problem_desc}", problem_desc)
+            feedback_template.replace("{problem_desc}", problem_desc)
             .replace("{objects}", obj_str)
             .replace("{initial_states}", init_str)
             .replace("{types}", types_str)
@@ -675,12 +731,9 @@ class FeedbackBuilder:
             .replace("{llm_output}", llm_output)
         )
 
-        no_fb, fb_msg = self.get_feedback(
-            model, prompt, feedback_type, llm_output
-        )
+        no_fb, fb_msg = self.get_feedback(model, prompt, feedback_type, llm_output)
 
         return no_fb, fb_msg
-
 
     @require_llm
     def goal_state_feedback(
@@ -693,10 +746,10 @@ class FeedbackBuilder:
         objects: dict[str, str] = None,
         initial: list[dict[str, str]] = None,
         goal: list[dict[str, str]] = None,
-        types: dict[str, str] | list[dict[str,str]] = None,
-        constants: dict[str,str] = None,
+        types: dict[str, str] | list[dict[str, str]] = None,
+        constants: dict[str, str] = None,
         predicates: list[Predicate] = None,
-        functions: list[Function] = None
+        functions: list[Function] = None,
     ) -> tuple[bool, str]:
         """
         Provides feedback to initial LLM output of PDDL task goal states.
@@ -720,18 +773,31 @@ class FeedbackBuilder:
             fb_msg (str): feedback message from assistant
         """
 
-        obj_str = "\n".join([f"{obj} - {type}" for obj, type in objects.items()]) if objects else "No objects provided."
+        obj_str = (
+            "\n".join([f"{obj} - {type}" for obj, type in objects.items()])
+            if objects
+            else "No objects provided."
+        )
         init_str = format_initial(initial) if initial else "No initial state provided."
         goal_str = format_goal(goal) if goal else "No goal state provided."
 
         types_str = pretty_print_dict(types) if types else "No types provided."
-        const_str = format_constants(constants) if constants else "No constants provided."
-        preds_str = "\n".join([f"{pred['raw']}" for pred in predicates]) if predicates else "No predicates provided."
-        funcs_str = "\n".join([f"{func['raw']}" for func in functions]) if functions else "No functions provided."
+        const_str = (
+            format_constants(constants) if constants else "No constants provided."
+        )
+        preds_str = (
+            "\n".join([f"{pred['raw']}" for pred in predicates])
+            if predicates
+            else "No predicates provided."
+        )
+        funcs_str = (
+            "\n".join([f"{func['raw']}" for func in functions])
+            if functions
+            else "No functions provided."
+        )
 
         prompt = (
-            feedback_template
-            .replace("{problem_desc}", problem_desc)
+            feedback_template.replace("{problem_desc}", problem_desc)
             .replace("{objects}", obj_str)
             .replace("{initial_states}", init_str)
             .replace("{goal_states}", goal_str)
@@ -742,8 +808,6 @@ class FeedbackBuilder:
             .replace("{llm_output}", llm_output)
         )
 
-        no_fb, fb_msg = self.get_feedback(
-            model, prompt, feedback_type, llm_output
-        )
+        no_fb, fb_msg = self.get_feedback(model, prompt, feedback_type, llm_output)
 
         return no_fb, fb_msg

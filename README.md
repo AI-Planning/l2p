@@ -163,6 +163,27 @@ For ease of use, our library contains submodule [FastDownward](https://github.co
 
 **IMPORTANT** FastDownward is a submodule in L2P. To use the planner, you must clone the GitHub repo of [FastDownward](https://github.com/aibasel/downward/tree/308812cf7315fe896dbcd319493277d82aa36bd2) and run the `planner_path` to that directory.
 
+Here is a quick test set up:
+```python
+from l2p.utils.pddl_planner import FastDownward
+
+# retrieve pddl files
+domain_file = "tests/pddl/test_domain.pddl"
+problem_file = "tests/pddl/test_problem.pddl"
+
+# instantiate FastDownward class
+planner = FastDownward(planner_path="<PATH_TO>/downward/fast-downward.py")
+
+# run plan
+success, plan_str = planner.run_fast_downward(
+    domain_file=domain_file,
+    problem_file=problem_file,
+    search_alg="lama-first"
+)
+
+print(plan_str)
+```
+
 ## Current Works Reconstructed Using L2P
 The following are papers that have been reconstructed so far. *Checked* boxes are completed, *unchecked* are papers currently in queue to be reconstructed. This list will be updated in the future.
 

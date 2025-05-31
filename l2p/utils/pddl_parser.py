@@ -21,6 +21,7 @@ from .pddl_types import Action, Function, Predicate
 
 # ---- PDDL DOMAIN PARSERS ----
 
+
 def parse_types(llm_output: str, heading: str = "TYPES") -> Optional[dict[str, str]]:
     """
     Safely extracts and evaluates a dictionary structure from a string (LLM response).
@@ -32,7 +33,7 @@ def parse_types(llm_output: str, heading: str = "TYPES") -> Optional[dict[str, s
         types_parsed (dict[str, str]) | None: parsed dictionary of :types if valid, else None.
     """
     try:
-        
+
         types_head = parse_heading(llm_output, heading)
         if types_head.count("```") != 2:
             raise ValueError(
@@ -40,7 +41,7 @@ def parse_types(llm_output: str, heading: str = "TYPES") -> Optional[dict[str, s
             )
 
         types_raw = combine_blocks(types_head)
-        
+
         # Regex to extract the first dictionary-like structure
         dict_pattern = re.compile(r"{[^{}]*}", re.DOTALL)
         match = dict_pattern.search(types_raw)
@@ -64,8 +65,9 @@ def parse_types(llm_output: str, heading: str = "TYPES") -> Optional[dict[str, s
     except Exception as e:
         print(f"Error parsing dictionary: {e}")
         return None
-    
-def parse_type_hierarchy(llm_output: str) -> Optional[list[dict[str,str]]]:
+
+
+def parse_type_hierarchy(llm_output: str) -> Optional[list[dict[str, str]]]:
     """
     Safely parses LLM response into a list of nested dictionaries representing the type hierarchy.
 
@@ -76,7 +78,7 @@ def parse_type_hierarchy(llm_output: str) -> Optional[list[dict[str,str]]]:
         types_parsed (list[dict[str,str]]) | None: parsed type hierarchy if valid, else None.
     """
     try:
-        
+
         types_head = parse_heading(llm_output, "TYPES")
         if types_head.count("```") != 2:
             raise ValueError(
@@ -115,7 +117,8 @@ def parse_type_hierarchy(llm_output: str) -> Optional[list[dict[str,str]]]:
     except Exception as e:
         print(f"Failed to convert response to dict: {e}")
         return None
-    
+
+
 def parse_constants(llm_output: str) -> Optional[dict[str, str]]:
     """
     Safely extracts and evaluates a dictionary structure from a string (LLM response).
@@ -127,7 +130,7 @@ def parse_constants(llm_output: str) -> Optional[dict[str, str]]:
         constants_parsed (dict[str, str]) | None: parsed dictionary if valid, else None.
     """
     try:
-        
+
         constant_head = parse_heading(llm_output, "CONSTANTS")
         if constant_head.count("```") != 2:
             raise ValueError(
@@ -135,7 +138,7 @@ def parse_constants(llm_output: str) -> Optional[dict[str, str]]:
             )
 
         constants_raw = combine_blocks(constant_head)
-        
+
         # regex to extract the first dictionary-like structure
         dict_pattern = re.compile(r"{[^{}]*}", re.DOTALL)
         match = dict_pattern.search(constants_raw)
@@ -149,7 +152,8 @@ def parse_constants(llm_output: str) -> Optional[dict[str, str]]:
 
         # validate it is a flat dictionary with string keys and values
         if isinstance(constants_parsed, dict) and all(
-            isinstance(k, str) and isinstance(v, str) for k, v in constants_parsed.items()
+            isinstance(k, str) and isinstance(v, str)
+            for k, v in constants_parsed.items()
         ):
             return constants_parsed
 
@@ -186,6 +190,7 @@ def parse_predicates(all_predicates: list[Predicate]) -> list[Predicate]:
                 param_name, param_obj_type = p, split_predicate[j + 2]
                 pred["params"][param_name] = param_obj_type
     return all_predicates
+
 
 def parse_new_predicates(llm_output) -> list[Predicate]:
     """
@@ -229,18 +234,18 @@ def parse_new_predicates(llm_output) -> list[Predicate]:
 
         # clean the predicate signature
         pred_part = pred_part.strip("- ()").strip()
-        
+
         # split into name and parameters
         parts = pred_part.split()
         if not parts:
             continue
-            
+
         predicate_name = parts[0]
         param_parts = parts[1:]
-        
+
         params = OrderedDict()
         current_param = None
-        
+
         i = 0
         while i < len(param_parts):
             part = param_parts[i]
@@ -252,18 +257,22 @@ def parse_new_predicates(llm_output) -> list[Predicate]:
             elif part == "-":
                 # found type indicator
                 if current_param is None:
-                    print(f"[WARNING] Found type indicator without parameter in: {p_line}")
+                    print(
+                        f"[WARNING] Found type indicator without parameter in: {p_line}"
+                    )
                     i += 1
                     continue
                 if i + 1 < len(param_parts):
-                    params[current_param] = param_parts[i+1]
+                    params[current_param] = param_parts[i + 1]
                     i += 2
                 else:
                     print(f"[WARNING] Missing type after '-' in: {p_line}")
                     i += 1
             else:
                 # might be a typeless parameter (accept it with warning)
-                print(f"[WARNING] Assuming '{part}' is an untyped parameter in: {p_line}")
+                print(
+                    f"[WARNING] Assuming '{part}' is an untyped parameter in: {p_line}"
+                )
                 current_param = f"?{part.lstrip('?')}"
                 params[current_param] = ""
                 i += 1
@@ -277,15 +286,18 @@ def parse_new_predicates(llm_output) -> list[Predicate]:
                 clean_params.append(param)
         clean = f"({predicate_name} {' '.join(clean_params)})"
 
-        new_predicates.append({
-            "name": predicate_name,
-            "desc": predicate_desc,
-            "raw": p_line,
-            "params": params,
-            "clean": clean,
-        })
-    
+        new_predicates.append(
+            {
+                "name": predicate_name,
+                "desc": predicate_desc,
+                "raw": p_line,
+                "params": params,
+                "clean": clean,
+            }
+        )
+
     return new_predicates
+
 
 def parse_functions(llm_output: str) -> list[Function]:
     """
@@ -296,9 +308,7 @@ def parse_functions(llm_output: str) -> list[Function]:
     """
     functions = list()
     try:
-        function_heading = (
-            llm_output.split("FUNCTIONS\n")[1].strip().split("###")[0]
-        )
+        function_heading = llm_output.split("FUNCTIONS\n")[1].strip().split("###")[0]
     except:
         raise Exception(
             "Could not find the 'FUNCTIONS' section in the output. Provide the entire response, including all headings even if some are unchanged."
@@ -329,18 +339,18 @@ def parse_functions(llm_output: str) -> list[Function]:
 
         # clean the function signature
         func_part = func_part.strip("- ()").strip()
-        
+
         # split into name and parameters
         parts = func_part.split()
         if not parts:
             continue
-            
+
         function_name = parts[0]
         param_parts = parts[1:]
-        
+
         params = OrderedDict()
         current_param = None
-        
+
         i = 0
         while i < len(param_parts):
             part = param_parts[i]
@@ -352,18 +362,22 @@ def parse_functions(llm_output: str) -> list[Function]:
             elif part == "-":
                 # found type indicator
                 if current_param is None:
-                    print(f"[WARNING] Found type indicator without parameter in: {f_line}")
+                    print(
+                        f"[WARNING] Found type indicator without parameter in: {f_line}"
+                    )
                     i += 1
                     continue
                 if i + 1 < len(param_parts):
-                    params[current_param] = param_parts[i+1]
+                    params[current_param] = param_parts[i + 1]
                     i += 2
                 else:
                     print(f"[WARNING] Missing type after '-' in: {f_line}")
                     i += 1
             else:
                 # might be a typeless parameter (accept it with warning)
-                print(f"[WARNING] Assuming '{part}' is an untyped parameter in: {f_line}")
+                print(
+                    f"[WARNING] Assuming '{part}' is an untyped parameter in: {f_line}"
+                )
                 current_param = f"?{part.lstrip('?')}"
                 params[current_param] = ""
                 i += 1
@@ -377,14 +391,16 @@ def parse_functions(llm_output: str) -> list[Function]:
                 clean_params.append(param)
         clean = f"({function_name} {' '.join(clean_params)})"
 
-        functions.append({
-            "name": function_name,
-            "desc": function_desc,
-            "raw": f_line,
-            "params": params,
-            "clean": clean,
-        })
-    
+        functions.append(
+            {
+                "name": function_name,
+                "desc": function_desc,
+                "raw": f_line,
+                "params": params,
+                "clean": clean,
+            }
+        )
+
     return functions
 
 
@@ -429,6 +445,7 @@ def parse_action(llm_output: str, action_name: str) -> Action:
         "effects": effects,
     }
 
+
 def parse_params(llm_output: str) -> tuple[OrderedDict, list]:
     """
     Parses parameters from LLM into Python format (refer to example templates to see
@@ -442,7 +459,7 @@ def parse_params(llm_output: str) -> tuple[OrderedDict, list]:
     )[0]
     params_str = combine_blocks(params_heading)
     params_raw = []
-    
+
     for line in params_str.split("\n"):
         line = line.strip()
         if not line:  # skip empty lines
@@ -450,33 +467,36 @@ def parse_params(llm_output: str) -> tuple[OrderedDict, list]:
 
         if line.startswith("-"):
             line = line[1:].strip()  # remove the dash and clean up
-            
+
         if not line.startswith("?"):
             print(f"[WARNING] Invalid parameter line - must start with '?': '{line}'")
-            
+
         try:
             params_raw.append(line)
             # split into param name and type
             parts = line.split(":")
-                
+
             left_side = parts[0].strip()
             param_parts = [p.strip() for p in left_side.split("-")]
-            
+
             param_name = param_parts[0].strip(" `")
             if len(param_parts) == 2 and param_parts[1]:
                 param_type = param_parts[1].strip(" `")
             else:
-                print(f"[WARNING] Invalid parameter format: '{line}'. Defaulting to no type.")
+                print(
+                    f"[WARNING] Invalid parameter format: '{line}'. Defaulting to no type."
+                )
                 param_type = ""  # no type provided
 
             params_info[param_name] = param_type
-            
+
         except Exception as e:
             print(f"[WARNING] Failed to parse parameter line: '{line}' - {str(e)}")
             continue
-            
+
     return params_info, params_raw
-    
+
+
 def parse_preconditions(llm_output: str) -> str:
     """Parses precondition string from LLM output"""
     try:
@@ -486,23 +506,24 @@ def parse_preconditions(llm_output: str) -> str:
             .split("```")[1]
             .strip(" `\n")
         )
-        
+
         return preconditions
     except:
         raise Exception(
             "Could not find the 'Preconditions' section in the output. Provide the entire response, including all headings even if some are unchanged."
         )
-        
+
+
 def parse_effects(llm_output: str) -> str:
     """Parses effect string from LLM output"""
     try:
         effects = (
-                    llm_output.split("Effects\n")[1]
-                    .split("###")[0]
-                    .split("```")[1]
-                    .strip(" `\n")
-                )
-        
+            llm_output.split("Effects\n")[1]
+            .split("###")[0]
+            .split("```")[1]
+            .strip(" `\n")
+        )
+
         return effects
     except:
         raise Exception(
@@ -513,7 +534,7 @@ def parse_effects(llm_output: str) -> str:
 def prune_types(
     types: dict[str, str] | list[dict[str, str]],
     predicates: list[Predicate],
-    actions: list[Action]
+    actions: list[Action],
 ) -> dict[str, str]:
     """
     Prune types that are not used in any predicate or action.
@@ -531,12 +552,12 @@ def prune_types(
 
     def collect_all_types(obj):
         """Recursively extract all type names and their descriptions from the input."""
-        
+
         # if setup is normal types dictionary
         if isinstance(obj, dict):
             for type_name, desc in obj.items():
                 all_type_names[type_name] = desc
-                
+
         # if set up is type hierarchy list dictionary
         elif isinstance(obj, list):
             for node in obj:
@@ -565,18 +586,15 @@ def prune_types(
             if base_name in action["params"].values():
                 used_types[type_name] = all_type_names[type_name]
                 break
-            if (
-                base_name in action["preconditions"]
-                or base_name in action["effects"]
-            ):
+            if base_name in action["preconditions"] or base_name in action["effects"]:
                 used_types[type_name] = all_type_names[type_name]
                 break
 
     return used_types
 
+
 def prune_predicates(
-    predicates: list[Predicate], 
-    actions: list[Action]
+    predicates: list[Predicate], actions: list[Action]
 ) -> list[Predicate]:
     """
     Remove predicates that are not used in any action.
@@ -607,10 +625,11 @@ def prune_predicates(
 
 # ---- PDDL PROBLEM PARSERS ----
 
+
 def parse_objects(llm_output: str) -> dict[str, str]:
     """
     Extract objects from LLM response and returns dictionary string pairs object(name, type)
-    
+
     Args:
         llm_output (str): raw LLM output
         types (dict[str,str]): WILL BE USED FOR CHECK ERROR RAISES
@@ -631,6 +650,7 @@ def parse_objects(llm_output: str) -> dict[str, str]:
     }
 
     return objects_parsed
+
 
 def parse_initial(llm_output: str) -> list[dict[str, str]]:
     """
@@ -654,6 +674,7 @@ def parse_initial(llm_output: str) -> list[dict[str, str]]:
 
     return parse_task_states(initial_parsed)
 
+
 def parse_goal(llm_output: str) -> list[dict[str, str]]:
     """
     Extracts goal (PDDL-goal) from LLM response and returns it as a string
@@ -676,29 +697,32 @@ def parse_goal(llm_output: str) -> list[dict[str, str]]:
 
     return parse_task_states(goal_parsed)
 
+
 def parse_task_states(parsed_states: list) -> list[dict]:
     states = []
     for line in parsed_states:
-        
+
         if isinstance(line, str):
             line = [line]
 
         # only parse lines
         if isinstance(line, list):
             name = line[0].split(" ")[0]
-            
+
             if name == "and":
                 continue
             # if comparsion operator
             if name in ["=", ">", "<", ">=", "<="]:
                 op = name
-                name = line[1][0].split(" ")[0] # retrieve function name
+                name = line[1][0].split(" ")[0]  # retrieve function name
                 params = line[1][0].split(" ")[1:]
                 value = line[2]
-                states.append({"func_name": name, "params": params, "value": value, "op": op})
+                states.append(
+                    {"func_name": name, "params": params, "value": value, "op": op}
+                )
                 continue
             if name == "not":
-                name = line[1][0].split(" ")[0] # retrieve function name
+                name = line[1][0].split(" ")[0]  # retrieve function name
                 params = line[1][0].split(" ")[1:]
                 neg = True
             else:
@@ -711,6 +735,7 @@ def parse_task_states(parsed_states: list) -> list[dict]:
 
 # ---- SUPPLEMENTARY PARSING FUNCTIONS ----
 
+
 def parse_heading(llm_output: str, heading: str) -> str:
     """Extract the text between the heading and the next second level heading in the LLM output."""
     if heading not in llm_output:
@@ -722,34 +747,36 @@ def parse_heading(llm_output: str, heading: str) -> str:
     )  # Get the text between the heading and the next heading
     return heading_str
 
+
 def parse_pddl(pddl_str: str) -> list:
     """
     Simplified PDDL parser that converts the string into a nested list structure.
     """
-    
+
     # tokenize string
-    tokens = re.sub(r'([()])', r' \1 ', pddl_str).split()
+    tokens = re.sub(r"([()])", r" \1 ", pddl_str).split()
     stack = []
     current = []
-    
+
     # iterate each token, if it is a bracket, we append to new list
     for token in tokens:
-        if token == '(':
+        if token == "(":
             stack.append(current)
             current = []
-        elif token == ')':
+        elif token == ")":
             if stack:
                 parent = stack.pop()
                 parent.append(current)
                 current = parent
         else:
             current.append(token)
-    
+
     if len(current) != 1:
         raise ValueError("Malformed PDDL expression")
-    
+
     nested_pddl = concatenate_strings(current[0])
     return nested_pddl
+
 
 def combine_blocks(heading_str: str):
     """Combine the inside of blocks from the heading string into a single string."""
@@ -764,12 +791,13 @@ def combine_blocks(heading_str: str):
     return combined.replace(
         "\n\n", "\n"
     ).strip()  # remove leading/trailing whitespace and internal empty lines
-    
+
+
 def concatenate_strings(nested_list):
     """Helper function that concatenates strings within a list together."""
     if not isinstance(nested_list, list):
         return nested_list
-    
+
     new_list = []
     i = 0
     while i < len(nested_list):
@@ -779,7 +807,7 @@ def concatenate_strings(nested_list):
             concatenated = current
             j = i + 1
             while j < len(nested_list) and isinstance(nested_list[j], str):
-                concatenated += ' ' + nested_list[j]
+                concatenated += " " + nested_list[j]
                 j += 1
             new_list.append(concatenated)
             i = j
@@ -789,11 +817,11 @@ def concatenate_strings(nested_list):
             i += 1
     return new_list
 
-
     # ---- SUPPLEMENTARY FUNCTIONS ----
 
 
 # ---- HELPER FUNCTIONS ----
+
 
 def load_file(file_path: str):
     """Helper function that loads a single file into a string"""
@@ -804,6 +832,7 @@ def load_file(file_path: str):
         else:
             return file.read().strip()
 
+
 def load_files(folder_path: str):
     """Helper function that loads multiple files into a string list"""
     file_contents = []
@@ -813,6 +842,7 @@ def load_files(folder_path: str):
             with open(file_path, "r") as file:
                 file_contents.append(file.read())
     return file_contents
+
 
 def check_parse_domain(file_path: str):
     """Run PDDL library to check if file is syntactically correct"""
@@ -825,6 +855,7 @@ def check_parse_domain(file_path: str):
         print(f"Error parsing domain: {e}", file=sys.stderr)
         print("------------------")
         sys.exit(1)
+
 
 def check_parse_problem(file_path: str):
     """Run PDDL library to check if file is syntactically correct"""

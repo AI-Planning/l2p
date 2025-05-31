@@ -6,8 +6,8 @@ Run: python3 -m paper_reconstructions.llm+p.main
 Assumes the following:
     1. NL task description
     2. Ground-truth PDDL domain
-    
-This library only focuses on model generation, so it is not concerned with the other phase of LLM+P: LLM translating PDDL plans to NL. 
+
+This library only focuses on model generation, so it is not concerned with the other phase of LLM+P: LLM translating PDDL plans to NL.
 This module contains all domains from LLM+P code (except Manipulation domain as L2P currently does not support cost actions).
 Experimentation recreation was only done on first four problems of each domain. Example results found in `./domains/blocksworld/results`
 """
@@ -114,7 +114,9 @@ if __name__ == "__main__":
 
     # load in arguments to run program
     parser = argparse.ArgumentParser(description="LLM+P")
-    parser.add_argument("--model", type=str, default="gpt-4o-mini") # experiment originally ran on o3-mini
+    parser.add_argument(
+        "--model", type=str, default="gpt-4o-mini"
+    )  # experiment originally ran on o3-mini
     parser.add_argument("--domain", type=str, choices=DOMAINS, default="termes")
     parser.add_argument("--task", type=int, default=3)  # task to run
     parser.add_argument("--planner", type=str, default="downward/fast-downward.py")

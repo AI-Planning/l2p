@@ -1,13 +1,13 @@
 """
-This is a subclass (OPENAI) for abstract class (BaseLLM) that implements an interface 
-to interact with OpenAI's chat-based language models via the official OpenAI API. It 
+This is a subclass (OPENAI) for abstract class (BaseLLM) that implements an interface
+to interact with OpenAI's chat-based language models via the official OpenAI API. It
 supports providers that are compatible with OpenAI SDK usage (i.e. DeepSeek, Anthropic, etc.).
 
-A YAML configuration file is required to specify model parameters, costs, and other 
-provider-specific settings. By default, the l2p library includes a configuration file 
+A YAML configuration file is required to specify model parameters, costs, and other
+provider-specific settings. By default, the l2p library includes a configuration file
 located at 'l2p/llm/utils/llm.yaml'.
 
-Users can also define their own custom models and parameters by extending the YAML 
+Users can also define their own custom models and parameters by extending the YAML
 configuration using the same format template.
 """
 
@@ -15,16 +15,17 @@ from retry import retry
 from typing_extensions import override
 from .base import BaseLLM, load_yaml
 
+
 class OPENAI(BaseLLM):
     def __init__(
-            self,
-            model: str,
-            config_path: str = "l2p/llm/utils/llm.yaml",
-            provider: str = "openai",
-            api_key: str | None = None,   
-            base_url: str = "https://api.openai.com/v1/"
-        ) -> None:
-        
+        self,
+        model: str,
+        config_path: str = "l2p/llm/utils/llm.yaml",
+        provider: str = "openai",
+        api_key: str | None = None,
+        base_url: str = "https://api.openai.com/v1/",
+    ) -> None:
+
         # load yaml configuration path
         self.provider = provider
         self._config = load_yaml(config_path)
@@ -45,7 +46,7 @@ class OPENAI(BaseLLM):
                 "The 'tiktoken' library is required for token processing but is not installed. "
                 "Install it using: `pip install tiktoken`."
             )
-        
+
         # retrieve model configurations
         model_config = self._config.get(self.provider, {}).get(model, {})
         self.model_engine = model_config.get("engine", model)
@@ -61,12 +62,15 @@ class OPENAI(BaseLLM):
         self.tok = tiktoken.get_encoding("cl100k_base")
         self.in_tokens = 0
         self.out_tokens = 0
-        self.query_log = [] # per-query metadata storage
+        self.query_log = []  # per-query metadata storage
 
         # Retrieve cost information for the model from the YAML
-        self.cost_per_input_token = model_config.get("cost_usd_mtok", {}).get("input", 0)
-        self.cost_per_output_token = model_config.get("cost_usd_mtok", {}).get("output", 0)
-
+        self.cost_per_input_token = model_config.get("cost_usd_mtok", {}).get(
+            "input", 0
+        )
+        self.cost_per_output_token = model_config.get("cost_usd_mtok", {}).get(
+            "output", 0
+        )
 
     def _set_parameters(self, model_config: dict) -> None:
         """Set parameters from the model configuration."""
@@ -80,24 +84,18 @@ class OPENAI(BaseLLM):
             "frequency_penalty": 0.0,
             "presence_penalty": 0.0,
             "stop": None,
-            "reasoning_effort": None
+            "reasoning_effort": None,
         }
 
         parameters = model_config.get("model_params", {})
         for key, default in defaults.items():
             setattr(self, key, parameters.get(key, default))
 
-
     @retry(tries=2, delay=60)
     def connect_openai(self, client, model, messages, **kwargs):
         """Send a request to OpenAI API"""
-        
-        return client.chat.completions.create(
-            model=model, 
-            messages=messages, 
-            **kwargs
-            )
 
+        return client.chat.completions.create(model=model, messages=messages, **kwargs)
 
     @override
     def query(
@@ -117,7 +115,10 @@ class OPENAI(BaseLLM):
 
         # estimate current usage of tokens
         current_tokens = sum(len(self.tok.encode(m["content"])) for m in messages)
-        requested_tokens = min(self.max_completion_tokens, self.context_length - current_tokens - est_margin)
+        requested_tokens = min(
+            self.max_completion_tokens,
+            self.context_length - current_tokens - est_margin,
+        )
 
         print(
             f"Requesting {requested_tokens} tokens "
@@ -128,7 +129,9 @@ class OPENAI(BaseLLM):
         conn_success, n_retry = False, 0
         while not conn_success and n_retry < max_retry:
             try:
-                print(f"[INFO] connecting to {self.model_engine} ({requested_tokens} tokens)...")
+                print(
+                    f"[INFO] connecting to {self.model_engine} ({requested_tokens} tokens)..."
+                )
 
                 kwargs = {
                     "temperature": self.temperature,
@@ -148,10 +151,12 @@ class OPENAI(BaseLLM):
                     client=self.client,
                     model=self.model_engine,
                     messages=messages,
-                    **kwargs
+                    **kwargs,
                 )
-                
-                llm_output = response.choices[0].message.content # retrieve output from completion
+
+                llm_output = response.choices[
+                    0
+                ].message.content  # retrieve output from completion
 
                 # record token usage
                 usage = getattr(response, "usage", None)
@@ -173,7 +178,7 @@ class OPENAI(BaseLLM):
                 print(f"[ERROR] LLM error: {e}")
                 if end_when_error:
                     break
-            
+
             n_retry += 1
 
         if not conn_success:
@@ -182,18 +187,30 @@ class OPENAI(BaseLLM):
             )
 
         # log query information
-        self.query_log.append({
-            "model": self.model_engine,
-            "prompt_tokens": usage.prompt_tokens if usage else current_tokens,
-            "completion_tokens": usage.completion_tokens if usage else len(self.tok.encode(llm_output)),
-            "reasoning_tokens": usage.completion_tokens_details.reasoning_tokens if usage else 0,
-            "total_tokens": usage.total_tokens if usage else current_tokens + len(self.tok.encode(llm_output)),
-            "input_cost_usd": input_cost,
-            "output_cost_usd": output_cost,
-            "total_cost_usd": total_cost,
-            "messages": messages,
-            "output": llm_output,
-        })
+        self.query_log.append(
+            {
+                "model": self.model_engine,
+                "prompt_tokens": usage.prompt_tokens if usage else current_tokens,
+                "completion_tokens": (
+                    usage.completion_tokens
+                    if usage
+                    else len(self.tok.encode(llm_output))
+                ),
+                "reasoning_tokens": (
+                    usage.completion_tokens_details.reasoning_tokens if usage else 0
+                ),
+                "total_tokens": (
+                    usage.total_tokens
+                    if usage
+                    else current_tokens + len(self.tok.encode(llm_output))
+                ),
+                "input_cost_usd": input_cost,
+                "output_cost_usd": output_cost,
+                "total_cost_usd": total_cost,
+                "messages": messages,
+                "output": llm_output,
+            }
+        )
 
         return llm_output
 
@@ -209,7 +226,7 @@ class OPENAI(BaseLLM):
     def get_query_log(self) -> list:
         """Retrieve query log."""
         return self.query_log
-    
+
     def reset_query_log(self) -> None:
         """Reset query log."""
         self.query_log = []
@@ -221,4 +238,3 @@ class OPENAI(BaseLLM):
             return list(self._config.get(self.provider, {}).keys())
         except KeyError:
             return []
-    
