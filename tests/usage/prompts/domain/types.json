@@ -1,8 +1,0 @@
-{
-    "object": "Object is always root, everything is an object",
-    "children": [
-        {"arm": "mechanical arm that picks up and stacks blocks on other blocks or table.", "children": []},
-        {"block": "colored block that can be stacked or stacked on other blocks or table.", "children": []},
-        {"table": "surface where the blocks can be placed on top of.", "children": []}
-    ]
-}

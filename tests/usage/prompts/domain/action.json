@@ -1,4 +1,0 @@
-{
-    "action_name": "stack",
-    "action_desc": "allows the arm to stack a block on top of another block if the arm is holding the top block and the bottom block is clear. After the stack action, the arm will be empty, the top block will be on top of the bottom block, and the bottom block will no longer be clear."
-}

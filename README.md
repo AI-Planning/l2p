@@ -1,6 +1,6 @@
 # l2p : LLM-driven Planning Model library kit
 
-This library is a collection of tools for PDDL model generation extracted from natural language driven by large language models. This library is an expansion from the survey paper [**LLMs as Planning Formalizers: A Survey for Leveraging Large Language Models to Construct Automated Planning Specifications**](https://arxiv.org/abs/2503.18971v1)
+This library is a collection of tools for PDDL model generation extracted from natural language driven by large language models. This library is an expansion from the survey paper [**LLMs as Planning Formalizers: A Survey for Leveraging Large Language Models to Construct Automated Planning Specifications**](https://arxiv.org/abs/2503.18971v1).
 
 L2P is an offline, natural language-to-planning model system that supports domain-agnostic planning. It does this via creating an intermediate [PDDL](https://planning.wiki/guide/whatis/pddl) representation of the domain and task, which can then be solved by a classical planner.
 
@@ -129,6 +129,7 @@ pip install -r requirements.txt
 These environments can then be exited with `conda deactivate` and `deactivate` respectively. The instructions below assume that a suitable environemnt is active.
 
 **API keys**
+
 L2P requires access to an LLM. L2P provides support for OpenAI's models and other providers compatible with OpenAI SDK. To configure these, provide the necessary API-key in an environment variable.
 
 **OpenAI**
