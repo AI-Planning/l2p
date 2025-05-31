@@ -2,7 +2,7 @@
 PDDL Feedback Generation Utilities
 
 This module provides tools for generating feedback on LLM-generated PDDL domains and tasks.
-It supports multiple feedback strategies including human-written, LLM-generated, and hybrid feedback.
+It supports multiple feedback strategies including human-written or LLM-generated feedback.
 
 NOTE: is worth noting that the usefulness of LLM feedback is uncertain. It is inspired by the NL2PLAN framework 
     (Gestrin et al., 2024) and is designed to provide feedback to LLM output w/o human intervention.
@@ -29,7 +29,7 @@ class FeedbackBuilder:
     ) -> tuple[bool, str]:
         """
         This retrieves the type of feedback user requests and returns feedack message.
-        feedback_type takes in either "human" "llm" or "hybrid" which it both
+        feedback_type takes in either "human" or "llm"
         """
 
         if feedback_type.lower() == "human":
@@ -37,20 +37,9 @@ class FeedbackBuilder:
         elif feedback_type.lower() == "llm":
             model.reset_tokens()
             feedback_msg = model.query(prompt=feedback_template)
-            model.reset_tokens()
-        elif feedback_type.lower() == "hybrid":
-            feedback_msg = model.query(prompt=feedback_template)
-            response = (
-                "\nORIGINAL LLM OUTPUT:\n"
-                + llm_output
-                + "\nFEEDBACK:\n"
-                + feedback_msg
-            )
-            feedback_msg.replace("no feedback".lower(), "")
-            feedback_msg += self.human_feedback(response)
         else:
             raise ValueError(
-                "Invalid feedback_type. Expected 'human', 'llm', or 'hybrid'."
+                "Invalid feedback_type. Expected 'human' or 'llm'"
             )
             
         no_feedback = self.feedback_state(info=feedback_msg)
@@ -113,7 +102,7 @@ class FeedbackBuilder:
             domain_desc (str): general domain information
             llm_output (str): original LLM output
             feedback_template (str): prompt template to guide LLM to provide feedback to initial output
-            feedback_type (str): type of feedback assistant - 'llm', 'human', 'hybrid' (both)
+            feedback_type (str): type of feedback assistant - 'llm', 'human'
             types (dict[str,str] | list[dict[str,str]]): PDDL types of current specification
 
         Returns:
@@ -157,7 +146,7 @@ class FeedbackBuilder:
             domain_desc (str): general domain information
             llm_output (str): original LLM output
             feedback_template (str): prompt template to guide LLM to provide feedback to initial output
-            feedback_type (str): type of feedback assistant - 'llm', 'human', 'hybrid' (both)
+            feedback_type (str): type of feedback assistant - 'llm', 'human'
             types (dict[str,str] | list[dict[str,str]]): PDDL types of current specification
             nl_actions (dict[str,str]): optional to supplement feedback prompt
 
@@ -206,7 +195,7 @@ class FeedbackBuilder:
             domain_desc (str): general domain information
             llm_output (str): original LLM output
             feedback_template (str): prompt template to guide LLM to provide feedback to initial output
-            feedback_type (str): type of feedback assistant - 'llm', 'human', 'hybrid' (both)
+            feedback_type (str): type of feedback assistant - 'llm', 'human'
             action (Action): current action specifications
             types (dict[str,str] | list[dict[str,str]]): PDDL types of current specification
             constants (dict[str,str]): current constants in specification, defaults to None
@@ -271,7 +260,7 @@ class FeedbackBuilder:
             domain_desc (str): general domain information
             llm_output (str): original LLM output
             feedback_template (str): prompt template to guide LLM to provide feedback to initial output
-            feedback_type (str): type of feedback assistant - 'llm', 'human', 'hybrid' (both)
+            feedback_type (str): type of feedback assistant - 'llm', 'human'
             parameter (OrderedDict): PDDL params of current action
             action_name (str): name of action
             action_desc (str): description of action
@@ -333,7 +322,7 @@ class FeedbackBuilder:
             domain_desc (str): general domain information
             llm_output (str): original LLM output
             feedback_template (str): prompt template to guide LLM to provide feedback to initial output
-            feedback_type (str): type of feedback assistant - 'llm', 'human', 'hybrid' (both)
+            feedback_type (str): type of feedback assistant - 'llm', 'human'
             parameter (OrderedDict): PDDL params of current action
             preconditions (str): PDDL precondition of current action
             action_name (str): name of action
@@ -405,7 +394,7 @@ class FeedbackBuilder:
             domain_desc (str): general domain information
             llm_output (str): original LLM output
             feedback_template (str): prompt template to guide LLM to provide feedback to initial output
-            feedback_type (str): type of feedback assistant - 'llm', 'human', 'hybrid' (both)
+            feedback_type (str): type of feedback assistant - 'llm', 'human'
             parameter (OrderedDict): PDDL params of current action
             preconditions (str): PDDL precondition of current action
             effects (str): PDDL effect of current action
@@ -474,7 +463,7 @@ class FeedbackBuilder:
             domain_desc (str): general domain information
             llm_output (str): original LLM output
             feedback_template (str): prompt template to guide LLM to provide feedback to initial output
-            feedback_type (str): type of feedback assistant - 'llm', 'human', 'hybrid' (both)
+            feedback_type (str): type of feedback assistant - 'llm', 'human'
             types (dict[str,str] | list[dict[str,str]]): dictionary of types currently in specification
             constants (dict[str,str]): current constants in specification, defaults to None
             predicates (list[Predicate]): list of predicates currently in specification
@@ -528,7 +517,7 @@ class FeedbackBuilder:
             problem_desc (str): general problem information
             llm_output (str): original LLM output
             feedback_template (str): prompt template to guide LLM to provide feedback to initial output
-            feedback_type (str): type of feedback assistant - 'llm', 'human', 'hybrid' (both)
+            feedback_type (str): type of feedback assistant - 'llm', 'human'
             objects (dict[str,str]): objects of current task specification
             initial (list[dict[str,str]]): initial states of current task specification
             goal (list[dict[str,str]]): goal states of current task specification
@@ -593,7 +582,7 @@ class FeedbackBuilder:
             domain_desc (str): general domain information
             llm_output (str): original LLM output
             feedback_template (str): prompt template to guide LLM to provide feedback to initial output
-            feedback_type (str): type of feedback assistant - 'llm', 'human', 'hybrid' (both)
+            feedback_type (str): type of feedback assistant - 'llm', 'human'
             objects (dict[str,str]): objects of current task specification
             types (dict[str,str] | list[dict[str,str]]): dictionary of types currently in specification
             constants (dict[str,str]): current constants in specification, defaults to None
@@ -653,7 +642,7 @@ class FeedbackBuilder:
             domain_desc (str): general domain information
             llm_output (str): original LLM output
             feedback_template (str): prompt template to guide LLM to provide feedback to initial output
-            feedback_type (str): type of feedback assistant - 'llm', 'human', 'hybrid' (both)
+            feedback_type (str): type of feedback assistant - 'llm', 'human'
             objects (dict[str,str]): objects of current task specification
             initial (list[dict[str,str]]): initial states of current task specification
             types (dict[str,str] | list[dict[str,str]]): dictionary of types currently in specification
@@ -717,7 +706,7 @@ class FeedbackBuilder:
             domain_desc (str): general domain information
             llm_output (str): original LLM output
             feedback_template (str): prompt template to guide LLM to provide feedback to initial output
-            feedback_type (str): type of feedback assistant - 'llm', 'human', 'hybrid' (both)
+            feedback_type (str): type of feedback assistant - 'llm', 'human'
             objects (dict[str,str]): objects of current task specification
             initial (list[dict[str,str]]): initial states of current task specification
             goal (list[dict[str,str]]): goal states of current task specification
