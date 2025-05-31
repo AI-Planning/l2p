@@ -115,10 +115,10 @@ def format_constants(constants: dict[str,str]) -> str:
     
     return "\n".join(lines)
 
-def format_expression(expression: list[Predicate] | list[Function]) -> str:
+def format_expression(expressions: list[Predicate] | list[Function]) -> str:
     """Formats predicate/function list into a PDDL-style string, removing exact duplicates."""
     unique = dict()  # key = (name.lower(), tuple(params)), value = clean string
-    for exp in expression:
+    for exp in expressions:
         key = (exp["name"], tuple(exp["params"]))
         if key not in unique:
             unique[key] = exp["clean"].replace(":", " ; ")
@@ -271,11 +271,11 @@ def pretty_print_dict(data):
     else:
         raise TypeError("Input must be a dictionary or a list of dictionaries")
 
-def pretty_print_predicates(predicates: list[Predicate]) -> str:
+def pretty_print_expression(expressions: list[Predicate] | list[Function]) -> str:
     """Formats list of predicates easier for readability"""
-    if not predicates:
+    if not expressions:
         return ""
     return "\n".join(
-        f"{i + 1}. {pred['name']}: {pred.get('desc', 'No description provided') or 'No description provided'}"
-        for i, pred in enumerate(predicates)
+        f"{i + 1}. {exp['name']}: {exp.get('desc', 'No description provided') or 'No description provided'}"
+        for i, exp in enumerate(expressions)
     )

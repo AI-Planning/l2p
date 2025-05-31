@@ -44,7 +44,7 @@ if __name__ == "__main__":
         + "\n\nhere are the types I have:\n"
         + pretty_print_dict(types)
         + "\n\nhere are the predicates I have:\n"
-        + pretty_print_predicates(predicates)
+        + pretty_print_expression(predicates)
     )
     ZPD_prompt = PromptBuilder(
         role=role, technique=technique, examples=[example], task=task
