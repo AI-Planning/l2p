@@ -184,19 +184,6 @@ success, plan_str = planner.run_fast_downward(
 print(plan_str)
 ```
 
-## Current Works Reconstructed Using L2P
-The following are papers that have been reconstructed so far. *Checked* boxes are completed, *unchecked* are papers currently in queue to be reconstructed. This list will be updated in the future.
-
-- [x] `P+S` [[paper]](https://arxiv.org/abs/2205.05718)
-- [x] `LLM+P` [[paper]](https://arxiv.org/abs/2304.11477)
-- [x] `PROC2PDDL` [[paper]](https://arxiv.org/abs/2403.00092)
-- [x] `LLM+DM` [[paper]](https://arxiv.org/abs/2305.14909)
-- [x] `NL2Plan` [[paper]](https://arxiv.org/abs/2405.04215)
-- [ ] `LLM+DP` [[paper]](https://arxiv.org/abs/2308.06391)
-- [ ] `LLM+EW` [[paper]](https://arxiv.org/abs/2407.12979)
-- [ ] `LLM+Consistency` [[paper]](https://arxiv.org/abs/2404.07751)
-- [ ] `LaMMa-P`[[paper]](https://arxiv.org/abs/2409.20560)
-
 To stay up to date with the most current papers, please visit [**here**](https://marcustantakoun.github.io/l2p.github.io/paper_feed.html).
 
 ## Contact
