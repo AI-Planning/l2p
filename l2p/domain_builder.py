@@ -4,7 +4,8 @@ PDDL Domain Formalization/Generation Functions
 This module defines the `DomainBuilder` class and related utilities for constructing
 PDDL domain specifications programatically.
 
-Refer to /docs for more information how to use class funcions. Refer to /templates
+Refer to: https://marcustantakoun.github.io/l2p.github.io/l2p.html for more information
+how to use class functions. Refer to /templates in: https://github.com/AI-Planning/l2p
 for how to structurally prompt LLMs so they are compatible with class function parsing.
 """
 

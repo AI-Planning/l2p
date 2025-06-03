@@ -4,7 +4,7 @@ PDDL Feedback Generation Utilities
 This module provides tools for generating feedback on LLM-generated PDDL domains and tasks.
 It supports multiple feedback strategies including human-written or LLM-generated feedback.
 
-NOTE: is worth noting that the usefulness of LLM feedback is uncertain. It is inspired by the NL2PLAN framework
+NOTE: is worth noting that the usefulness of LLM feedback is experimental. It is inspired by the NL2PLAN framework
     (Gestrin et al., 2024) and is designed to provide feedback to LLM output w/o human intervention.
 """
 
@@ -40,6 +40,7 @@ class FeedbackBuilder:
         else:
             raise ValueError("Invalid feedback_type. Expected 'human' or 'llm'")
 
+        # retrieve feedback message
         no_feedback = self.feedback_state(info=feedback_msg)
 
         if no_feedback:
@@ -48,7 +49,14 @@ class FeedbackBuilder:
         return False, feedback_msg
 
     def feedback_state(self, info: str):
-        """Confirms if feedback is needed."""
+        """
+        Confirms if feedback is needed from output.
+
+        It expects a `### JUDGMENT` header with enclosed (```) boxes with an answer
+        of either 'no feedback' or content of suggestion.
+
+        Refer to l2p/templates/feedback_templates for proper LLM output structuring.
+        """
         try:
             judgement_head = parse_heading(info, "JUDGMENT")
             judgement_raw = combine_blocks(judgement_head)
@@ -72,12 +80,14 @@ class FeedbackBuilder:
             if line.strip().lower() == "done":
                 break
             contents.append(line)
-        resp = "\n".join(contents)
+        response = "\n".join(contents)
 
-        if resp.strip().lower() == "no feedback":
-            return "no feedback"
+        if response.lower() == "no feedback" or response == "":
+            feedback = "### JUDGMENT\n```\nno feedback\n```"
+        else:
+            feedback = f"### JUDGMENT\n```\n{response}\n```"
 
-        return resp
+        return feedback
 
     @require_llm
     def type_feedback(
@@ -95,9 +105,9 @@ class FeedbackBuilder:
         Args:
             model (BaseLLM): LLM to query
             domain_desc (str): general domain information
-            llm_output (str): original LLM output
             feedback_template (str): prompt template to guide LLM to provide feedback to initial output
             feedback_type (str): type of feedback assistant - 'llm', 'human'
+            llm_output (str): original LLM output
             types (dict[str,str] | list[dict[str,str]]): PDDL types of current specification
 
         Returns:
@@ -123,9 +133,9 @@ class FeedbackBuilder:
         self,
         model: BaseLLM,
         domain_desc: str,
-        llm_output: str,
         feedback_template: str,
         feedback_type: str = "llm",
+        llm_output: str = "",
         types: dict[str, str] | list[dict[str, str]] = None,
         nl_actions: dict[str, str] = None,
     ) -> tuple[bool, str]:
@@ -135,9 +145,9 @@ class FeedbackBuilder:
         Args:
             model (BaseLLM): LLM to query
             domain_desc (str): general domain information
-            llm_output (str): original LLM output
             feedback_template (str): prompt template to guide LLM to provide feedback to initial output
             feedback_type (str): type of feedback assistant - 'llm', 'human'
+            llm_output (str): original LLM output
             types (dict[str,str] | list[dict[str,str]]): PDDL types of current specification
             nl_actions (dict[str,str]): optional to supplement feedback prompt
 
@@ -146,6 +156,7 @@ class FeedbackBuilder:
             fb_msg (str): feedback message from assistant
         """
 
+        # format string info replacements
         types_str = pretty_print_dict(types) if types else "No types provided."
         nl_act_str = (
             pretty_print_dict(nl_actions) if nl_actions else "No actions provided."
@@ -182,9 +193,9 @@ class FeedbackBuilder:
         Args:
             model (BaseLLM): LLM to query
             domain_desc (str): general domain information
-            llm_output (str): original LLM output
             feedback_template (str): prompt template to guide LLM to provide feedback to initial output
             feedback_type (str): type of feedback assistant - 'llm', 'human'
+            llm_output (str): original LLM output
             action (Action): current action specifications
             types (dict[str,str] | list[dict[str,str]]): PDDL types of current specification
             constants (dict[str,str]): current constants in specification, defaults to None
@@ -196,6 +207,7 @@ class FeedbackBuilder:
             fb_msg (str): feedback message from assistant
         """
 
+        # format string info replacements
         act_name_str = action["name"] if action else "No action name provided."
         params_str = (
             "\n".join([f"{name} - {type}" for name, type in action["params"].items()])
@@ -257,9 +269,9 @@ class FeedbackBuilder:
         Args:
             model (BaseLLM): LLM to query
             domain_desc (str): general domain information
-            llm_output (str): original LLM output
             feedback_template (str): prompt template to guide LLM to provide feedback to initial output
             feedback_type (str): type of feedback assistant - 'llm', 'human'
+            llm_output (str): original LLM output
             parameter (OrderedDict): PDDL params of current action
             action_name (str): name of action
             action_desc (str): description of action
@@ -271,6 +283,7 @@ class FeedbackBuilder:
             fb_msg (str): feedback message from assistant
         """
 
+        # format string info replacements
         act_name_str = action_name if action_name else "No action name provided"
         act_desc_str = action_desc if action_desc else "No action description provided"
         params_str = (
@@ -321,9 +334,9 @@ class FeedbackBuilder:
         Args:
             model (BaseLLM): LLM to query
             domain_desc (str): general domain information
-            llm_output (str): original LLM output
             feedback_template (str): prompt template to guide LLM to provide feedback to initial output
             feedback_type (str): type of feedback assistant - 'llm', 'human'
+            llm_output (str): original LLM output
             parameter (OrderedDict): PDDL params of current action
             preconditions (str): PDDL precondition of current action
             action_name (str): name of action
@@ -338,6 +351,7 @@ class FeedbackBuilder:
             fb_msg (str): feedback message from assistant
         """
 
+        # format string info replacements
         act_name_str = action_name if action_name else "No action name provided"
         act_desc_str = action_desc if action_desc else "No action description provided"
         params_str = (
@@ -403,9 +417,9 @@ class FeedbackBuilder:
         Args:
             model (BaseLLM): LLM to query
             domain_desc (str): general domain information
-            llm_output (str): original LLM output
             feedback_template (str): prompt template to guide LLM to provide feedback to initial output
             feedback_type (str): type of feedback assistant - 'llm', 'human'
+            llm_output (str): original LLM output
             parameter (OrderedDict): PDDL params of current action
             preconditions (str): PDDL precondition of current action
             effects (str): PDDL effect of current action
@@ -421,6 +435,7 @@ class FeedbackBuilder:
             fb_msg (str): feedback message from assistant
         """
 
+        # format string info replacements
         act_name_str = action_name if action_name else "No action name provided"
         act_desc_str = action_desc if action_desc else "No action description provided"
         params_str = (
@@ -482,9 +497,9 @@ class FeedbackBuilder:
         Args:
             model (BaseLLM): LLM to query
             domain_desc (str): general domain information
-            llm_output (str): original LLM output
             feedback_template (str): prompt template to guide LLM to provide feedback to initial output
             feedback_type (str): type of feedback assistant - 'llm', 'human'
+            llm_output (str): original LLM output
             types (dict[str,str] | list[dict[str,str]]): dictionary of types currently in specification
             constants (dict[str,str]): current constants in specification, defaults to None
             predicates (list[Predicate]): list of predicates currently in specification
@@ -494,6 +509,7 @@ class FeedbackBuilder:
             fb_msg (str): feedback message from assistant
         """
 
+        # format string info replacements
         types_str = pretty_print_dict(types) if types else "No types provided."
         const_str = (
             format_constants(constants) if constants else "No constants provided."
@@ -538,9 +554,9 @@ class FeedbackBuilder:
         Args:
             model (BaseLLM): LLM to query
             problem_desc (str): general problem information
-            llm_output (str): original LLM output
             feedback_template (str): prompt template to guide LLM to provide feedback to initial output
             feedback_type (str): type of feedback assistant - 'llm', 'human'
+            llm_output (str): original LLM output
             objects (dict[str,str]): objects of current task specification
             initial (list[dict[str,str]]): initial states of current task specification
             goal (list[dict[str,str]]): goal states of current task specification
@@ -554,6 +570,7 @@ class FeedbackBuilder:
             fb_msg (str): feedback message from assistant
         """
 
+        # format string info replacements
         obj_str = (
             "\n".join([f"{obj} - {type}" for obj, type in objects.items()])
             if objects
@@ -613,9 +630,9 @@ class FeedbackBuilder:
         Args:
             model (BaseLLM): LLM to query
             domain_desc (str): general domain information
-            llm_output (str): original LLM output
             feedback_template (str): prompt template to guide LLM to provide feedback to initial output
             feedback_type (str): type of feedback assistant - 'llm', 'human'
+            llm_output (str): original LLM output
             objects (dict[str,str]): objects of current task specification
             types (dict[str,str] | list[dict[str,str]]): dictionary of types currently in specification
             constants (dict[str,str]): current constants in specification, defaults to None
@@ -627,6 +644,7 @@ class FeedbackBuilder:
             fb_msg (str): feedback message from assistant
         """
 
+        # format string info replacements
         obj_str = (
             "\n".join([f"{obj} - {type}" for obj, type in objects.items()])
             if objects
@@ -683,9 +701,9 @@ class FeedbackBuilder:
         Args:
             model (BaseLLM): LLM to query
             domain_desc (str): general domain information
-            llm_output (str): original LLM output
             feedback_template (str): prompt template to guide LLM to provide feedback to initial output
             feedback_type (str): type of feedback assistant - 'llm', 'human'
+            llm_output (str): original LLM output
             objects (dict[str,str]): objects of current task specification
             initial (list[dict[str,str]]): initial states of current task specification
             types (dict[str,str] | list[dict[str,str]]): dictionary of types currently in specification
@@ -698,6 +716,7 @@ class FeedbackBuilder:
             fb_msg (str): feedback message from assistant
         """
 
+        # format string info replacements
         obj_str = (
             "\n".join([f"{obj} - {type}" for obj, type in objects.items()])
             if objects
@@ -757,9 +776,9 @@ class FeedbackBuilder:
         Args:
             model (BaseLLM): LLM to query
             domain_desc (str): general domain information
-            llm_output (str): original LLM output
             feedback_template (str): prompt template to guide LLM to provide feedback to initial output
             feedback_type (str): type of feedback assistant - 'llm', 'human'
+            llm_output (str): original LLM output
             objects (dict[str,str]): objects of current task specification
             initial (list[dict[str,str]]): initial states of current task specification
             goal (list[dict[str,str]]): goal states of current task specification
@@ -773,6 +792,7 @@ class FeedbackBuilder:
             fb_msg (str): feedback message from assistant
         """
 
+        # format string info replacements
         obj_str = (
             "\n".join([f"{obj} - {type}" for obj, type in objects.items()])
             if objects

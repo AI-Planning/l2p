@@ -78,7 +78,7 @@ Generates prompt templates for LLMs to assemble organized prompts and swap betwe
 
 ### Components:
 - **Roles**: Overview task for the LLM.
-- **Technique**: Defines prompting methods (e.g., CoT, ZPD).
+- **Format**: Defines format method for LLM to follow as final output.
 - **Example**: Provides in-context examples.
 - **Task**: Placeholder definitions for proper information extraction.
 
@@ -99,10 +99,10 @@ Contains tools to format L2P's python structured PDDL components into strings re
 Contains tools to parse L2P information extraction.
 
 ### pddl_types.py
-Contains PDDL types 'Action' and 'Predicate' as well as Domain, Problem, and Plan details. These can be utilized to help organize builder method calls easier.
+Contains PDDL types 'Action' and 'Predicate' as well as Domain, Problem, Plan details, etc. These can be utilized to help organize builder method calls easier.
 
 ### pddl_validator.py
-Contains tools to validate PDDL specifications and returns error feedback.
+Contains tools to validate PDDL specifications and returns error feedback. Visit [**L2P Documention**](https://marcustantakoun.github.io/l2p.github.io/) for more information how to use the validators.
 
 ### pddl_planner.py
 For ease of use, our library contains submodule [FastDownward](https://github.com/aibasel/downward/tree/308812cf7315fe896dbcd319493277d82aa36bd2). Fast Downward is a domain-independent classical planning system that users can run their PDDL domain and problem files on. The motivation is that the majority of papers involving PDDL-LLM usage uses this library as their planner.
@@ -111,9 +111,19 @@ This planner can be run like:
 ```python
 from l2p.utils.pddl_planner import FastDownward
 
-planner = FastDownward()   
-domain = "path/to/domain.pddl"
-problem = "path/to/problem.pddl"
+# retrieve pddl files
+domain_file = "tests/pddl/test_domain.pddl"
+problem_file = "tests/pddl/test_problem.pddl"
 
-pass, plan = planner.run_fast_downward(domain, problem)
+# instantiate FastDownward class
+planner = FastDownward(planner_path="<PATH_TO>/downward/fast-downward.py")
+
+# run plan
+success, plan_str = planner.run_fast_downward(
+    domain_file=domain_file,
+    problem_file=problem_file,
+    search_alg="lama-first"
+)
+
+print(plan_str)
 ```

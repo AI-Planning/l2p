@@ -77,7 +77,7 @@ class BaseLLM(ABC):
 
     def query_with_system_prompt(self, system_prompt: str, prompt: str) -> str:
         """
-        Abstract methody to query an LLM with a given prompt and system prompt and return the response.
+        Abstract method to query an LLM with a given prompt and system prompt and return the response.
 
         Args:
             system_prompt (str): The system prompt to send to the LLM
