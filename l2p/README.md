@@ -37,15 +37,15 @@ Responsible for generating PDDL task information via LLMs.
 - [x] **Objects** (PDDL 1.2+): Defines objects involved in the problem.
 - [x] **Initial State** (PDDL 1.2+): Specifies the initial configuration of the world.
 - [x] **Goal State** (PDDL 1.2+): Defines the conditions to achieve the goal.
-- [ ] **Quantified Goals** (PDDL 2.2+): Defines goals with quantification.
-- [ ] **Negative Goals** (PDDL 2.2+): Specifies goals where predicates must be false.
-- [ ] **Metric Optimization** (PDDL 2.1+): Optimizes a given metric, such as minimizing resources.
-- [ ] **Timeline Constraints** (PDDL 2.2+): Specifies constraints governing the sequence of events.
+- [x] **Negative Goals** (PDDL 2.2+): Specifies goals where predicates must be false.
 - [ ] **Temporal Goal Definition** (PDDL 2.2+): Defines time-sensitive goals.
-- [ ] **Preferences** (PDDL 3.0+): Defines soft, non-mandatory goals.
-- [ ] **Resource Constraints** (PDDL 2.1+): Limits on resources like robots or fuel.
+- [ ] **Quantified Goals** (PDDL 2.2+): Defines goals with quantification.
 - [ ] **Durative Goals** (PDDL 2.2+): Specifies goals over a specific time duration.
 - [ ] **Conditional Goals** (PDDL 2.2+): Defines goals based on certain conditions.
+- [ ] **Metric Optimization** (PDDL 2.1+): Optimizes a given metric, such as minimizing resources.
+- [ ] **Resource Constraints** (PDDL 2.1+): Limits on resources like robots or fuel.
+- [ ] **Timeline Constraints** (PDDL 2.2+): Specifies constraints governing the sequence of events.
+- [ ] **Preferences** (PDDL 3.0+): Defines soft, non-mandatory goals.
 
 ---
 
