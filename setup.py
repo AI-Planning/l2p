@@ -5,14 +5,14 @@ with open("README.md", "r") as fh:
 
 setup(
     name="l2p",
-    version="0.2.2",
+    version="0.3.1",
     packages=find_packages(exclude=["tests"]),
     description="Library to connect LLMs and planning tasks",
     long_description=long_description,
     long_description_content_type="text/markdown",
     author="Marcus Tantakoun, Christian Muise",
     author_email="mtantakoun@gmail.com, christian.muise@gmail.com",
-    install_requires=["retry", "pddl", "typing_extensions"],
+    install_requires=["retry", "pddl", "typing_extensions, pyyaml"],
     license="MIT",
     url="https://github.com/AI-Planning/l2p",
     classifiers=[
