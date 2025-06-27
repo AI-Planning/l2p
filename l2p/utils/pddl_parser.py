@@ -28,6 +28,7 @@ def parse_types(llm_output: str, heading: str = "TYPES") -> Optional[dict[str, s
 
     Args:
         llm_output (str): raw string from the LLM expected to contain a flat dictionary
+        heading (str): header string to extract text. Defaults to `TYPES`
 
     Returns:
         types_parsed (dict[str, str]) | None: parsed dictionary of :types if valid, else None.
@@ -67,19 +68,20 @@ def parse_types(llm_output: str, heading: str = "TYPES") -> Optional[dict[str, s
         return None
 
 
-def parse_type_hierarchy(llm_output: str) -> Optional[list[dict[str, str]]]:
+def parse_type_hierarchy(llm_output: str, heading: str = "TYPES") -> Optional[list[dict[str, str]]]:
     """
     Safely parses LLM response into a list of nested dictionaries representing the type hierarchy.
 
     Args:
         llm_output (str): raw LLM output expected to contain a Python list of dictionaries.
+        heading (str): header string to extract text. Defaults to `TYPES`
 
     Returns:
         types_parsed (list[dict[str,str]]) | None: parsed type hierarchy if valid, else None.
     """
     try:
 
-        types_head = parse_heading(llm_output, "TYPES")
+        types_head = parse_heading(llm_output, heading)
         if types_head.count("```") != 2:
             raise ValueError(
                 "Could not find exactly one block in the types section enclosed by [```, ```] of the LLM output."
@@ -119,19 +121,20 @@ def parse_type_hierarchy(llm_output: str) -> Optional[list[dict[str, str]]]:
         return None
 
 
-def parse_constants(llm_output: str) -> Optional[dict[str, str]]:
+def parse_constants(llm_output: str, heading: str = "CONSTANTS") -> Optional[dict[str, str]]:
     """
     Safely extracts and evaluates a dictionary structure from a string (LLM response).
 
     Args:
         llm_output (str): Raw string from the LLM expected to contain a flat dictionary.
+        heading (str): header string to extract text. Defaults to `CONSTANTS`
 
     Returns:
         constants_parsed (dict[str, str]) | None: parsed dictionary if valid, else None.
     """
     try:
 
-        constant_head = parse_heading(llm_output, "CONSTANTS")
+        constant_head = parse_heading(llm_output, heading)
         if constant_head.count("```") != 2:
             raise ValueError(
                 "Could not find exactly one block in the constants section enclosed by [```, ```] of the LLM output."
@@ -192,7 +195,7 @@ def parse_predicates(all_predicates: list[Predicate]) -> list[Predicate]:
     return all_predicates
 
 
-def parse_new_predicates(llm_output) -> list[Predicate]:
+def parse_new_predicates(llm_output: str, heading: str = "New Predicates") -> list[Predicate]:
     """
     Parses new predicates from LLM into Python format (refer to example templates to see
     how these predicates should be formatted in LLM response).
@@ -200,15 +203,13 @@ def parse_new_predicates(llm_output) -> list[Predicate]:
     LLM output header should contain '### New Predicates' along with structured content.
     """
     new_predicates = list()
-    try:
-        predicate_heading = (
-            llm_output.split("New Predicates\n")[1].strip().split("###")[0]
+
+    predicates_head = parse_heading(llm_output, heading)
+    if predicates_head.count("```") != 2:
+        raise ValueError(
+            "Could not find exactly one block in the new predicates section enclosed by [```, ```] of the LLM output."
         )
-    except:
-        raise Exception(
-            "Could not find the 'New Predicates' section in the output. Provide the entire response, including all headings even if some are unchanged."
-        )
-    predicate_output = combine_blocks(predicate_heading)
+    predicate_output = combine_blocks(predicates_head)
 
     for p_line in predicate_output.split("\n"):
         p_line = p_line.strip()
@@ -280,7 +281,7 @@ def parse_new_predicates(llm_output) -> list[Predicate]:
         # generate clean PDDL representation
         clean_params = []
         for param, type_ in params.items():
-            if type_:
+            if type_ and type_ != "object":
                 clean_params.append(f"{param} - {type_}")
             else:
                 clean_params.append(param)
@@ -299,7 +300,7 @@ def parse_new_predicates(llm_output) -> list[Predicate]:
     return new_predicates
 
 
-def parse_functions(llm_output: str) -> list[Function]:
+def parse_functions(llm_output: str, heading: str = "FUNCTIONS") -> list[Function]:
     """
     Parses function from LLM into Python format (refer to example templates to see
     how these functions should be formatted in LLM response).
@@ -307,13 +308,12 @@ def parse_functions(llm_output: str) -> list[Function]:
     LLM output header should contain '### FUNCTIONS' along with structured content.
     """
     functions = list()
-    try:
-        function_heading = llm_output.split("FUNCTIONS\n")[1].strip().split("###")[0]
-    except:
-        raise Exception(
-            "Could not find the 'FUNCTIONS' section in the output. Provide the entire response, including all headings even if some are unchanged."
+    functions_head = parse_heading(llm_output, heading)
+    if functions_head.count("```") != 2:
+        raise ValueError(
+            "Could not find exactly one block in the functions section enclosed by [```, ```] of the LLM output."
         )
-    function_output = combine_blocks(function_heading)
+    function_output = combine_blocks(functions_head)
 
     for f_line in function_output.split("\n"):
         f_line = f_line.strip()
@@ -338,6 +338,10 @@ def parse_functions(llm_output: str) -> list[Function]:
             function_desc = ""
 
         # clean the function signature
+        is_numeric = False
+        if re.search(r"- number\s*$", func_part):
+            is_numeric = True
+            func_part = re.sub(r"\s+- number\s*$", "", func_part)
         func_part = func_part.strip("- ()").strip()
 
         # split into name and parameters
@@ -389,7 +393,11 @@ def parse_functions(llm_output: str) -> list[Function]:
                 clean_params.append(f"{param} - {type_}")
             else:
                 clean_params.append(param)
+        
         clean = f"({function_name} {' '.join(clean_params)})"
+
+        if is_numeric:
+            clean += " - number"
 
         functions.append(
             {
@@ -404,7 +412,7 @@ def parse_functions(llm_output: str) -> list[Function]:
     return functions
 
 
-def parse_action(llm_output: str, action_name: str) -> Action:
+def parse_action(llm_output: str, action_name: str = "action-name") -> Action:
     """
     Parse an action from a given LLM output.
 
@@ -418,25 +426,25 @@ def parse_action(llm_output: str, action_name: str) -> Action:
     parameters, _ = parse_params(llm_output)
     try:
         preconditions = (
-            llm_output.split("Preconditions\n")[1]
+            llm_output.split("Action Preconditions\n")[1]
             .split("###")[0]
             .split("```")[1]
             .strip(" `\n")
         )
     except:
         raise Exception(
-            "Could not find the 'Preconditions' section in the output. Provide the entire response, including all headings even if some are unchanged."
+            "Could not find the 'Action Preconditions' section in the output. Provide the entire response, including all headings even if some are unchanged."
         )
     try:
         effects = (
-            llm_output.split("Effects\n")[1]
+            llm_output.split("Action Effects\n")[1]
             .split("###")[0]
             .split("```")[1]
             .strip(" `\n")
         )
     except:
         raise Exception(
-            "Could not find the 'Effects' section in the output. Provide the entire response, including all headings even if some are unchanged."
+            "Could not find the 'Action Effects' section in the output. Provide the entire response, including all headings even if some are unchanged."
         )
     return {
         "name": action_name,
@@ -446,7 +454,7 @@ def parse_action(llm_output: str, action_name: str) -> Action:
     }
 
 
-def parse_params(llm_output: str) -> tuple[OrderedDict, list]:
+def parse_params(llm_output: str, heading: str = "Action Parameters") -> tuple[OrderedDict, list]:
     """
     Parses parameters from LLM into Python format (refer to example templates to see
     how these parameters should be formatted in LLM response).
@@ -454,10 +462,12 @@ def parse_params(llm_output: str) -> tuple[OrderedDict, list]:
     LLM output header should contain 'Parameters' along with structured content.
     """
     params_info = OrderedDict()
-    params_heading = re.split(
-        r"\n#+\s", llm_output.split("Parameters")[1].strip(), maxsplit=1
-    )[0]
-    params_str = combine_blocks(params_heading)
+    params_head = parse_heading(llm_output, heading)
+    if params_head.count("```") != 2:
+        raise ValueError(
+            "Could not find exactly one block in the parameters section enclosed by [```, ```] of the LLM output."
+        )
+    params_str = combine_blocks(params_head)
     params_raw = []
 
     for line in params_str.split("\n"):
@@ -477,16 +487,13 @@ def parse_params(llm_output: str) -> tuple[OrderedDict, list]:
             parts = line.split(":")
 
             left_side = parts[0].strip()
-            param_parts = [p.strip() for p in left_side.split("-")]
+            param_parts = [p.strip() for p in left_side.split(" - ")]
+            param_name = param_parts[0].strip(" `").strip("-").strip()
 
-            param_name = param_parts[0].strip(" `")
             if len(param_parts) == 2 and param_parts[1]:
                 param_type = param_parts[1].strip(" `")
             else:
-                print(
-                    f"[WARNING] Invalid parameter format: '{line}'. Defaulting to no type."
-                )
-                param_type = ""  # no type provided
+                param_type = "object"  # no type provided
 
             params_info[param_name] = param_type
 
@@ -497,15 +504,15 @@ def parse_params(llm_output: str) -> tuple[OrderedDict, list]:
     return params_info, params_raw
 
 
-def parse_preconditions(llm_output: str) -> str:
+def parse_preconditions(llm_output: str, heading: str = "Action Preconditions") -> str:
     """Parses precondition string from LLM output"""
     try:
-        preconditions = (
-            llm_output.split("Preconditions\n")[1]
-            .split("###")[0]
-            .split("```")[1]
-            .strip(" `\n")
-        )
+        preconds_head = parse_heading(llm_output, heading)
+        if preconds_head.count("```") != 2:
+            raise ValueError(
+                "Could not find exactly one block in the preconditions section enclosed by [```, ```] of the LLM output."
+            )
+        preconditions = combine_blocks(preconds_head)
 
         return preconditions
     except:
@@ -514,15 +521,15 @@ def parse_preconditions(llm_output: str) -> str:
         )
 
 
-def parse_effects(llm_output: str) -> str:
+def parse_effects(llm_output: str, heading: str = "Action Effects") -> str:
     """Parses effect string from LLM output"""
     try:
-        effects = (
-            llm_output.split("Effects\n")[1]
-            .split("###")[0]
-            .split("```")[1]
-            .strip(" `\n")
-        )
+        effects_head = parse_heading(llm_output, heading)
+        if effects_head.count("```") != 2:
+            raise ValueError(
+                "Could not find exactly one block in the effects section enclosed by [```, ```] of the LLM output."
+            )
+        effects = combine_blocks(effects_head)
 
         return effects
     except:
@@ -626,7 +633,7 @@ def prune_predicates(
 # ---- PDDL PROBLEM PARSERS ----
 
 
-def parse_objects(llm_output: str) -> dict[str, str]:
+def parse_objects(llm_output: str, heading: str = "OBJECTS") -> dict[str, str]:
     """
     Extract objects from LLM response and returns dictionary string pairs object(name, type)
 
@@ -639,7 +646,11 @@ def parse_objects(llm_output: str) -> dict[str, str]:
         objects_parsed (dict[str,str]): PDDL task objects
     """
 
-    objects_head = parse_heading(llm_output, "OBJECTS")
+    objects_head = parse_heading(llm_output, heading)
+    if objects_head.count("```") != 2:
+        raise ValueError(
+            "Could not find exactly one block in the problem objects section enclosed by [```, ```] of the LLM output."
+        )
     objects_raw = combine_blocks(objects_head)
     objects_clean = remove_comments(objects_raw)
 
@@ -652,7 +663,7 @@ def parse_objects(llm_output: str) -> dict[str, str]:
     return objects_parsed
 
 
-def parse_initial(llm_output: str) -> list[dict[str, str]]:
+def parse_initial(llm_output: str, heading: str = "INITIAL") -> list[dict[str, str]]:
     """
     Extracts state (PDDL-init) from LLM response and returns it as a list of dict strings
 
@@ -662,7 +673,7 @@ def parse_initial(llm_output: str) -> list[dict[str, str]]:
     Returns:
         states (list[dict[str,str]]): list of initial states in dictionaries
     """
-    initial_head = parse_heading(llm_output, "INITIAL")
+    initial_head = parse_heading(llm_output, heading)
     if initial_head.count("```") != 2:
         raise ValueError(
             "Could not find exactly one block in the initial section enclosed by [```, ```] of the LLM output. The initial states have to be specified in a single block Likely this is caused by a too long response and limited context length. If so, try to shorten the message and exclude objects which aren't needed for the task."
@@ -675,7 +686,7 @@ def parse_initial(llm_output: str) -> list[dict[str, str]]:
     return parse_task_states(initial_parsed)
 
 
-def parse_goal(llm_output: str) -> list[dict[str, str]]:
+def parse_goal(llm_output: str, heading: str = "GOAL") -> list[dict[str, str]]:
     """
     Extracts goal (PDDL-goal) from LLM response and returns it as a string
 
@@ -685,7 +696,7 @@ def parse_goal(llm_output: str) -> list[dict[str, str]]:
     Returns:
         states (list[dict[str,str]]): list of goal states in dictionaries
     """
-    goal_head = parse_heading(llm_output, "GOAL")
+    goal_head = parse_heading(llm_output, heading)
     if goal_head.count("```") != 2:
         raise ValueError(
             "Could not find exactly one block in the goal section enclosed by [```, ```] of the LLM output. The goal states have to be specified in a single block Likely this is caused by a too long response and limited context length. If so, try to shorten the message and exclude objects which aren't needed for the task."

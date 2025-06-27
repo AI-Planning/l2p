@@ -172,6 +172,8 @@ class OPENAI(BaseLLM):
                 output_cost = (self.out_tokens / 1_000_000) * self.cost_per_output_token
                 total_cost = input_cost + output_cost
 
+                self.reset_tokens() # reset tokens after each query
+
                 conn_success = True
 
             except Exception as e:

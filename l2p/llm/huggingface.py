@@ -12,7 +12,7 @@ configuration using the same format template.
 
 from typing_extensions import override
 from .base import BaseLLM, load_yaml
-from .utils.prompt_template import prompt_templates
+from .utils.prompt_templates import prompt_templates
 import warnings
 
 warnings.filterwarnings("ignore", message="`do_sample` is set to `False`.*")
@@ -246,6 +246,8 @@ class HUGGING_FACE(BaseLLM):
                 # exclude texts after stop token
                 if self.stop is not None:
                     llm_output = llm_output.split(self.stop)[0]
+
+                self.reset_tokens() # reset tokens after each query
 
                 conn_success = True
 

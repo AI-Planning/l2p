@@ -334,8 +334,8 @@ class SyntaxValidator:
         all_invalid_params = []
 
         for func in functions:
-            func_def = func["clean"]
-            func_def = func_def.strip(" ()`")  # discard parentheses and similar
+            func_params = " ".join(f"{k} - {v}" if v else f"{k}" for k,v in func['params'].items())
+            func_def = f"{func['name']} " + (func_params if func_params else "")
 
             # check if function name declared
             if func_def.startswith("?") or func["name"].startswith("?"):
@@ -361,11 +361,9 @@ class SyntaxValidator:
                             f"[ERROR]: For PDDL, function `({func_def})` appears to contain invalid or unexpected symbol `{f}`. This might be a parsing error or stray character. Make sure each parameter follows the format `?name - type`.",
                         )
 
-                    raw_func = func["raw"]
-
                     feedback_msg = (
                         f"[ERROR]: For PDDL, there is a syntax issue in the function definition."
-                        f"\n`{f}` appears where a variable is expected in function `{raw_func}`."
+                        f"\n`{f}` appears where a variable is expected in function `({func_def})`."
                         f"\n\nPossible causes:"
                         f"\n(1) `{f}` is intended to be a variable but is missing the `?` prefix. All variables must start with `?`, like `?block`."
                         f"\n(2) `{f}` is actually a type, in which case it should appear after a `-` in a declaration like `?x - {f}`."

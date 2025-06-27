@@ -137,14 +137,16 @@ def format_params(parameters: OrderedDict) -> str:
         clean_type = type_.strip() if type_ else None
         grouped_params[clean_type].append(name)
 
-    param_parts = []
+    # separate out typed and untyped/object parameters
+    typed_parts = []
+    untyped_parts = []
     for type_, names in grouped_params.items():
-        if type_ is None:
-            param_parts.append(" ".join(names))  # untyped parameters
+        if type_ is None or type_ == "object":
+            untyped_parts.append(" ".join(names))  # untyped parameters
         else:
-            param_parts.append(f"{' '.join(names)} - {type_}")
+            typed_parts.append(f"{' '.join(names)} - {type_}")
 
-    return " ".join(param_parts)
+    return " ".join(typed_parts + untyped_parts)
 
 
 def format_actions(actions: list[Action]) -> str:
