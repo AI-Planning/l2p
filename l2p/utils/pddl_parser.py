@@ -412,40 +412,29 @@ def parse_functions(llm_output: str, heading: str = "FUNCTIONS") -> list[Functio
     return functions
 
 
-def parse_action(llm_output: str, action_name: str = "action-name") -> Action:
+def parse_action(
+        llm_output: str, 
+        action_name: str, 
+        param_head: str = "Action Parameters", 
+        precon_head: str = "Action Preconditions",
+        effect_head: str = "Action Effects") -> Action:
     """
     Parse an action from a given LLM output.
 
     Args:
         llm_output (str): raw LLM output
         action_name (str): the name of the action
+        param_head (str): parameter header for extraction
+        precon_head (str): precondition header for extraction
+        effect_head (str): effect header for extraction
 
     Returns:
         Action: the parsed PDDL action
     """
-    parameters, _ = parse_params(llm_output)
-    try:
-        preconditions = (
-            llm_output.split("Action Preconditions\n")[1]
-            .split("###")[0]
-            .split("```")[1]
-            .strip(" `\n")
-        )
-    except:
-        raise Exception(
-            "Could not find the 'Action Preconditions' section in the output. Provide the entire response, including all headings even if some are unchanged."
-        )
-    try:
-        effects = (
-            llm_output.split("Action Effects\n")[1]
-            .split("###")[0]
-            .split("```")[1]
-            .strip(" `\n")
-        )
-    except:
-        raise Exception(
-            "Could not find the 'Action Effects' section in the output. Provide the entire response, including all headings even if some are unchanged."
-        )
+    parameters, _ = parse_params(llm_output, param_head)
+    preconditions = parse_preconditions(llm_output, precon_head)
+    effects = parse_effects(llm_output, effect_head)
+
     return {
         "name": action_name,
         "params": parameters,
@@ -479,7 +468,8 @@ def parse_params(llm_output: str, heading: str = "Action Parameters") -> tuple[O
             line = line[1:].strip()  # remove the dash and clean up
 
         if not line.startswith("?"):
-            print(f"[WARNING] Invalid parameter line - must start with '?': '{line}'")
+            print(f"[WARNING] Invalid parameter line. Must start with '?': '{line}'")
+            continue
 
         try:
             params_raw.append(line)
