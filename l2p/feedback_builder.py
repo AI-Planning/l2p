@@ -210,7 +210,7 @@ class FeedbackBuilder:
         # format string info replacements
         act_name_str = action["name"] if action else "No action name provided."
         params_str = (
-            "\n".join([f"{name} - {type}" for name, type in action["params"].items()])
+            "\n".join([f"{name} - {type}" if type else f"{name}" for name, type in action["params"].items()])
             if action
             else "No parameters provided"
         )

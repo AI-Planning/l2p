@@ -968,7 +968,7 @@ class DomainBuilder:
                 if extract_new_preds:
                     new_predicates = parse_new_predicates(llm_output=llm_output)
                 else:
-                    new_predicates = None
+                    new_predicates = []
 
                 # run syntax validation if applicable
                 validation_info = (True, "All validations passed.")
@@ -994,6 +994,7 @@ class DomainBuilder:
                                 preconditions,
                                 all_predicates,
                                 params,
+                                functions,
                                 types,
                                 "preconditions",
                             )
@@ -1373,41 +1374,58 @@ class DomainBuilder:
             requirements (list[str]): list of PDDL requirements
         """
 
+        ASSIGNMENT_OPERATORS = {"assign", "increase", "decrease", "scale-up", "scale-down"}
+
         requirements = set()
         requirements.add(":strips")
 
-        # check if each specification needs a :requirement
         if types:
             requirements.add(":typing")
         if functions:
             requirements.add(":numeric-fluents")
 
-        # go through actions and checks if it needs a :requirement
+        has_global_function = any(
+            f.get("params") == {} or len(f.get("params", {})) == 0
+            for f in (functions or [])
+        )
+
+        assignment_ops_used = False
+
+        keyword_map = {
+            r"\bnot\b": ":negative-preconditions",
+            r"\bor\b": ":disjunctive-preconditions",
+            r"=": ":equality",
+            r"\bwhen\b": ":conditional-effects",
+            r"\bexists\b": ":existential-preconditions",
+            r"\bforall\b": ":universal-preconditions",
+        }
+
+        actions = actions or []
+
         for action in actions:
-            preconditions = "\n".join(
-                line for line in action["preconditions"].splitlines() if line.strip()
-            )
-            effects = "\n".join(
-                line for line in action["effects"].splitlines() if line.strip()
-            )
+            pre = "\n".join(line for line in action.get("preconditions", "").splitlines() if line.strip())
+            eff = "\n".join(line for line in action.get("effects", "").splitlines() if line.strip())
 
-            if "not" in preconditions:
-                requirements.add(":negative-preconditions")
-            if "or" in preconditions:
-                requirements.add(":disjunctive-preconditions")
-            if "=" in preconditions:
-                requirements.add(":equality")
-            if "exists" in preconditions and "forall" in preconditions:
-                requirements.add(":quantified-preconditions")
-            else:
-                if "exists" in preconditions:
-                    requirements.add(":existential-preconditions")
-                if "forall" in preconditions:
-                    requirements.add(":universal-preconditions")
-            if "when" in effects:
-                requirements.add(":conditional-effects")
+            for pattern, requirement in keyword_map.items():
+                target_text = pre if "preconditions" in requirement else eff
+                if re.search(pattern, target_text):
+                    requirements.add(requirement)
 
-        # replace ADL components with :adl
+            # check for assignment operator usage in effects
+            if any(op in eff for op in ASSIGNMENT_OPERATORS):
+                assignment_ops_used = True
+
+        # after looping through actions, handle quantified preconditions
+        if ":existential-preconditions" in requirements and ":universal-preconditions" in requirements:
+            requirements.discard(":existential-preconditions")
+            requirements.discard(":universal-preconditions")
+            requirements.add(":quantified-preconditions")
+
+        # add :action-costs if global functions exist AND assignment operators used
+        if has_global_function and assignment_ops_used:
+            requirements.add(":action-costs")
+
+        # replace full ADL components with :adl if all present
         adl_components = {
             ":strips",
             ":typing",
@@ -1420,8 +1438,7 @@ class DomainBuilder:
             requirements -= adl_components
             requirements.add(":adl")
 
-        requirements = list(sorted(requirements))  # convert set back into list
-        return requirements
+        return sorted(requirements)
 
     def generate_domain(
         self,
