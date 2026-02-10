@@ -12,7 +12,7 @@ setup(
     long_description_content_type="text/markdown",
     author="Marcus Tantakoun, Christian Muise",
     author_email="mtantakoun@gmail.com, christian.muise@gmail.com",
-    install_requires=["retry", "pddl", "typing_extensions, pyyaml"],
+    install_requires=["retry", "pddl", "typing_extensions", "pyyaml"],
     license="MIT",
     url="https://github.com/AI-Planning/l2p",
     classifiers=[
