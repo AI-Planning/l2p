@@ -89,6 +89,28 @@ google:
     cost_usd_mtok:
       input: 1.25
       output: 10.00
+  gemini-3-pro-preview:
+    family: gemini-3
+    engine: gemini-3-pro-preview
+    model_params:
+      context_length: 8192 # max: 1048576
+      max_completion_tokens: 4096 # max: 65536
+      temperature: 0.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 2.00
+      output: 12.00
+  gemini-3-flash-preview:
+    family: gemini-3
+    engine: gemini-3-flash-preview
+    model_params:
+      context_length: 8192 # max: 1048576
+      max_completion_tokens: 4096 # max: 65536
+      temperature: 0.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 0.50
+      output: 3.00
 
 openai:
   o1:
