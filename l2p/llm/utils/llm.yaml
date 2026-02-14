@@ -95,7 +95,7 @@ google:
     model_params:
       context_length: 8192 # max: 1048576
       max_completion_tokens: 4096 # max: 65536
-      temperature: 1.0
+      temperature: 0.0
       top_p: 1.0
     cost_usd_mtok:
       input: 2.00
@@ -106,7 +106,7 @@ google:
     model_params:
       context_length: 8192 # max: 1048576
       max_completion_tokens: 4096 # max: 65536
-      temperature: 1.0
+      temperature: 0.0
       top_p: 1.0
     cost_usd_mtok:
       input: 0.50

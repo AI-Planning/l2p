@@ -23,7 +23,7 @@ This is incompatible with the current OpenAI client call pattern in this repo. S
 
 ## Gemini pricing note
 
-Gemini 3 Pro pricing is tiered by prompt size (`<=200k` vs `>200k`), but the current config schema stores only one `input` and one `output` value per model. Since this repo also uses conservative defaults (`context_length: 8192`, `max_completion_tokens: 4096`), normal usage does not typically reach the `>200k` tier. The values in this PR use the base pricing.
+Gemini 3 pricing is tiered by prompt size (`<=200k` vs `>200k`), the values in this PR use the base pricing.
 
 ## Endpoint compatibility note
 
