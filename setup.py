@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name="l2p",
-    version="0.3.1",
+    version="0.3.3",
     packages=find_packages(exclude=["tests"]),
     description="Library to connect LLMs and planning tasks",
     long_description=long_description,
@@ -15,6 +15,10 @@ setup(
     install_requires=["retry", "pddl", "typing_extensions", "pyyaml"],
     license="MIT",
     url="https://github.com/AI-Planning/l2p",
+    include_package_data=True,
+    package_data={
+    "l2p.llm.utils": ["*"],
+    },
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",

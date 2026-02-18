@@ -1,117 +1,197 @@
+# Config file for llm: https://github.com/simonw/llm 
 # Prices vary for respective API providers. Default prices may not reflect current prices.
 
 # [Structure template]
 # {PROVIDER}:
 #   {MODEL_NAME}:
-#     family: {FAMILY_NAME}
-#     engine: {MODEL_API_NAME}
-#     max_completion_tokens: 
-#     temperature:
-#     top_p:
-#     context_length:
-#     stop:
+#     model_family: {MODEL_FAMILY_NAME}
+#     model_alias: {MODEL_API_NAME}
+#     model_context_length: {MODEL_WINDOW}
+#     model_params:
+#       {custom parameter arguments}. For example:
+#       max_completion_tokens: 
+#       temperature:
+#       top_p:
+#       stop:
 
+# GEMINI
 google:
-  gemini-1.5-flash:
-    family: gemini-1.5
-    engine: gemini-1.5-flash
+  gemini-3-pro-preview:
+    model_family: gemini-3
+    model_alias: gemini-3-pro-preview
+    model_context_length: 1000000 # max ~1,000,000
     model_params:
-      context_length: 8192
-      max_completion_tokens: 4096
-      temperature: 0.0
+      max_output_tokens: 16384 # max: 65536
+      temperature: 1.0
+      thinking_level: low # low/high
       top_p: 1.0
     cost_usd_mtok:
-      input: 0.075
-      output: 0.30
-  gemini-1.5-pro:
-    family: gemini-1.5
-    engine: gemini-1.5-pro
+      input: 2.00
+      output: 12.00
+  gemini-3-flash-preview:
+    model_family: gemini-3
+    model_alias: gemini-3-flash-preview
+    model_context_length: 1000000 # max ~1,000,000
     model_params:
-      context_length: 8192
-      max_completion_tokens: 4096
-      temperature: 0.0
+      max_output_tokens: 16384 # max: 65536
+      temperature: 1.0
+      thinking_level: low # low/high
       top_p: 1.0
     cost_usd_mtok:
-      input: 1.25
-      output: 5.00
-  gemini-2.0-flash-lite:
-    family: gemini-2.0
-    engine: gemini-2.0-flash-lite
-    model_params:
-      context_length: 8192
-      max_completion_tokens: 4096
-      temperature: 0.0
-      top_p: 1.0
-    cost_usd_mtok:
-      input: 0.075
-      output: 0.30
-  gemini-2.0-flash:
-    family: gemini-2.0
-    engine: gemini-2.0-flash
-    model_params:
-      context_length: 8192
-      max_completion_tokens: 4096
-      temperature: 0.0
-      top_p: 1.0
-    cost_usd_mtok:
-      input: 0.10
-      output: 0.40
-  gemini-2.5-flash-lite-preview-06-17:
-    family: gemini-2.5
-    engine: gemini-2.5-flash-lite-preview-06-17
-    model_params:
-      context_length: 8192
-      max_completion_tokens: 4096
-      temperature: 0.0
-      top_p: 1.0
-    cost_usd_mtok:
-      input: 0.10
-      output: 0.40
-  gemini-2.5-flash:
-    family: gemini-2.5
-    engine: gemini-2.5-flash
-    model_params:
-      context_length: 8192
-      max_completion_tokens: 4096
-      temperature: 0.0
-      top_p: 1.0
-    cost_usd_mtok:
-      input: 0.30
-      output: 2.50
+      input: 0.50
+      output: 3.00
   gemini-2.5-pro:
-    family: gemini-2.5
-    engine: gemini-2.5-pro
+    model_family: gemini-2.5
+    model_alias: gemini-2.5-pro
+    model_context_length: 1000000 # max ~1,000,000
     model_params:
-      context_length: 8192
-      max_completion_tokens: 4096
-      temperature: 0.0
+      max_output_tokens: 16384 # max: 65,536
+      temperature: 1.0
+      thinking_budget: 8192
       top_p: 1.0
     cost_usd_mtok:
       input: 1.25
       output: 10.00
-
-openai:
-  o1:
-    family: o1
-    engine: o1
+  gemini-2.5-flash:
+    model_family: gemini-2.5
+    model_alias: gemini-2.5-flash
+    model_context_length: 1000000 # max ~1,000,000
     model_params:
-      context_length: 8192 # max: 200k
-      max_completion_tokens: 8192 # max: 100k
+      max_output_tokens: 16384 # max: 65,536
+      temperature: 1.0
+      thinking_budget: 8192
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 0.30
+      output: 2.50
+  gemini-2.5-flash-lite:
+    model_family: gemini-2.5
+    model_alias: gemini-2.5-flash-lite
+    model_context_length: 1000000 # max ~1,000,000
+    model_params:
+      max_output_tokens: 16384 # max: 65,536
+      temperature: 1.0
+      thinking_budget: 8192
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 0.10
+      output: 0.40
+  gemini-2.0-flash:
+    model_family: gemini-2.0
+    model_alias: gemini-2.0-flash
+    model_context_length: 1000000 # max ~1,000,000
+    model_params:
+      max_output_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 0.10
+      output: 0.40
+  gemini-2.0-flash-lite:
+    model_family: gemini-2.0
+    model_alias: gemini-2.0-flash-lite
+    model_context_length: 1000000 # max ~1,000,000
+    model_params:
+      max_output_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 0.075
+      output: 0.30
+
+# OPENAI
+openai:
+  gpt-5.2:
+    model_family: gpt-5
+    model_alias: gpt-5.2
+    model_context_length: 400000
+    model_params:
+      # max_tokens: 8192 # max: 128k
       temperature: 1.0
       top_p: 1.0
       frequency_penalty: 0.0
       presence_penalty: 0.0
-      stop:
+      reasoning_effort: medium
+    cost_usd_mtok:
+      input: 1.75
+      output: 14.00
+  gpt-5.1:
+    model_family: gpt-5
+    model_alias: gpt-5.1
+    model_context_length: 400000
+    model_params:
+      # max_tokens: 8192 # max: 128k
+      temperature: 1.0
+      top_p: 1.0
+      frequency_penalty: 0.0
+      presence_penalty: 0.0
+      reasoning_effort: medium
+    cost_usd_mtok:
+      input: 1.25
+      output: 10.00
+  gpt-5:
+    model_family: gpt-5
+    model_alias: gpt-5
+    model_context_length: 400000
+    model_params:
+      # max_tokens: 8192 # max: 128k
+      temperature: 1.0
+      top_p: 1.0
+      frequency_penalty: 0.0
+      presence_penalty: 0.0
+      reasoning_effort: medium
+    cost_usd_mtok:
+      input: 1.25
+      output: 10.00
+  gpt-5-mini:
+    model_family: gpt-5
+    model_alias: gpt-5-mini
+    model_context_length: 400000
+    model_params: 
+      # max_tokens: 8192 # max: 128k
+      temperature: 1.0
+      top_p: 1.0
+      frequency_penalty: 0.0
+      presence_penalty: 0.0
+      reasoning_effort: medium
+    cost_usd_mtok:
+      input: 0.25
+      output: 2.00
+  gpt-5-nano:
+    model_family: gpt-5
+    model_alias: gpt-5-nano
+    model_context_length: 400000
+    model_params:
+      # max_tokens: 8192 # max: 128k
+      temperature: 1.0
+      top_p: 1.0
+      frequency_penalty: 0.0
+      presence_penalty: 0.0
+      reasoning_effort: medium
+    cost_usd_mtok:
+      input: 0.05
+      output: 0.40
+  o1:
+    model_family: o1
+    model_alias: o1
+    model_context_length: 200000
+    model_params:
+      # max_tokens: 8192 # max: 100k
+      temperature: 1.0
+      top_p: 1.0
+      frequency_penalty: 0.0
+      presence_penalty: 0.0
+      stop: None,
       reasoning_effort: medium
     cost_usd_mtok:
       input: 15.00
       output: 60.00
   o1-mini:
-    family: o1
-    engine: o1-mini
+    model_family: o1
+    model_alias: o1-mini
+    model_context_length: 128000
     model_params:
-      context_length: 8192 # max: 128k
-      max_completion_tokens: 8192 # max: 65536
+      # max_completion_tokens: 8192 # max: 65536
       temperature: 1.0
       top_p: 1.0
       frequency_penalty: 0.0
@@ -121,11 +201,11 @@ openai:
       input: 1.10
       output: 4.40
   o3:
-    family: o3
-    engine: o3
+    model_family: o3
+    model_alias: o3
+    model_context_length: 200000
     model_params:
-      context_length: 8192 # max: 200k
-      max_completion_tokens: 8192 # max: 100k
+      # max_completion_tokens: 8192 # max: 100k
       temperature: 1.0
       top_p: 1.0
       frequency_penalty: 0.0
@@ -133,14 +213,14 @@ openai:
       stop:
       reasoning_effort: medium
     cost_usd_mtok:
-      input: 10.00
-      output: 40.00
+      input: 2.00
+      output: 8.00
   o3-mini:
-    family: o3
-    engine: o3-mini
+    model_family: o3
+    model_alias: o3-mini
+    model_context_length: 200000
     model_params:
-      context_length: 8192 # max: 200k
-      max_completion_tokens: 8192 # max: 100k
+      # max_completion_tokens: 8192 # max: 100k
       temperature: 1.0
       top_p: 1.0
       frequency_penalty: 0.0
@@ -151,11 +231,11 @@ openai:
       input: 1.10
       output: 4.40
   o4-mini:
-    family: o4
-    engine: o4-mini
+    model_family: o4
+    model_alias: o4-mini
+    model_context_length: 200000
     model_params:
-      context_length: 8192 # max: 200k
-      max_completion_tokens: 8192 # max: 100k
+      # max_completion_tokens: 8192 # max: 100k
       temperature: 1.0
       top_p: 1
       frequency_penalty: 0.0
@@ -166,11 +246,11 @@ openai:
       input: 1.10
       output: 4.40
   gpt-4.1:
-    family: gpt-4.1
-    engine: gpt-4.1
+    model_family: gpt-4.1
+    model_alias: gpt-4.1
+    model_context_length: 1047575
     model_params:
-      context_length: 8192 # max: 1047576
-      max_completion_tokens: 8192 # max: 32768
+      max_tokens: 8192 # max: 32768
       temperature: 0.0
       top_p: 1.0
       frequency_penalty: 0.0
@@ -179,12 +259,26 @@ openai:
     cost_usd_mtok:
       input: 2.00
       output: 8.00
-  gpt-4.1-nano:
-    family: gpt-4.1
-    engine: gpt-4.1-nano
+  gpt-4.1-mini:
+    model_family: gpt-4.1
+    model_alias: gpt-4.1-mini
+    model_context_length: 1047575
     model_params:
-      context_length: 8192 # max: 1047576
-      max_completion_tokens: 8192 # max: 32768
+      max_tokens: 8192 # max: 32768
+      temperature: 0.0
+      top_p: 1.0
+      frequency_penalty: 0.0
+      presence_penalty: 0.0
+      stop: None
+    cost_usd_mtok:
+      input: 0.40
+      output: 1.60
+  gpt-4.1-nano:
+    model_family: gpt-4.1
+    model_alias: gpt-4.1-nano
+    model_context_length: 1047575
+    model_params:
+      max_tokens: 8192 # max: 32768
       temperature: 0.0
       top_p: 1.0
       frequency_penalty: 0.0
@@ -193,40 +287,12 @@ openai:
     cost_usd_mtok:
       input: 0.10
       output: 0.40
-  gpt-4.1-mini:
-    family: gpt-4.1
-    engine: gpt-4.1-mini
-    model_params:
-      context_length: 8192 # max: 1047576
-      max_completion_tokens: 8192 # max: 32768
-      temperature: 0.0
-      top_p: 1.0
-      frequency_penalty: 0.0
-      presence_penalty: 0.0
-      stop:
-    cost_usd_mtok:
-      input: 0.40
-      output: 1.60
-  chatgpt-4o-latest:
-    family: gpt-4o
-    engine: chatgpt-4o-latest
-    model_params:
-      context_length: 8192 # max: 128k
-      max_completion_tokens: 8192 # max: 16384
-      temperature: 0.0
-      top_p: 1.0
-      frequency_penalty: 0.0
-      presence_penalty: 0.0
-      stop:
-    cost_usd_mtok:
-      input: 5.00
-      output: 15.00
   gpt-4o:
-    family: gpt-4o
-    engine: gpt-4o
+    model_family: gpt-4o
+    model_alias: gpt-4o
+    model_context_length: 128000
     model_params:
-      context_length: 8192 # max: 128k
-      max_completion_tokens: 8192 # max: 16384
+      max_tokens: 8192 # max: 16384
       temperature: 0.0
       top_p: 1.0
       frequency_penalty: 0.0
@@ -236,11 +302,11 @@ openai:
       input: 2.50
       output: 10.00
   gpt-4o-mini:
-    family: gpt-4o
-    engine: gpt-4o-mini
+    model_family: gpt-4o
+    model_alias: gpt-4o-mini
+    model_context_length: 128000
     model_params:
-      context_length: 8192 # max: 128k
-      max_completion_tokens: 8192 # max: 16384
+      max_tokens: 8192 # max: 16384
       temperature: 0.0
       top_p: 1.0
       frequency_penalty: 0.0
@@ -250,11 +316,11 @@ openai:
       input: 0.15
       output: 0.60
   gpt-4:
-    family: gpt-4
-    engine: gpt-4
+    model_family: gpt-4
+    model_alias: gpt-4
+    model_context_length: 8192
     model_params:
-      context_length: 8192
-      max_completion_tokens: 8192
+      max_tokens: 4096
       temperature: 0.0
       top_p: 1.0
       frequency_penalty: 0.0
@@ -264,11 +330,11 @@ openai:
       input: 30.00
       output: 60.00
   gpt-4-turbo:
-    family: gpt-4
-    engine: gpt-4-turbo
+    model_family: gpt-4
+    model_alias: gpt-4-turbo
+    model_context_length: 128000
     model_params:
-      context_length: 8192 # max: 128k
-      max_completion_tokens: 4096
+      max_tokens: 4096
       temperature: 0.0
       top_p: 1.0
       frequency_penalty: 0.0
@@ -278,11 +344,11 @@ openai:
       input: 10.00
       output: 30.00
   gpt-3.5-turbo:
-    family: gpt-3.5
-    engine: gpt-3.5-turbo
+    model_family: gpt-3.5
+    model_alias: gpt-3.5-turbo
+    model_context_length: 16385
     model_params:
-      context_length: 8192 # max: 16385
-      max_completion_tokens: 4096
+      max_tokens: 4096
       temperature: 0.0
       top_p: 1.0
       frequency_penalty: 0.0
@@ -292,374 +358,598 @@ openai:
       input: 0.50
       output: 1.50
 
+# DEEPSEEK
 deepseek:
+  deepseek-coder:
+    model_family: deepseek
+    model_alias: deepseek-coder
+    model_context_length: 128000
+    model_params:
+      max_tokens: 4096
+      temperature: 0.0
+      top_p: 1.0
+      stop:
+    cost_usd_mtok:
+      input: 0.028
+      output: 0.42
   deepseek-chat:
-    family: deepseek
-    engine: deepseek-chat
+    model_family: deepseek
+    model_alias: deepseek-chat
+    model_context_length: 128000
     model_params:
-      context_length: 8192 # max: 64k
-      max_completion_tokens: 4096
+      max_tokens: 8192 # max 8k
       temperature: 0.0
       top_p: 1.0
       stop:
     cost_usd_mtok:
-      input: 0.035 # discount price (orig. $0.07 USD)
-      output: 0.550 # discount price (orig. $1.10 USD) 
+      input: 0.028
+      output: 0.42
   deepseek-reasoner:
-    family: deepseek
-    engine: deepseek-reasoner
+    model_family: deepseek
+    model_alias: deepseek-reasoner
+    model_context_length: 128000
     model_params:
-      context_length: 8192 # max: 64k
-      max_completion_tokens: 4096
+      max_tokens: 8192 # max 64k
       temperature: 0.0
       top_p: 1.0
       stop:
     cost_usd_mtok:
-      input: 0.035 # discount price (orig. $0.14 USD)
-      output: 0.550 # discount price (orig. $2.19 USD)
+      input: 0.028
+      output: 0.42
 
+# ANTHROPIC
 anthropic:
-  claude-opus-4:
-    family: opus
-    engine: claude-opus-4-20250514
+  claude-opus-4.5:
+    model_family: opus
+    model_alias: claude-opus-4.5
+    model_context_length: 200000
     model_params:
-      context_length: 8192 # max: 200k
-      max_completion_tokens: 8192 # max: 32k
-      temperature: 0.0
-      top_p: 1.0
-      stop:
+      max_tokens: 16384 # max: 64k
+      temperature: 1.0 # temp must equal 1 when thinking enabled
+      thinking: True
+      thinking_budget: 8192
+    cost_usd_mtok:
+      input: 5.00
+      output: 25.00
+  claude-opus-4.1:
+    model_family: opus
+    model_alias: claude-opus-4.1
+    model_context_length: 200000
+    model_params:
+      max_tokens: 16384 # max: 32k
+      temperature: 1.0 # temp must equal 1 when thinking enabled
+      thinking: True
+      thinking_budget: 8192
     cost_usd_mtok:
       input: 15.00
       output: 75.00
-  claude-sonnet-4:
-    family: sonnet
-    engine: claudeclaude-sonnet-4-20250514
+  claude-4-opus:
+    model_family: opus
+    model_alias: claude-4-opus
+    model_context_length: 200000
     model_params:
-      context_length: 8192 # max: 200k
-      max_completion_tokens: 8192 # max: 64k
-      temperature: 0.0
-      top_p: 1.0
-      stop:
+      max_tokens: 16384 # max: 32k
+      temperature: 1.0 # temp must equal 1 when thinking enabled
+      thinking: True
+      thinking_budget: 8192
+    cost_usd_mtok:
+      input: 15.00
+      output: 75.00
+  claude-sonnet-4.5:
+    model_family: sonnet
+    model_alias: claude-sonnet-4.5
+    model_context_length: 200000
+    model_params:
+      max_tokens: 16384 # max: 160k
+      temperature: 1.0 # temp must equal 1 when thinking enabled
+      thinking: True
+      thinking_budget: 8192
     cost_usd_mtok:
       input: 3.00
       output: 15.00
-  claude-3.7-sonnet:
-    family: sonnet
-    engine: claude-3-7-sonnet-20250219
+  claude-4-sonnet:
+    model_family: sonnet
+    model_alias: claude-4-sonnet
+    model_context_length: 200000
     model_params:
-      context_length: 8192 # max: 200k
-      max_completion_tokens: 8192 # max: 64k
-      temperature: 0.0
-      top_p: 1.0
-      stop:
+      max_tokens: 16384 # max: 64k
+      temperature: 1.0 # temp must equal 1 when thinking enabled
+      thinking: True
+      thinking_budget: 8192
+    cost_usd_mtok:
+      input: 3.00
+      output: 15.00
+  claude-3.7-sonnet: # deprecated
+    model_family: sonnet
+    model_alias: claude-3.7-sonnet
+    model_context_length: 200000
+    model_params:
+      max_tokens: 8192 # max: 128k
+      temperature: 0.0 # only one of top_p or temperature can be set
+      # top_p: 1.0
     cost_usd_mtok:
       input: 3.00
       output: 15.00
   claude-3.5-sonnet:
-    family: sonnet
-    engine: claude-3-5-sonnet-20241022
+    model_family: sonnet
+    model_alias: claude-3.5-sonnet
+    model_context_length: 200000
     model_params:
-      context_length: 8192 # max: 200k
-      max_completion_tokens: 8192
-      temperature: 0.0
-      top_p: 1.0
-      stop:
+      max_tokens: 4096
+      temperature: 0.0 # only one of top_p or temperature can be set
+      # top_p: 1.0
     cost_usd_mtok:
       input: 3.00
       output: 15.00
-  claude-3.5-haiku:
-    family: haiku
-    engine: claude-3-5-haiku-20241022
+  claude-haiku-4.5:
+    model_family: haiku
+    model_alias: claude-haiku-4.5
+    model_context_length: 200000
     model_params:
-      context_length: 8192 # max: 200k
-      max_completion_tokens: 8192
-      temperature: 0.0
-      top_p: 1.0
-      stop:
+      max_tokens: 16384 # max: 64k
+      temperature: 1.0 # temp must equal 1 when thinking enabled
+      thinking: True
+      thinking_budget: 8192
+    cost_usd_mtok:
+      input: 1.00
+      output: 5.00
+  claude-3.5-haiku:
+    model_family: haiku
+    model_alias: claude-3.5-haiku
+    model_context_length: 200000
+    model_params:
+      max_tokens: 4096
+      temperature: 0.0 # only one of top_p or temperature can be set
+      # top_p = 1.0
     cost_usd_mtok:
       input: 0.80
       output: 4.00
   claude-3-haiku:
-    family: haiku
-    engine: claude-3-haiku-20240307
+    model_family: haiku
+    model_alias: claude-3-haiku
+    model_context_length: 200000
     model_params:
-      context_length: 8192 # max: 200k
-      max_completion_tokens: 4096
-      temperature: 0.0
-      top_p: 1.0
-      stop:
+      max_tokens: 4096
+      temperature: 0.0 # only one of top_p or temperature can be set
+      # top_p: 1.0
     cost_usd_mtok:
       input: 0.25
       output: 1.25
-  claude-3-opus:
-    family: opus
-    engine: claude-3-opus-20240229
-    model_params:
-      context_length: 8192 # max: 200k
-      max_completion_tokens: 4096
-      temperature: 0.0
-      top_p: 1.0
-      stop:
-    cost_usd_mtok:
-      input: 15.00
-      output: 75.00
 
-
+# MISTRAL
 mistral:
-  codestral-latest:
-    family: codestral
-    engine: codestral-2501
+  mistral-large:
+    model_family: mistral
+    model_alias: mistral-large
+    model_context_length: 256000
     model_params:
-      context_length: 8192
-      max_completion_tokens: 8192
-      temperature: 0.0
-      top_p: 1.0
-    cost_usd_mtok:
-      input: 0.30
-      output: 0.90
-  ministral-3b-latest:
-    family: ministral
-    engine: ministral-3b-2410
-    model_params:
-      context_length: 8192
-      max_completion_tokens: 8192
-      temperature: 0.0
-      top_p: 1.0
-    cost_usd_mtok:
-      input: 0.04
-      output: 0.04
-  ministral-8b-latest:
-    family: ministral
-    engine: ministral-8b-2410
-    model_params:
-      context_length: 8192
-      max_completion_tokens: 8192
-      temperature: 0.0
-      top_p: 1.0
-    cost_usd_mtok:
-      input: 0.10
-      output: 0.10
-  mistral-small-latest:
-    family: mistral
-    engine: mistral-small-2506
-    model_params:
-      context_length: 8192
-      max_completion_tokens: 8192
-      temperature: 0.0
-      top_p: 1.0
-    cost_usd_mtok:
-      input: 0.10
-      output: 0.30
-  mistral-medium-latest:
-    family: mistral
-    engine: mistral-medium-2505
-    model_params:
-      context_length: 8192
-      max_completion_tokens: 8192
-      temperature: 0.0
-      top_p: 1.0
-    cost_usd_mtok:
-      input: 0.40
-      output: 2.00
-  mistral-large-latest:
-    family: mistral
-    engine: mistral-large-2411
-    model_params:
-      context_length: 8192
-      max_completion_tokens: 8192
-      temperature: 0.0
-      top_p: 1.0
-    cost_usd_mtok:
-      input: 2.00
-      output: 6.00
-  magistral-small-latest:
-    family: magistral
-    engine: magistral-small-2506
-    model_params:
-      context_length: 8192
-      max_completion_tokens: 8192
+      max_tokens: 8192
       temperature: 0.0
       top_p: 1.0
     cost_usd_mtok:
       input: 0.50
       output: 1.50
-  magistral-medium-latest:
-    family: magistral
-    engine: magistral-medium-2506
+  mistral-medium:
+    model_family: mistral
+    model_alias: mistral-medium
+    model_context_length: 128000
     model_params:
-      context_length: 8192
-      max_completion_tokens: 8192
+      max_tokens: 8192
       temperature: 0.0
       top_p: 1.0
     cost_usd_mtok:
-      input: 2.00
-      output: 5.00
+      input: 0.40
+      output: 2.00
+  mistral-small:
+    model_family: mistral
+    model_alias: mistral-small
+    model_context_length: 128000
+    model_params:
+      max_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 0.10
+      output: 0.30
+  ministral-8b:
+    model_family: ministral
+    model_alias: ministral-8b
+    model_context_length: 256000
+    model_params:
+      max_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 0.15
+      output: 0.15
+  ministral-3b:
+    model_family: ministral
+    model_alias: ministral-3b
+    model_context_length: 256000
+    model_params:
+      max_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 0.10
+      output: 0.10
+  codestral:
+    model_family: codestral
+    model_alias: codestral
+    model_context_length: 128000
+    model_params:
+      max_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 0.30
+      output: 0.90
 
+# max tokens == num_predict
+# reasoning level = medium (~8192 budget)
+ollama:
+  gpt-oss:120b:
+    model_family: gpt-oss
+    model_alias: gpt-oss:120b
+    model_context_length: 128000
+    model_params:
+      num_predict: 8192 # max 128000
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  gpt-oss:20b:
+    model_family: gpt-oss
+    model_alias: gpt-oss:20b
+    model_context_length: 128000
+    model_params:
+      num_predict: 8192 # max 128000
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
 
-# The total context window is shared between input and output tokens.
-# Max new tokens generated is limited to (context window - input tokens).
-huggingface:
-  gpt2:
-    family: gpt2
-    engine: openai-community/gpt2
+  deepseek-r1:671b:
+    model_family: deepseek-reasoner
+    model_alias: deepseek-r1:671b
+    model_context_length: 160000
     model_params:
-      context_length: 1024
-      max_new_tokens: 512
+      num_predict: 8192
       temperature: 0.0
       top_p: 1.0
-      do_sample: false
-      stop:
-    model_config:
-      dtype: float32
-      device_map: null
-      ngpu: 1
-  llama2-7b:
-    family: llama-2
-    engine: meta-llama/Llama-2-7b-chat-hf
+      top_k: 0.0
+      repeat_penalty: 1.0
+  deepseek-r1:70b:
+    model_family: deepseek-reasoner
+    model_alias: deepseek-r1:70b
+    model_context_length: 128000
     model_params:
-      context_length: 4096
-      max_new_tokens: 2048
+      num_predict: 8192
       temperature: 0.0
       top_p: 1.0
-      do_sample: false
-      stop:
-    model_config:
-      dtype: float16
-      device_map: null
-      ngpu: 1
-  llama2-13b:
-    family: llama-2
-    engine: meta-llama/Llama-2-13b-chat-hf
+      top_k: 0.0
+      repeat_penalty: 1.0
+  deepseek-r1:32b:
+    model_family: deepseek-reasoner
+    model_alias: deepseek-r1:32b
+    model_context_length: 128000
     model_params:
-      context_length: 4096
-      max_new_tokens: 2048
+      num_predict: 8192
       temperature: 0.0
       top_p: 1.0
-      do_sample: false
-      stop:
-    model_config:
-      dtype: float16
-      device_map: null
-      ngpu: 2
-    cost_usd_mtok:
-      input: 0.52 # (when hosted on Azure)
-      output: 0.67 # (when hosted on Azure)
-  llama2-70b:
-    family: llama-2
-    engine: meta-llama/Llama-2-70b-chat-hf
+      top_k: 0.0
+      repeat_penalty: 1.0
+  deepseek-r1:14b:
+    model_family: deepseek-reasoner
+    model_alias: deepseek-r1:14b
+    model_context_length: 128000
     model_params:
-      context_length: 4096
-      max_new_tokens: 2048
+      num_predict: 8192
       temperature: 0.0
       top_p: 1.0
-      do_sample: false
-      stop:
-    model_config:
-      dtype: float16
-      device_map: null
-      ngpu: 4
-    cost_usd_mtok:
-      input: 1.54 # (when hosted on Azure)
-      output: 1.77 # (when hosted on Azure)
-  llama3.1-405b:
-    family: llama-3.1
-    engine: meta-llama/Llama-3.1-405B-Instruct
+      top_k: 0.0
+      repeat_penalty: 1.0
+  deepseek-r1:8b:
+    model_family: deepseek-reasoner
+    model_alias: deepseek-r1:8b
+    model_context_length: 128000
     model_params:
-      context_length: 8192 # max: 128k
-      max_new_tokens: 2048
+      num_predict: 8192
       temperature: 0.0
       top_p: 1.0
-      do_sample: false
-      stop:
-    model_config:
-      dtype: float16
-      device_map: null
-    cost_usd_mtok:
-      input: 5.33 # (when hosted on Azure)
-      output: 16.00 # (when hosted on Azure)
-  llama3.1-70b:
-    family: llama-3.1
-    engine: meta-llama/Llama-3.1-70B-Instruct
+      top_k: 0.0
+      repeat_penalty: 1.0
+  deepseek-v3:671b:
+    model_family: deepseek-chat
+    model_alias: deepseek-v3:671b
+    model_context_length: 160000
     model_params:
-      context_length: 8192 # max: 128k
-      max_new_tokens: 4096
+      num_predict: 8192
       temperature: 0.0
       top_p: 1.0
-      do_sample: false
-      stop:
-    model_config:
-      dtype: bfloat16
-      device_map: null
-      npgu: 4
-    cost_usd_mtok:
-      input: 2.68 # (when hosted on Azure)
-      output: 3.54 # (when hosted on Azure)
-  llama3.1-8b:
-    family: llama-3.1
-    engine: meta-llama/Llama-3.1-8B-Instruct
+      top_k: 0.0
+      repeat_penalty: 1.0
+  deepseek-coder:33b:
+    model_family: deepseek-coder
+    model_alias: deepseek-coder:33b
+    model_context_length: 16000
     model_params:
-      context_length: 8192
-      max_new_tokens: 4096
+      num_predict: 8192
       temperature: 0.0
       top_p: 1.0
-      do_sample: false
-      stop:
-    model_config:
-      dtype: float16
-      device_map: null
-      ngpu: 1
-    cost_usd_mtok:
-      input: 0.30 # (when hosted on Azure)
-      output: 0.61 # (when hosted on Azure)
-  codellama-7b:
-    family: codellama
-    engine: codellama/CodeLlama-7b-Instruct-hf
+      top_k: 0.0
+      repeat_penalty: 1.0
+  deepseek-coder:6.7b:
+    model_family: deepseek-coder
+    model_alias: deepseek-coder:6.7b
+    model_context_length: 16000
     model_params:
-      context_length: 16384
-      max_new_tokens: 2000
+      num_predict: 8192
       temperature: 0.0
       top_p: 1.0
-      stop:
-    model_config:
-      dtype: float16
-      device_map: null
-      ngpu: 1
-  codellama-13b:
-    family: codellama
-    engine: codellama/CodeLlama-13b-Instruct-hf
+      top_k: 0.0
+      repeat_penalty: 1.0
+  deepseek-coder:1.3b:
+    model_family: deepseek-coder
+    model_alias: deepseek-coder:1.3b
+    model_context_length: 16000
     model_params:
-      context_length: 16384
-      max_new_tokens: 2000
+      num_predict: 8192
       temperature: 0.0
       top_p: 1.0
-      stop: "\n"
-    model_config:
-      dtype: float16
-      device_map: null
-      ngpu: 2
-  codellama-34b:
-    family: codellama
-    engine: codellama/CodeLlama-34b-Instruct-hf
+      top_k: 0.0
+      repeat_penalty: 1.0
+
+  mixtral:8x22b:
+    model_family: mixtral
+    model_alias: mixtral:8x22b
+    model_context_length: 64000
     model_params:
-      context_length: 16384
-      max_new_tokens: 2000
+      num_predict: 8192
       temperature: 0.0
       top_p: 1.0
-      stop: "\n"
-    model_config:
-      dtype: float16
-      device_map: null
-      ngpu: 4
-  codellama-70b:
-    family: codellama
-    engine: codellama/CodeLlama-70b-Instruct-hf
+      top_k: 0.0
+      repeat_penalty: 1.0
+  mixtral:8x7b:
+    model_family: mixtral
+    model_alias: mixtral:8x7b
+    model_context_length: 32000
     model_params:
-      context_length: 16384
-      max_new_tokens: 2000
+      num_predict: 8192
       temperature: 0.0
       top_p: 1.0
-      stop: "\n"
-    model_config:
-      dtype: float16
-      device_map: null
-      ngpu: 4
+      top_k: 0.0
+      repeat_penalty: 1.0
+
+  llama3.2:3b:
+    model_family: llama3.2
+    model_alias: llama3.2:3b
+    model_context_length: 128000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  llama3.2:1b:
+    model_family: llama3.2
+    model_alias: llama3.2:1b
+    model_context_length: 128000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  llama3.1:405b:
+    model_family: llama3.1
+    model_alias: llama3.1:405b
+    model_context_length: 128000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  llama3.1:70b:
+    model_family: llama3.1
+    model_alias: llama3.1:70b
+    model_context_length: 128000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  llama3.1:8b:
+    model_family: llama3.1
+    model_alias: llama3.1:8b
+    model_context_length: 128000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  llama3:70b:
+    model_family: llama2
+    model_alias: llama3:70b
+    model_context_length: 8000
+    model_params:
+      num_predict: 4096
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  llama3:8b:
+    model_family: llama3
+    model_alias: llama3:8b
+    model_context_length: 8000
+    model_params:
+      num_predict: 4096
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  llama2:70b:
+    model_family: llama2
+    model_alias: llama2:70b
+    model_context_length: 4000
+    model_params:
+      num_predict: 1024
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  llama2:13b:
+    model_family: llama2
+    model_alias: llama2:13b
+    model_context_length: 4000
+    model_params:
+      num_predict: 1024
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  llama2:7b:
+    model_family: llama2
+    model_alias: llama2:7b
+    model_context_length: 4000
+    model_params:
+      num_predict: 1024
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+
+  qwen3:235b:
+    model_family: qwen3
+    model_alias: qwen3:235b
+    model_context_length: 256000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  qwen3:32b:
+    model_family: qwen3
+    model_alias: qwen3:32b
+    model_context_length: 40000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  qwen3:30b:
+    model_family: qwen3
+    model_alias: qwen3:30b
+    model_context_length: 256000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  qwen3:14b:
+    model_family: qwen3
+    model_alias: qwen3:14b
+    model_context_length: 40000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  qwen3:8b:
+    model_family: qwen3
+    model_alias: qwen3:8b
+    model_context_length: 40000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  qwen2.5:72b:
+    model_family: qwen2.5
+    model_alias: qwen2.5:72b
+    model_context_length: 32000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  qwen2.5:32b:
+    model_family: qwen2.5
+    model_alias: qwen2.5:32b
+    model_context_length: 32000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  qwen2.5:14b:
+    model_family: qwen2.5
+    model_alias: qwen2.5:14b
+    model_context_length: 32000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  qwen2.5:7b:
+    model_family: qwen2.5
+    model_alias: qwen2.5:7b
+    model_context_length: 32000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+
+  command-a:111b:
+    model_family: command-a
+    model_alias: command-a:111b
+    model_context_length: 16000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  command-r:35b:
+    model_family: command-r
+    model_alias: command-r:35b
+    model_context_length: 128000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  aya:35b:
+    model_family: aya
+    model_alias: aya:35b
+    model_context_length: 8000
+    model_params:
+      num_predict: 4096
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  aya:8b:
+    model_family: aya
+    model_alias: aya:8b
+    model_context_length: 8000
+    model_params:
+      num_predict: 4096
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0

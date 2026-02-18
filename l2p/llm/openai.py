@@ -5,7 +5,7 @@ supports providers that are compatible with OpenAI SDK usage (i.e. DeepSeek, Ant
 
 A YAML configuration file is required to specify model parameters, costs, and other
 provider-specific settings. By default, the l2p library includes a configuration file
-located at 'l2p/llm/utils/llm.yaml'.
+located at 'l2p/llm/utils/openaiSDK.yaml'.
 
 Users can also define their own custom models and parameters by extending the YAML
 configuration using the same format template.
@@ -20,7 +20,7 @@ class OPENAI(BaseLLM):
     def __init__(
         self,
         model: str,
-        config_path: str = "l2p/llm/utils/llm.yaml",
+        config_path: str = "l2p/llm/utils/openaiSDK.yaml",
         provider: str = "openai",
         api_key: str | None = None,
         base_url: str = "https://api.openai.com/v1/",
@@ -49,7 +49,8 @@ class OPENAI(BaseLLM):
 
         # retrieve model configurations
         model_config = self._config.get(self.provider, {}).get(model, {})
-        self.model_engine = model_config.get("engine", model)
+        self.model_alias = model_config.get("model_alias", model)
+        self.context_length = model_config.get("model_context_length", 4096)
 
         # call the parent class constructor to handle model and api_key
         super().__init__(model, api_key)
@@ -77,7 +78,6 @@ class OPENAI(BaseLLM):
 
         # default values for parameters if none exists
         defaults = {
-            "context_length": 4096,
             "max_completion_tokens": 4096,
             "temperature": 0.0,
             "top_p": 1.0,
@@ -130,7 +130,7 @@ class OPENAI(BaseLLM):
         while not conn_success and n_retry < max_retry:
             try:
                 print(
-                    f"[INFO] connecting to {self.model_engine} ({requested_tokens} tokens)..."
+                    f"[INFO] connecting to {self.model_alias} ({requested_tokens} tokens)..."
                 )
 
                 kwargs = {
@@ -149,7 +149,7 @@ class OPENAI(BaseLLM):
                 # retrieve completion
                 response = self.connect_openai(
                     client=self.client,
-                    model=self.model_engine,
+                    model=self.model_alias,
                     messages=messages,
                     **kwargs,
                 )
@@ -191,15 +191,23 @@ class OPENAI(BaseLLM):
         # log query information
         self.query_log.append(
             {
-                "model": self.model_engine,
-                "prompt_tokens": usage.prompt_tokens if usage else current_tokens,
-                "completion_tokens": (
+                "model": self.model_alias,
+                "messages": messages,
+                "response": llm_output,
+                "input_tokens": usage.prompt_tokens if usage else current_tokens,
+                "output_tokens": (
                     usage.completion_tokens
                     if usage
                     else len(self.tok.encode(llm_output))
                 ),
                 "reasoning_tokens": (
-                    usage.completion_tokens_details.reasoning_tokens if usage else 0
+                    getattr(
+                        getattr(usage, "completion_tokens_details", None),
+                        "reasoning_tokens",
+                        0,
+                    )
+                    if usage
+                    else 0
                 ),
                 "total_tokens": (
                     usage.total_tokens
@@ -208,9 +216,7 @@ class OPENAI(BaseLLM):
                 ),
                 "input_cost_usd": input_cost,
                 "output_cost_usd": output_cost,
-                "total_cost_usd": total_cost,
-                "messages": messages,
-                "output": llm_output,
+                "total_cost_usd": total_cost
             }
         )
 
