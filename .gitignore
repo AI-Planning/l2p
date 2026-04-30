@@ -166,6 +166,7 @@ data/
 tests/tests.py
 templates/temp
 tests/test_llm_dm
+AGENTS.md
 
 # paper reconstructions to ignore
 paper_reconstructions/llm+dp/

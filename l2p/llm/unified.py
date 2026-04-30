@@ -58,7 +58,21 @@ class UnifiedLLM(BaseLLM):
 
         # model alias and handle
         self.model_alias = model_config.get("model_alias", model)
-        self.model_handle = llm.get_model(self.model_alias)
+        try:
+            self.model_handle = llm.get_model(self.model_alias)
+        except KeyError:
+            msg = (
+                f"Failed to load model '{self.model_alias}'. "
+                f"The '{self.provider}' provider plugin may not be installed.\n"
+            )
+            if self.provider == "ollama":
+                msg += "Install it: llm install llm-ollama"
+            else:
+                msg += (
+                    f"See https://llm.datasette.io/en/stable/plugins/directory.html "
+                    f"for available {self.provider} plugins."
+                )
+            raise ImportError(msg)
 
         # tokens and query tracking
         self.tok = tiktoken.get_encoding("cl100k_base")

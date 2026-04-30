@@ -13,11 +13,20 @@ setup(
     author="Marcus Tantakoun, Christian Muise",
     author_email="mtantakoun@gmail.com, christian.muise@gmail.com",
     install_requires=["retry", "pddl", "typing_extensions", "pyyaml"],
+    extras_require={
+        "cli": ["llm", "tiktoken", "rich"],
+    },
+    entry_points={
+        "console_scripts": [
+            "l2p=l2p.cli.main:main",
+        ],
+    },
     license="MIT",
     url="https://github.com/AI-Planning/l2p",
     include_package_data=True,
     package_data={
-    "l2p.llm.utils": ["*"],
+        "l2p.llm.utils": ["*"],
+        "l2p.templates": ["domain_templates/*", "task_templates/*", "feedback_templates/*"],
     },
     classifiers=[
         "Programming Language :: Python :: 3",
