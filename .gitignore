@@ -179,7 +179,6 @@ paper_reconstructions/llm+consistency/
 sas_plan
 
 offline_packages
-config.py
 l2p/llm/vllm.py
 run_inference.sh
 test.py
