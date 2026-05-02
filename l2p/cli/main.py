@@ -62,12 +62,14 @@ For more information on a specific command, use:
             from .commands.generate import add_subparser as add_generate_parser
             from .commands.config import add_subparser as add_config_parser
             from .commands.templates import add_subparser as add_templates_parser
+            from .commands.new import add_subparser as add_new_parser
             
             add_init_parser(subparsers)
             add_models_parser(subparsers)
             add_generate_parser(subparsers)
             add_config_parser(subparsers)
             add_templates_parser(subparsers)
+            add_new_parser(subparsers)
             
         except ImportError as e:
             print(f"ERROR: Failed to load CLI commands: {e}")
@@ -101,6 +103,9 @@ For more information on a specific command, use:
         elif args.command == "templates":
             from .commands.templates import templates_command
             templates_command(args)
+        elif args.command == "new":
+            from .commands.new import new_command
+            new_command(args)
         else:
             parser.print_help()
             sys.exit(1)
