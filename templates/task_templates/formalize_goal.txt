@@ -7,3 +7,9 @@ End your final answer starting with "### GOAL" containing the predicates/numeric
 (<predicate_name> <object5>) ; comment for goal state predicate 3
 (<operator> (<function_name> <object6>) <value>) ; comment for a numeric assignment
 ```
+
+Please process the following problem:
+
+<problem_description>
+{problem_desc}
+</problem_description>

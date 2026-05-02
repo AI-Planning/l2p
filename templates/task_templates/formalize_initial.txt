@@ -7,3 +7,9 @@ End your final answer starting with "### INITIAL" containing the predicates/nume
 (<predicate_name> <object5>) ; comment for initial state predicate 3
 (= (<function_name> <object6>) <value>) ; comment for a numeric assignment
 ```
+
+Please process the following problem:
+
+<problem_description>
+{problem_desc}
+</problem_description>

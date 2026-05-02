@@ -23,7 +23,7 @@ class OPENAI(BaseLLM):
         config_path: str = "l2p/llm/utils/openaiSDK.yaml",
         provider: str = "openai",
         api_key: str | None = None,
-        base_url: str = "https://api.openai.com/v1/",
+        base_url: str | None = None,
     ) -> None:
 
         # load yaml configuration path
@@ -48,7 +48,16 @@ class OPENAI(BaseLLM):
             )
 
         # retrieve model configurations
-        model_config = self._config.get(self.provider, {}).get(model, {})
+        provider_config = self._config.get(self.provider, {})
+        model_config = provider_config.get(model, {})
+
+        # resolve base_url: constructor arg > YAML provider config > default
+        if base_url is None:
+            if isinstance(provider_config, dict) and "base_url" in provider_config:
+                base_url = provider_config["base_url"]
+            else:
+                base_url = "https://api.openai.com/v1/"
+
         self.model_alias = model_config.get("model_alias", model)
         self.context_length = model_config.get("model_context_length", 4096)
 
@@ -75,21 +84,7 @@ class OPENAI(BaseLLM):
 
     def _set_parameters(self, model_config: dict) -> None:
         """Set parameters from the model configuration."""
-
-        # default values for parameters if none exists
-        defaults = {
-            "max_completion_tokens": 4096,
-            "temperature": 0.0,
-            "top_p": 1.0,
-            "frequency_penalty": 0.0,
-            "presence_penalty": 0.0,
-            "stop": None,
-            "reasoning_effort": None,
-        }
-
-        parameters = model_config.get("model_params", {})
-        for key, default in defaults.items():
-            setattr(self, key, parameters.get(key, default))
+        self.model_params = model_config.get("model_params", {}).copy()
 
     @retry(tries=2, delay=60)
     def connect_openai(self, client, model, messages, **kwargs):
@@ -112,6 +107,9 @@ class OPENAI(BaseLLM):
             raise ValueError("Prompt must be a non-empty string.")
 
         messages = messages or [{"role": "user", "content": prompt}]
+        
+        kwargs = dict(self.model_params)
+        self.max_completion_tokens = kwargs['max_completion_tokens']
 
         # estimate current usage of tokens
         current_tokens = sum(len(self.tok.encode(m["content"])) for m in messages)
@@ -132,19 +130,6 @@ class OPENAI(BaseLLM):
                 print(
                     f"[INFO] connecting to {self.model_alias} ({requested_tokens} tokens)..."
                 )
-
-                kwargs = {
-                    "temperature": self.temperature,
-                    "max_completion_tokens": requested_tokens,
-                    "top_p": self.top_p,
-                    "frequency_penalty": self.frequency_penalty,
-                    "presence_penalty": self.presence_penalty,
-                    "stop": self.stop,
-                }
-
-                # only add reasoning_effort if it is not None
-                if self.reasoning_effort is not None:
-                    kwargs["reasoning_effort"] = self.reasoning_effort
 
                 # retrieve completion
                 response = self.connect_openai(
@@ -243,6 +228,7 @@ class OPENAI(BaseLLM):
     def valid_models(self) -> list[str]:
         """Returns a list of valid model engines."""
         try:
-            return list(self._config.get(self.provider, {}).keys())
+            provider_config = self._config.get(self.provider, {})
+            return [k for k, v in provider_config.items() if isinstance(v, dict)]
         except KeyError:
             return []

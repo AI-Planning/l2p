@@ -22,3 +22,9 @@ Each object must be declared separately with their type and not grouped - even i
 (<predicate_name> <object>) ; comment for goal state predicate
 (<operator> (<function_name> <object>) <value>) ; comment for a numeric assignment
 ```
+
+Please process the following problem:
+
+<problem_description>
+{problem_desc}
+</problem_description>

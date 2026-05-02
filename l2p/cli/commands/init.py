@@ -26,19 +26,29 @@ def add_subparser(subparsers):
 Examples:
   # Interactive initialization
   l2p init
-  
-  # Non-interactive setup for OpenAI
-  l2p init --provider openai --model gpt-4o-mini
-  
+   
+  # Non-interactive setup for Unified backend (simonw/llm)
+  l2p init --backend unified --provider openai --model gpt-4o-mini
+   
+  # Non-interactive setup for OpenAI SDK backend
+  l2p init --backend openai --provider deepseek --model deepseek-chat
+   
   # With custom config path
   l2p init --config ~/.l2p/custom-config.yaml
         """,
     )
     
     parser.add_argument(
+        "--backend",
+        type=str,
+        choices=["unified", "openai"],
+        help="LLM backend: unified (simonw/llm) or openai (direct OpenAI SDK)"
+    )
+    
+    parser.add_argument(
         "--provider",
         type=str,
-        help="LLM provider (openai, google, anthropic, ollama, etc.)"
+        help="LLM provider (openai, google, anthropic, ollama, ollama-cloud, etc.)"
     )
     
     parser.add_argument(
@@ -87,6 +97,24 @@ def init_command(args):
         
         config_updates = {"model": {}}
         
+        # Backend
+        backend = args.backend
+        if not backend:
+            print("\n" + "="*50)
+            print("L2P Configuration Setup")
+            print("="*50)
+            print("\nAvailable LLM backends:")
+            print("• unified - Use simonw/llm (supports all providers via plugins)")
+            print("• openai - Use OpenAI SDK directly (for OpenAI-compatible APIs)")
+            print("\nEnter backend (default: unified): ", end="")
+            backend = input().strip().lower() or "unified"
+        
+        if backend not in ("unified", "openai"):
+            print(f"Invalid backend '{backend}'. Defaulting to 'unified'.")
+            backend = "unified"
+        
+        config_updates["model"]["backend"] = backend
+        
         # Provider
         provider = args.provider
         if not provider:
@@ -100,6 +128,7 @@ def init_command(args):
             print("• deepseek - DeepSeek models")
             print("• mistral - Mistral models")
             print("• ollama - Local Ollama models")
+            print("• ollama-cloud - Ollama cloud models")
             print("\nEnter provider name: ", end="")
             provider = input().strip().lower()
         
@@ -123,9 +152,9 @@ def init_command(args):
         config_path = args.config_path
         if not config_path:
             if non_interactive:
-                config_path = "l2p/llm/utils/llm.yaml"
+                config_path = "l2p/llm/utils/llm.yaml" if backend == "unified" else "l2p/llm/utils/openaiSDK.yaml"
             else:
-                default_config = "l2p/llm/utils/llm.yaml"
+                default_config = "l2p/llm/utils/llm.yaml" if backend == "unified" else "l2p/llm/utils/openaiSDK.yaml"
                 print(f"\nPath to LLM configuration YAML (default: {default_config}): ", end="")
                 user_input = input().strip()
                 config_path = user_input if user_input else default_config
@@ -165,34 +194,44 @@ def init_command(args):
             print("✅ Configuration is valid.")
             
             # Try to initialize model
+            llm_name = "OPENAI" if backend == "openai" else "UnifiedLLM"
             try:
-                from l2p.llm.unified import UnifiedLLM
-                model_config = config_manager.get_model_config()
+                if backend == "openai":
+                    from l2p.llm.openai import OPENAI as llm_class
+                else:
+                    from l2p.llm.unified import UnifiedLLM as llm_class
                 
-                print(f"\nInitializing {provider}/{model}...")
+                print(f"\nInitializing {provider}/{model} via {llm_name}...")
                 # Note: We don't actually connect here, just validate config
                 print("✅ Model configuration ready.")
                 
                 print("\nNext steps:")
-                if provider == "ollama":
+                if backend == "unified" and provider == "ollama":
                     print("1. Make sure the Ollama plugin is installed:")
                     print("   llm install llm-ollama")
                     print("2. Verify Ollama server is running:")
                     print("   ollama list")
+                    steps_offset = 3
+                elif backend == "unified":
+                    print("1. Set your API key if using environment variable:")
+                    print(f"   export {get_api_key_env_var(provider)}=\"your-key\"")
+                    steps_offset = 2
                 else:
                     print("1. Set your API key if using environment variable:")
                     print(f"   export {get_api_key_env_var(provider)}=\"your-key\"")
-                steps_offset = 3 if provider == "ollama" else 2
+                    steps_offset = 2
                 print(f"{steps_offset}. Test connection:")
                 print("   l2p models test")
                 print(f"{steps_offset + 1}. Generate your first PDDL component:")
                 print("   l2p generate types --desc \"blocksworld domain\"")
                 
             except ImportError as e:
-                print(f"⚠️  Could not import UnifiedLLM: {e}")
+                print(f"⚠️  Could not import {llm_name}: {e}")
                 print("\nTroubleshooting:")
-                print("• Install CLI dependencies: pip install llm tiktoken")
-                print("• Or use a different provider")
+                if backend == "unified":
+                    print("• Install CLI dependencies: pip install llm tiktoken")
+                else:
+                    print("• Install CLI dependencies: pip install openai tiktoken")
                 
         else:
             print(f"⚠️  Configuration issue: {message}")
@@ -216,6 +255,7 @@ def get_example_model(provider: str) -> str:
         "deepseek": "deepseek-chat, deepseek-reasoner",
         "mistral": "mistral-small, mistral-large",
         "ollama": "llama3.1:8b, deepseek-r1:32b",
+        "ollama-cloud": "gemma4:31b-cloud, deepseek-v4-pro:cloud",
     }
     return examples.get(provider, "model-name")
 
@@ -228,6 +268,6 @@ def get_api_key_env_var(provider: str) -> str:
         "anthropic": "ANTHROPIC_API_KEY",
         "deepseek": "DEEPSEEK_API_KEY",
         "mistral": "MISTRAL_API_KEY",
-        "ollama": "OLLAMA_API_KEY",  # Usually not needed for local Ollama
+        "ollama-cloud": "OLLAMA_API_KEY",  # Usually not needed for local Ollama
     }
     return env_vars.get(provider, f"{provider.upper()}_API_KEY")

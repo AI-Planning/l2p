@@ -49,3 +49,9 @@ End your final answers underneath the headers: '### Action Parameters,' '### Act
 """
 
 and so on...
+
+Please process the following domain:
+
+<domain_description>
+{domain_desc}
+</domain_description>

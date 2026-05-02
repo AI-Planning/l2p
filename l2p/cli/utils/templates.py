@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 import importlib.resources
 import pkgutil
+from l2p.utils.pddl_parser import load_file
 
 from .errors import CLIError, TemplateError
 
@@ -111,6 +112,7 @@ class TemplateManager:
         Returns:
             Template content or None if not found.
         """
+        
         if not self.config_manager:
             return None
         
@@ -119,7 +121,7 @@ class TemplateManager:
         
         if not custom_path:
             return None
-        
+
         custom_dir = Path(custom_path).expanduser().resolve()
         
         # Try category subdirectory first
@@ -161,7 +163,7 @@ class TemplateManager:
         try:
             # Try to load from package resources
             template_path = f"templates/{category}_templates/{template_name}"
-            content = importlib.resources.read_text("l2p", template_path)
+            content = load_file(template_path)
             return content
         except (ImportError, FileNotFoundError, ModuleNotFoundError):
             # Fall back to file system for development

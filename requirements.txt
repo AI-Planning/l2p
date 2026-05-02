@@ -3,3 +3,4 @@ pddl
 typing_extensions
 pyyaml
 llm
+tiktoken

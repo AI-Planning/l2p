@@ -119,17 +119,24 @@ def list_models_command(args):
     try:
         # Load config file
         if config_path.startswith("l2p/"):
+            # Extract the YAML filename from config path
+            # e.g. "l2p/llm/utils/openaiSDK.yaml" -> "openaiSDK.yaml"
+            parts = config_path.replace("\\", "/").split("/")
+            yaml_filename = parts[-1] if parts else "llm.yaml"
+            
             # Try to load from package
             try:
                 import importlib.resources
-                config_content = importlib.resources.read_text("l2p.llm.utils", "llm.yaml")
+                config_content = importlib.resources.read_text("l2p.llm.utils", yaml_filename)
                 config = yaml.safe_load(config_content)
             except Exception:
                 # Fall back to file system
                 package_root = Path(__file__).parent.parent.parent.parent
-                config_file = package_root / "l2p" / "llm" / "utils" / "llm.yaml"
+                config_file = package_root / "l2p" / "llm" / "utils" / yaml_filename
                 if not config_file.exists():
-                    config_file = package_root / "l2p" / "llm" / "utils" / "openaiSDK.yaml"
+                    # Try the other YAML as last resort
+                    fallback = "openaiSDK.yaml" if yaml_filename == "llm.yaml" else "llm.yaml"
+                    config_file = package_root / "l2p" / "llm" / "utils" / fallback
                 with open(config_file, 'r') as f:
                     config = yaml.safe_load(f)
         else:
@@ -156,7 +163,8 @@ def list_models_command(args):
                 ]
             )
         
-        models = list(provider_config.keys())
+        # return models excluding `base_url` argument
+        models = list(provider_config.keys() - {"base_url"})
         
         # Display results
         print(f"\nAvailable models for '{provider}' provider:")
@@ -321,12 +329,20 @@ def test_model_command(args):
     # Actual connection test
     print("\nAttempting to connect to model...")
     
+    # Determine backend from config (safe defaults for error handling)
+    backend = model_config.get("backend", "unified")
+    llm_name = "OPENAI" if backend == "openai" else "UnifiedLLM"
+    
     try:
-        # Import and initialize UnifiedLLM
-        from l2p.llm.unified import UnifiedLLM
+        if backend == "openai":
+            from l2p.llm.openai import OPENAI
+            llm_class = OPENAI
+        else:
+            from l2p.llm.unified import UnifiedLLM
+            llm_class = UnifiedLLM
         
-        print(f"Initializing UnifiedLLM for {provider}/{model}...")
-        llm = UnifiedLLM(
+        print(f"Initializing {llm_name} for {provider}/{model}...")
+        llm = llm_class(
             provider=provider,
             model=model,
             config_path=config_path,
@@ -354,10 +370,12 @@ def test_model_command(args):
         print("\n✅ Connection test successful!")
         
     except ImportError as e:
-        print(f"\n✗ Failed to import UnifiedLLM: {e}")
+        print(f"\n✗ Failed to import {llm_name}: {e}")
         print("\nTroubleshooting:")
-        print("• Install required packages: pip install llm tiktoken")
-        print("• The 'llm' package provides UnifiedLLM functionality")
+        if backend == "openai":
+            print("• Install required packages: pip install openai tiktoken")
+        else:
+            print("• Install required packages: pip install llm tiktoken")
         print("• You can also use other LLM providers directly")
         
     except Exception as e:

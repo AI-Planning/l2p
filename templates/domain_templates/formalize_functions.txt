@@ -8,3 +8,9 @@ End your final answers starting with "### FUNCTIONS" with ``` ``` comment blocks
 - (function_name_2 ?t3 - type_3 ?t4 - type_4): 'function_description'
 - (function_name_3 ?t5 - type_5): 'function_description'
 ``` 
+
+Please process the following domain:
+
+<domain_description>
+{domain_desc}
+</domain_description>

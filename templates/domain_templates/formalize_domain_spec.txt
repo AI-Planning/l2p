@@ -161,9 +161,11 @@ You are modeling a robot delivery system within a smart warehouse. The warehouse
 Here is your task:
 
 ## DOMAIN DESCRIPTION 
-```
+Please process the following domain:
+
+<domain_description>
 {domain_desc}
-```
+</domain_description>
 
 ### TYPES
 ```

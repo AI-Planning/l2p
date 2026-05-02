@@ -22,6 +22,7 @@ class ConfigManager:
     # Default configuration
     DEFAULT_CONFIG = {
         "model": {
+            "backend": "unified",
             "provider": "openai",
             "model": "gpt-4o-mini",
             "config_path": "l2p/llm/utils/llm.yaml",

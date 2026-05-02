@@ -118,6 +118,7 @@ class GeneratorBase:
         try:
             model_config = self.config_manager.get_model_config()
             
+            backend = model_config.get("backend", "unified")
             provider = model_config.get("provider")
             model = model_config.get("model")
             config_path = model_config.get("config_path")
@@ -129,25 +130,33 @@ class GeneratorBase:
                     ["Run 'l2p init' to configure model settings first."]
                 )
             
-            # Import and initialize UnifiedLLM
-            from l2p.llm.unified import UnifiedLLM
-            
-            print(f"Loading LLM: {provider}/{model}")
-            self.llm = UnifiedLLM(
-                provider=provider,
-                model=model,
-                config_path=config_path,
-                api_key=api_key
-            )
+            if backend == "openai":
+                from l2p.llm.openai import OPENAI
+                print(f"Loading LLM: {provider}/{model} (OpenAI SDK backend)")
+                self.llm = OPENAI(
+                    provider=provider,
+                    model=model,
+                    config_path=config_path,
+                    api_key=api_key
+                )
+            else:
+                from l2p.llm.unified import UnifiedLLM
+                print(f"Loading LLM: {provider}/{model} (Unified backend)")
+                self.llm = UnifiedLLM(
+                    provider=provider,
+                    model=model,
+                    config_path=config_path,
+                    api_key=api_key
+                )
             
             return self.llm
             
         except ImportError as e:
             raise CLIError(
-                f"Failed to import UnifiedLLM: {e}",
+                f"Failed to import LLM class: {e}",
                 [
-                    "Install CLI dependencies: pip install llm tiktoken",
-                    "Or use a different LLM provider"
+                    "For Unified backend: pip install llm tiktoken",
+                    "For OpenAI SDK backend: pip install openai tiktoken"
                 ]
             )
         except Exception as e:

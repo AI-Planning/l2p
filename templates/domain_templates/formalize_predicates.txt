@@ -8,3 +8,9 @@ End your final answers starting with "### New Predicates" with ``` ``` comment b
 - (predicate_name_2 ?t3 - type_3 ?t4 - type_4): 'predicate_description'
 - (predicate_name_3 ?t5 - type_5): 'predicate_description'
 ``` 
+
+Please process the following domain:
+
+<domain_description>
+{domain_desc}
+</domain_description>

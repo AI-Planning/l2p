@@ -8,3 +8,9 @@ object3 - type_1
 ```
 
 Each object must be declared separately with their type and not grouped - even if objects share the same type.
+
+Please process the following problem:
+
+<problem_description>
+{problem_desc}
+</problem_description>

@@ -25,3 +25,9 @@ End your final answers underneath the headers: '### Action Parameters,' '### Act
 ``` 
 
 If there are no new predicates created, keep an empty space enclosed ```  ``` with the '### New Predicates' header.
+
+Please process the following domain:
+
+<domain_description>
+{domain_desc}
+</domain_description>
