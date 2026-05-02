@@ -12,7 +12,7 @@ from collections import OrderedDict
 from copy import deepcopy
 from typing import Optional
 
-from pddl import parse_domain, parse_problem
+from pddl import parse_domain as pddl_parse_domain, parse_problem as pddl_parse_problem
 from pddl.formatter import domain_to_string, problem_to_string
 
 from .pddl_format import remove_comments
@@ -20,6 +20,28 @@ from .pddl_types import Action, Function, Predicate
 
 
 # ---- PDDL DOMAIN PARSERS ----
+
+def parse_domain(llm_output: str) -> str:
+    """Extract PDDL domain string from LLM output.
+
+    Expects the LLM to return the PDDL domain in a fenced code block:
+    ```pddl
+    (define (domain ...) ...)
+    ```
+    Falls back to a plain ``` block if ```pddl is not found.
+    """
+    pattern = r"```pddl\n(.*?)```"
+    matches = re.findall(pattern, llm_output, re.DOTALL)
+    if not matches:
+        pattern = r"```\n(.*?)```"
+        matches = re.findall(pattern, llm_output, re.DOTALL)
+    if not matches:
+        raise ValueError(
+            "Could not find PDDL code block in LLM output.\n"
+            f"Expected format: ```pddl\\n<PDDL content>\\n```\n"
+            f"LLM Output:\n{llm_output}"
+        )
+    return matches[0].strip()
 
 
 def parse_types(llm_output: str, heading: str = "TYPES") -> Optional[dict[str, str]]:
@@ -848,7 +870,7 @@ def load_files(folder_path: str):
 def check_parse_domain(file_path: str):
     """Run PDDL library to check if file is syntactically correct"""
     try:
-        domain = parse_domain(file_path)
+        domain = pddl_parse_domain(file_path)
         pddl_domain = domain_to_string(domain)
         return pddl_domain
     except Exception as e:
@@ -861,7 +883,7 @@ def check_parse_domain(file_path: str):
 def check_parse_problem(file_path: str):
     """Run PDDL library to check if file is syntactically correct"""
     try:
-        problem = parse_problem(file_path)
+        problem = pddl_parse_problem(file_path)
         pddl_problem = problem_to_string(problem)
         return pddl_problem
     except Exception as e:

@@ -54,6 +54,107 @@ class DomainBuilder:
     """Formalize/generate functions"""
 
     @require_llm
+    def formalize_domain(
+        self,
+        model: BaseLLM,
+        domain_desc: str,
+        domain_name: str,
+        prompt_template: str,
+        types: dict[str, str] | list[dict[str, str]] | None = None,
+        constants: dict[str, str] | None = None,
+        predicates: list[Predicate] | None = None,
+        functions: list[Function] | None = None,
+        actions: list[Action] | None = None,
+        requirements: list[str] | None = None,
+        syntax_validator: SyntaxValidator = None,
+        max_retries: int = 3,
+    ) -> tuple[str, str, tuple[bool, str]]:
+        """
+        Formalizes a complete PDDL domain using the LLM.
+
+        Generates a base PDDL domain string via `generate_domain()`, then sends
+        it to the LLM for refinement. The LLM output must be in a fenced code
+        block: ```pddl ... ```.
+
+        Args:
+            model (BaseLLM): LLM to query
+            domain_name (str): domain name
+            prompt_template (str): structured prompt template for domain formalization
+            types: domain :types, defaults to None
+            constants: domain :constants, defaults to None
+            predicates: domain :predicates, defaults to None
+            functions: domain :functions, defaults to None
+            actions: domain :action(s), defaults to None
+            requirements: domain :requirements, defaults to auto-generated
+            syntax_validator: syntax checker for generated domain, defaults to None
+            max_retries: max # of retries if failure occurs, defaults to 3
+
+        Returns:
+            pddl_domain (str): the refined PDDL domain string
+            llm_output (str): the raw string BaseLLM response
+            validation_info (tuple[bool, str]): validation info
+        """
+
+        actions = actions or []
+        has_domain_info = any([types, constants, predicates, functions, actions])
+
+        if has_domain_info:
+            domain_str = self.generate_domain(
+                domain_name=domain_name,
+                types=types,
+                constants=constants,
+                predicates=predicates,
+                functions=functions,
+                actions=actions,
+                requirements=requirements,
+            )
+            domain_section = (
+                f"Review and refine the following PDDL domain - fix any syntax errors, add missing requirements, improve definitions, and ensure it follows PDDL conventions.\n\n"
+                f"Please refine the following PDDL domain:\n\n"
+                f"<domain>\n```pddl\n{domain_str}\n```\n</domain>"
+            )
+        else:
+            domain_str = ""
+            domain_section = ""
+
+        prompt = (
+            prompt_template
+            .replace("{domain_desc}", domain_desc)
+            .replace("{domain_str}", domain_str)
+            .replace("{domain_section}", domain_section)
+        )
+
+        for attempt in range(max_retries):
+            try:
+                model.reset_tokens()
+                llm_output = model.query(prompt=prompt)
+
+                pddl_domain = parse_domain(llm_output=llm_output)
+
+                validation_info = (True, "All validations passed.")
+                if syntax_validator:
+                    for error_type in syntax_validator.error_types:
+                        validator = getattr(
+                            syntax_validator, f"{error_type}", None
+                        )
+                        if not callable(validator):
+                            continue
+                        validation_info = validator(pddl_domain)
+                        if not validation_info[0]:
+                            return pddl_domain, llm_output, validation_info
+
+                return pddl_domain, llm_output, validation_info
+
+            except Exception as e:
+                print(
+                    f"Error encountered during attempt {attempt + 1}/{max_retries}: {e}. "
+                    f"\nLLM Output: \n\n{llm_output if 'llm_output' in locals() else 'None'}\n\n Retrying..."
+                )
+                time.sleep(2)
+
+        raise RuntimeError("Max retries exceeded. Failed to formalize domain.")
+
+    @require_llm
     def formalize_types(
         self,
         model: BaseLLM,
