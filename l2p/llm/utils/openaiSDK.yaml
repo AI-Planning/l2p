@@ -776,173 +776,6 @@ huggingface:
       dtype: float16
       device_map: null
       ngpu: 4
-
-# OLLAMA CLOUD (OpenAI-compatible API)
-ollama-cloud:
-  base_url: https://ollama.com/v1
-  deepseek-v4-pro:cloud:
-    model_family: deepseek-v4
-    model_alias: deepseek-v4-pro:cloud
-    model_context_length: 1000000
-    model_params:
-      max_completion_tokens: 8192
-      temperature: 0.0
-      top_p: 1.0
-  deepseek-v4-flash:cloud:
-    model_family: deepseek-v4
-    model_alias: deepseek-v4-flash:cloud
-    model_context_length: 1000000
-    model_params:
-      max_completion_tokens: 8192
-      temperature: 0.0
-      top_p: 1.0
-  deepseek-v3.2:cloud:
-    model_family: deepseek-v3
-    model_alias: deepseek-v3.2:cloud
-    model_context_length: 160000
-    model_params:
-      max_completion_tokens: 8192
-      temperature: 0.0
-      top_p: 1.0
-  deepseek-v3.1:671b-cloud:
-    model_family: deepseek-v3
-    model_alias: deepseek-v3.1:671b-cloud
-    model_context_length: 160000
-    model_params:
-      max_completion_tokens: 8192
-      temperature: 0.0
-      top_p: 1.0
-  kimi-k2-thinking:cloud:
-    model_family: kimi-k2
-    model_alias: kimi-k2-thinking:cloud
-    model_context_length: 256000
-    model_params:
-      max_completion_tokens: 8192
-      temperature: 0.0
-      top_p: 1.0
-  kimi-k2.6:cloud:
-    model_family: kimi-k2
-    model_alias: kimi-k2.6:cloud
-    model_context_length: 256000
-    model_params:
-      max_completion_tokens: 8192
-      temperature: 0.0
-      top_p: 1.0
-  kimi-k2.5:cloud:
-    model_family: kimi-k2
-    model_alias: kimi-k2.5:cloud
-    model_context_length: 256000
-    model_params:
-      max_completion_tokens: 8192
-      temperature: 0.0
-      top_p: 1.0
-  kimi-k2:1t-cloud:
-    model_family: kimi-k2
-    model_alias: kimi-k2:1t-cloud
-    model_context_length: 256000
-    model_params:
-      max_completion_tokens: 8192
-      temperature: 0.0
-      top_p: 1.0
-  gemini-3-flash-preview:cloud:
-    model_family: gemini-3
-    model_alias: gemini-3-flash-preview:cloud
-    model_context_length: 1000000
-    model_params:
-      max_completion_tokens: 8192
-      temperature: 0.0
-      top_p: 1.0
-  gemma4:31b-cloud:
-    model_family: gemma4
-    model_alias: gemma4:31b-cloud
-    model_context_length: 256000
-    model_params:
-      max_completion_tokens: 8192
-      temperature: 0.0
-      top_p: 1.0
-  glm-5.1:cloud:
-    model_family: glm-5.1
-    model_alias: glm-5.1:cloud
-    model_context_length: 198000
-    model_params:
-      max_completion_tokens: 8192
-      temperature: 0.0
-      top_p: 1.0
-  glm-5:cloud:
-    model_family: glm-5
-    model_alias: glm-5:cloud
-    model_context_length: 198000
-    model_params:
-      max_completion_tokens: 8192
-      temperature: 0.0
-      top_p: 1.0
-  gpt-oss:120b-cloud:
-    model_family: gpt-oss
-    model_alias: gpt-oss:120b-cloud
-    model_context_length: 128000
-    model_params:
-      max_completion_tokens: 8192
-      temperature: 0.0
-      top_p: 1.0
-  gpt-oss:20b-cloud:
-    model_family: gpt-oss
-    model_alias: gpt-oss:20b-cloud
-    model_context_length: 128000
-    model_params:
-      max_completion_tokens: 8192
-      temperature: 0.0
-      top_p: 1.0
-  mistral-large-3:675b-cloud:
-    model_family: mistral-large-3
-    model_alias: mistral-large-3:675b-cloud
-    model_context_length: 256000
-    model_params:
-      max_completion_tokens: 8192
-      temperature: 0.0
-      top_p: 1.0
-  ministral-3:14b-cloud:
-    model_family: ministral-3
-    model_alias: ministral-3:14b-cloud
-    model_context_length: 256000
-    model_params:
-      max_completion_tokens: 8192
-      temperature: 0.0
-      top_p: 1.0
-  ministral-3:8b-cloud:
-    model_family: ministral-3
-    model_alias: ministral-3:8b-cloud
-    model_context_length: 256000
-    model_params:
-      max_completion_tokens: 8192
-      temperature: 0.0
-      top_p: 1.0
-  ministral-3:3b-cloud:
-    model_family: ministral-3
-    model_alias: ministral-3:3b-cloud
-    model_context_length: 256000
-    model_params:
-      max_completion_tokens: 8192
-      temperature: 0.0
-      top_p: 1.0
-  qwen3.5:397b-cloud:
-    model_family: qwen3.5
-    model_alias: qwen3.5:397b-cloud
-    model_context_length: 256000
-    model_params:
-      max_completion_tokens: 8192
-      temperature: 0.0
-      top_p: 1.0
-  qwen3.5:cloud:
-    model_family: qwen3.5
-    model_alias: qwen3.5:cloud
-    model_context_length: 256000
-    model_params:
-      max_completion_tokens: 8192
-      temperature: 0.0
-      top_p: 1.0
-    cost_usd_mtok:
-      input: 1.54 # (when hosted on Azure)
-      output: 1.77 # (when hosted on Azure)
   llama3.1-405b:
     model_family: llama-3.1
     model_alias: meta-llama/Llama-3.1-405B-Instruct
@@ -1045,3 +878,227 @@ ollama-cloud:
       dtype: float16
       device_map: null
       ngpu: 4
+
+# OLLAMA CLOUD (OpenAI-compatible API)
+ollama-cloud:
+  base_url: https://ollama.com/v1
+  deepseek-v4-pro:cloud:
+    model_family: deepseek-v4
+    model_alias: deepseek-v4-pro:cloud
+    model_context_length: 1000000
+    model_params:
+      max_completion_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 0.00
+      output: 0.00
+  deepseek-v4-flash:cloud:
+    model_family: deepseek-v4
+    model_alias: deepseek-v4-flash:cloud
+    model_context_length: 1000000
+    model_params:
+      max_completion_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 0.00
+      output: 0.00
+  deepseek-v3.2:cloud:
+    model_family: deepseek-v3
+    model_alias: deepseek-v3.2:cloud
+    model_context_length: 160000
+    model_params:
+      max_completion_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 0.00
+      output: 0.00
+  deepseek-v3.1:671b-cloud:
+    model_family: deepseek-v3
+    model_alias: deepseek-v3.1:671b-cloud
+    model_context_length: 160000
+    model_params:
+      max_completion_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 0.00
+      output: 0.00
+  kimi-k2-thinking:cloud:
+    model_family: kimi-k2
+    model_alias: kimi-k2-thinking:cloud
+    model_context_length: 256000
+    model_params:
+      max_completion_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 0.00
+      output: 0.00
+  kimi-k2.6:cloud:
+    model_family: kimi-k2
+    model_alias: kimi-k2.6:cloud
+    model_context_length: 256000
+    model_params:
+      max_completion_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 0.00
+      output: 0.00
+  kimi-k2.5:cloud:
+    model_family: kimi-k2
+    model_alias: kimi-k2.5:cloud
+    model_context_length: 256000
+    model_params:
+      max_completion_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 0.00
+      output: 0.00
+  kimi-k2:1t-cloud:
+    model_family: kimi-k2
+    model_alias: kimi-k2:1t-cloud
+    model_context_length: 256000
+    model_params:
+      max_completion_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 0.00
+      output: 0.00
+  gemini-3-flash-preview:cloud:
+    model_family: gemini-3
+    model_alias: gemini-3-flash-preview:cloud
+    model_context_length: 1000000
+    model_params:
+      max_completion_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 0.00
+      output: 0.00
+  gemma4:31b-cloud:
+    model_family: gemma4
+    model_alias: gemma4:31b-cloud
+    model_context_length: 256000
+    model_params:
+      max_completion_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 0.00
+      output: 0.00
+  glm-5.1:cloud:
+    model_family: glm-5.1
+    model_alias: glm-5.1:cloud
+    model_context_length: 198000
+    model_params:
+      max_completion_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 0.00
+      output: 0.00
+  glm-5:cloud:
+    model_family: glm-5
+    model_alias: glm-5:cloud
+    model_context_length: 198000
+    model_params:
+      max_completion_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 0.00
+      output: 0.00
+  gpt-oss:120b-cloud:
+    model_family: gpt-oss
+    model_alias: gpt-oss:120b-cloud
+    model_context_length: 128000
+    model_params:
+      max_completion_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 0.00
+      output: 0.00
+  gpt-oss:20b-cloud:
+    model_family: gpt-oss
+    model_alias: gpt-oss:20b-cloud
+    model_context_length: 128000
+    model_params:
+      max_completion_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 0.00
+      output: 0.00
+  mistral-large-3:675b-cloud:
+    model_family: mistral-large-3
+    model_alias: mistral-large-3:675b-cloud
+    model_context_length: 256000
+    model_params:
+      max_completion_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 0.00
+      output: 0.00
+  ministral-3:14b-cloud:
+    model_family: ministral-3
+    model_alias: ministral-3:14b-cloud
+    model_context_length: 256000
+    model_params:
+      max_completion_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 0.00
+      output: 0.00
+  ministral-3:8b-cloud:
+    model_family: ministral-3
+    model_alias: ministral-3:8b-cloud
+    model_context_length: 256000
+    model_params:
+      max_completion_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 0.00
+      output: 0.00
+  ministral-3:3b-cloud:
+    model_family: ministral-3
+    model_alias: ministral-3:3b-cloud
+    model_context_length: 256000
+    model_params:
+      max_completion_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 0.00
+      output: 0.00
+  qwen3.5:397b-cloud:
+    model_family: qwen3.5
+    model_alias: qwen3.5:397b-cloud
+    model_context_length: 256000
+    model_params:
+      max_completion_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 0.00
+      output: 0.00
+  qwen3.5:cloud:
+    model_family: qwen3.5
+    model_alias: qwen3.5:cloud
+    model_context_length: 256000
+    model_params:
+      max_completion_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 0.00
+      output: 0.00

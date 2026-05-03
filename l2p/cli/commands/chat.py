@@ -85,7 +85,7 @@ def chat_command(args):
 
         if not provider or not model:
             print("Error: No model configured.")
-            print("Run 'l2p init' to configure a model first.")
+            print("Run 'l2p init' to configure a model first or 'l2p config edit' to edit an existing config file.")
             sys.exit(1)
 
         # Resolve API key
