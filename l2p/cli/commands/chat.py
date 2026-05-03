@@ -1,16 +1,19 @@
 """
 Chat command for L2P CLI.
 
-Interactive single-exchange chat with the configured LLM model.
+Interactive single-exchange chat with the configured LLM model:
+    - Run command: `l2p chat`
 """
 
 import os
+import re
 import sys
+import tempfile
 import argparse
+from pathlib import Path
 
-from ..utils.config import CLIError, get_config_manager
+from ..utils.config import get_config_manager
 from ..utils.errors import handle_error
-
 
 BOLD = "\033[1m"
 GREEN = "\033[92m"
@@ -18,6 +21,22 @@ CYAN = "\033[96m"
 YELLOW = "\033[93m"
 RESET = "\033[0m"
 
+EDIT_SYSTEM_PROMPT = (
+    "You are a PDDL editing assistant. The user will provide you with the contents of a PDDL file "
+    "and a description of the edit they want to make.\n\n"
+    "Your task is to apply the requested edit and return the ENTIRE updated PDDL file content "
+    "inside a single fenced code block with the 'pddl' language tag:\n\n"
+    "```pddl\n(define (domain ...)\n  ...\n)\n```\n\n"
+    "Rules:\n"
+    "- Preserve all existing content that the user did not ask to change.\n"
+    "- Ensure the PDDL syntax is correct: balanced parentheses, proper indentation, valid requirement declarations.\n"
+    "- Use :typing if the domain uses typed parameters, :strips is always implied.\n"
+    "- Do NOT include any explanatory text outside the code block.\n"
+    "- Always output the full file content, never a diff or partial snippet.\n"
+    "- If the requested edit would break the PDDL syntax, suggest an alternative that preserves correctness."
+)
+
+# system prompt for L2P context
 SYSTEM_PROMPT = (
     "You are an assistant for L2P (Library to connect LLMs and Planning), a CLI tool that uses LLMs "
     "to generate PDDL (Planning Domain Definition Language) components for AI planning tasks.\n\n"
@@ -71,6 +90,93 @@ Examples:
     parser.set_defaults(func=chat_command)
 
 
+def _check_pddl_syntax(content: str) -> str | None:
+    """Run PDDL syntax check on content. Returns None if valid, error string if not."""
+    from pddl import parse_domain as pddl_parse_domain, parse_problem as pddl_parse_problem
+
+    tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".pddl", delete=False)
+    try:
+        tmp.write(content)
+        tmp.close()
+        if content.strip().startswith("(define (domain"):
+            pddl_parse_domain(tmp.name)
+        elif content.strip().startswith("(define (problem"):
+            pddl_parse_problem(tmp.name)
+        else:
+            return "Unknown PDDL type — must start with (define (domain ... or (define (problem ..."
+        return None
+    except Exception as e:
+        return str(e)
+    finally:
+        os.unlink(tmp.name)
+
+
+def _handle_edit_command(llm, backend: str, filepath: str):
+    """Handle /edit <filepath> — load, prompt for edit, send to LLM, confirm overwrite."""
+    path = Path(filepath).expanduser().resolve()
+    if not path.exists():
+        print(f"  {YELLOW}File not found:{RESET} {path}")
+        return
+
+    content = path.read_text()
+    print(f"  Loaded {CYAN}{path}{RESET} ({len(content)} chars)")
+
+    edit_desc = input(f"  {GREEN}Describe your edit:{RESET} ").strip()
+    if not edit_desc:
+        print(f"  {YELLOW}No edit provided.{RESET}")
+        return
+
+    prompt = (
+        f"[PDDL File: {path.name}]\n\n"
+        f"```pddl\n{content}\n```\n\n"
+        f"Requested edit: {edit_desc}\n\n"
+        f"Apply this edit and return the entire updated file in a ```pddl block."
+    )
+
+    try:
+        if backend == "openai":
+            messages = [
+                {"role": "system", "content": EDIT_SYSTEM_PROMPT},
+                {"role": "user", "content": prompt},
+            ]
+            response = llm.query(prompt, messages=messages, max_retry=1)
+        else:
+            prefixed = f"[System Instructions]\n{EDIT_SYSTEM_PROMPT}\n\n[User]\n{prompt}"
+            response = llm.query(prefixed, max_retry=1)
+    except Exception as e:
+        print(f"\n{YELLOW}LLM error: {e}{RESET}")
+        return
+
+    # Extract ```pddl ... ``` block
+    m = re.search(r"```pddl\s*\n(.*?)```", response, re.DOTALL)
+    if not m:
+        print(f"\n{CYAN}{response}{RESET}\n")
+        print(f"  {YELLOW}Could not find a ```pddl block in the response. Edit aborted.{RESET}")
+        return
+
+    new_content = m.group(1).strip()
+    print(f"\n{CYAN}```pddl{RESET}")
+    print(new_content)
+    print(f"{CYAN}```{RESET}")
+
+    # Run PDDL syntax check (warning only, never reformats)
+    print(f"\n  Checking PDDL syntax...")
+    error = _check_pddl_syntax(new_content)
+    if error:
+        print(f"  {YELLOW}[WARNING] PDDL syntax issue: {error}{RESET}")
+        print(f"  {YELLOW}The file may not be valid — proceed with caution.{RESET}")
+    else:
+        print(f"  {GREEN}PDDL syntax is valid.{RESET}")
+
+    confirm = input(f"\n  {GREEN}Overwrite file? (y/N):{RESET} ").strip().lower()
+    if confirm != "y":
+        print(f"  {YELLOW}Edit cancelled.{RESET}")
+        return
+
+    path.write_text(new_content + "\n")
+    print(f"  {GREEN}File saved to:{RESET} {path}")
+
+
 def chat_command(args):
     """Execute chat command."""
     try:
@@ -88,7 +194,7 @@ def chat_command(args):
             print("Run 'l2p init' to configure a model first or 'l2p config edit' to edit an existing config file.")
             sys.exit(1)
 
-        # Resolve API key
+        # resolve API key
         if api_key and api_key.endswith("_API_KEY"):
             api_key = os.getenv(api_key, "")
 
@@ -104,7 +210,8 @@ def chat_command(args):
         print(f"{BOLD}  L2P Chat{RESET}")
         print(f"  {CYAN}{provider}/{model}{RESET}")
         print(f"{BOLD}{'=' * 60}{RESET}")
-        print(f"  Type {YELLOW}/exit{RESET} to quit")
+        print(f"  {YELLOW}/exit{RESET}       Quit")
+        print(f"  {YELLOW}/edit <file>{RESET}  Edit a PDDL file with LLM assistance")
         print()
 
         llm = llm_class(
@@ -115,19 +222,27 @@ def chat_command(args):
         )
 
         while True:
+            # get input from user
             try:
                 user_input = input(f"{GREEN}>>>{RESET} ").strip()
             except (EOFError, KeyboardInterrupt):
                 print()
                 break
 
+            # if not user input continue
             if not user_input:
                 continue
-
+            
             if user_input == "/exit":
                 break
 
+            if user_input.startswith("/edit "):
+                filepath = user_input[len("/edit "):].strip()
+                _handle_edit_command(llm, backend, filepath)
+                continue
+
             try:
+                # insert L2P system prompt to query with
                 if backend == "openai":
                     messages = [
                         {"role": "system", "content": SYSTEM_PROMPT},
@@ -141,8 +256,10 @@ def chat_command(args):
             except Exception as e:
                 print(f"\n{YELLOW}Error: {e}{RESET}\n")
 
+        # exit message
         print(f"\n{BOLD}Goodbye!{RESET}")
 
+    # fail catch message returns
     except ImportError as e:
         print(f"\nFailed to import {llm_name}: {e}")
         print("Troubleshooting:")

@@ -4,16 +4,15 @@ Generation commands for L2P CLI.
 Generate PDDL components using configured LLM models.
 """
 
-import os
 import sys
 import argparse
 import json
 import yaml
 from pathlib import Path
-from typing import Dict, Any, Optional, List
+from typing import Any, Optional
 
-from ..utils.config import ConfigManager, CLIError, get_config_manager
-from ..utils.templates import TemplateManager, get_template_manager
+from ..utils.config import CLIError, get_config_manager
+from ..utils.templates import get_template_manager
 from ..utils.errors import handle_error
 from ...llm.base import resolve_config_path
 
@@ -76,7 +75,7 @@ Examples:
 def generate_command(args):
     """Execute generate command."""
     try:
-        # This function is just a dispatcher - the actual work is done
+        # this function is just a dispatcher - the actual work is done
         # by the subcommand functions set via set_defaults
         if hasattr(args, 'func'):
             args.func(args)
@@ -164,7 +163,7 @@ class GeneratorBase:
             
         except ImportError as e:
             raise CLIError(
-                f"Failed to import LLM class: {e}",
+                f"[ERROR] Failed to import LLM class: {e}",
                 [
                     "For Unified backend: pip install llm tiktoken",
                     "For OpenAI SDK backend: pip install openai tiktoken"
@@ -172,7 +171,7 @@ class GeneratorBase:
             )
         except Exception as e:
             raise CLIError(
-                f"Failed to load LLM: {e}",
+                f"[ERROR] Failed to load LLM: {e}",
                 [
                     "Check model configuration with 'l2p config show'",
                     "Test connection with 'l2p models test'",
@@ -194,7 +193,7 @@ class GeneratorBase:
         
         if not path.exists():
             raise CLIError(
-                f"{description.capitalize()} file not found: {file_path}",
+                f"[ERROR] {description.capitalize()} file not found: {file_path}",
                 [
                     f"Check file path: {file_path}",
                     "Use absolute path for better reliability",
@@ -218,7 +217,7 @@ class GeneratorBase:
                 
         except Exception as e:
             raise CLIError(
-                f"Failed to load {description} file: {e}",
+                f"[ERROR] Failed to load {description} file: {e}",
                 [
                     f"Check file format: {path.suffix}",
                     "Ensure file has valid format (JSON, YAML, or text)",
@@ -264,7 +263,7 @@ class GeneratorBase:
                 print(f"Output written to: {path}")
             except Exception as e:
                 raise CLIError(
-                    f"Failed to write output: {e}",
+                    f"[ERROR] Failed to write output: {e}",
                     [
                         f"Check write permissions for: {path.parent}",
                         "Ensure enough disk space",

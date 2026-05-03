@@ -1,18 +1,18 @@
 """
-Configuration management commands for L2P CLI.
-
-Show, edit, and reset configuration.
+Configuration management commands for L2P CLI: l2p config <sub-arg>
+    - `l2p config show`
+    - `l2p config edit`
+    - `l2p config reset`
+    - `l2p config validate`
 """
 
 import os
 import sys
 import argparse
-import yaml
 import subprocess
 from pathlib import Path
-from typing import Dict, Any
 
-from ..utils.config import ConfigManager, CLIError, get_config_manager
+from ..utils.config import CLIError, get_config_manager
 from ..utils.errors import handle_error
 
 
@@ -47,7 +47,7 @@ Examples:
         required=True
     )
     
-    # Show command
+    # show command
     show_parser = subparsers.add_parser(
         "show",
         help="Show current configuration",
@@ -60,7 +60,7 @@ Examples:
     )
     show_parser.set_defaults(func=config_show_command)
     
-    # Edit command
+    # edit command
     edit_parser = subparsers.add_parser(
         "edit",
         help="Edit configuration",
@@ -68,7 +68,7 @@ Examples:
     )
     edit_parser.set_defaults(func=config_edit_command)
     
-    # Reset command
+    # reset command
     reset_parser = subparsers.add_parser(
         "reset",
         help="Reset configuration",
@@ -81,7 +81,7 @@ Examples:
     )
     reset_parser.set_defaults(func=config_reset_command)
     
-    # Validate command
+    # validate command
     validate_parser = subparsers.add_parser(
         "validate",
         help="Validate configuration",
@@ -100,7 +100,7 @@ def config_command(args):
 
 
 def config_show_command(args):
-    """Show current configuration."""
+    """Show current configuration. COMMAND: `l2p config show`"""
     config_manager = get_config_manager(args.config if hasattr(args, 'config') else None)
     
     config_file = config_manager.get_config_path()
@@ -108,17 +108,17 @@ def config_show_command(args):
     print("=" * 60)
     
     if args.raw:
-        # Show raw YAML
+        # show raw YAML
         try:
             with open(config_file, 'r') as f:
                 print(f.read())
         except Exception as e:
-            print(f"Error reading config file: {e}")
+            print(f"[ERROR] Reading config file: {e}")
     else:
-        # Show formatted configuration
+        # show formatted configuration
         config = config_manager.config
         
-        # Model configuration
+        # model configuration
         print("\nModel Configuration:")
         print("-" * 40)
         model_config = config.get("model", {})
@@ -129,40 +129,39 @@ def config_show_command(args):
             else:
                 print(f"  {key}: {value}")
         
-        # Generation configuration
+        # generation configuration
         print("\nGeneration Configuration:")
         print("-" * 40)
         gen_config = config.get("generation", {})
         for key, value in gen_config.items():
             print(f"  {key}: {value}")
         
-        # Templates configuration
+        # templates configuration
         print("\nTemplates Configuration:")
         print("-" * 40)
         templates_config = config.get("templates", {})
         for key, value in templates_config.items():
             print(f"  {key}: {value}")
         
-        # Validation status
+        # validation status
         print("\nValidation:")
         print("-" * 40)
         is_valid, message = config_manager.validate_model_config()
-        status = "✅ Valid" if is_valid else "❌ Invalid"
+        status = "[SUCCESS] Valid" if is_valid else "[FAIL] Invalid"
         print(f"  Status: {status}")
         if not is_valid:
             print(f"  Message: {message}")
 
 
 def config_edit_command(args):
-    """Edit configuration with default editor."""
+    """Edit configuration with default editor. COMMAND: `l2p config edit`"""
     config_manager = get_config_manager(args.config if hasattr(args, 'config') else None)
-    
     config_file = config_manager.get_config_path()
     
-    # Determine editor
+    # determine editor
     editor = os.environ.get('EDITOR')
     if not editor:
-        # Try common editors
+        # try common editors
         for candidate in ['nano', 'vim', 'vi', 'code', 'subl']:
             if subprocess.run(['which', candidate], capture_output=True).returncode == 0:
                 editor = candidate
@@ -170,10 +169,10 @@ def config_edit_command(args):
     
     if not editor:
         raise CLIError(
-            "No editor found.",
+            "[ERROR] No editor found.",
             [
                 "Set EDITOR environment variable: export EDITOR='your-editor'",
-                "Or install a common editor like nano, vim, or VS Code"
+                "Or install a common editor like nano, vim, or VSCode"
             ]
         )
     
@@ -182,10 +181,10 @@ def config_edit_command(args):
     try:
         subprocess.run([editor, config_file], check=True)
         
-        # Reload and validate
+        # reload and validate
         config_manager.load_config()
         
-        # Detect backend from config_path and fix if misaligned
+        # detect backend from config_path and fix if misaligned
         model_cfg = config_manager.config.get("model", {})
         config_path = model_cfg.get("config_path", "")
         current_backend = model_cfg.get("backend", "")
@@ -202,30 +201,30 @@ def config_edit_command(args):
         is_valid, message = config_manager.validate_model_config()
         
         if is_valid:
-            print("✅ Configuration updated and valid.")
+            print("[SUCCESS] Configuration updated and valid.")
         else:
-            print(f"⚠ Configuration updated but has issues: {message}")
+            print(f"[WARNING] Configuration updated but has issues: {message}")
             
     except subprocess.CalledProcessError as e:
         raise CLIError(
-            f"Editor command failed: {e}",
+            f"[ERROR] Editor command failed: {e}",
             ["Check EDITOR environment variable", "Ensure editor is properly installed"]
         )
     except Exception as e:
         raise CLIError(
-            f"Failed to edit configuration: {e}",
+            f"[ERROR] Failed to edit configuration: {e}",
             ["Check file permissions", "Try editing manually: {config_file}"]
         )
 
 
 def config_reset_command(args):
-    """Reset configuration to defaults."""
+    """Reset configuration to defaults. COMMAND: `l2p config reset`"""
     config_manager = get_config_manager(args.config if hasattr(args, 'config') else None)
     
     config_file = config_manager.get_config_path()
     
     if not args.force:
-        print(f"Warning: This will reset configuration to defaults.")
+        print(f"[WARNING] This will reset configuration to defaults.")
         print(f"Current configuration at: {config_file}")
         response = input("Are you sure? (y/N): ").strip().lower()
         if response != 'y':
@@ -234,10 +233,10 @@ def config_reset_command(args):
     
     try:
         config_manager.reset_to_defaults()
-        print("✅ Configuration reset to defaults.")
+        print("[SUCCESS] Configuration reset to defaults.")
         print(f"\nNew configuration at: {config_file}")
         
-        # Show new configuration
+        # show new configuration
         config = config_manager.config
         print("\nDefault configuration:")
         print("-" * 40)
@@ -247,13 +246,13 @@ def config_reset_command(args):
         
     except Exception as e:
         raise CLIError(
-            f"Failed to reset configuration: {e}",
+            f"[ERROR] Failed to reset configuration: {e}",
             ["Check file permissions", "Try removing config file manually: rm {config_file}"]
         )
 
 
 def config_validate_command(args):
-    """Validate current configuration."""
+    """Validate current configuration. COMMAND: `l2p config validate`"""
     config_manager = get_config_manager(args.config if hasattr(args, 'config') else None)
     
     config_file = config_manager.get_config_path()
@@ -274,7 +273,7 @@ def config_validate_command(args):
     
     all_passed = True
     for name, value, passed in checks:
-        status = "✅" if passed else "❌"
+        status = "[SUCCESS]" if passed else "[FAIL]"
         print(f"  {status} {name}: {value}")
         if not passed:
             all_passed = False
@@ -283,13 +282,13 @@ def config_validate_command(args):
     config_path = model_config.get("config_path")
     if config_path:
         if config_path.startswith("l2p/"):
-            print(f"  📦 Using package config: {config_path}")
+            print(f"  Using package config: {config_path}")
         else:
             config_file_path = Path(config_path).expanduser().resolve()
             if config_file_path.exists():
-                print(f"  ✅ Config file exists: {config_file_path}")
+                print(f"  [SUCCESS] Config file exists: {config_file_path}")
             else:
-                print(f"  ❌ Config file not found: {config_path}")
+                print(f"  [FAIL] Config file not found: {config_path}")
                 all_passed = False
     
     # Overall validation
@@ -298,14 +297,14 @@ def config_validate_command(args):
     is_valid, message = config_manager.validate_model_config()
     
     if is_valid and all_passed:
-        print("✅ Configuration is valid and ready to use.")
+        print("[SUCCESS] Configuration is valid and ready to use.")
         print(f"\nNext steps:")
-        print("  • Test connection: l2p models test")
-        print("  • Generate components: l2p generate types --desc \"your domain\"")
+        print("  > Test connection: l2p models test")
+        print("  > Generate components: l2p generate types --desc \"your domain\"")
     else:
-        print("❌ Configuration has issues.")
+        print("[FAIL] Configuration has issues.")
         if message:
             print(f"\nIssues: {message}")
         print(f"\nTo fix:")
-        print("  • Run 'l2p init' to reconfigure")
-        print("  • Or edit configuration: l2p config edit")
+        print("  > Run 'l2p init' to reconfigure")
+        print("  > Or edit configuration: l2p config edit")
