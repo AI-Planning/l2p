@@ -184,6 +184,21 @@ def config_edit_command(args):
         
         # Reload and validate
         config_manager.load_config()
+        
+        # Detect backend from config_path and fix if misaligned
+        model_cfg = config_manager.config.get("model", {})
+        config_path = model_cfg.get("config_path", "")
+        current_backend = model_cfg.get("backend", "")
+        suggested_backend = None
+        if config_path.endswith("openaiSDK.yaml") and current_backend != "openai":
+            suggested_backend = "openai"
+        elif config_path.endswith("llm.yaml") and current_backend != "unified":
+            suggested_backend = "unified"
+        if suggested_backend:
+            config_manager.config["model"]["backend"] = suggested_backend
+            config_manager.save_config()
+            print(f"ℹ Auto-updated backend from '{current_backend}' to '{suggested_backend}' to match config_path")
+        
         is_valid, message = config_manager.validate_model_config()
         
         if is_valid:

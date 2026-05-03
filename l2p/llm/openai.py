@@ -30,20 +30,30 @@ class OPENAI(BaseLLM):
         self.provider = provider
         self._config = load_yaml(config_path)
 
-        # attempt to import necessary OPENAI modules
-        try:
-            from openai import OpenAI
-        except ImportError:
-            raise ImportError(
-                "The 'openai' library is required for OPENAI but is not installed. "
-                "Install it using: `pip install openai`."
-            )
+        if provider == "mistral":
+            # attempt to import necessary MISTRAL module
+            try:
+                from mistralai import Mistral
+            except ImportError:
+                raise ImportError(
+                    "The 'mistralai' library is required for OPENAI but is not installed (Mistral has their own API client).\n\n"
+                    "Install it using: `pip install mistralai`."
+                )
+        else:
+            # attempt to import necessary OPENAI module
+            try:
+                from openai import OpenAI
+            except ImportError:
+                raise ImportError(
+                    "The 'openai' library is required for OPENAI but is not installed.\n\n"
+                    "Install it using: `pip install openai`."
+                )
 
         try:
             import tiktoken
         except ImportError:
             raise ImportError(
-                "The 'tiktoken' library is required for token processing but is not installed. "
+                "The 'tiktoken' library is required for token processing but is not installed.\n\n"
                 "Install it using: `pip install tiktoken`."
             )
 
@@ -63,7 +73,11 @@ class OPENAI(BaseLLM):
 
         # call the parent class constructor to handle model and api_key
         super().__init__(model, api_key)
-        self.client = OpenAI(api_key=api_key, base_url=base_url)
+
+        if provider == "mistral":
+            self.client = Mistral(api_key=api_key, base_url=base_url)    
+        else:
+            self.client = OpenAI(api_key=api_key, base_url=base_url)
 
         # set model parameters
         self._set_parameters(model_config)
@@ -109,7 +123,7 @@ class OPENAI(BaseLLM):
         messages = messages or [{"role": "user", "content": prompt}]
         
         kwargs = dict(self.model_params)
-        self.max_completion_tokens = kwargs['max_completion_tokens']
+        self.max_completion_tokens = kwargs.get('max_completion_tokens', kwargs.get('max_tokens', None))
 
         # estimate current usage of tokens
         current_tokens = sum(len(self.tok.encode(m["content"])) for m in messages)

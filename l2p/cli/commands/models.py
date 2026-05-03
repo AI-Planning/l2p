@@ -13,6 +13,15 @@ from typing import Dict, List, Any, Optional
 
 from ..utils.config import ConfigManager, CLIError, get_config_manager
 from ..utils.errors import handle_error
+from ...llm.base import resolve_config_path
+
+
+def _input_or_exit(prompt: str = "") -> str:
+    value = input(prompt).strip()
+    if value == "'exit":
+        print("Operation cancelled.")
+        sys.exit(0)
+    return value
 
 
 def add_subparser(subparsers):
@@ -29,6 +38,9 @@ Examples:
   
   # List models for a specific provider
   l2p models list --provider openai
+  
+  # Interactively switch to a different model
+  l2p models switch
   
   # Test connection to configured model
   l2p models test
@@ -86,6 +98,14 @@ Examples:
         help="Simple test without loading full model"
     )
     test_parser.set_defaults(func=test_model_command)
+    
+    # Switch command
+    switch_parser = subparsers.add_parser(
+        "switch",
+        help="Switch to a different model",
+        description="Interactively select a model for the configured provider."
+    )
+    switch_parser.set_defaults(func=switch_model_command)
 
 
 def models_command(args):
@@ -259,21 +279,20 @@ def test_model_command(args):
     print("=" * 60)
     
     # Check API key
-    if api_key.startswith("${") and api_key.endswith("}"):
-        env_var = api_key[2:-1]
-        actual_key = os.environ.get(env_var)
-        if not actual_key:
+    if api_key.endswith("_API_KEY"):
+        env_key = os.getenv(api_key)
+        if not env_key:
             if provider == "ollama":
                 print("ℹ No API key needed for local Ollama")
                 api_key_status = True
             else:
-                print(f"⚠ API key not set: environment variable {env_var} is empty")
-                print(f"  Set it with: export {env_var}=\"your-key\"")
+                print(f"⚠ API key not set: environment variable {api_key} is empty")
+                print(f"  Set it with: export ${api_key}=\"your-key\"")
                 api_key_status = False
         else:
-            print(f"✓ API key: Using environment variable {env_var}")
+            print(f"✓ API key: Using environment variable {api_key}")
             api_key_status = True
-            model_config["api_key"] = actual_key
+            model_config["api_key"] = env_key
     elif api_key:
         if len(api_key) > 8:
             masked = api_key[:4] + "*" * (len(api_key) - 8) + api_key[-4:]
@@ -290,31 +309,14 @@ def test_model_command(args):
     
     # Check config file
     config_file = None
-    if config_path.startswith("l2p/"):
-        try:
-            import importlib.resources
-            print(f"✓ Config: Using package default: {config_path}")
-            config_exists = True
-        except Exception:
-            # Check filesystem
-            package_root = Path(__file__).parent.parent.parent.parent
-            config_file = package_root / "l2p" / "llm" / "utils" / "llm.yaml"
-            if not config_file.exists():
-                config_file = package_root / "l2p" / "llm" / "utils" / "openaiSDK.yaml"
-            if config_file.exists():
-                print(f"✓ Config: Found at {config_file}")
-                config_exists = True
-            else:
-                print(f"✗ Config: Package file not found: {config_path}")
-                config_exists = False
-    else:
-        config_file = Path(config_path).expanduser().resolve()
-        if config_file.exists():
-            print(f"✓ Config: Found at {config_file}")
-            config_exists = True
-        else:
-            print(f"✗ Config: File not found: {config_path}")
-            config_exists = False
+    try:
+        resolved_path = resolve_config_path(config_path)
+        config_file = Path(resolved_path)
+        print(f"✓ Config: Found at {config_file}")
+        config_exists = True
+    except FileNotFoundError as e:
+        print(f"✗ Config: {e}")
+        config_exists = False
     
     if not api_key_status or not config_exists:
         print("\n✗ Pre-checks failed. Please fix issues above.")
@@ -386,3 +388,122 @@ def test_model_command(args):
         print("• Check network connectivity")
         print("• Ensure provider service is available")
         print("• Run with --verbose flag for more details")
+
+
+def _load_models_for_provider(config_manager, provider=None):
+    """Load available models for a provider from the YAML config.
+    
+    Returns:
+        Tuple of (provider, models_list, provider_config_dict)
+    """
+    model_config = config_manager.get_model_config()
+    if not provider:
+        provider = model_config.get("provider")
+        if not provider:
+            raise CLIError(
+                "No provider configured.",
+                ["Run 'l2p init' to configure a provider first."]
+            )
+    
+    config_path = model_config.get("config_path", "l2p/llm/utils/llm.yaml")
+    
+    # Load config file
+    if config_path.startswith("l2p/"):
+        parts = config_path.replace("\\", "/").split("/")
+        yaml_filename = parts[-1] if parts else "llm.yaml"
+        try:
+            import importlib.resources
+            config_content = importlib.resources.read_text("l2p.llm.utils", yaml_filename)
+            config = yaml.safe_load(config_content)
+        except Exception:
+            package_root = Path(__file__).parent.parent.parent.parent
+            config_file = package_root / "l2p" / "llm" / "utils" / yaml_filename
+            if not config_file.exists():
+                fallback = "openaiSDK.yaml" if yaml_filename == "llm.yaml" else "llm.yaml"
+                config_file = package_root / "l2p" / "llm" / "utils" / fallback
+            with open(config_file, 'r') as f:
+                config = yaml.safe_load(f)
+    else:
+        config_file = Path(config_path).expanduser().resolve()
+        if not config_file.exists():
+            raise CLIError(
+                f"Config file not found: {config_path}",
+                ["Check config path in your configuration", "Run 'l2p config show' to see current config"]
+            )
+        with open(config_file, 'r') as f:
+            config = yaml.safe_load(f)
+    
+    provider_config = config.get(provider, {})
+    if not provider_config:
+        available_providers = list(config.keys())
+        raise CLIError(
+            f"Provider '{provider}' not found in configuration.",
+            [
+                f"Available providers: {', '.join(available_providers)}",
+                f"Check config file: {config_path}",
+                "Run 'l2p init' to reconfigure with valid provider"
+            ]
+        )
+    
+    models = sorted(provider_config.keys() - {"base_url"})
+    return provider, models, provider_config
+
+
+def switch_model_command(args):
+    """Interactively switch to a different model."""
+    config_manager = get_config_manager(args.config if hasattr(args, 'config') else None)
+    
+    try:
+        provider, models, provider_config = _load_models_for_provider(config_manager)
+    except CLIError as e:
+        print(f"\n{e}")
+        sys.exit(1)
+    
+    if not models:
+        print(f"\nNo models found for provider '{provider}'.")
+        return
+    
+    current_model = config_manager.get_model_config().get("model", "")
+    
+    print(f"\nAvailable models for '{provider}' provider:")
+    print("=" * 60)
+    for i, model_name in enumerate(models, 1):
+        model_info = provider_config[model_name]
+        alias = model_info.get('model_alias', '')
+        display = model_name
+        if alias and alias != model_name:
+            display += f" (alias: {alias})"
+        marker = " ← current" if model_name == current_model else ""
+        print(f"{i:2}. {display}{marker}")
+    print()
+    
+    while True:
+        choice = _input_or_exit("Select model by number or name: ").strip()
+        if not choice:
+            continue
+        
+        # Try as number
+        try:
+            idx = int(choice)
+            if 1 <= idx <= len(models):
+                selected = models[idx - 1]
+                break
+            print(f"Invalid number. Enter 1-{len(models)}.")
+            continue
+        except ValueError:
+            pass
+        
+        # Try as name
+        matching = [m for m in models if m.lower() == choice.lower()]
+        if matching:
+            selected = matching[0]
+            break
+        
+        print(f"Invalid model '{choice}'. Valid options: {', '.join(models)}")
+    
+    if selected == current_model:
+        print(f"\nAlready configured: {provider}/{selected}")
+        return
+    
+    config_manager.update_config({"model": {"model": selected}})
+    print(f"\n✅ Switched to {provider}/{selected}")

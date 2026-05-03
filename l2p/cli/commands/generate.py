@@ -15,6 +15,7 @@ from typing import Dict, Any, Optional, List
 from ..utils.config import ConfigManager, CLIError, get_config_manager
 from ..utils.templates import TemplateManager, get_template_manager
 from ..utils.errors import handle_error
+from ...llm.base import resolve_config_path
 
 
 def add_subparser(subparsers):
@@ -129,6 +130,16 @@ class GeneratorBase:
                     "Model not configured.",
                     ["Run 'l2p init' to configure model settings first."]
                 )
+            
+            # Resolve config path to catch errors early
+            try:
+                config_path = resolve_config_path(config_path)
+            except FileNotFoundError as e:
+                raise CLIError(str(e), [
+                    "Check config_path in your configuration",
+                    "Run 'l2p config show' to see current config",
+                    "Run 'l2p init' to reconfigure"
+                ])
             
             if backend == "openai":
                 from l2p.llm.openai import OPENAI

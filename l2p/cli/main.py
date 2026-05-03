@@ -63,6 +63,7 @@ For more information on a specific command, use:
             from .commands.config import add_subparser as add_config_parser
             from .commands.templates import add_subparser as add_templates_parser
             from .commands.new import add_subparser as add_new_parser
+            from .commands.chat import add_subparser as add_chat_parser
             
             add_init_parser(subparsers)
             add_models_parser(subparsers)
@@ -70,6 +71,7 @@ For more information on a specific command, use:
             add_config_parser(subparsers)
             add_templates_parser(subparsers)
             add_new_parser(subparsers)
+            add_chat_parser(subparsers)
             
         except ImportError as e:
             print(f"ERROR: Failed to load CLI commands: {e}")
@@ -106,6 +108,9 @@ For more information on a specific command, use:
         elif args.command == "new":
             from .commands.new import new_command
             new_command(args)
+        elif args.command == "chat":
+            from .commands.chat import chat_command
+            chat_command(args)
         else:
             parser.print_help()
             sys.exit(1)

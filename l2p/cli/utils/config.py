@@ -8,12 +8,14 @@ Manages environment variables and provides model configuration.
 import os
 import sys
 import json
+import copy
 import yaml
 from pathlib import Path
 from typing import Dict, Any, Optional, Tuple
 import shutil
 
 from .errors import CLIError
+from ...llm.base import resolve_config_path
 
 
 class ConfigManager:
@@ -77,7 +79,7 @@ class ConfigManager:
                 return self.DEFAULT_CONFIG.copy()
             
             # Merge with defaults to ensure all sections exist
-            merged = self.DEFAULT_CONFIG.copy()
+            merged = copy.deepcopy(self.DEFAULT_CONFIG)
             self._deep_update(merged, config)
             return merged
             
@@ -120,19 +122,21 @@ class ConfigManager:
         Returns:
             Model configuration dictionary with resolved API keys.
         """
-        model_config = self.config.get("model", {}).copy()
-        
-        # Resolve environment variables in api_key
-        api_key = model_config.get("api_key", "")
-        if api_key.startswith("${") and api_key.endswith("}"):
-            env_var = api_key[2:-1]
-            resolved = os.environ.get(env_var)
-            if not resolved:
-                # Not all providers require API keys (e.g. local Ollama),
-                # so silently set to empty rather than crashing.
+        model_config = self.config.get("model", {}).copy() # retrieve model configuration file
+        api_key = model_config.get("api_key", "") # retrieve API key entry
+
+        # check if env variable
+        if api_key.endswith("_API_KEY"):
+            env_key = os.getenv(api_key)
+            # if env key is empty
+            if not env_key:
+                print(
+                    f"[WARNING] Could not find environment variable: {api_key}. Setting API key to None.\n"
+                    f"Env variable must strictly end with `_API_KEY`. Example: export {{MY_API_KEY}}=\"your-key\""
+                )
                 model_config["api_key"] = ""
             else:
-                model_config["api_key"] = resolved
+                model_config["api_key"] = env_key
         
         return model_config
     
@@ -168,12 +172,20 @@ class ConfigManager:
                 if not model_config.get(field):
                     return False, f"Missing required field: {field}"
             
-            # Check config path exists (if it's a file path)
+            # Check config path exists
             config_path = model_config.get("config_path")
-            if config_path and not config_path.startswith("l2p/"):
-                config_path_obj = Path(config_path)
-                if not config_path_obj.exists():
-                    return False, f"Config file not found: {config_path}"
+            if config_path:
+                try:
+                    resolve_config_path(config_path)
+                except FileNotFoundError as e:
+                    return False, str(e)
+            
+            # Check backend matches config_path for known pairs
+            backend = model_config.get("backend", "")
+            if config_path.endswith("openaiSDK.yaml") and backend != "openai":
+                return False, f"Backend is '{backend}' but config_path '{config_path}' suggests 'openai'"
+            if config_path.endswith("llm.yaml") and backend != "unified":
+                return False, f"Backend is '{backend}' but config_path '{config_path}' suggests 'unified'"
             
             return True, "Configuration valid"
             

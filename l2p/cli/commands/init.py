@@ -7,12 +7,29 @@ Sets up model configuration and creates config file.
 import os
 import sys
 import argparse
-import yaml
-from pathlib import Path
-from typing import Optional, Dict, Any
 
 from ..utils.config import ConfigManager, CLIError, get_config_manager
 from ..utils.errors import handle_error
+
+VALID_BACKENDS = {"unified", "openai"}
+
+VALID_PROVIDERS = [
+    "openai",
+    "google",
+    "anthropic",
+    "deepseek",
+    "mistral",
+    "ollama",
+    "ollama-cloud",
+]
+
+
+def _input_or_exit(prompt: str = "") -> str:
+    value = input(prompt).strip()
+    if value == "'exit":
+        print("Init cancelled.")
+        sys.exit(0)
+    return value
 
 
 def add_subparser(subparsers):
@@ -87,7 +104,7 @@ def init_command(args):
         config_file = config_manager.get_config_path()
         if config_file.exists() and not args.force:
             print(f"Configuration already exists at: {config_file}")
-            response = input("Overwrite? (y/N): ").strip().lower()
+            response = _input_or_exit("Overwrite? (y/N): ").strip().lower()
             if response != 'y':
                 print("Init cancelled.")
                 return
@@ -106,12 +123,14 @@ def init_command(args):
             print("\nAvailable LLM backends:")
             print("• unified - Use simonw/llm (supports all providers via plugins)")
             print("• openai - Use OpenAI SDK directly (for OpenAI-compatible APIs)")
-            print("\nEnter backend (default: unified): ", end="")
-            backend = input().strip().lower() or "unified"
-        
-        if backend not in ("unified", "openai"):
-            print(f"Invalid backend '{backend}'. Defaulting to 'unified'.")
-            backend = "unified"
+            while True:
+                backend = _input_or_exit("\nEnter backend (default: unified): ").lower()
+                if not backend:
+                    backend = "unified"
+                    break
+                if backend in VALID_BACKENDS:
+                    break
+                print(f"Invalid backend '{backend}'. Valid options: unified, openai")
         
         config_updates["model"]["backend"] = backend
         
@@ -129,19 +148,18 @@ def init_command(args):
             print("• mistral - Mistral models")
             print("• ollama - Local Ollama models")
             print("• ollama-cloud - Ollama cloud models")
-            print("\nEnter provider name: ", end="")
-            provider = input().strip().lower()
-        
-        if not provider:
-            raise CLIError("Provider is required.")
+            while True:
+                provider = _input_or_exit("\nEnter provider name: ").lower()
+                if provider in VALID_PROVIDERS:
+                    break
+                print(f"Invalid provider '{provider}'. Valid options: {', '.join(VALID_PROVIDERS)}")
         
         config_updates["model"]["provider"] = provider
         
         # Model
         model = args.model
         if not model:
-            print(f"\nEnter model name for {provider} (e.g., {get_example_model(provider)}): ", end="")
-            model = input().strip()
+            model = _input_or_exit(f"\nEnter model name for {provider} (e.g., {get_example_model(provider)}): ").strip()
         
         if not model:
             raise CLIError("Model name is required.")
@@ -155,11 +173,19 @@ def init_command(args):
                 config_path = "l2p/llm/utils/llm.yaml" if backend == "unified" else "l2p/llm/utils/openaiSDK.yaml"
             else:
                 default_config = "l2p/llm/utils/llm.yaml" if backend == "unified" else "l2p/llm/utils/openaiSDK.yaml"
-                print(f"\nPath to LLM configuration YAML (default: {default_config}): ", end="")
-                user_input = input().strip()
+                user_input = _input_or_exit(f"\nPath to LLM configuration YAML (default: {default_config}): ").strip()
                 config_path = user_input if user_input else default_config
         
         config_updates["model"]["config_path"] = config_path
+        
+        # Auto-detect backend from config_path if there's a mismatch
+        final_backend = config_updates["model"].get("backend", backend)
+        if config_path.endswith("openaiSDK.yaml") and final_backend != "openai":
+            print(f"ℹ Auto-updating backend to 'openai' to match config_path")
+            config_updates["model"]["backend"] = "openai"
+        elif config_path.endswith("llm.yaml") and final_backend != "unified":
+            print(f"ℹ Auto-updating backend to 'unified' to match config_path")
+            config_updates["model"]["backend"] = "unified"
         
         # API key
         api_key = args.api_key
@@ -171,12 +197,12 @@ def init_command(args):
                 print(f"\nAPI key for {provider}:")
                 print(f"• Set environment variable: export {env_var}=\"your-key\"")
                 print(f"• Or enter API key directly (will be stored in config): ", end="")
-                user_input = input().strip()
+                user_input = _input_or_exit().strip()
                 
                 if user_input:
                     api_key = user_input
                 else:
-                    api_key = f"${{{env_var}}}"
+                    api_key = env_var
                     print(f"Using environment variable reference: {api_key}")
         
         config_updates["model"]["api_key"] = api_key

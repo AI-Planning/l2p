@@ -17,70 +17,118 @@
 
 # GEMINI
 google:
-  gemini-3-pro-preview:
-    model_family: gemini-3
-    model_alias: gemini-3-pro-preview
-    model_context_length: 1000000 # max ~1,000,000
+  gemma-4-31b-it:
+    model_family: gemma4
+    model_alias: gemma-4-31b-it
+    model_context_length: 256000
     model_params:
       max_output_tokens: 16384 # max: 65536
       temperature: 1.0
-      thinking_level: low # low/high
       top_p: 1.0
+      # thinking_level: medium <- temporarily unavailable
+    cost_usd_mtok:
+      input: 0.00
+      output: 0.00
+  gemma-4-26b-a4b-it:
+    model_family: gemma4
+    model_alias: gemma-4-26b-a4b-it
+    model_context_length: 1048576
+    model_params:
+      max_output_tokens: 16384 # max: 65536
+      temperature: 1.0
+      top_p: 1.0
+      # thinking_level: medium <- temporarily unavailable
+    cost_usd_mtok:
+      input: 0.00
+      output: 0.00
+  gemini-3.1-pro-preview:
+    model_family: gemini-3
+    model_alias: gemini-3.1-pro-preview
+    model_context_length: 1048576
+    model_params:
+      max_output_tokens: 16384 # max: 65536
+      temperature: 1.0
+      top_p: 1.0
+      thinking_level: medium # low/medium/high
+    cost_usd_mtok:
+      input: 2.00
+      output: 12.00
+  gemini-3.1-flash-lite-preview:
+    model_family: gemini-3
+    model_alias: gemini-3.1-flash-lite-preview
+    model_context_length: 1048576
+    model_params:
+      max_output_tokens: 16384 # max: 65536
+      temperature: 1.0
+      top_p: 1.0
+      thinking_level: medium # low/medium/high
+    cost_usd_mtok:
+      input: 0.25
+      output: 1.50
+  gemini-3-pro-preview:
+    model_family: gemini-3
+    model_alias: gemini-3-pro-preview
+    model_context_length: 1048576
+    model_params:
+      max_output_tokens: 16384 # max: 65536
+      temperature: 1.0
+      top_p: 1.0
+      thinking_level: medium # low/medium/high
     cost_usd_mtok:
       input: 2.00
       output: 12.00
   gemini-3-flash-preview:
     model_family: gemini-3
     model_alias: gemini-3-flash-preview
-    model_context_length: 1000000 # max ~1,000,000
+    model_context_length: 1048576
     model_params:
       max_output_tokens: 16384 # max: 65536
       temperature: 1.0
-      thinking_level: low # low/high
       top_p: 1.0
+      thinking_level: medium # low/medium/high
     cost_usd_mtok:
       input: 0.50
       output: 3.00
   gemini-2.5-pro:
     model_family: gemini-2.5
     model_alias: gemini-2.5-pro
-    model_context_length: 1000000 # max ~1,000,000
+    model_context_length: 1048576
     model_params:
       max_output_tokens: 16384 # max: 65,536
       temperature: 1.0
-      thinking_budget: 8192
       top_p: 1.0
+      thinking_budget: 8192 # ~medium
     cost_usd_mtok:
       input: 1.25
       output: 10.00
   gemini-2.5-flash:
     model_family: gemini-2.5
     model_alias: gemini-2.5-flash
-    model_context_length: 1000000 # max ~1,000,000
+    model_context_length: 1048576
     model_params:
       max_output_tokens: 16384 # max: 65,536
       temperature: 1.0
-      thinking_budget: 8192
       top_p: 1.0
+      thinking_budget: 8192 # ~medium
     cost_usd_mtok:
       input: 0.30
       output: 2.50
   gemini-2.5-flash-lite:
     model_family: gemini-2.5
     model_alias: gemini-2.5-flash-lite
-    model_context_length: 1000000 # max ~1,000,000
+    model_context_length: 1048576
     model_params:
       max_output_tokens: 16384 # max: 65,536
       temperature: 1.0
-      thinking_budget: 8192
       top_p: 1.0
+      thinking_budget: 8192 # ~medium
     cost_usd_mtok:
       input: 0.10
       output: 0.40
   gemini-2.0-flash:
     model_family: gemini-2.0
     model_alias: gemini-2.0-flash
-    model_context_length: 1000000 # max ~1,000,000
+    model_context_length: 1048576
     model_params:
       max_output_tokens: 8192
       temperature: 0.0
@@ -91,7 +139,7 @@ google:
   gemini-2.0-flash-lite:
     model_family: gemini-2.0
     model_alias: gemini-2.0-flash-lite
-    model_context_length: 1000000 # max ~1,000,000
+    model_context_length: 1048576
     model_params:
       max_output_tokens: 8192
       temperature: 0.0
@@ -102,6 +150,62 @@ google:
 
 # OPENAI
 openai:
+  gpt-5.5:
+    model_family: gpt-5
+    model_alias: gpt-5.5
+    model_context_length: 1050000
+    model_params:
+      # max_completion_tokens: 8192
+      temperature: 1.0
+      top_p: 1.0
+      frequency_penalty: 0.0
+      presence_penalty: 0.0
+      reasoning_effort: medium
+    cost_usd_mtok:
+      input: 5.00
+      output: 30.00
+  gpt-5.4:
+    model_family: gpt-5
+    model_alias: gpt-5.4
+    model_context_length: 1050000
+    model_params:
+      # max_completion_tokens: 8192
+      temperature: 1.0
+      top_p: 1.0
+      frequency_penalty: 0.0
+      presence_penalty: 0.0
+      reasoning_effort: medium
+    cost_usd_mtok:
+      input: 2.50
+      output: 15.00
+  gpt-5.4-mini:
+    model_family: gpt-5
+    model_alias: gpt-5.4-mini
+    model_context_length: 400000
+    model_params:
+      # max_completion_tokens: 8192
+      temperature: 1.0
+      top_p: 1.0
+      frequency_penalty: 0.0
+      presence_penalty: 0.0
+      reasoning_effort: medium
+    cost_usd_mtok:
+      input: 0.75
+      output: 4.50
+  gpt-5.4-nano:
+    model_family: gpt-5
+    model_alias: gpt-5.4-nano
+    model_context_length: 400000
+    model_params:
+      # max_completion_tokens: 8192
+      temperature: 1.0
+      top_p: 1.0
+      frequency_penalty: 0.0
+      presence_penalty: 0.0
+      reasoning_effort: medium
+    cost_usd_mtok:
+      input: 0.20
+      output: 1.25
   gpt-5.2:
     model_family: gpt-5
     model_alias: gpt-5.2
@@ -519,7 +623,18 @@ anthropic:
 
 # MISTRAL
 mistral:
-  mistral-large:
+  magistral-medium: # magistral-medium-latest
+    model_family: mistral
+    model_alias: magistral-medium
+    model_context_length: 128000
+    model_params:
+      max_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 2.00
+      output: 5.00
+  mistral-large: # mistral-large-latest
     model_family: mistral
     model_alias: mistral-large
     model_context_length: 256000
@@ -530,7 +645,7 @@ mistral:
     cost_usd_mtok:
       input: 0.50
       output: 1.50
-  mistral-medium:
+  mistral-medium: # mistral-medium-latest
     model_family: mistral
     model_alias: mistral-medium
     model_context_length: 128000
@@ -541,7 +656,7 @@ mistral:
     cost_usd_mtok:
       input: 0.40
       output: 2.00
-  mistral-small:
+  mistral-small: # mistral-small-latest
     model_family: mistral
     model_alias: mistral-small
     model_context_length: 128000
@@ -550,9 +665,9 @@ mistral:
       temperature: 0.0
       top_p: 1.0
     cost_usd_mtok:
-      input: 0.10
-      output: 0.30
-  ministral-8b:
+      input: 0.15
+      output: 0.60
+  ministral-8b: # ministral-8b-latest
     model_family: ministral
     model_alias: ministral-8b
     model_context_length: 256000
@@ -563,7 +678,7 @@ mistral:
     cost_usd_mtok:
       input: 0.15
       output: 0.15
-  ministral-3b:
+  ministral-3b: # ministral-3b-latest
     model_family: ministral
     model_alias: ministral-3b
     model_context_length: 256000
@@ -574,7 +689,7 @@ mistral:
     cost_usd_mtok:
       input: 0.10
       output: 0.10
-  codestral:
+  codestral: # codestral-latest
     model_family: codestral
     model_alias: codestral
     model_context_length: 128000
