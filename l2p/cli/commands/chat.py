@@ -111,6 +111,36 @@ def _check_pddl_syntax(content: str) -> str | None:
         os.unlink(tmp.name)
 
 
+def _handle_validate_command(filepath: str):
+    """Handle /validate <filepath> — validate PDDL syntax."""
+    path = Path(filepath).expanduser().resolve()
+
+    if not path.exists():
+        print(f"  {YELLOW}[ERROR] File not found:{RESET} {path}")
+        return
+    if path.suffix.lower() != ".pddl":
+        print(f"  {YELLOW}[ERROR] Invalid file type:{RESET} Expected a '.pddl' file, but got '{path.suffix}' ({path.name})")
+        return
+
+    content = path.read_text()
+
+    if content.strip().startswith("(define (domain"):
+        pddl_type = "domain"
+    elif content.strip().startswith("(define (problem"):
+        pddl_type = "problem"
+    else:
+        pddl_type = "unknown"
+
+    print(f"  Loaded {CYAN}{path}{RESET} ({len(content)} chars, {pddl_type} file)")
+
+    print(f"  Checking PDDL syntax...")
+    error = _check_pddl_syntax(content)
+    if error:
+        print(f"  {YELLOW}[INVALID] PDDL syntax error:{RESET} {error}")
+    else:
+        print(f"  {GREEN}[VALID]{RESET} PDDL syntax is valid.")
+
+
 def _handle_edit_command(llm, backend: str, filepath: str):
     """Handle /edit <filepath> — load, prompt for edit, send to LLM, confirm overwrite."""
     path = Path(filepath).expanduser().resolve()
@@ -216,6 +246,7 @@ def chat_command(args):
         print(f"{BOLD}{'=' * 60}{RESET}")
         print(f"  {YELLOW}/exit{RESET}       Quit")
         print(f"  {YELLOW}/edit <file>{RESET}  Edit a PDDL file with LLM assistance")
+        print(f"  {YELLOW}/validate <file>{RESET}  Validate PDDL file syntax")
         print()
 
         llm = llm_class(
@@ -243,6 +274,11 @@ def chat_command(args):
             if user_input.startswith("/edit "):
                 filepath = user_input[len("/edit "):].strip()
                 _handle_edit_command(llm, backend, filepath)
+                continue
+
+            if user_input.startswith("/validate "):
+                filepath = user_input[len("/validate "):].strip()
+                _handle_validate_command(filepath)
                 continue
 
             try:
