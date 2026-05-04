@@ -114,8 +114,12 @@ def _check_pddl_syntax(content: str) -> str | None:
 def _handle_edit_command(llm, backend: str, filepath: str):
     """Handle /edit <filepath> — load, prompt for edit, send to LLM, confirm overwrite."""
     path = Path(filepath).expanduser().resolve()
+
     if not path.exists():
-        print(f"  {YELLOW}File not found:{RESET} {path}")
+        print(f"  {YELLOW}[ERROR] File not found:{RESET} {path}")
+        return
+    if path.suffix.lower() != ".pddl":
+        print(f"  {YELLOW}[ERROR] Invalid file type:{RESET} Expected a '.pddl' file, but got '{path.suffix}' ({path.name})")
         return
 
     content = path.read_text()

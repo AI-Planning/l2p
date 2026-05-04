@@ -216,6 +216,33 @@ class DomainGenerator(GeneratorBase):
     #  Interactive generation
     # ------------------------------------------------------------------ #
 
+    def _confirm_stage(self, label: str, context: dict,
+                       manual_func, llm_func):
+        """Run a component stage with confirmation and fix loop."""
+        while True:
+            if manual_func:
+                result = manual_func()
+            else:
+                feedback = context.pop("_feedback", "")
+                result = llm_func(feedback) if feedback else llm_func()
+
+            if result is None:
+                return None
+
+            self._display_component(label, result)
+
+            resp = _input_or_exit(f"\n  Is this correct? (y/N): ").strip().lower()
+            if resp == "y":
+                return result
+
+            if manual_func:
+                print(f"  {YELLOW}Restarting {label} entry...{RESET}")
+            else:
+                fix = _input_or_exit(f"  Describe what to fix: ").strip()
+                if not fix:
+                    return result
+                context["_feedback"] = fix
+
     def _interactive_generate(self, args):
         """Interactive domain generation."""
         print()
@@ -236,10 +263,18 @@ class DomainGenerator(GeneratorBase):
         include, manual = self._prompt_component("types", default_include=True)
         if include:
             if manual:
-                context["types"] = self._manual_type_hierarchy()
+                context["types"] = self._confirm_stage(
+                    "types", context,
+                    manual_func=lambda: self._manual_type_hierarchy(),
+                    llm_func=None
+                )
             else:
-                context["types"] = self._generate_types_from_desc(domain_desc, args.max_retries)
-            self._display_component("types", context["types"])
+                context["types"] = self._confirm_stage(
+                    "types", context,
+                    manual_func=None,
+                    llm_func=lambda feedback="":
+                        self._generate_types_from_desc(domain_desc, args.max_retries, feedback)
+                )
         else:
             context["types"] = None
 
@@ -248,12 +283,20 @@ class DomainGenerator(GeneratorBase):
         include, manual = self._prompt_component("constants", default_include=False)
         if include:
             if manual:
-                context["constants"] = self._manual_constants(context.get("types"))
-            else:
-                context["constants"] = self._generate_constants_from_desc(
-                    domain_desc, context.get("types"), args.max_retries
+                context["constants"] = self._confirm_stage(
+                    "constants", context,
+                    manual_func=lambda: self._manual_constants(context.get("types")),
+                    llm_func=None
                 )
-            self._display_component("constants", context["constants"])
+            else:
+                context["constants"] = self._confirm_stage(
+                    "constants", context,
+                    manual_func=None,
+                    llm_func=lambda feedback="":
+                        self._generate_constants_from_desc(
+                            domain_desc, context.get("types"), args.max_retries, feedback
+                        )
+                )
         else:
             context["constants"] = None
 
@@ -262,14 +305,23 @@ class DomainGenerator(GeneratorBase):
         include, manual = self._prompt_component("predicates", default_include=True)
         if include:
             if manual:
-                context["predicates"] = self._manual_predicates(
-                    context.get("types"), context.get("constants")
+                context["predicates"] = self._confirm_stage(
+                    "predicates", context,
+                    manual_func=lambda: self._manual_predicates(
+                        context.get("types"), context.get("constants")
+                    ),
+                    llm_func=None
                 )
             else:
-                context["predicates"] = self._generate_predicates_from_desc(
-                    domain_desc, context.get("types"), context.get("constants"), args.max_retries
+                context["predicates"] = self._confirm_stage(
+                    "predicates", context,
+                    manual_func=None,
+                    llm_func=lambda feedback="":
+                        self._generate_predicates_from_desc(
+                            domain_desc, context.get("types"), context.get("constants"),
+                            args.max_retries, feedback
+                        )
                 )
-            self._display_component("predicates", context["predicates"])
         else:
             context["predicates"] = None
 
@@ -278,15 +330,23 @@ class DomainGenerator(GeneratorBase):
         include, manual = self._prompt_component("functions", default_include=False)
         if include:
             if manual:
-                context["functions"] = self._manual_functions(
-                    context.get("types"), context.get("constants")
+                context["functions"] = self._confirm_stage(
+                    "functions", context,
+                    manual_func=lambda: self._manual_functions(
+                        context.get("types"), context.get("constants")
+                    ),
+                    llm_func=None
                 )
             else:
-                context["functions"] = self._generate_functions_from_desc(
-                    domain_desc, context.get("types"), context.get("constants"),
-                    context.get("predicates"), args.max_retries
+                context["functions"] = self._confirm_stage(
+                    "functions", context,
+                    manual_func=None,
+                    llm_func=lambda feedback="":
+                        self._generate_functions_from_desc(
+                            domain_desc, context.get("types"), context.get("constants"),
+                            context.get("predicates"), args.max_retries, feedback
+                        )
                 )
-            self._display_component("functions", context["functions"])
         else:
             context["functions"] = None
 
@@ -755,8 +815,9 @@ class DomainGenerator(GeneratorBase):
         if label == "types":
             for t in items:
                 if isinstance(t, dict):
+                    name = next(iter(t))
                     p = t.get("parent", "object")
-                    print(f"    {CYAN}{t.get('name', '?')}{RESET} : {p}")
+                    print(f"    {CYAN}{name}{RESET} : {p}")
         elif label == "constants":
             if isinstance(items, dict):
                 for name, typ in items.items():
@@ -784,14 +845,19 @@ class DomainGenerator(GeneratorBase):
     #  LLM-based generation wrappers (with context support)
     # ------------------------------------------------------------------ #
 
-    def _generate_types_from_desc(self, domain_desc: str, max_retries: int):
+    def _generate_types_from_desc(self, domain_desc: str, max_retries: int, feedback: str = ""):
         from l2p import DomainBuilder
         llm = self.load_llm()
         builder = DomainBuilder()
         template = self.template_manager.get_template("formalize_type_hierarchy.txt", "domain")
-        print(f"  Generating types from description...")
+        prompt = domain_desc
+        if feedback:
+            prompt = f"{domain_desc}\n\n[Feedback to apply to the generated types]\n{feedback}"
+            print(f"  Re-generating types with your feedback...")
+        else:
+            print(f"  Generating types from description...")
         result = builder.formalize_type_hierarchy(
-            model=llm, domain_desc=domain_desc,
+            model=llm, domain_desc=prompt,
             prompt_template=template, max_retries=max_retries
         )
         types_result, llm_output, validation_info = result
@@ -799,14 +865,19 @@ class DomainGenerator(GeneratorBase):
             print(f"  {YELLOW}Validation: {validation_info[1]}{RESET}")
         return types_result
 
-    def _generate_constants_from_desc(self, domain_desc: str, types, max_retries: int):
+    def _generate_constants_from_desc(self, domain_desc: str, types, max_retries: int, feedback: str = ""):
         from l2p import DomainBuilder
         llm = self.load_llm()
         builder = DomainBuilder()
         template = self.template_manager.get_template("formalize_constants.txt", "domain")
-        print(f"  Generating constants from description...")
+        prompt = domain_desc
+        if feedback:
+            prompt = f"{domain_desc}\n\n[Feedback to apply to the generated constants]\n{feedback}"
+            print(f"  Re-generating constants with your feedback...")
+        else:
+            print(f"  Generating constants from description...")
         result = builder.formalize_constants(
-            model=llm, domain_desc=domain_desc,
+            model=llm, domain_desc=prompt,
             prompt_template=template, types=types, max_retries=max_retries
         )
         const_result, llm_output, validation_info = result
@@ -814,14 +885,19 @@ class DomainGenerator(GeneratorBase):
             print(f"  {YELLOW}Validation: {validation_info[1]}{RESET}")
         return const_result
 
-    def _generate_predicates_from_desc(self, domain_desc: str, types, constants, max_retries: int):
+    def _generate_predicates_from_desc(self, domain_desc: str, types, constants, max_retries: int, feedback: str = ""):
         from l2p import DomainBuilder
         llm = self.load_llm()
         builder = DomainBuilder()
         template = self.template_manager.get_template("formalize_predicates.txt", "domain")
-        print(f"  Generating predicates from description...")
+        prompt = domain_desc
+        if feedback:
+            prompt = f"{domain_desc}\n\n[Feedback to apply to the generated predicates]\n{feedback}"
+            print(f"  Re-generating predicates with your feedback...")
+        else:
+            print(f"  Generating predicates from description...")
         result = builder.formalize_predicates(
-            model=llm, domain_desc=domain_desc,
+            model=llm, domain_desc=prompt,
             prompt_template=template, types=types,
             constants=constants, max_retries=max_retries
         )
@@ -830,14 +906,19 @@ class DomainGenerator(GeneratorBase):
             print(f"  {YELLOW}Validation: {validation_info[1]}{RESET}")
         return pred_result
 
-    def _generate_functions_from_desc(self, domain_desc: str, types, constants, predicates, max_retries: int):
+    def _generate_functions_from_desc(self, domain_desc: str, types, constants, predicates, max_retries: int, feedback: str = ""):
         from l2p import DomainBuilder
         llm = self.load_llm()
         builder = DomainBuilder()
         template = self.template_manager.get_template("formalize_functions.txt", "domain")
-        print(f"  Generating functions from description...")
+        prompt = domain_desc
+        if feedback:
+            prompt = f"{domain_desc}\n\n[Feedback to apply to the generated functions]\n{feedback}"
+            print(f"  Re-generating functions with your feedback...")
+        else:
+            print(f"  Generating functions from description...")
         result = builder.formalize_functions(
-            model=llm, domain_desc=domain_desc,
+            model=llm, domain_desc=prompt,
             prompt_template=template, types=types,
             constants=constants, predicates=predicates,
             max_retries=max_retries
