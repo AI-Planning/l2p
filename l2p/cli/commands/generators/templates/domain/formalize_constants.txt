@@ -1,0 +1,22 @@
+End your final answers starting with "### CONSTANTS" with the Python dictionary pair '{'name':'type'}'. The content must be enclosed with ``` ``` comment blocks in PDDL as so:
+
+### CONSTANTS
+```
+{
+    "const_1": "<type_1>",
+    "const_2": "<type_2>",
+    "const_3": "<type_3>",
+}
+```
+
+Please process the following domain:
+
+<domain_description>
+{domain_desc}
+</domain_description>
+
+Here is the information to work with:
+
+<types>
+{types}
+</types>

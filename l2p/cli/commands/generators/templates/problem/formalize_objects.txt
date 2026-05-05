@@ -1,0 +1,28 @@
+End your final answer starting with "### OBJECTS" containing the object types within the ``` ``` comment blocks in PDDL as so:
+
+### OBJECTS
+```
+object1 - type_1
+object2 - type_2
+object3 - type_1
+```
+
+Each object must be declared separately with their type and not grouped - even if objects share the same type.
+
+Please process the following problem:
+
+<problem_description>
+{problem_desc}
+</problem_description>
+
+Here is the type information for this domain:
+
+<types>
+{types}
+</types>
+
+Here are the domain constants (if any):
+
+<constants>
+{constants}
+</constants>

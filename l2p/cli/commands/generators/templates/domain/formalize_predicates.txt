@@ -1,0 +1,26 @@
+List predicate variable types separately. Do not group them if they share the same types.
+
+End your final answers starting with "### New Predicates" with ``` ``` comment blocks in PDDL as so:
+
+### New Predicates
+```
+- (predicate_name_1 ?t1 - type_1 ?t2 - type_2): 'predicate_description'
+- (predicate_name_2 ?t3 - type_3 ?t4 - type_4): 'predicate_description'
+- (predicate_name_3 ?t5 - type_5): 'predicate_description'
+``` 
+
+Please process the following domain:
+
+<domain_description>
+{domain_desc}
+</domain_description>
+
+Here is the information to work with:
+
+<types>
+{types}
+</types>
+
+<constants>
+{constants}
+</constants>

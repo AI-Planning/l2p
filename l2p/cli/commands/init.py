@@ -146,8 +146,8 @@ def init_command(args):
             print("• anthropic - Anthropic models (Claude)")
             print("• deepseek - DeepSeek models")
             print("• mistral - Mistral models")
-            print("• ollama - Local Ollama models")
-            print("• ollama-cloud - Ollama cloud models")
+            print("• ollama - Local Ollama models (currently only available on UNIFIED backend)")
+            print("• ollama-cloud - Ollama cloud models (currently only available on OPENAI backend)")
             while True:
                 provider = _input_or_exit("\nEnter provider name: ").lower()
                 if provider in VALID_PROVIDERS:
@@ -156,7 +156,6 @@ def init_command(args):
         
         config_updates["model"]["provider"] = provider
         
-        # Model
         model = args.model
         if not model:
             model = _input_or_exit(f"\nEnter model name for {provider} (e.g., {get_example_model(provider)}): ").strip()

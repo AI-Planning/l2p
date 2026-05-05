@@ -11,6 +11,9 @@ import yaml
 from pathlib import Path
 from typing import Any, Optional
 
+from l2p.domain_builder import DomainBuilder
+from l2p.task_builder import TaskBuilder
+
 from ..utils.config import CLIError, get_config_manager
 from ..utils.templates import get_template_manager
 from ..utils.errors import handle_error
@@ -63,6 +66,7 @@ Examples:
     from .generators.action import add_subparser as add_action_parser
     from .generators.domain import add_subparser as add_domain_parser
     from .generators.task import add_subparser as add_task_parser
+    from .generators.problem import add_subparser as add_problem_parser
     
     add_types_parser(subparsers)
     add_predicates_parser(subparsers)
@@ -70,6 +74,7 @@ Examples:
     add_action_parser(subparsers)
     add_domain_parser(subparsers)
     add_task_parser(subparsers)
+    add_problem_parser(subparsers)
 
 
 def generate_command(args):
@@ -101,7 +106,10 @@ class GeneratorBase:
         """
         self.config_manager = config_manager or get_config_manager()
         self.template_manager = template_manager or get_template_manager(self.config_manager)
+        self.domain_builder = DomainBuilder()
+        self.problem_builder = TaskBuilder()
         self.llm = None
+        self.llm = self.load_llm()
     
     def load_llm(self):
         """Load and initialize LLM from configuration.
