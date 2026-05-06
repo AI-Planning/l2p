@@ -8,6 +8,7 @@ import argparse
 from pathlib import Path
 from typing import Optional, Tuple
 
+from l2p.utils.pddl_format import format_types_to_string
 from l2p.utils.pddl_parser import load_file
 from l2p.cli.commands.generate import GeneratorBase
 from l2p.cli.utils.errors import handle_error
@@ -181,7 +182,7 @@ class DomainGenerator(GeneratorBase):
                     "functions", context,
                     manual_func=None,
                     llm_func=lambda feedback="":
-                        self._generate_functions_from_desc(
+                        self._generate_functions(
                             domain_desc, context.get("types"), context.get("constants"),
                             context.get("predicates"), args.max_retries, feedback
                         )
@@ -199,6 +200,8 @@ class DomainGenerator(GeneratorBase):
             f"\n{BOLD}  Assembling Domain{RESET}"
             f"\n{BOLD}{'=' * 60}{RESET}"
         )
+
+        # print(context.get("types"))
 
         req_list = [r.strip() for r in requirements.split(",") if r.strip()]
         domain_pddl = self.domain_builder.generate_domain(
@@ -325,26 +328,61 @@ class DomainGenerator(GeneratorBase):
 
         if not types:
             return None
-        return types
+        formatted_tree = self._format_to_nested_tree(types)
+        
+        return formatted_tree
+    
+    def _format_to_nested_tree(self, flat_types: list) -> list:
+        """Converts a flat list of types into a nested dictionary structure."""
+        nodes = {}
+        for t in flat_types:
+            name = t["name"]
+            desc = t["desc"]
+            # format: { "type_name": "description", "children": [] }
+            nodes[name] = {
+                name: desc,
+                "children": []
+            }
+            
+        tree = []
+        for t in flat_types:
+            name = t["name"]
+            parent = t["parent"]
+            if parent == "object" or parent not in nodes:
+                tree.append(nodes[name])
+            else:
+                nodes[parent]["children"].append(nodes[name])
+                
+        return tree
 
     def _show_type_tree(self, types: list):
-        """Display the type hierarchy as an indented tree."""
-        tree = {"object": {"children": {}}}
+        """Display the type hierarchy as an indented tree with lines."""
+        nodes = {"object": {"children": {}}}
         for t in types:
             parent = t["parent"]
-            if parent not in tree:
-                tree[parent] = {"children": {}}
-            if t["name"] not in tree:
-                tree[t["name"]] = {"children": {}}
-            tree[parent]["children"][t["name"]] = tree[t["name"]]
-
-        def _print(node, indent_level):
-            for name, child in node.items():
-                print(f"    {'  ' * indent_level}{CYAN}{name}{RESET}")
-                _print(child["children"], indent_level + 1)
-
+            name = t["name"]
+            if parent not in nodes:
+                nodes[parent] = {"children": {}}
+            if name not in nodes:
+                nodes[name] = {"children": {}}
+            nodes[parent]["children"][name] = nodes[name]
         print(f"  {BOLD}Current hierarchy:{RESET}")
-        _print(tree, 0)
+
+        def _print_tree(node_name, node, prefix="", is_last=True, is_root=False):
+            # print the current node
+            if is_root:
+                print(f"  {CYAN}{node_name}{RESET}")
+                child_prefix = prefix
+            else:
+                connector = "└── " if is_last else "├── "
+                print(f"  {prefix}{connector}{CYAN}{node_name}{RESET}")
+                child_prefix = prefix + ("    " if is_last else "│   ")
+
+            children = list(node["children"].items())
+            for i, (child_name, child_node) in enumerate(children):
+                is_last_child = (i == len(children) - 1)
+                _print_tree(child_name, child_node, child_prefix, is_last_child, is_root=False)
+        _print_tree("object", nodes["object"], is_root=True)
 
     def _manual_constants(self, types) -> dict:
         """Interactive constant builder."""
@@ -691,11 +729,8 @@ class DomainGenerator(GeneratorBase):
             return
         print(f"\n  {BOLD}{label.capitalize()}:{RESET}")
         if label == "types":
-            for t in items:
-                if isinstance(t, dict):
-                    name = next(iter(t))
-                    p = t.get("parent", "object")
-                    print(f"    {CYAN}{name}{RESET} : {p}")
+            types_string = format_types_to_string(items)
+            print(f"{CYAN}{types_string}{RESET}")
         elif label == "constants":
             if isinstance(items, dict):
                 for name, typ in items.items():
@@ -712,10 +747,17 @@ class DomainGenerator(GeneratorBase):
         if not types:
             return ["object"]
         names = ["object"]
-        for t in types:
-            if isinstance(t, dict):
-                names.append(t.get("name", ""))
-        return [n for n in names if n]
+        def _extract_names(node_list):
+            for node in node_list:
+                # find the key that is not "children"
+                for key in node.keys():
+                    if key != "children":
+                        names.append(key)
+                if "children" in node and node["children"]:
+                    _extract_names(node["children"])
+                    
+        _extract_names(types)
+        return names
     
     def _confirm_stage(self, label: str, context: dict, manual_func, llm_func):
         """Run a component stage with confirmation and fix loop."""
@@ -798,7 +840,7 @@ class DomainGenerator(GeneratorBase):
             print(f"  {YELLOW}Validation: {validation_info[1]}{RESET}")
         return pred_result
 
-    def _generate_functions_from_desc(self, domain_desc: str, types, constants, predicates, max_retries: int, feedback: str = ""):
+    def _generate_functions(self, domain_desc: str, types, constants, predicates, max_retries: int, feedback: str = ""):
         template = load_file("l2p/cli/commands/generators/templates/domain/formalize_functions.txt")
         
         prompt = domain_desc

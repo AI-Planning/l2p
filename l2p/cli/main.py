@@ -2,38 +2,34 @@
 """
 L2P Command Line Interface
 
-This module provides a CLI for generating PDDL components using LLMs.
+This module provides a CLI for generating PDDL domains/problems using LLMs.
 Users must configure an LLM model before using generation commands.
 """
 
-import os
 import sys
 import argparse
-from typing import Optional
 
-# Import CLI utilities
-from .utils.errors import handle_error
+from l2p.cli.utils.errors import handle_error
 
 
 def main():
     """Main CLI entry point."""
     try:
-        # Create the main parser
+        # create the main parser
         parser = argparse.ArgumentParser(
             description="L2P: Library to connect LLMs and planning tasks",
             formatter_class=argparse.RawDescriptionHelpFormatter,
             epilog="""
 Examples:
   l2p init --provider openai --model gpt-4o-mini
-  l2p generate types --desc "blocksworld domain"
-  l2p generate action --name pick-up --desc "pick up a block"
+  l2p generate domain --max-retries <n>
+  l2p generate problem --max-retries <n>
   
 For more information on a specific command, use:
   l2p <command> --help
             """,
         )
         
-        # Global arguments
         parser.add_argument(
             "--verbose", "-v",
             action="store_true",
@@ -74,42 +70,41 @@ For more information on a specific command, use:
             add_chat_parser(subparsers)
             
         except ImportError as e:
-            print(f"ERROR: Failed to load CLI commands: {e}")
+            print(f"[ERROR] Failed to load CLI commands: {e}")
             print("\nTroubleshooting:")
-            print("• Ensure L2P CLI is properly installed")
-            print("• Check Python path and module structure")
+            print(" > Ensure L2P CLI is properly installed")
+            print(" > Check Python path and module structure")
             sys.exit(1)
         
-        # Parse arguments
         args = parser.parse_args()
         
-        # Set up logging/verbose output
+        # set up logging/verbose output
         if args.verbose:
             import logging
             logging.basicConfig(level=logging.DEBUG)
         
-        # Execute command
-        # Import command functions dynamically to avoid circular imports
+        # execute command
+        # import command functions dynamically to avoid circular imports
         if args.command == "init":
-            from .commands.init import init_command
+            from l2p.cli.commands.init import init_command
             init_command(args)
         elif args.command == "models":
-            from .commands.models import models_command
+            from l2p.cli.commands.models import models_command
             models_command(args)
         elif args.command == "generate":
-            from .commands.generate import generate_command
+            from l2p.cli.commands.generate import generate_command
             generate_command(args)
         elif args.command == "config":
-            from .commands.config import config_command
+            from l2p.cli.commands.config import config_command
             config_command(args)
         elif args.command == "templates":
-            from .commands.templates import templates_command
+            from l2p.cli.commands.templates import templates_command
             templates_command(args)
         elif args.command == "new":
-            from .commands.new import new_command
+            from l2p.cli.commands.new import new_command
             new_command(args)
         elif args.command == "chat":
-            from .commands.chat import chat_command
+            from l2p.cli.commands.chat import chat_command
             chat_command(args)
         else:
             parser.print_help()

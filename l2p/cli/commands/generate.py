@@ -6,10 +6,6 @@ Generate PDDL components using configured LLM models.
 
 import sys
 import argparse
-import json
-import yaml
-from pathlib import Path
-from typing import Any, Optional
 
 from l2p.domain_builder import DomainBuilder
 from l2p.task_builder import TaskBuilder
@@ -23,30 +19,16 @@ def add_subparser(subparsers):
     """Add generate command subparser."""
     parser = subparsers.add_parser(
         "generate",
-        help="Generate PDDL components",
+        help="Generate PDDL domain or tasks",
         description="Generate PDDL domain and task components using LLMs.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
-Examples:
-  # Generate types from domain description
-  l2p generate types --desc "blocksworld domain"
-  
-  # Generate predicates with existing types
-  l2p generate predicates --desc "blocksworld" --types-file types.json
-  
-  # Generate a specific action
-  l2p generate action --name "pick-up" --desc "pick up a block"
-  
-  # Generate full domain (pipeline)
-  l2p generate domain --desc "blocksworld domain" --pipeline
-  
+Examples:  
+  # Generate domain
+  l2p generate domain --max-retries <n>
+
   # Generate problem/task
-  l2p generate task --desc "stack blocks A and B" --domain-file domain.pddl
-  
-  # Output in different formats
-  l2p generate types --desc "domain" --format json --output types.json
-  l2p generate types --desc "domain" --format yaml --output types.yaml
-  l2p generate types --desc "domain" --format pddl --output types.pddl
+  l2p generate problem --max-retries <n>
         """,
     )
     
@@ -58,21 +40,10 @@ Examples:
         required=True
     )
     
-    # Add individual generator subparsers
-    from .generators.types import add_subparser as add_types_parser
-    from .generators.predicates import add_subparser as add_predicates_parser
-    from .generators.constants import add_subparser as add_constants_parser
-    from .generators.action import add_subparser as add_action_parser
     from .generators.domain import add_subparser as add_domain_parser
-    from .generators.task import add_subparser as add_task_parser
     from .generators.problem import add_subparser as add_problem_parser
-    
-    add_types_parser(subparsers)
-    add_predicates_parser(subparsers)
-    add_constants_parser(subparsers)
-    add_action_parser(subparsers)
+
     add_domain_parser(subparsers)
-    add_task_parser(subparsers)
     add_problem_parser(subparsers)
 
 
@@ -85,7 +56,7 @@ def generate_command(args):
             args.func(args)
         else:
             print("Error: No generate subcommand specified.", file=sys.stderr)
-            print("Use 'l2p generate --help' for usage information.", file=sys.stderr)
+            print("Use `l2p generate --help` for usage information.", file=sys.stderr)
             sys.exit(1)
             
     except Exception as e:
@@ -184,108 +155,3 @@ class GeneratorBase:
                     "Ensure API keys are valid and set"
                 ]
             )
-    
-    def load_input_file(self, file_path: str, description: str = "input") -> Any:
-        """Load input file (JSON, YAML, or text)."""
-        path = Path(file_path).expanduser().resolve()
-        
-        if not path.exists():
-            raise CLIError(
-                f"[ERROR] {description.capitalize()} file not found: {file_path}",
-                [
-                    f"Check file path: {file_path}",
-                    "Use absolute path for better reliability",
-                    "Ensure file exists and is readable"
-                ]
-            )
-        
-        try:
-            suffix = path.suffix.lower()
-            if suffix == '.json':
-                with open(path, 'r') as f:
-                    return json.load(f)
-            elif suffix in ['.yaml', '.yml']:
-                with open(path, 'r') as f:
-                    return yaml.safe_load(f)
-            else:
-                with open(path, 'r') as f:
-                    return f.read().strip()
-                
-        except Exception as e:
-            raise CLIError(
-                f"[ERROR] Failed to load {description} file: {e}",
-                [
-                    f"Check file format: {path.suffix}",
-                    "Ensure file has valid format (JSON, YAML, or text)",
-                    "Check file permissions and encoding"
-                ]
-            )
-    
-    def save_output(self, content: Any, output_path: Optional[str], output_format: str = "pddl"):
-        """Save output to file or stdout."""
-        # convert content to string based on format
-        if output_format == "json":
-            if isinstance(content, (dict, list)):
-                output = json.dumps(content, indent=2)
-            else:
-                # try to parse as JSON first, then treat as string
-                try:
-                    parsed = json.loads(str(content))
-                    output = json.dumps(parsed, indent=2)
-                except:
-                    output = str(content)
-        elif output_format == "yaml":
-            if isinstance(content, (dict, list)):
-                output = yaml.dump(content, default_flow_style=False, sort_keys=False)
-            else:
-                output = str(content)
-        else:  # pddl or default
-            output = str(content)
-        
-        # write to file or stdout
-        if output_path:
-            path = Path(output_path).expanduser().resolve()
-            path.parent.mkdir(parents=True, exist_ok=True)
-            
-            try:
-                with open(path, 'w') as f:
-                    f.write(output)
-                print(f"Output written to: {path}")
-            except Exception as e:
-                raise CLIError(
-                    f"[ERROR] Failed to write output: {e}",
-                    [
-                        f"Check write permissions for: {path.parent}",
-                        "Ensure enough disk space",
-                        "Try different output path"
-                    ]
-                )
-        else:
-            print(output)
-    
-    def format_for_output(self, content: Any, output_format: str) -> Any:
-        """Format content for specified output format."""
-        if output_format == "pddl":
-            # ror PDDL output, content should already be string
-            return str(content)
-        elif output_format == "json":
-            if isinstance(content, (dict, list)):
-                return content
-            else:
-                # try to parse as JSON
-                try:
-                    return json.loads(str(content))
-                except:
-                    return {"raw": str(content)}
-        elif output_format == "yaml":
-            if isinstance(content, (dict, list)):
-                return content
-            else:
-                # try to parse as JSON first
-                try:
-                    parsed = json.loads(str(content))
-                    return parsed
-                except:
-                    return {"raw": str(content)}
-        else:
-            return content
