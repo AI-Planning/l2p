@@ -4,15 +4,12 @@ Template management commands for L2P CLI.
 List and manage prompt templates.
 """
 
-import os
 import sys
 import argparse
-from pathlib import Path
-from typing import Dict, List
 
-from ..utils.config import get_config_manager
-from ..utils.templates import TemplateManager, get_template_manager
-from ..utils.errors import handle_error
+from l2p.cli.utils.config import get_config_manager
+from l2p.cli.utils.templates import get_template_manager
+from l2p.cli.utils.errors import handle_error
 
 
 def add_subparser(subparsers):
@@ -126,28 +123,26 @@ def templates_list_command(args):
     category = args.category if args.category != "all" else None
     templates = template_manager.list_templates(category)
     
-    print("Available Templates:")
-    print("=" * 60)
+    print(f"Available Templates:\n{"=" * 60}")
     
     for cat, files in templates.items():
         print(f"\n{cat.upper()} Templates ({len(files)}):")
         print("-" * 40)
         
         if args.details:
-            # Show with descriptions
             for file in files:
                 template_path = template_manager.get_template_path(file, cat)
                 source = "Package" if "l2p" in str(template_path) else "Custom" if template_path else "Not found"
-                print(f"  • {file}")
+                print(f"  > {file}")
                 print(f"    Source: {source}")
                 if template_path:
                     print(f"    Path: {template_path}")
         else:
-            # Simple list
+            # simple list
             for file in files:
-                print(f"  • {file}")
+                print(f"  > {file}")
     
-    # Show custom template path if configured
+    # show custom template path if configured
     templates_config = config_manager.get_templates_config()
     custom_path = templates_config.get("custom_path")
     if custom_path:
@@ -163,26 +158,26 @@ def templates_show_command(args):
     
     try:
         template_content = template_manager.get_template(args.name, args.category)
+        print(
+            f"Template: {args.category}/{args.name}"
+            f"\n{"=" * 60}\n"
+            f"\n{template_content}"
+        )
         
-        print(f"Template: {args.category}/{args.name}")
-        print("=" * 60)
-        print()
-        print(template_content)
-        
-        # Show template location
+        # show template location
         template_path = template_manager.get_template_path(args.name, args.category)
         if template_path:
             print(f"\nSource: {template_path}")
         
     except Exception as e:
-        print(f"Error loading template: {e}", file=sys.stderr)
+        print(f"[ERROR] Error loading template: {e}", file=sys.stderr)
         
-        # Show available templates in category
+        # show available templates in category
         templates = template_manager.list_templates(args.category)
         if args.category in templates:
             print(f"\nAvailable templates in '{args.category}' category:")
             for template in templates[args.category]:
-                print(f"  • {template}")
+                print(f"  > {template}")
 
 
 def templates_find_command(args):
@@ -196,13 +191,13 @@ def templates_find_command(args):
         print(f"Template found: {args.category}/{args.name}")
         print(f"Path: {template_path}")
         
-        # Show if it's package or custom
+        # show if it is package or custom
         if "l2p/templates" in str(template_path):
             print("Source: Package templates")
         else:
             print("Source: Custom templates")
         
-        # Show file info
+        # show file info
         try:
             stat = template_path.stat()
             import datetime
@@ -238,4 +233,4 @@ def templates_find_command(args):
         if args.category in templates:
             print(f"\nAvailable templates in '{args.category}' category:")
             for template in templates[args.category]:
-                print(f"  • {template}")
+                print(f"  > {template}")

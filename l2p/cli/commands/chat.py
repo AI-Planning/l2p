@@ -3,24 +3,19 @@ Chat command for L2P CLI.
 
 Interactive single-exchange chat with the configured LLM model:
     - Run command: `l2p chat`
+        Sub-commands: /exit, /edit <file.pddl>, /validate <file.pddl>
 """
 
 import os
 import re
 import sys
-import difflib
 import tempfile
 import argparse
 from pathlib import Path
 
-from ..utils.config import get_config_manager
-from ..utils.errors import handle_error
-
-BOLD = "\033[1m"
-GREEN = "\033[92m"
-CYAN = "\033[96m"
-YELLOW = "\033[93m"
-RESET = "\033[0m"
+from l2p.cli.utils.config import get_config_manager
+from l2p.cli.utils.errors import handle_error
+from l2p.cli.utils.helpers import _show_diff, BOLD, GREEN, CYAN, YELLOW, RESET
 
 EDIT_SYSTEM_PROMPT = (
     "You are a PDDL editing assistant. The user will provide you with the contents of a PDDL file "
@@ -105,7 +100,7 @@ def _check_pddl_syntax(content: str) -> str | None:
         elif content.strip().startswith("(define (problem"):
             pddl_parse_problem(tmp.name)
         else:
-            return "Unknown PDDL type — must start with (define (domain ... or (define (problem ..."
+            return "[ERROR] Unknown PDDL type — must start with (define (domain ... or (define (problem ..."
         return None
     except Exception as e:
         return str(e)
@@ -125,7 +120,6 @@ def _handle_validate_command(filepath: str):
         return
 
     content = path.read_text()
-
     if content.strip().startswith("(define (domain"):
         pddl_type = "domain"
     elif content.strip().startswith("(define (problem"):
@@ -134,41 +128,12 @@ def _handle_validate_command(filepath: str):
         pddl_type = "unknown"
 
     print(f"  Loaded {CYAN}{path}{RESET} ({len(content)} chars, {pddl_type} file)")
-
     print(f"  Checking PDDL syntax...")
     error = _check_pddl_syntax(content)
     if error:
         print(f"  {YELLOW}[INVALID] PDDL syntax error:{RESET} {error}")
     else:
         print(f"  {GREEN}[VALID]{RESET} PDDL syntax is valid.")
-
-
-def _show_diff(original: str, modified: str):
-    """Show a colored unified diff between original and modified content."""
-    diff = difflib.unified_diff(
-        original.splitlines(keepends=True),
-        modified.splitlines(keepends=True),
-        fromfile="original",
-        tofile="modified",
-    )
-    lines = list(diff)
-    if not lines:
-        print(f"  {YELLOW}No changes.{RESET}")
-        return
-
-    print(f"\n  {BOLD}Changes:{RESET}")
-    for line in lines:
-        line = line.rstrip("\n")
-        if line.startswith("---") or line.startswith("+++"):
-            print(f"  {BOLD}{line}{RESET}")
-        elif line.startswith("@@"):
-            print(f"  {CYAN}{line}{RESET}")
-        elif line.startswith("+"):
-            print(f"  {GREEN}{line}{RESET}")
-        elif line.startswith("-"):
-            print(f"  {YELLOW}{line}{RESET}")
-        else:
-            print(f"  {line}")
 
 
 def _handle_edit_command(llm, backend: str, filepath: str):
@@ -211,7 +176,7 @@ def _handle_edit_command(llm, backend: str, filepath: str):
         print(f"\n{YELLOW}LLM error: {e}{RESET}")
         return
 
-    # Extract ```pddl ... ``` block
+    # extract ```pddl ... ``` block
     m = re.search(r"```pddl\s*\n(.*?)```", response, re.DOTALL)
     if not m:
         print(f"\n{CYAN}{response}{RESET}\n")
@@ -254,7 +219,7 @@ def chat_command(args):
         backend = model_config.get("backend", "unified")
 
         if not provider or not model:
-            print("Error: No model configured.")
+            print("[ERROR] No model configured.")
             print("Run 'l2p init' to configure a model first or 'l2p config edit' to edit an existing config file.")
             sys.exit(1)
 
@@ -269,15 +234,16 @@ def chat_command(args):
         else:
             from l2p.llm.unified import UnifiedLLM as llm_class
 
-        print()
-        print(f"{BOLD}{'=' * 60}{RESET}")
-        print(f"{BOLD}  L2P Chat{RESET}")
-        print(f"  {CYAN}{provider}/{model}{RESET}")
-        print(f"{BOLD}{'=' * 60}{RESET}")
-        print(f"  {YELLOW}/exit{RESET}       Quit")
-        print(f"  {YELLOW}/edit <file>{RESET}  Edit a PDDL file with LLM assistance")
-        print(f"  {YELLOW}/validate <file>{RESET}  Validate PDDL file syntax")
-        print()
+        # print interactive header commands
+        print(
+            f"\n{BOLD}{'=' * 60}{RESET}"
+            f"\n{BOLD}  L2P Chat{RESET}"
+            f"\n  {CYAN}{provider}/{model}{RESET}"
+            f"\n{BOLD}{'=' * 60}{RESET}"
+            f"\n  {YELLOW}/exit{RESET}              Quit"
+            f"\n  {YELLOW}/edit <file>{RESET}       Edit a PDDL file with LLM assistance"
+            f"\n  {YELLOW}/validate <file>{RESET}   Validate PDDL file syntax\n"
+        )
 
         llm = llm_class(
             provider=provider,
@@ -286,26 +252,22 @@ def chat_command(args):
             api_key=api_key,
         )
 
+        # get input from user
         while True:
-            # get input from user
             try:
                 user_input = input(f"{GREEN}>>>{RESET} ").strip()
             except (EOFError, KeyboardInterrupt):
                 print()
                 break
 
-            # if not user input continue
             if not user_input:
                 continue
-            
             if user_input == "/exit":
                 break
-
             if user_input.startswith("/edit "):
                 filepath = user_input[len("/edit "):].strip()
                 _handle_edit_command(llm, backend, filepath)
                 continue
-
             if user_input.startswith("/validate "):
                 filepath = user_input[len("/validate "):].strip()
                 _handle_validate_command(filepath)

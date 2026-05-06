@@ -11,16 +11,10 @@ from pathlib import Path
 from collections import OrderedDict
 from typing import Optional, Tuple
 
-from ..generate import GeneratorBase
-from ...utils.errors import handle_error
-
 from l2p import load_file
-
-BOLD = "\033[1m"
-GREEN = "\033[92m"
-CYAN = "\033[96m"
-YELLOW = "\033[93m"
-RESET = "\033[0m"
+from l2p.cli.commands.generate import GeneratorBase
+from l2p.cli.utils.errors import handle_error
+from l2p.cli.utils.helpers import _input_or_exit, BOLD, GREEN, CYAN, YELLOW, RESET
 
 
 def add_subparser(subparsers):
@@ -247,10 +241,11 @@ class ProblemGenerator(GeneratorBase):
             context["goal"] = None
 
         # assemble problem
-        print(f"\n{BOLD}{'=' * 60}{RESET}")
-        print(f"{BOLD}  Assembling Problem{RESET}")
-        print(f"{BOLD}{'=' * 60}{RESET}")
-
+        print(
+            f"\n\n{BOLD}{'=' * 60}{RESET}"
+            f"\n{BOLD}  Assembling Problem{RESET}"
+            f"\n{BOLD}{'=' * 60}{RESET}"
+        )
         problem_pddl = self.problem_builder.generate_task(
             domain_name=domain_name,
             problem_name=problem_name,
@@ -259,15 +254,18 @@ class ProblemGenerator(GeneratorBase):
             goal=context.get("goal"),
         )
 
-        print("OUTPUT:")
-        print(f"\n{BOLD}{'=' * 60}{RESET}")
-        print(problem_pddl)
-        print(f"{BOLD}{'=' * 60}{RESET}")
+        # print output
+        print(
+            f"\nOUTPUT:"
+            f"\n\n{BOLD}{'=' * 60}{RESET}"
+            f"\n{problem_pddl}"
+            f"\n{BOLD}{'=' * 60}{RESET}"
+        )
 
         self._prompt_save(problem_pddl, problem_name)
 
+    
     # PROMPTING HELPERS
-
     def _prompt_domain_file(self) -> dict:
         """Prompt for domain file and parse it."""
         while True:
@@ -313,7 +311,6 @@ class ProblemGenerator(GeneratorBase):
 
     def _prompt_problem_desc(self) -> str:
         print(f"\n{GREEN}Enter a brief description of your problem:{RESET}")
-        print("  (This helps the LLM generate appropriate PDDL components)")
         desc = _input_or_exit().strip()
         return desc or "A general planning problem."
 
@@ -328,8 +325,8 @@ class ProblemGenerator(GeneratorBase):
         manual = resp == "y"
         return True, manual
 
+    
     # MANUAL BUILDERS
-
     def _manual_objects(self, types) -> Optional[dict]:
         """Interactive objects builder."""
         available = self._collect_type_names(types)
@@ -459,8 +456,8 @@ class ProblemGenerator(GeneratorBase):
         output_path.write_text(content)
         print(f"\n{GREEN}[SUCCESS] Problem saved to: {output_path.resolve()}{RESET}")
 
-    # DISPLAY & CONFIRM
 
+    # DISPLAY & CONFIRM
     def _collect_type_names(self, types) -> list:
         if not types:
             return ["object"]
@@ -515,8 +512,8 @@ class ProblemGenerator(GeneratorBase):
                     return result
                 context["_feedback"] = fix
 
-    # LLM-BASED GENERATION WRAPPERS
 
+    # LLM-BASED GENERATION WRAPPERS
     def _generate_objects(self, problem_desc: str, types, constants, max_retries: int, feedback: str = ""):
         template = load_file("l2p/cli/commands/generators/templates/problem/formalize_objects.txt")
         prompt = problem_desc

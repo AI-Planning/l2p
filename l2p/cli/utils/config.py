@@ -6,22 +6,20 @@ Manages environment variables and provides model configuration.
 """
 
 import os
-import sys
 import json
 import copy
 import yaml
 from pathlib import Path
 from typing import Dict, Any, Optional, Tuple
-import shutil
 
-from .errors import CLIError
-from ...llm.base import resolve_config_path
+from l2p.cli.utils.errors import CLIError
+from l2p.llm.base import resolve_config_path
 
 
 class ConfigManager:
     """Manages L2P CLI configuration."""
     
-    # Default configuration
+    # default configuration
     DEFAULT_CONFIG = {
         "model": {
             "backend": "unified",
@@ -42,11 +40,7 @@ class ConfigManager:
     }
     
     def __init__(self, config_path: Optional[str] = None):
-        """Initialize config manager.
-        
-        Args:
-            config_path: Optional path to config file. If None, uses default.
-        """
+        """Initialize config manager."""
         self.config_dir = Path.home() / ".l2p"
         self.config_file = self.config_dir / "config.yaml"
         
@@ -64,10 +58,10 @@ class ConfigManager:
         Raises:
             CLIError: If config file exists but is invalid.
         """
-        # Create config directory if it doesn't exist
+        # create config directory if it doesn't exist
         self.config_dir.mkdir(parents=True, exist_ok=True)
         
-        # Check if config file exists
+        # check if config file exists
         if not self.config_file.exists():
             return self.DEFAULT_CONFIG.copy()
         
@@ -78,31 +72,25 @@ class ConfigManager:
             if not config:
                 return self.DEFAULT_CONFIG.copy()
             
-            # Merge with defaults to ensure all sections exist
+            # merge with defaults to ensure all sections exist
             merged = copy.deepcopy(self.DEFAULT_CONFIG)
             self._deep_update(merged, config)
             return merged
             
         except (yaml.YAMLError, json.JSONDecodeError) as e:
             raise CLIError(
-                f"Failed to parse configuration file: {self.config_file}\n"
+                f"[ERROR] Failed to parse configuration file: {self.config_file}\n"
                 f"Error: {e}\n\n"
                 "Troubleshooting:\n"
-                "• Check YAML syntax in config file\n"
-                "• Delete config file to regenerate: rm {self.config_file}\n"
-                "• Run 'l2p init' to create new configuration"
+                "   > Check YAML syntax in config file\n"
+                "   > Delete config file to regenerate: rm {self.config_file}\n"
+                "   > Run `l2p init` to create new configuration"
             )
     
     def save_config(self, config: Optional[Dict[str, Any]] = None):
-        """Save configuration to file.
-        
-        Args:
-            config: Configuration to save. If None, saves current config.
-        """
+        """Save configuration to file."""
         if config is not None:
             self.config = config
-        
-        # Ensure config directory exists
         self.config_dir.mkdir(parents=True, exist_ok=True)
         
         try:
@@ -110,18 +98,14 @@ class ConfigManager:
                 yaml.dump(self.config, f, default_flow_style=False, sort_keys=False)
         except Exception as e:
             raise CLIError(
-                f"Failed to save configuration: {e}\n\n"
+                f"[ERROR] Failed to save configuration: {e}\n\n"
                 "Troubleshooting:\n"
-                "• Check write permissions for {self.config_file}\n"
-                "• Ensure enough disk space"
+                "   > Check write permissions for {self.config_file}\n"
+                "   > Ensure enough disk space"
             )
     
     def get_model_config(self) -> Dict[str, Any]:
-        """Get model configuration with environment variables resolved.
-        
-        Returns:
-            Model configuration dictionary with resolved API keys.
-        """
+        """Get model configuration with environment variables resolved."""
         model_config = self.config.get("model", {}).copy() # retrieve model configuration file
         api_key = model_config.get("api_key", "") # retrieve API key entry
 
@@ -149,30 +133,22 @@ class ConfigManager:
         return self.config.get("templates", {}).copy()
     
     def update_config(self, updates: Dict[str, Any]):
-        """Update configuration with new values.
-        
-        Args:
-            updates: Dictionary with configuration updates.
-        """
+        """Update configuration with new values."""
         self._deep_update(self.config, updates)
         self.save_config()
     
     def validate_model_config(self) -> Tuple[bool, str]:
-        """Validate current model configuration.
-        
-        Returns:
-            Tuple of (is_valid, error_message)
-        """
+        """Validate current model configuration."""
         try:
             model_config = self.get_model_config()
             
-            # Check required fields
+            # check required fields
             required = ["provider", "model", "config_path"]
             for field in required:
                 if not model_config.get(field):
                     return False, f"Missing required field: {field}"
             
-            # Check config path exists
+            # check config path exists
             config_path = model_config.get("config_path")
             if config_path:
                 try:
@@ -180,7 +156,7 @@ class ConfigManager:
                 except FileNotFoundError as e:
                     return False, str(e)
             
-            # Check backend matches config_path for known pairs
+            # check backend matches config_path for known pairs
             backend = model_config.get("backend", "")
             if config_path.endswith("openaiSDK.yaml") and backend != "openai":
                 return False, f"Backend is '{backend}' but config_path '{config_path}' suggests 'openai'"
@@ -222,18 +198,11 @@ class CLIError(Exception):
         return self.message
 
 
-# Convenience function for getting config manager instance
+# convenience function for getting config manager instance
 _config_manager: Optional[ConfigManager] = None
 
 def get_config_manager(config_path: Optional[str] = None) -> ConfigManager:
-    """Get or create config manager instance.
-    
-    Args:
-        config_path: Optional path to config file.
-        
-    Returns:
-        ConfigManager instance.
-    """
+    """Get or create config manager instance."""
     global _config_manager
     if _config_manager is None or config_path is not None:
         _config_manager = ConfigManager(config_path)

@@ -9,7 +9,7 @@ import os
 import sys
 import traceback
 from pathlib import Path
-from typing import Optional, Type
+from typing import Optional
 
 
 class CLIError(Exception):
@@ -59,28 +59,28 @@ def handle_error(error: Exception):
     Args:
         error: The exception to handle.
     """
-    # If it's already a CLIError, just print it
+    # if it is already a CLIError just print it
     if isinstance(error, CLIError):
         print(str(error), file=sys.stderr)
         return
     
-    # For other exceptions, create a generic error with troubleshooting
+    # for other exceptions create a generic error with troubleshooting
     error_type = type(error).__name__
     error_msg = str(error) or "Unknown error"
     
-    # Get traceback for debugging
+    # get traceback for debugging
     tb_lines = traceback.format_exception(type(error), error, error.__traceback__)
     tb_text = ''.join(tb_lines[-3:])  # Last 3 frames
     
-    # Determine error category and specific troubleshooting tips
+    # determine error category and specific troubleshooting tips
     tips = []
     
     if isinstance(error, ImportError):
         tips = [
-            "Ensure all required packages are installed: pip install llm tiktoken rich",
+            "Ensure all required packages are installed: `pip install llm tiktoken rich`",
             "If using a virtual environment, activate it first",
             "Check Python version (requires >= 3.10)",
-            "Try reinstalling L2P: pip install -e .[cli]"
+            "Try reinstalling L2P: `pip install -e .[cli]`"
         ]
     elif isinstance(error, FileNotFoundError):
         tips = [
@@ -101,26 +101,26 @@ def handle_error(error: Exception):
             "Verify API keys are correct and have not expired",
             "Check if the LLM service is available",
             "Try increasing timeout or retry count",
-            "Test with 'l2p models test' to verify connection"
+            "Test with `l2p models test` to verify connection"
         ]
     elif isinstance(error, ValueError) and ("model" in error_msg.lower() or "provider" in error_msg.lower()):
         tips = [
-            "Run 'l2p models list' to see available models",
+            "Run `l2p models list` to see available models",
             "Check model configuration with 'l2p config show'",
             "Ensure the model exists in your provider's configuration",
-            "Run 'l2p init' to reconfigure model settings"
+            "Run `l2p init` to reconfigure model settings"
         ]
     else:
-        # Generic troubleshooting tips
+        # generic troubleshooting tips
         tips = [
-            "Check command syntax with 'l2p <command> --help'",
-            "Ensure L2P is properly installed: pip install -e .[cli]",
-            "Check configuration with 'l2p config show'",
+            "Check command syntax with `l2p <command> --help`",
+            "Ensure L2P is properly installed: `pip install -e .[cli]`",
+            "Check configuration with `l2p config show`",
             "Run with --verbose flag for more details",
             f"See error details: {tb_text.strip()}"
         ]
     
-    # Create and display error
+    # display error
     cli_error = CLIError(
         f"{error_type}: {error_msg}",
         tips
@@ -128,23 +128,13 @@ def handle_error(error: Exception):
     
     print(str(cli_error), file=sys.stderr)
     
-    # Suggest documentation for complex errors
+    # suggest documentation for complex errors
     if not isinstance(error, (ImportError, FileNotFoundError, PermissionError)):
         print("\nFor more help, visit: https://github.com/AI-Planning/l2p", file=sys.stderr)
 
 
 def check_required_env_var(var_name: str) -> str:
-    """Check if a required environment variable is set.
-    
-    Args:
-        var_name: Name of environment variable.
-        
-    Returns:
-        Value of environment variable.
-        
-    Raises:
-        ConfigError: If environment variable is not set.
-    """
+    """Check if a required environment variable is set."""
     value = os.environ.get(var_name)
     if not value:
         raise ConfigError(
@@ -159,18 +149,7 @@ def check_required_env_var(var_name: str) -> str:
 
 
 def check_file_exists(file_path: str, description: str = "file") -> Path:
-    """Check if a file exists and return Path object.
-    
-    Args:
-        file_path: Path to check.
-        description: Description of file for error message.
-        
-    Returns:
-        Path object.
-        
-    Raises:
-        FileNotFoundError: If file does not exist.
-    """
+    """Check if a file exists and return Path object."""
     path = Path(file_path).expanduser().resolve()
     if not path.exists():
         raise FileNotFoundError(

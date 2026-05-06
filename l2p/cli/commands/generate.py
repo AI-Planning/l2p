@@ -13,11 +13,10 @@ from typing import Any, Optional
 
 from l2p.domain_builder import DomainBuilder
 from l2p.task_builder import TaskBuilder
-
-from ..utils.config import CLIError, get_config_manager
-from ..utils.templates import get_template_manager
-from ..utils.errors import handle_error
-from ...llm.base import resolve_config_path
+from l2p.cli.utils.config import CLIError, get_config_manager
+from l2p.cli.utils.templates import get_template_manager
+from l2p.cli.utils.errors import handle_error
+from l2p.llm.base import resolve_config_path
 
 
 def add_subparser(subparsers):
@@ -134,16 +133,15 @@ class GeneratorBase:
             
             if not provider or not model:
                 raise CLIError(
-                    "Model not configured.",
+                    "[ERROR] Model not configured.",
                     ["Run 'l2p init' to configure model settings first."]
                 )
             
-            # Resolve config path to catch errors early
             try:
                 config_path = resolve_config_path(config_path)
             except FileNotFoundError as e:
                 raise CLIError(str(e), [
-                    "Check config_path in your configuration",
+                    "[ERROR] Check config_path in your configuration",
                     "Run 'l2p config show' to see current config",
                     "Run 'l2p init' to reconfigure"
                 ])
@@ -188,15 +186,7 @@ class GeneratorBase:
             )
     
     def load_input_file(self, file_path: str, description: str = "input") -> Any:
-        """Load input file (JSON, YAML, or text).
-        
-        Args:
-            file_path: Path to input file.
-            description: Description for error messages.
-            
-        Returns:
-            Parsed content.
-        """
+        """Load input file (JSON, YAML, or text)."""
         path = Path(file_path).expanduser().resolve()
         
         if not path.exists():
@@ -211,7 +201,6 @@ class GeneratorBase:
         
         try:
             suffix = path.suffix.lower()
-            
             if suffix == '.json':
                 with open(path, 'r') as f:
                     return json.load(f)
@@ -219,7 +208,6 @@ class GeneratorBase:
                 with open(path, 'r') as f:
                     return yaml.safe_load(f)
             else:
-                # Assume text file
                 with open(path, 'r') as f:
                     return f.read().strip()
                 
@@ -234,19 +222,13 @@ class GeneratorBase:
             )
     
     def save_output(self, content: Any, output_path: Optional[str], output_format: str = "pddl"):
-        """Save output to file or stdout.
-        
-        Args:
-            content: Content to save.
-            output_path: Output file path (None for stdout).
-            output_format: Output format (pddl, json, yaml).
-        """
-        # Convert content to string based on format
+        """Save output to file or stdout."""
+        # convert content to string based on format
         if output_format == "json":
             if isinstance(content, (dict, list)):
                 output = json.dumps(content, indent=2)
             else:
-                # Try to parse as JSON first, then treat as string
+                # try to parse as JSON first, then treat as string
                 try:
                     parsed = json.loads(str(content))
                     output = json.dumps(parsed, indent=2)
@@ -260,7 +242,7 @@ class GeneratorBase:
         else:  # pddl or default
             output = str(content)
         
-        # Write to file or stdout
+        # write to file or stdout
         if output_path:
             path = Path(output_path).expanduser().resolve()
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -282,23 +264,15 @@ class GeneratorBase:
             print(output)
     
     def format_for_output(self, content: Any, output_format: str) -> Any:
-        """Format content for specified output format.
-        
-        Args:
-            content: Content to format.
-            output_format: Desired output format.
-            
-        Returns:
-            Formatted content.
-        """
+        """Format content for specified output format."""
         if output_format == "pddl":
-            # For PDDL output, content should already be string
+            # ror PDDL output, content should already be string
             return str(content)
         elif output_format == "json":
             if isinstance(content, (dict, list)):
                 return content
             else:
-                # Try to parse as JSON
+                # try to parse as JSON
                 try:
                     return json.loads(str(content))
                 except:
@@ -307,7 +281,7 @@ class GeneratorBase:
             if isinstance(content, (dict, list)):
                 return content
             else:
-                # Try to parse as JSON first
+                # try to parse as JSON first
                 try:
                     parsed = json.loads(str(content))
                     return parsed

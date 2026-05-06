@@ -12,8 +12,8 @@ import argparse
 import subprocess
 from pathlib import Path
 
-from ..utils.config import CLIError, get_config_manager
-from ..utils.errors import handle_error
+from l2p.cli.utils.config import CLIError, get_config_manager
+from l2p.cli.utils.errors import handle_error
 
 
 def add_subparser(subparsers):
@@ -104,11 +104,9 @@ def config_show_command(args):
     config_manager = get_config_manager(args.config if hasattr(args, 'config') else None)
     
     config_file = config_manager.get_config_path()
-    print(f"Configuration file: {config_file}")
-    print("=" * 60)
+    print(f"Configuration file: {config_file}\n{"=" * 60}")
     
     if args.raw:
-        # show raw YAML
         try:
             with open(config_file, 'r') as f:
                 print(f.read())
@@ -119,8 +117,7 @@ def config_show_command(args):
         config = config_manager.config
         
         # model configuration
-        print("\nModel Configuration:")
-        print("-" * 40)
+        print(f"\nModel Configuration:\n{"-" * 40}")
         model_config = config.get("model", {})
         for key, value in model_config.items():
             if key == "api_key" and isinstance(value, str) and len(value) > 8:
@@ -130,22 +127,19 @@ def config_show_command(args):
                 print(f"  {key}: {value}")
         
         # generation configuration
-        print("\nGeneration Configuration:")
-        print("-" * 40)
+        print(f"\nGeneration Configuration:\n{"-" * 40}")
         gen_config = config.get("generation", {})
         for key, value in gen_config.items():
             print(f"  {key}: {value}")
         
         # templates configuration
-        print("\nTemplates Configuration:")
-        print("-" * 40)
+        print(f"\nTemplates Configuration:\n{"-" * 40}")
         templates_config = config.get("templates", {})
         for key, value in templates_config.items():
             print(f"  {key}: {value}")
         
         # validation status
-        print("\nValidation:")
-        print("-" * 40)
+        print(f"\nValidation:\n{"-" * 40}")
         is_valid, message = config_manager.validate_model_config()
         status = "[SUCCESS] Valid" if is_valid else "[FAIL] Invalid"
         print(f"  Status: {status}")
@@ -196,7 +190,7 @@ def config_edit_command(args):
         if suggested_backend:
             config_manager.config["model"]["backend"] = suggested_backend
             config_manager.save_config()
-            print(f"ℹ Auto-updated backend from '{current_backend}' to '{suggested_backend}' to match config_path")
+            print(f"(i) Auto-updated backend from '{current_backend}' to '{suggested_backend}' to match config_path")
         
         is_valid, message = config_manager.validate_model_config()
         
@@ -256,12 +250,10 @@ def config_validate_command(args):
     config_manager = get_config_manager(args.config if hasattr(args, 'config') else None)
     
     config_file = config_manager.get_config_path()
-    print(f"Validating configuration: {config_file}")
-    print("=" * 60)
+    print(f"Validating configuration: {config_file}\n{"=" * 60}")
     
-    # Validate model configuration
-    print("\n1. Model Configuration:")
-    print("-" * 40)
+    # validate model configuration
+    print(f"\n1. Model Configuration:\n{"-" * 40}")
     model_config = config_manager.get_model_config()
     
     checks = [
@@ -278,7 +270,7 @@ def config_validate_command(args):
         if not passed:
             all_passed = False
     
-    # Validate config file exists
+    # validate config file exists
     config_path = model_config.get("config_path")
     if config_path:
         if config_path.startswith("l2p/"):
@@ -291,20 +283,23 @@ def config_validate_command(args):
                 print(f"  [FAIL] Config file not found: {config_path}")
                 all_passed = False
     
-    # Overall validation
-    print("\n2. Overall Validation:")
-    print("-" * 40)
+    # overall validation
+    print(f"\n2. Overall Validation:\n{"-" * 40}")
     is_valid, message = config_manager.validate_model_config()
     
     if is_valid and all_passed:
-        print("[SUCCESS] Configuration is valid and ready to use.")
-        print(f"\nNext steps:")
-        print("  > Test connection: l2p models test")
-        print("  > Generate components: l2p generate types --desc \"your domain\"")
+        print(
+            f"\n[SUCCESS] Configuration is valid and ready to use."
+            f"\n\nNext steps:"
+            f"\n    > Test connection: `l2p models test`"
+            f"\n    > Generate components: `l2p generate types --desc \"your domain\"`"
+        )
     else:
         print("[FAIL] Configuration has issues.")
         if message:
             print(f"\nIssues: {message}")
-        print(f"\nTo fix:")
-        print("  > Run 'l2p init' to reconfigure")
-        print("  > Or edit configuration: l2p config edit")
+        print(
+            f"\nTo fix:"
+            f"\n    > Run 'l2p init' to reconfigure"
+            f"\n    > Or edit configuration: l2p config edit"
+            )

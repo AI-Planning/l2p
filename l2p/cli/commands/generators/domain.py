@@ -1,9 +1,5 @@
 """
 Domain generator for L2P CLI. Generates complete PDDL domain using pipeline approach (simplified NL2PLAN).
-
-Users can either:
-    - Non-interactive mode
-    - Interactivate mode (HITL)
 """
 
 import sys
@@ -12,16 +8,11 @@ import argparse
 from pathlib import Path
 from typing import Optional, Tuple
 
-from ..generate import GeneratorBase
-from ...utils.errors import handle_error
+from l2p.utils.pddl_parser import load_file
+from l2p.cli.commands.generate import GeneratorBase
+from l2p.cli.utils.errors import handle_error
+from l2p.cli.utils.helpers import _input_or_exit, BOLD, GREEN, CYAN, YELLOW, RESET
 
-from l2p.utils.pddl_parser import load_file  
-
-BOLD = "\033[1m"
-GREEN = "\033[92m"
-CYAN = "\033[96m"
-YELLOW = "\033[93m"
-RESET = "\033[0m"
 
 PDDL_REQUIREMENTS = {
     "PDDL Core": [
@@ -87,14 +78,6 @@ def generate_domain_command(args):
     except Exception as e:
         handle_error(e)
         sys.exit(1)
-
-
-def _input_or_exit(prompt: str = "") -> str:
-    value = input(prompt).strip()
-    if value == "/exit":
-        print("Operation cancelled.")
-        sys.exit(0)
-    return value
 
 
 class DomainGenerator(GeneratorBase):
@@ -210,10 +193,12 @@ class DomainGenerator(GeneratorBase):
         print(f"\n{BOLD}--- Actions ---{RESET}")
         self._handle_actions_interactive(domain_desc, context, args.max_retries)
 
-        # parse domain
-        print(f"\n{BOLD}{'=' * 60}{RESET}")
-        print(f"{BOLD}  Assembling Domain{RESET}")
-        print(f"{BOLD}{'=' * 60}{RESET}")
+        # assemble domain
+        print(
+            f"\n\n{BOLD}{'=' * 60}{RESET}"
+            f"\n{BOLD}  Assembling Domain{RESET}"
+            f"\n{BOLD}{'=' * 60}{RESET}"
+        )
 
         req_list = [r.strip() for r in requirements.split(",") if r.strip()]
         domain_pddl = self.domain_builder.generate_domain(
@@ -226,10 +211,13 @@ class DomainGenerator(GeneratorBase):
             actions=context.get("actions", []),
         )
 
-        print(f"OUTPUT:")
-        print(f"\n{BOLD}{'=' * 60}{RESET}")
-        print(domain_pddl)
-        print(f"{BOLD}{'=' * 60}{RESET}")
+        # print output
+        print(
+            f"\nOUTPUT:"
+            f"\n\n{BOLD}{'=' * 60}{RESET}"
+            f"\n{domain_pddl}"
+            f"\n{BOLD}{'=' * 60}{RESET}"
+        )
 
         self._prompt_save(domain_pddl, domain_name)
 
@@ -756,7 +744,7 @@ class DomainGenerator(GeneratorBase):
                 context["_feedback"] = fix
 
 
-    #  LLM-based generation wrappers
+    # LLM-BASED GENERATION WRAPPERS
     def _generate_types(self, domain_desc: str, max_retries: int, feedback: str = ""):
     
         template = self.template_manager.get_template("formalize_type_hierarchy.txt", "domain")
