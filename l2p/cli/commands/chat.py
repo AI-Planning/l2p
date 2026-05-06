@@ -91,16 +91,20 @@ def _check_pddl_syntax(content: str) -> str | None:
     """Run PDDL syntax check on content. Returns None if valid, error string if not."""
     from pddl import parse_domain as pddl_parse_domain, parse_problem as pddl_parse_problem
 
+    match = re.search(r"\(\s*define\s*\(\s*(domain|problem)", content, re.IGNORECASE)    
+    if not match:
+        return "[ERROR] Unknown PDDL type — could not find (define (domain ...) or (define (problem ...)"
+        
+    pddl_type = match.group(1).lower()
+
     tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".pddl", delete=False)
     try:
         tmp.write(content)
         tmp.close()
-        if content.strip().startswith("(define (domain"):
+        if pddl_type == "domain":
             pddl_parse_domain(tmp.name)
-        elif content.strip().startswith("(define (problem"):
+        elif pddl_type == "problem":
             pddl_parse_problem(tmp.name)
-        else:
-            return "[ERROR] Unknown PDDL type — must start with (define (domain ... or (define (problem ..."
         return None
     except Exception as e:
         return str(e)
@@ -118,14 +122,14 @@ def _handle_validate_command(filepath: str):
     if path.suffix.lower() != ".pddl":
         print(f"  {YELLOW}[ERROR] Invalid file type:{RESET} Expected a '.pddl' file, but got '{path.suffix}' ({path.name})")
         return
-
+    
     content = path.read_text()
-    if content.strip().startswith("(define (domain"):
-        pddl_type = "domain"
-    elif content.strip().startswith("(define (problem"):
-        pddl_type = "problem"
-    else:
-        pddl_type = "unknown"
+    
+    match = re.search(r"\(\s*define\s*\(\s*(domain|problem)", content, re.IGNORECASE)    
+    if not match:
+        return "[ERROR] Unknown PDDL type — could not find (define (domain ...) or (define (problem ...)"
+        
+    pddl_type = match.group(1).lower()
 
     print(f"  Loaded {CYAN}{path}{RESET} ({len(content)} chars, {pddl_type} file)")
     print(f"  Checking PDDL syntax...")

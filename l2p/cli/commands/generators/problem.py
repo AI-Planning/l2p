@@ -185,11 +185,12 @@ class ProblemGenerator(GeneratorBase):
                     llm_func=None
                 )
             else:
+                obj_desc = _input_or_exit("  Describe the objects (optional): ").strip()
                 context["objects"] = self._confirm_stage(
                     "objects", context,
                     manual_func=None,
                     llm_func=lambda feedback="":
-                        self._generate_objects(problem_desc, types, constants, args.max_retries, feedback)
+                        self._generate_objects(problem_desc, types, constants, args.max_retries, feedback, obj_desc)
                 )
         else:
             context["objects"] = None
@@ -205,13 +206,14 @@ class ProblemGenerator(GeneratorBase):
                     llm_func=None
                 )
             else:
+                init_desc = _input_or_exit("  Describe the initial states (optional): ").strip()
                 context["initial"] = self._confirm_stage(
                     "initial", context,
                     manual_func=None,
                     llm_func=lambda feedback="":
                         self._generate_initial_states(
                             problem_desc, types, constants, predicates, functions,
-                            context.get("objects"), None, None, args.max_retries, feedback
+                            context.get("objects"), None, None, args.max_retries, feedback, init_desc
                         )
                 )
         else:
@@ -228,13 +230,14 @@ class ProblemGenerator(GeneratorBase):
                     llm_func=None
                 )
             else:
+                goal_desc = _input_or_exit("  Describe the goal states (optional): ").strip()
                 context["goal"] = self._confirm_stage(
                     "goal", context,
                     manual_func=None,
                     llm_func=lambda feedback="":
                         self._generate_goal_states(
                             problem_desc, types, constants, predicates, functions,
-                            context.get("objects"), context.get("initial"), None, args.max_retries, feedback
+                            context.get("objects"), context.get("initial"), None, args.max_retries, feedback, goal_desc
                         )
                 )
         else:
@@ -425,8 +428,11 @@ class ProblemGenerator(GeneratorBase):
                     "params": values,
                     "neg": negated,
                 })
-                neg_prefix = "not " if negated else ""
-                print(f"  {GREEN}Added:{RESET} ({neg_prefix}{pred_name} {' '.join(values)})")
+
+                if negated:
+                    print(f"  {GREEN}Added:{RESET} (not ({pred_name} {' '.join(values)}))")    
+                else:
+                    print(f"  {GREEN}Added:{RESET} ({pred_name} {' '.join(values)})")
                 state = 0
 
         return states if states else None
@@ -479,9 +485,11 @@ class ProblemGenerator(GeneratorBase):
         elif label in ("initial", "goal"):
             for s in items:
                 if isinstance(s, dict):
-                    neg = "not " if s.get("neg") else ""
                     params_str = " ".join(s.get("params", []))
-                    print(f"    {CYAN}({neg}{s.get('pred_name', '?')} {params_str}){RESET}")
+                    if s.get("neg"):
+                        print(f"    {CYAN}(not ({s.get('pred_name', '?')} {params_str})){RESET}")
+                    else:
+                        print(f"    {CYAN}({s.get('pred_name', '?')} {params_str}){RESET}")
         else:
             if isinstance(items, (list, dict)):
                 print(f"    ({len(items)} {label})")
@@ -514,11 +522,13 @@ class ProblemGenerator(GeneratorBase):
 
 
     # LLM-BASED GENERATION WRAPPERS
-    def _generate_objects(self, problem_desc: str, types, constants, max_retries: int, feedback: str = ""):
+    def _generate_objects(self, problem_desc: str, types, constants, max_retries: int, feedback: str = "", component_desc: str = ""):
         template = load_file("l2p/cli/commands/generators/templates/problem/formalize_objects.txt")
         prompt = problem_desc
+        if component_desc:
+            prompt = f"{problem_desc}\n\n[Additional context for objects]\n{component_desc}"
         if feedback:
-            prompt = f"{problem_desc}\n\n[Feedback to apply to the generated objects]\n{feedback}"
+            prompt = f"{prompt}\n\n[Feedback to apply to the generated objects]\n{feedback}"
             print("  Re-generating objects with your feedback...")
         else:
             print("  Generating objects from description...")
@@ -534,12 +544,14 @@ class ProblemGenerator(GeneratorBase):
 
     def _generate_initial_states(
         self, problem_desc: str, types, constants, predicates, functions,
-        objects, initial, goal, max_retries: int, feedback: str = ""
+        objects, initial, goal, max_retries: int, feedback: str = "", component_desc: str = ""
     ):
         template = load_file("l2p/cli/commands/generators/templates/problem/formalize_initial.txt")
         prompt = problem_desc
+        if component_desc:
+            prompt = f"{problem_desc}\n\n[Additional context for initial states]\n{component_desc}"
         if feedback:
-            prompt = f"{problem_desc}\n\n[Feedback to apply to the generated initial states]\n{feedback}"
+            prompt = f"{prompt}\n\n[Feedback to apply to the generated initial states]\n{feedback}"
             print("  Re-generating initial states with your feedback...")
         else:
             print("  Generating initial states from description...")
@@ -558,12 +570,14 @@ class ProblemGenerator(GeneratorBase):
 
     def _generate_goal_states(
         self, problem_desc: str, types, constants, predicates, functions,
-        objects, initial, goal, max_retries: int, feedback: str = ""
+        objects, initial, goal, max_retries: int, feedback: str = "", component_desc: str = ""
     ):
         template = load_file("l2p/cli/commands/generators/templates/problem/formalize_goal.txt")
         prompt = problem_desc
+        if component_desc:
+            prompt = f"{problem_desc}\n\n[Additional context for goal states]\n{component_desc}"
         if feedback:
-            prompt = f"{problem_desc}\n\n[Feedback to apply to the generated goal states]\n{feedback}"
+            prompt = f"{prompt}\n\n[Feedback to apply to the generated goal states]\n{feedback}"
             print("  Re-generating goal states with your feedback...")
         else:
             print("  Generating goal states from description...")
