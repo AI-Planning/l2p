@@ -8,6 +8,7 @@ Interactive single-exchange chat with the configured LLM model:
 import os
 import re
 import sys
+import difflib
 import tempfile
 import argparse
 from pathlib import Path
@@ -142,6 +143,34 @@ def _handle_validate_command(filepath: str):
         print(f"  {GREEN}[VALID]{RESET} PDDL syntax is valid.")
 
 
+def _show_diff(original: str, modified: str):
+    """Show a colored unified diff between original and modified content."""
+    diff = difflib.unified_diff(
+        original.splitlines(keepends=True),
+        modified.splitlines(keepends=True),
+        fromfile="original",
+        tofile="modified",
+    )
+    lines = list(diff)
+    if not lines:
+        print(f"  {YELLOW}No changes.{RESET}")
+        return
+
+    print(f"\n  {BOLD}Changes:{RESET}")
+    for line in lines:
+        line = line.rstrip("\n")
+        if line.startswith("---") or line.startswith("+++"):
+            print(f"  {BOLD}{line}{RESET}")
+        elif line.startswith("@@"):
+            print(f"  {CYAN}{line}{RESET}")
+        elif line.startswith("+"):
+            print(f"  {GREEN}{line}{RESET}")
+        elif line.startswith("-"):
+            print(f"  {YELLOW}{line}{RESET}")
+        else:
+            print(f"  {line}")
+
+
 def _handle_edit_command(llm, backend: str, filepath: str):
     """Handle /edit <filepath> — load, prompt for edit, send to LLM, confirm overwrite."""
     path = Path(filepath).expanduser().resolve()
@@ -190,11 +219,8 @@ def _handle_edit_command(llm, backend: str, filepath: str):
         return
 
     new_content = m.group(1).strip()
-    print(f"\n{CYAN}```pddl{RESET}")
-    print(new_content)
-    print(f"{CYAN}```{RESET}")
 
-    # Run PDDL syntax check (warning only, never reformats)
+    # run PDDL syntax check (warning only, never reformats)
     print(f"\n  Checking PDDL syntax...")
     error = _check_pddl_syntax(new_content)
     if error:
@@ -202,6 +228,9 @@ def _handle_edit_command(llm, backend: str, filepath: str):
         print(f"  {YELLOW}The file may not be valid — proceed with caution.{RESET}")
     else:
         print(f"  {GREEN}PDDL syntax is valid.{RESET}")
+
+    # show diff
+    _show_diff(content, new_content)
 
     confirm = input(f"\n  {GREEN}Overwrite file? (y/N):{RESET} ").strip().lower()
     if confirm != "y":
