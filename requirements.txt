@@ -4,3 +4,4 @@ typing_extensions
 pyyaml
 llm
 tiktoken
+pydantic
