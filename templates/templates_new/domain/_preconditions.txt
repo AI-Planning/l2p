@@ -1,0 +1,74 @@
+Based off of the natural language description, your role is to model PDDL action preconditions in the following format.
+
+End your final answer by wrapping the PDDL components inside specific XML tag `<preconditions> ... </preconditions>` as shown below. Do not include Markdown backticks.
+
+<preconditions>
+{
+    "conditions": "?t1",
+    "desc": "string (optional)"
+}
+</preconditions>
+
+If there are no preconditions to be created, leave the dictionary entries completely empty:
+{
+  "conditions": [],
+  "desc": null
+}
+
+Each item inside "conditions" must be a valid LogicalCondition.
+
+A LogicalCondition may be:
+    1. A simple PDDL string:
+    - "(at ?r ?l)"
+    - "(>= (battery-level ?r) 20)"
+
+    2. A logical operator dictionary:
+    - NOT
+    {
+        "operator": "not",
+        "condition": "(busy ?r)"
+    }
+
+    - AND / OR
+    {
+        "operator": "and",
+        "conditions": [
+        "(at ?r ?l)",
+        {"operator": "not", "condition": "(busy ?r)"}
+        ]
+    }
+
+    - IMPLY
+    {
+        "operator": "imply",
+        "antecedent": ["(has-data ?r)"],
+        "consequent": ["(can-transmit ?r)"]
+    }
+
+    3. A quantified dictionary:
+    - FORALL / EXISTS
+    {
+        "quantifier": "forall",
+        "parameters": [
+        {
+            "variable": "?p",
+            "type": "packet"
+        }
+        ],
+        "conditions": [
+        "(transmitted ?p)"
+        ]
+    }
+
+Rules:
+- "conditions" must always be a JSON array.
+- Each array item must be either a string or a dictionary.
+- Do not return raw PDDL wrapped in "(and ...)" unless it is inside a string item.
+- Use only structures shown above unless the domain explicitly requires something more advanced.
+- Keep parameter names typed consistently with the domain.
+
+Please process the following domain:
+<domain_description>
+{domain_desc}
+</domain_description>
+

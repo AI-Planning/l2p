@@ -10,8 +10,8 @@ from typing import Any, Dict, List, Optional, Union
 # ---------------------------------------------------------------------------
 
 """
-LogicalCondition represents a single logical node in a PDDL formula. This type alias allows
-the LLM to output a mix of simple strings and recursive dictionaries:
+LogicalCondition represents a single logical node in a PDDL formula. This type 
+alias allows the LLM to output a mix of simple strings and recursive dictionaries:
 
     1. Simple Predicates & Numeric Checks (str): 
         "(at ?r ?l)"
@@ -99,7 +99,7 @@ the LLM to output a mix of simple strings and recursive dictionaries:
 """
 LogicalCondition = Union[str, Dict[str, Any]]
 
-class Type(BaseModel):
+class PDDLType(BaseModel):
     name: str
     parent: str
     desc: Optional[str] = None
@@ -123,16 +123,12 @@ class Parameter(BaseModel):
 
 class Predicate(BaseModel):
     name: str
-    raw: str
     params: List[Parameter]
-    clean: str
     desc: Optional[str] = None
 
 class Function(BaseModel):
     name: str
-    raw: str
     params: List[Parameter]
-    clean: str
     desc: Optional[str] = None
 
 # PDDL 2.2 Derived Predicates (Axioms)
@@ -143,22 +139,26 @@ class DerivedPredicate(BaseModel):
     desc: Optional[str] = None
 
 
+class ActionPrecondition(BaseModel):
+    conditions: List[LogicalCondition] = Field(default_factory=list)
+    desc: Optional[str] = None
+
 class ConditionalEffect(BaseModel):
     condition: List[LogicalCondition]
-    effect: Dict[str, List[str]] # e.g., {"add": [], "delete": [], "numeric": []}
+    effect: Dict[str, List[LogicalCondition]] # e.g., {"add": [], "delete": [], "numeric": []}
     desc: Optional[str] = None
 
 class ActionEffect(BaseModel):
-    add: List[str] = Field(default_factory=list)
-    delete: List[str] = Field(default_factory=list)
-    numeric: List[str] = Field(default_factory=list)
+    add: List[LogicalCondition] = Field(default_factory=list)
+    delete: List[LogicalCondition] = Field(default_factory=list)
+    numeric: List[LogicalCondition] = Field(default_factory=list)
     conditional: List[ConditionalEffect] = Field(default_factory=list)
     desc: Optional[str] = None
 
 class Action(BaseModel):
     name: str
     params: List[Parameter]
-    preconditions: List[LogicalCondition] = Field(default_factory=list)
+    preconditions: ActionPrecondition = Field(default_factory=ActionPrecondition)
     effects: ActionEffect = Field(default_factory=ActionEffect)
     desc: Optional[str] = None
 
@@ -172,7 +172,7 @@ class DurativeActionConditions(BaseModel):
 class DurativeActionEffect(BaseModel):
     at_start: ActionEffect = Field(default_factory=ActionEffect)
     at_end: ActionEffect = Field(default_factory=ActionEffect)
-    continuous: List[str] = Field(default_factory=list) # added for PDDL 2.1/+ continuous numeric changes using #t
+    continuous: List[LogicalCondition] = Field(default_factory=list)  # added for PDDL 2.1/+ continuous numeric changes using #t
     desc: Optional[str] = None
 
 class DurativeAction(BaseModel):
@@ -185,7 +185,6 @@ class DurativeAction(BaseModel):
 
 # PDDL 3.0
 class Constraint(BaseModel):
-    name: Optional[str] = None
     condition: LogicalCondition
     desc: Optional[str] = None
 
@@ -194,14 +193,14 @@ class Constraint(BaseModel):
 class Event(BaseModel):
     name: str
     params: List[Parameter]
-    preconditions: List[LogicalCondition] = Field(default_factory=list)
+    preconditions: ActionPrecondition = Field(default_factory=ActionPrecondition)
     effects: ActionEffect = Field(default_factory=ActionEffect)
     desc: Optional[str] = None
 
 class Process(BaseModel):
     name: str
     params: List[Parameter]
-    preconditions: List[LogicalCondition] = Field(default_factory=list)
+    preconditions: ActionPrecondition = Field(default_factory=ActionPrecondition)
     effects: ActionEffect = Field(default_factory=ActionEffect)
     desc: Optional[str] = None
 
@@ -214,7 +213,7 @@ class DomainDetails(BaseModel):
     
     # meta-data
     requirements: List[str] = Field(default_factory=list)
-    types: List[Type] = Field(default_factory=list)
+    types: List[PDDLType] = Field(default_factory=list)
     constants: List[Constant] = Field(default_factory=list)
     
     # state variables
