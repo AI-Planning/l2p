@@ -99,6 +99,10 @@ alias allows the LLM to output a mix of simple strings and recursive dictionarie
 """
 LogicalCondition = Union[str, Dict[str, Any]]
 
+class Requirement(BaseModel):
+    name: str
+    desc: Optional[str] = None
+
 class PDDLType(BaseModel):
     name: str
     parent: str
