@@ -1,4 +1,4 @@
-Based off of the natural language description, your role is to model PDDL :requirements in the following format.
+Based off of the natural language description, your role is to model PDDL domain :requirements in the following format.
 
 End your final answer by wrapping the PDDL components inside specific XML tag `<requirements> ... </requirements>` as shown below. Do not include Markdown backticks.
 

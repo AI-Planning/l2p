@@ -232,7 +232,7 @@ class DomainDetails(BaseModel):
     # PDDL+ & PDDL 3.0 extensions
     events: List[Event] = Field(default_factory=list)
     processes: List[Process] = Field(default_factory=list)
-    constraints: List[Constraint] = Field(default_factory=list)
+    constraint: List[Constraint] = Field(default_factory=list)
 
 
 # ---------------------------------------------------------------------------
@@ -240,7 +240,7 @@ class DomainDetails(BaseModel):
 # ---------------------------------------------------------------------------
 
 """
-InitFact represents a single condition in the initial state. 
+LogicalCondition represents a single condition in the initial state. 
 This allows a mix of standard PDDL strings and PDDL 2.2 Timed Initial Literals (TILs).
 
     1. Standard Facts & Numeric Assignments (str):
@@ -254,11 +254,24 @@ This allows a mix of standard PDDL strings and PDDL 2.2 Timed Initial Literals (
             "fact": "(communications-blackout)"
         }
 """
-InitFact = Union[str, Dict[str, Any]]
 
 class PDDLObject(BaseModel):
     name: str   # e.g., "rover1"
     type: str   # e.g., "rover"
+    desc: Optional[str] = None
+
+class TimedFact(BaseModel):
+    time: float
+    fact: LogicalCondition
+    desc: Optional[str] = None
+
+class InitialState(BaseModel):
+    facts: List[LogicalCondition] = Field(default_factory=list)
+    timed_facts: List[TimedFact] = Field(default_factory=list)
+    desc: Optional[str] = None
+
+class GoalState(BaseModel):
+    conditions: List[LogicalCondition] = Field(default_factory=list)
     desc: Optional[str] = None
 
 # PDDL 2.1 & PDDL 3.0 Plan Optimization Metrics
@@ -283,11 +296,11 @@ class ProblemDetails(BaseModel):
 
     # typed object instances
     objects: List[PDDLObject] = Field(default_factory=list)
-    initial: List[InitFact] = Field(default_factory=list)
-    goal: Optional[LogicalCondition] = None
+    initial_state: InitialState = Field(default_factory=InitialState)
+    goal_state: GoalState = Field(default_factory=GoalState)
 
     # PDDL 3.0 problem-specific trajectory constraints
-    constraints: List[Constraint] = Field(default_factory=list)
+    constraint: List[Constraint] = Field(default_factory=list)
     metric: Optional[Metric] = None
 
 

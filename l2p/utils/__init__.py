@@ -4,5 +4,6 @@ from .pddl_validator import *
 from .pddl_planner import *
 from .pddl_format import *
 
+from .pddl_format_new import *
 from .pddl_parser_new import *
 from .pddl_types_new import *
