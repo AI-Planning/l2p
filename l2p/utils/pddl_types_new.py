@@ -100,22 +100,53 @@ alias allows the LLM to output a mix of simple strings and recursive dictionarie
 LogicalCondition = Union[str, Dict[str, Any]]
 
 class Requirement(BaseModel):
+    """
+    Expected JSON format (example):
+    {
+        "name": ":typing",
+        "desc": "Enables typed variables"
+    }
+    """
     name: str
     desc: Optional[str] = None
 
 class PDDLType(BaseModel):
+    """
+    Expected JSON format (example):
+    {
+        "name": "rover",
+        "parent": "vehicle",
+        "desc": "A planetary rover"
+    }
+    """
     name: str
     parent: str
     desc: Optional[str] = None
 
 class Constant(BaseModel):
+    """
+    Expected JSON format (example):
+    {
+        "name": "base_station",
+        "type": "location",
+        "desc": "The main hub"
+    }
+    """
     name: str
     type: str
     desc: Optional[str] = None
 
 class Parameter(BaseModel):
-    variable: str   # e.g., "?r"
-    type: str       # e.g., "rover"
+    """
+    Expected JSON format (example):
+    {
+        "variable": "?r",
+        "type": "rover",
+        "desc": "A rover"
+    }
+    """
+    variable: str
+    type: str
     desc: Optional[str] = None
 
     @field_validator('variable')
@@ -126,17 +157,45 @@ class Parameter(BaseModel):
         return v
 
 class Predicate(BaseModel):
+    """
+    Expected JSON format (example):
+    {
+        "name": "at",
+        "params": [
+            {"variable": "?r", "type": "rover"},
+            {"variable": "?l", "type": "location"}
+        ],
+        "desc": "True if rover is at location"
+    }
+    """
     name: str
     params: List[Parameter]
     desc: Optional[str] = None
 
 class Function(BaseModel):
+    """
+    Expected JSON format (example):
+    {
+        "name": "battery-level",
+        "params": [{"variable": "?r", "type": "rover"}],
+        "desc": "Current battery level of the rover"
+    }
+    """
     name: str
     params: List[Parameter]
     desc: Optional[str] = None
 
 # PDDL 2.2 Derived Predicates (Axioms)
 class DerivedPredicate(BaseModel):
+    """
+    Expected JSON format (example):
+    {
+        "name": "can-move",
+        "params": [{"variable": "?r", "type": "rover"}],
+        "condition": "(> (battery-level ?r) 0.0)",
+        "desc": "Derived from having positive battery"
+    }
+    """
     name: str
     params: List[Parameter]
     condition: LogicalCondition
@@ -144,15 +203,47 @@ class DerivedPredicate(BaseModel):
 
 
 class ActionPrecondition(BaseModel):
+    """
+    Expected JSON format (example):
+    {
+        "conditions": [
+            "(at ?r ?from)",
+            {"operator": "not", "condition": "(busy ?r)"}
+        ],
+        "desc": "Rover must be at the start location and not busy"
+    }
+    """
     conditions: List[LogicalCondition] = Field(default_factory=list)
     desc: Optional[str] = None
 
 class ConditionalEffect(BaseModel):
+    """
+    Expected JSON format (example):
+    {
+        "condition": ["(has-payload ?r)"],
+        "effect": {
+            "add": ["(payload-delivered)"],
+            "delete": [],
+            "numeric": []
+        },
+        "desc": "If it has a payload, it is delivered"
+    }
+    """
     condition: List[LogicalCondition]
     effect: Dict[str, List[LogicalCondition]] # e.g., {"add": [], "delete": [], "numeric": []}
     desc: Optional[str] = None
 
 class ActionEffect(BaseModel):
+    """
+    Expected JSON format (example):
+    {
+        "add": ["(at ?r ?to)"],
+        "delete": ["(at ?r ?from)"],
+        "numeric": ["(decrease (battery-level ?r) 5.0)"],
+        "conditional": [],
+        "desc": "Optional description"
+    }
+    """
     add: List[LogicalCondition] = Field(default_factory=list)
     delete: List[LogicalCondition] = Field(default_factory=list)
     numeric: List[LogicalCondition] = Field(default_factory=list)
@@ -160,6 +251,27 @@ class ActionEffect(BaseModel):
     desc: Optional[str] = None
 
 class Action(BaseModel):
+    """
+    Expected JSON format (example):
+    {
+        "name": "drive",
+        "params": [
+            {"variable": "?r", "type": "rover"},
+            {"variable": "?from", "type": "location"}
+        ],
+        "preconditions": {
+            "conditions": ["(at ?r ?from)"],
+            "desc": null
+        },
+        "effects": {
+            "add": [], 
+            "delete": [], 
+            "numeric": [], 
+            "conditional": []
+        },
+        "desc": "Classical action to drive"
+    }
+    """
     name: str
     params: List[Parameter]
     preconditions: ActionPrecondition = Field(default_factory=ActionPrecondition)
@@ -168,18 +280,63 @@ class Action(BaseModel):
 
 
 class DurativeActionConditions(BaseModel):
+    """
+    Expected JSON format (example):
+    {
+        "at_start": ["(at ?r ?from)"],
+        "over_all": [{"operator": "not", "condition": "(busy ?r)"}],
+        "at_end": [],
+        "desc": null
+    }
+    """
     at_start: List[LogicalCondition] = Field(default_factory=list)
     at_end: List[LogicalCondition] = Field(default_factory=list)
     over_all: List[LogicalCondition] = Field(default_factory=list)
     desc: Optional[str] = None
 
 class DurativeActionEffect(BaseModel):
+    """
+    Expected JSON format (example):
+    {
+        "at_start": {
+            "add": [], 
+            "delete": [], 
+            "numeric": [], 
+            "conditional": []
+        },
+        "at_end": {
+            "add": ["(at ?r ?to)"], 
+            "delete": ["(at ?r ?from)"], 
+            "numeric": [], 
+            "conditional": []
+        },
+        "continuous": ["(decrease (battery-level ?r) (* #t 1.0))"],
+        "desc": null
+    }
+    """
     at_start: ActionEffect = Field(default_factory=ActionEffect)
     at_end: ActionEffect = Field(default_factory=ActionEffect)
     continuous: List[LogicalCondition] = Field(default_factory=list)  # added for PDDL 2.1/+ continuous numeric changes using #t
     desc: Optional[str] = None
 
 class DurativeAction(BaseModel):
+    """
+    Expected JSON format (example):
+    {
+        "name": "transmit",
+        "params": [{"variable": "?r", "type": "rover"}],
+        "duration": ["(>= ?duration 5.0)"],
+        "conditions": {
+            "at_start": ["(at ?r base)"], "over_all": [], "at_end": []
+        },
+        "effects": {
+            "at_start": {"add": [], "delete": [], "numeric": [], "conditional": []},
+            "at_end": {"add": ["(data-transmitted)"], "delete": [], "numeric": [], "conditional": []},
+            "continuous": ["(decrease (battery ?r) (* #t 2.0))"]
+        },
+        "desc": "Durative transmission action"
+    }
+    """
     name: str
     params: List[Parameter]
     duration: List[str]
@@ -189,12 +346,44 @@ class DurativeAction(BaseModel):
 
 # PDDL 3.0
 class Constraint(BaseModel):
+    """
+    Expected JSON format (example):
+    {
+        "condition": {
+            "operator": "always", 
+            "condition": "(> (battery-level ?r) 0.0)"
+        },
+        "desc": "Battery must always be positive"
+    }
+    """
     condition: LogicalCondition
     desc: Optional[str] = None
 
 
 # PDDL+
 class Event(BaseModel):
+    """
+    Expected JSON format (example):
+    {
+        "name": "battery-depleted",
+        "params": [
+            {"variable": "?r", "type": "rover"}
+        ],
+        "preconditions": {
+            "conditions": [
+                "(<= (battery-level ?r) 0)"
+            ], 
+            "desc": null
+        },
+        "effects": {
+            "add": ["(dead ?r)"], 
+            "delete": [], 
+            "numeric": [], 
+            "conditional": []
+        },
+        "desc": "Triggers when battery dies"
+    }
+    """
     name: str
     params: List[Parameter]
     preconditions: ActionPrecondition = Field(default_factory=ActionPrecondition)
@@ -202,6 +391,30 @@ class Event(BaseModel):
     desc: Optional[str] = None
 
 class Process(BaseModel):
+    """
+    Expected JSON format (example):
+    {
+        "name": "solar-charging",
+        "params": [
+            {"variable": "?r", "type": "rover"}
+        ],
+        "preconditions": {
+            "conditions": [
+                "(in-sun ?r)"
+            ], 
+            "desc": null
+        },
+        "effects": {
+            "add": [], 
+            "delete": [], 
+            "numeric": [
+                "(increase (battery-level ?r) (* #t 2.0))"
+            ], 
+            "conditional": []
+        },
+        "desc": "Charges continuously in sun"
+    }
+    """
     name: str
     params: List[Parameter]
     preconditions: ActionPrecondition = Field(default_factory=ActionPrecondition)
@@ -210,7 +423,20 @@ class Process(BaseModel):
 
 
 class DomainDetails(BaseModel):
-    """Root model for parsing a complete PDDL domain."""
+    """
+    Root model for parsing a complete PDDL domain.
+    Expected JSON format (truncated example):
+    {
+        "name": "rover_domain",
+        "requirements": [":typing", ":durative-actions"],
+        "types": [
+            {"name": "rover", "parent": "vehicle"}
+        ],
+        "predicates": [...],
+        "actions": [...],
+        "durative_actions": [...]
+    }
+    """
     name: str
     desc: Optional[str] = None
     domain_pddl: Optional[str] = None # optional raw PDDL string for whole domain
@@ -256,26 +482,71 @@ This allows a mix of standard PDDL strings and PDDL 2.2 Timed Initial Literals (
 """
 
 class PDDLObject(BaseModel):
-    name: str   # e.g., "rover1"
+    """
+    Expected JSON format (example):
+    {
+        "name": "rover1",
+        "type": "rover",
+        "desc": "Instance of a rover"
+    }
+    """
+    name: str   # e.g., "r1"
     type: str   # e.g., "rover"
     desc: Optional[str] = None
 
 class TimedFact(BaseModel):
+    """
+    Expected JSON format (example):
+    {
+        "time": 15.5,
+        "fact": "(communications-blackout)",
+        "desc": "Event triggers at t=15.5"
+    }
+    """
     time: float
     fact: LogicalCondition
     desc: Optional[str] = None
 
 class InitialState(BaseModel):
+    """
+    Expected JSON format (example):
+    {
+        "facts": [
+            "(at rover1 loc1)", 
+            "(= (battery-level rover1) 100)"
+        ],
+        "timed_facts": [],
+        "desc": "Starting state"
+    }
+    """
     facts: List[LogicalCondition] = Field(default_factory=list)
     timed_facts: List[TimedFact] = Field(default_factory=list)
     desc: Optional[str] = None
 
 class GoalState(BaseModel):
+    """
+    Expected JSON format (example):
+    {
+        "conditions": [
+            "(at rover1 loc2)", 
+            "(data-transmitted)"
+        ],
+        "desc": "Target state"
+    }
+    """
     conditions: List[LogicalCondition] = Field(default_factory=list)
     desc: Optional[str] = None
 
 # PDDL 2.1 & PDDL 3.0 Plan Optimization Metrics
 class Metric(BaseModel):
+    """
+    Expected JSON format (example):
+    {
+        "optimization": "minimize",
+        "expression": "total-time",
+        "desc": "Minimize makespan"
+    }
+    """
     optimization: str   # must be 'minimize' or 'maximize'
     expression: str     # e.g., 'total-time', '(* (fuel-used) 2)', or '(is-violated pref1)'
     desc: Optional[str] = None
@@ -289,6 +560,16 @@ class Metric(BaseModel):
         return v
 
 class ProblemDetails(BaseModel):
+    """
+    Expected JSON format (truncated example):
+    {
+        "name": "prob1",
+        "domain_name": "rover_domain",
+        "objects": [{"name": "rover1", "type": "rover"}],
+        "initial_state": {"facts": [...], "timed_facts": [...]},
+        "goal_state": {"conditions": [...]}
+    }
+    """
     name: str
     domain_name: str
     desc: Optional[str] = None
@@ -304,8 +585,45 @@ class ProblemDetails(BaseModel):
     metric: Optional[Metric] = None
 
 
+# ---------------------------------------------------------------------------
+# PDDL PLAN CLASSES
+# ---------------------------------------------------------------------------
+
+class PlanStep(BaseModel):
+    """
+    Expected JSON format (example):
+    {
+        "action": "drive",
+        "args": ["rover1", "loc1", "loc2"],
+        "start_time": 0.0,
+        "duration": 5.5,
+        "desc": "Optional description"
+    }
+    """
+    action: str                  # e.g., "drive"
+    args: List[str]              # e.g., ["rover1", "loc1", "loc2"] (grounded objects)
+    start_time: float = 0.0      # for durative actions / temporal planning
+    duration: Optional[float] = None  # None for classical actions, float for durative
+    desc: Optional[str] = None
+
 class PlanDetails(BaseModel):
+    """
+    Expected JSON format (truncated example):
+    {
+        "domain": {...},
+        "problem": {...},
+        "raw_plan": "0.0: (drive rover1 loc1 loc2) [5.5]",
+        "steps": [
+            {"action": "drive", "args": ["rover1", "loc1", "loc2"]}
+        ],
+        "cost": 10.0,
+        "makespan": 5.5
+    }
+    """
     domain: DomainDetails
     problem: ProblemDetails
-    plan: str
+    raw_plan: str                # keep the raw text for logging or standard VAL validation
+    steps: List[PlanStep] = Field(default_factory=list)
+    cost: Optional[float] = None # total plan cost (if using action costs)
+    makespan: Optional[float] = None # total time to complete (for durative plans)
     desc: Optional[str] = None

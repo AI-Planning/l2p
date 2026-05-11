@@ -101,11 +101,10 @@ class DomainBuilder:
                     elif isinstance(val, (dict, str)):
                         check_logical_condition(val)
 
-        # 1. check actions, events, and processes
+        # check actions, events, and processes
         assignment_ops_used = False
         
-        # Combine all standard, durative, events, and processes to check their conditions
-        # (Durative actions have slightly different property names, so we just check standard/event/process here)
+        # combine all standard, durative, events, and processes to check their conditions
         for block in domain_details.actions + domain_details.events + domain_details.processes:
             # check preconditions
             for cond in block.preconditions.conditions:
@@ -126,7 +125,7 @@ class DomainBuilder:
                 assignment_ops_used = True
                 check_logical_condition(num_eff)
 
-        # 2. check durative actions
+        # check durative actions
         for d_act in domain_details.durative_actions:
             # Check duration strings for inequalities (< or >)
             for dur in d_act.duration:
@@ -151,7 +150,7 @@ class DomainBuilder:
                 for cond in d_act.effects.continuous:
                     check_logical_condition(cond)
 
-        # 3. check problem file
+        # check problem file
         if problem_details:
             if problem_details.goal_state:
                 check_logical_condition(problem_details.goal_state)

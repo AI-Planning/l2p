@@ -1,71 +1,49 @@
 Based off of the natural language description, your role is to model a PDDL domain's action preconditions in the following format.
 
-End your final answer by wrapping the PDDL components inside specific XML tag `<preconditions> ... </preconditions>` as shown below. Do not include Markdown backticks.
+End your final answer by wrapping the PDDL components inside specific XML tag `<preconditions> ... </preconditions>` with the specified JSON object as shown below. Do not include Markdown backticks.
 
 <preconditions>
 {
-    "conditions": "?t1",
-    "desc": "string (optional)"
+    "conditions": [
+        "(at ?r ?l)",
+        "(>= (battery-level ?r) 20.0)",
+        {
+            "operator": "not",
+            "condition": "(busy ?r)"
+        },
+        {
+            "quantifier": "forall",
+            "parameters": [
+                {
+                    "variable": "?w",
+                    "type": "waypoint"
+                }
+            ],
+            "conditions": [
+                "(visited ?w)"
+            ]
+        }
+    ],
+    "desc": "Optional (str)"
 }
 </preconditions>
 
-If there are no preconditions to be created, leave the dictionary entries completely empty:
-{
-  "conditions": [],
-  "desc": null
-}
-
-Each item inside "conditions" must be a valid LogicalCondition.
-
-A LogicalCondition may be:
-    1. A simple PDDL string:
-    - "(at ?r ?l)"
-    - "(>= (battery-level ?r) 20)"
-
-    2. A logical operator dictionary:
-    - NOT
-    {
-        "operator": "not",
-        "condition": "(busy ?r)"
-    }
-
-    - AND / OR
-    {
-        "operator": "and",
-        "conditions": [
-        "(at ?r ?l)",
-        {"operator": "not", "condition": "(busy ?r)"}
-        ]
-    }
-
-    - IMPLY
-    {
-        "operator": "imply",
-        "antecedent": ["(has-data ?r)"],
-        "consequent": ["(can-transmit ?r)"]
-    }
-
-    3. A quantified dictionary:
-    - FORALL / EXISTS
-    {
-        "quantifier": "forall",
-        "parameters": [
-        {
-            "variable": "?p",
-            "type": "packet"
-        }
-        ],
-        "conditions": [
-        "(transmitted ?p)"
-        ]
-    }
-
-Rules:
-- "conditions" must always be a JSON array.
-- Each array item must be either a string or a dictionary.
-- Do not return raw PDDL wrapped in "(and ...)" unless it is inside a string item.
-- Use only structures shown above unless the domain explicitly requires something more advanced.
-- Keep parameter names typed consistently with the domain.
+## RULES
+1. The JSON block above is strictly an ILLUSTRATIVE EXAMPLE. Do not copy names like "?r", "battery-level", or "waypoint" 
+    unless explicitly defined in the domain description.
+2. Provide ONLY a valid JSON object wrapped in `<preconditions>` tags.
+3. The JSON object must always contain the keys: "conditions" and an optional "desc".
+4. The "conditions" key must always be a JSON array. If there are no preconditions, use an empty list: `{"conditions": [], "desc": null}`.
+5. Each item inside the "conditions" array must be a valid `LogicalCondition`. A `LogicalCondition` can be:
+   - A simple PDDL string: `"(at ?r ?l)"` or `"(>= (battery-level ?r) 20)"`
+   - A logical NOT dictionary: `{"operator": "not", "condition": "..."}`
+   - A logical AND/OR dictionary: `{"operator": "and", "conditions": [...]}`
+   - A logical IMPLY dictionary: `{"operator": "imply", "antecedent": [...], "consequent": [...]}`
+   - A quantified FORALL/EXISTS dictionary: `{"quantifier": "forall", "parameters": [{"variable": "?p", "type": "packet"}], "conditions": [...]}`
+6. Do NOT use an outer `and` operator to wrap all preconditions. 
+    List each top-level condition as a separate item in the "conditions" array (the system handles the root `and` automatically).
+7. All parameter variables must be prefixed with a question mark (e.g., `?r`).
+8. Ensure the final JSON is perfectly formatted with no trailing commas.
 
 Please process the following domain:
 <domain_description>

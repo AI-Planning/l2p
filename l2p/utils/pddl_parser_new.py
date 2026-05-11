@@ -2,13 +2,12 @@
 This module contains a collection of helper functions that parses information from LLM output.
 """
 
-import json
 import re
+import inspect
 from typing import List, TypeVar, Type as PyType
 from pydantic import TypeAdapter, ValidationError
 
 T = TypeVar('T')
-
 
 def parse_xml_tags(llm_output: str, tag_name: str) -> List[str]:
     """
@@ -42,14 +41,16 @@ def parse_list(raw_blocks: List[str], model_class: PyType[T], tag_name: str) -> 
             collected_errors.append(str(e))
             continue
             
-    expected_schema = json.dumps(model_class.model_json_schema(), indent=2)
+    # extract the exact Python source code of the class
+    class_source = inspect.getsource(model_class)
+    
     error_message = (
-        f"Error: The JSON provided inside <{tag_name}> failed schema validation.\n\n"
+        f"Error: The JSON provided inside <{tag_name}> failed validation.\n\n"
         f"--- YOUR ERRORS ---\n"
         f"{collected_errors[0]}\n\n"
-        f"--- EXPECTED JSON SCHEMA FOR A SINGLE ITEM IN THE LIST ---\n"
-        f"Please ensure your output is a JSON array `[...]` containing objects that match this schema:\n"
-        f"{expected_schema}"
+        f"--- EXPECTED CLASS DEFINITION FOR A SINGLE ITEM IN THE LIST ---\n"
+        f"Please ensure your output is a JSON array `[...]` containing objects that match this exact Pydantic model structure:\n\n"
+        f"```python\n{class_source}```"
     )
     raise ValueError(error_message)
 
@@ -68,13 +69,15 @@ def parse_element(raw_blocks: List[str], model_class: PyType[T], tag_name: str) 
             collected_errors.append(str(e))
             continue
             
-    expected_schema = json.dumps(model_class.model_json_schema(), indent=2)
+    # extract the exact Python source code of the class
+    class_source = inspect.getsource(model_class)
+    
     error_message = (
-        f"Error: The JSON provided inside <{tag_name}> failed schema validation.\n\n"
+        f"Error: The JSON provided inside <{tag_name}> failed validation.\n\n"
         f"--- YOUR ERRORS ---\n"
         f"{collected_errors[0]}\n\n"
-        f"--- EXPECTED JSON SCHEMA ---\n"
-        f"Please ensure your output is a single JSON object `{{...}}` matching this schema:\n"
-        f"{expected_schema}"
+        f"--- EXPECTED CLASS DEFINITION ---\n"
+        f"Please ensure your output is a single JSON object `{{...}}` matching this exact Pydantic model structure:\n\n"
+        f"```python\n{class_source}```"
     )
     raise ValueError(error_message)
