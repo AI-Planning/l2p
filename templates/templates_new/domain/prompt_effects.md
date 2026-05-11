@@ -1,5 +1,7 @@
-Based off of the natural language description, your role is to model a PDDL domain's action effects in the following format.
+## ROLE
+Based off of the natural language description (found under `## TASK`), your role is to model a PDDL domain's action effects in the following format.
 
+## OUTPUT FORMAT
 End your final answer by wrapping the PDDL components inside specific XML tag `<effects> ... </effects>` with the specified JSON object as shown below. Do not include Markdown backticks.
 
 <effects>
@@ -49,6 +51,7 @@ End your final answer by wrapping the PDDL components inside specific XML tag `<
 11. Parameter variables must remain consistent with the domain and must use question-mark prefixes (for example, `?r`).
 12. Ensure the final JSON is perfectly formatted with no trailing commas.
 
+## TASK
 Please process the following domain:
 <domain_description>
 {domain_desc}

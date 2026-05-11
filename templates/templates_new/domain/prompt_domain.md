@@ -1,5 +1,7 @@
-Based off of the natural language description, your role is to model a PDDL domain in the following format.
+## ROLE
+Based off of the natural language description (found under `## TASK`), your role is to model a PDDL domain in the following format.
 
+## OUTPUT FORMAT
 End your final answer by wrapping the PDDL components inside specific XML tag `<domain> ... </domain>` with the specified JSON object as shown below. Do not include Markdown backticks.
 
 <domain>
@@ -42,6 +44,7 @@ End your final answer by wrapping the PDDL components inside specific XML tag `<
 7. Ensure all LISP parentheses `()` are perfectly balanced and closed. 
 8. Use standard formatting and indentation to keep the PDDL readable.
 
+## TASK
 Please process the following domain:
 <domain_description>
 {domain_desc}

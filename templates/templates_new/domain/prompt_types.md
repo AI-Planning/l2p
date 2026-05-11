@@ -1,5 +1,7 @@
-Based off of the natural language description, your role is to model PDDL domain types in the following format.
+## ROLE
+Based off of the natural language description (found under `## TASK`), your role is to model PDDL domain types in the following format.
 
+## OUTPUT FORMAT
 End your final answer by wrapping the PDDL components inside specific XML tag `<types> ... </types>` with the specified JSON object as shown below. Do not include Markdown backticks.
 
 <types>
@@ -27,6 +29,7 @@ End your final answer by wrapping the PDDL components inside specific XML tag `<
 6. If there are no custom types described, output an empty list `[]`.
 7. Ensure the final JSON is perfectly formatted with no trailing commas.
 
+## TASK
 Please process the following domain:
 <domain_description>
 {domain_desc}

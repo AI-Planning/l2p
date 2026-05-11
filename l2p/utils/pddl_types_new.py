@@ -110,6 +110,13 @@ class Requirement(BaseModel):
     name: str
     desc: Optional[str] = None
 
+    @field_validator('name')
+    @classmethod
+    def check_colon(cls, r: str) -> str:
+        if not r.startswith(':'):
+            raise ValueError(f"Requirement name '{r}' must start with ':'")
+        return r
+
 class PDDLType(BaseModel):
     """
     Expected JSON format (example):
@@ -240,7 +247,14 @@ class ActionEffect(BaseModel):
         "add": ["(at ?r ?to)"],
         "delete": ["(at ?r ?from)"],
         "numeric": ["(decrease (battery-level ?r) 5.0)"],
-        "conditional": [],
+        "conditional": [
+            "condition": [],
+            "effect": {
+                "add": [],
+                "delete": [],
+                "numeric": []
+            }
+        ],
         "desc": "Optional description"
     }
     """
@@ -442,7 +456,7 @@ class DomainDetails(BaseModel):
     domain_pddl: Optional[str] = None # optional raw PDDL string for whole domain
     
     # meta-data
-    requirements: List[str] = Field(default_factory=list)
+    requirements: List[Requirement] = Field(default_factory=list)
     types: List[PDDLType] = Field(default_factory=list)
     constants: List[Constant] = Field(default_factory=list)
     

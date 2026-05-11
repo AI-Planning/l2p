@@ -1,19 +1,21 @@
-Based off of the natural language description, your role is to model PDDL problem metrics in the following format.
+## ROLE
+Based off of the natural language description (found under `## TASK`), your role is to model a PDDL problem metric in the following format.
 
-End your final answer by wrapping the PDDL components inside specific XML tag `<metrics> ... </metrics>` with the specified JSON object as shown below. Do not include Markdown backticks.
+## OUTPUT FORMAT
+End your final answer by wrapping the PDDL components inside specific XML tag `<metric> ... </metric>` with the specified JSON object as shown below. Do not include Markdown backticks.
 
-<metrics>
+<metric>
 {
     "optimization": "minimize",
     "expression": "(+ (total-cost) (* 10.0 (is-violated pref_name)))",
     "desc": "Optional (str)"
 }
-</metrics>
+</metric>
 
 ## RULES
 1. The JSON block above is strictly an ILLUSTRATIVE EXAMPLE. Do not copy "total-cost", "10.0", or "pref_name" 
     unless they are explicitly defined in the problem description. You must extract the actual metric, weights, and preference names from the text.
-2. Provide ONLY a valid JSON object wrapped in `<metrics>` tags.
+2. Provide ONLY a valid JSON object wrapped in `<metric>` tags.
 3. The "optimization" field MUST be exactly either "minimize" or "maximize".
 4. The "expression" field must be a valid PDDL mathematical expression (as a string). 
    - Use `total-time` to minimize the overall makespan (durative-actions).
@@ -23,6 +25,7 @@ End your final answer by wrapping the PDDL components inside specific XML tag `<
 5. If there is no metric or optimization objective described for the problem, output an empty JSON object: `{}`.
 6. Ensure the final JSON is perfectly formatted with no trailing commas.
 
+## TASK
 Please process the following domain:
 <domain_description>
 {domain_desc}

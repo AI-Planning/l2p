@@ -1,5 +1,7 @@
-Based off of the natural language description, your role is to model a PDDL domain's action preconditions in the following format.
+## ROLE
+Based off of the natural language description (found under `## TASK`), your role is to model a PDDL domain's action preconditions in the following format.
 
+## OUTPUT FORMAT
 End your final answer by wrapping the PDDL components inside specific XML tag `<preconditions> ... </preconditions>` with the specified JSON object as shown below. Do not include Markdown backticks.
 
 <preconditions>
@@ -45,6 +47,7 @@ End your final answer by wrapping the PDDL components inside specific XML tag `<
 7. All parameter variables must be prefixed with a question mark (e.g., `?r`).
 8. Ensure the final JSON is perfectly formatted with no trailing commas.
 
+## TASK
 Please process the following domain:
 <domain_description>
 {domain_desc}

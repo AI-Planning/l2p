@@ -1,5 +1,7 @@
-Based off of the natural language description, your role is to model PDDL domain constraints in the following format.
+## ROLE
+Based off of the natural language description (found under `## TASK`), your role is to model PDDL domain constraints in the following format.
 
+## OUTPUT FORMAT
 End your final answer by wrapping the PDDL components inside specific XML tag `<constraints> ... </constraints>` with the specified JSON object as shown below. Do not include Markdown backticks.
 
 <constraints>
@@ -45,6 +47,7 @@ End your final answer by wrapping the PDDL components inside specific XML tag `<
 7. If there are no domain-wide constraints described, output an empty list `[]`.
 8. Ensure the final JSON is perfectly formatted with no trailing commas.
 
+## TASK
 Please process the following domain:
 <domain_description>
 {domain_desc}

@@ -1,5 +1,7 @@
-Based off of the natural language description, your role is to model PDDL domain :requirements in the following format.
+## ROLE
+Based off of the natural language description (found under `## TASK`), your role is to model PDDL domain :requirements in the following format.
 
+## OUTPUT FORMAT
 End your final answer by wrapping the PDDL components inside specific XML tag `<requirements> ... </requirements>` with the specified JSON object as shown below. Do not include Markdown backticks.
 
 <requirements>
@@ -73,6 +75,7 @@ PDDL 3.1/+:
 5. Ensure `:strips` is always included as a baseline.
 6. Ensure the final JSON is perfectly formatted with no trailing commas.
 
+## TASK
 Please process the following domain:
 <domain_description>
 {domain_desc}

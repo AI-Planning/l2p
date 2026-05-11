@@ -1,5 +1,7 @@
-Based off of the natural language description, your role is to model PDDL domain constants in the following format.
+## ROLE
+Based off of the natural language description (found under `## TASK`), your role is to model PDDL domain constants in the following format.
 
+## OUTPUT FORMAT
 End your final answer by wrapping the PDDL components inside specific XML tag `<constants> ... </constants>` with the specified JSON object as shown below. Do not include Markdown backticks.
 
 <constants>
@@ -10,9 +12,9 @@ End your final answer by wrapping the PDDL components inside specific XML tag `<
         "desc": "Optional (str)"
     },
     {
-        "name": "earth",
-        "type": "planet",
-        "desc": "Optional (str)"
+        "name": "constant_n",
+        "type": "type_n",
+        "desc": ""
     }
 ]
 </constants>
@@ -26,6 +28,7 @@ End your final answer by wrapping the PDDL components inside specific XML tag `<
 6. If there are no constants explicitly described in the domain, output an empty list `[]`.
 7. Ensure the final JSON is perfectly formatted with no trailing commas.
 
+## TASK
 Please process the following domain:
 <domain_description>
 {domain_desc}

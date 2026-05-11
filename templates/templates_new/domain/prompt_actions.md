@@ -1,11 +1,13 @@
-Based off of the natural language description, your role is to model a PDDL domain action in the following format.
+## ROLE
+Based off of the natural language description (found under `## TASK`), your role is to model PDDL domain actions in the following format.
 
-End your final answer by wrapping the PDDL components inside specific XML tag `<action> ... </action>` with the specified JSON object as shown below. Do not include Markdown backticks.
+## OUTPUT FORMAT
+End your final answer by wrapping the PDDL components inside specific XML tag `<actions> ... </actions>` with the specified JSON object as shown below. Do not include Markdown backticks.
 
-<action>
+<actions>
 [
     {
-        "name": "navigate",
+        "name": "move-rover",
         "params": [
             {"variable": "?r", "type": "rover"},
             {"variable": "?from", "type": "waypoint"},
@@ -38,14 +40,21 @@ End your final answer by wrapping the PDDL components inside specific XML tag `<
             "desc": "Optional (str)"
         },
         "desc": "Optional (str)"
-    }
+    },
+    {
+        "name": "action_n",
+        "params": [...],
+        "preconditions": {...},
+        "effects": {...},
+        "desc": "Optional (str)"
+    },
 ]
-</action>
+</actions>
 
 ## RULES
 1. The JSON block above is strictly an ILLUSTRATIVE EXAMPLE. Do not copy names like "navigate", "rover", or "battery-level" 
     unless explicitly defined in the domain description. You must extract actual actions, variables, conditions, and effects from the text.
-2. Provide ONLY a valid JSON list wrapped in `<action>` tags.
+2. Provide ONLY valid JSON list wrapped in `<actions>` tags.
 3. Every action MUST have a "name" (string), "params" (list), "preconditions" (object), and "effects" (object).
 4. The "params" list must contain objects with a "variable" (string) and "type" (string). Parameter variables MUST ALWAYS be prefixed with a question mark (e.g., `?r`).
 5. The "preconditions" object contains a "conditions" list. All conditions in this list are implicitly joined by an "AND" operator. Use nested dictionaries for operators like "or", "not", "forall", or "exists".
@@ -57,6 +66,7 @@ End your final answer by wrapping the PDDL components inside specific XML tag `<
 8. Empty lists should be represented as `[]`. If an action has no preconditions, use `{"conditions": []}`.
 9. Ensure the final JSON is perfectly formatted with no trailing commas.
 
+## TASK
 Please process the following domain:
 <domain_description>
 {domain_desc}

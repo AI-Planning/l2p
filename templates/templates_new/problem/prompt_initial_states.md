@@ -1,5 +1,7 @@
-Based off of the natural language description, your role is to model PDDL problem initial states in the following format.
+## ROLE
+Based off of the natural language description (found under `## TASK`), your role is to model PDDL problem initial states in the following format.
 
+## OUTPUT FORMAT
 End your final answer by wrapping the PDDL components inside specific XML tag `<initial_states> ... </initial_states>` with the specified JSON object as shown below. Do not include Markdown backticks.
 
 <initial_states>
@@ -34,6 +36,7 @@ End your final answer by wrapping the PDDL components inside specific XML tag `<
 8. If there are no standard facts, leave "facts" as an empty list `[]`. If there are no timed facts, leave "timed_facts" as an empty list `[]`.
 9. Ensure the final JSON is perfectly formatted with no trailing commas.
 
+## TASK
 Please process the following domain:
 <domain_description>
 {domain_desc}

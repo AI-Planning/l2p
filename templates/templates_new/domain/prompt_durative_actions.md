@@ -1,8 +1,10 @@
-Based off of the natural language description, your role is to model a PDDL domain durative-action in the following format.
+## ROLE
+Based off of the natural language description (found under `## TASK`), your role is to model PDDL domain durative-actions in the following format.
 
-End your final answer by wrapping the PDDL components inside specific XML tag `<durative_action> ... </durative_action>` with the specified JSON object as shown below. Do not include Markdown backticks.
+## OUTPUT FORMAT
+End your final answer by wrapping the PDDL components inside specific XML tag `<durative_actions> ... </durative_actions>` with the specified JSON object as shown below. Do not include Markdown backticks.
 
-<durative_action>
+<durative_actions>
 [
     {
         "name": "transmit_data",
@@ -44,14 +46,42 @@ End your final answer by wrapping the PDDL components inside specific XML tag `<
             "desc": "Optional (str)"
         },
         "desc": "Optional (str)"
+    },
+    {
+        "name": "action_n",
+        "params": [],
+        "duration": [],
+        "conditions": {
+            "at_start": [],
+            "over_all": [],
+            "at_end": [],
+            "desc": ""
+        },
+        "effects": {
+            "at_start": {
+                "add": [],
+                "delete": [],
+                "numeric": [],
+                "conditional": []
+            },
+            "at_end": {
+                "add": [],
+                "delete": [],
+                "numeric": [],
+                "conditional": []
+            },
+            "continuous": [],
+            "desc": ""
+        },
+        "desc": ""
     }
 ]
-</durative_action>
+</durative_actions>
 
 ## RULES
 1. The JSON block above is strictly an ILLUSTRATIVE EXAMPLE. Do not copy names like "transmit_data" or "rover" 
   unless explicitly defined in the domain description. You must extract actual durative actions, variables, conditions, and effects from the text.
-2. Provide ONLY a valid JSON list wrapped in `<durative_action>` tags.
+2. Provide ONLY a valid JSON list wrapped in `<durative_actions>` tags.
 3. Every durative action MUST have "name", "params", "duration", "conditions", and "effects".
 4. **Params List:** Must contain objects with "variable" and "type". Variables MUST be prefixed with a question mark (e.g., `?r`).
 5. **Duration Array:** If the duration is an exact time, provide a single string like `["(= ?duration 5.0)"]`. If it is bounded, use multiple strings like `["(>= ?duration 5.0)", "(<= ?duration 10.0)"]`.
@@ -68,6 +98,7 @@ End your final answer by wrapping the PDDL components inside specific XML tag `<
 8. If a temporal block (like `at_end`) has no conditions or effects, leave the array/object completely empty.
 9. Ensure the final JSON is perfectly formatted with no trailing commas.
 
+## TASK
 Please process the following domain:
 <domain_description>
 {domain_desc}
