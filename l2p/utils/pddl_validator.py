@@ -20,9 +20,9 @@ Is supported in: DomainBuilder.extract_pddl_action(**kwargs, syntax_validator)
 
 import re
 from collections import OrderedDict
-from .pddl_format import *
-from .pddl_parser import *
-from .pddl_types import Predicate, Function
+from .temp.pddl_format import *
+from .temp.pddl_parser import *
+from .temp.pddl_types import Predicate, Function
 
 
 ORDINAL_SUFFIXES = {1: "st", 2: "nd", 3: "rd"}

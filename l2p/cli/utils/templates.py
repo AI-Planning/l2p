@@ -7,7 +7,7 @@ Handles loading templates from package resources or custom paths.
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
-from l2p.utils.pddl_parser import load_file
+from l2p.utils.temp.pddl_parser import load_file
 from l2p.cli.utils.errors import TemplateError
 
 

@@ -7,8 +7,8 @@ Generate PDDL components using configured LLM models.
 import sys
 import argparse
 
-from l2p.domain_builder import DomainBuilder
-from l2p.task_builder import TaskBuilder
+from l2p.temp.domain_builder import DomainBuilder
+from l2p.temp.task_builder import TaskBuilder
 from l2p.cli.utils.config import CLIError, get_config_manager
 from l2p.cli.utils.templates import get_template_manager
 from l2p.cli.utils.errors import handle_error

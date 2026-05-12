@@ -166,7 +166,9 @@ tests/main.py
 tests/parse.py
 data/
 tests/tests.py
-templates/temp
+l2p/templates/temp
+l2p/temp
+l2p/utils/temp
 tests/test_llm_dm
 AGENTS.md
 

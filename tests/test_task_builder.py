@@ -1,8 +1,8 @@
 import unittest, textwrap
-from l2p.task_builder import TaskBuilder
+from l2p.temp.task_builder import TaskBuilder
 from l2p.utils import *
 from l2p.utils.pddl_validator import SyntaxValidator
-from l2p.utils.pddl_types import Predicate
+from l2p.utils.temp.pddl_types import Predicate
 from .mock_llm import MockLLM
 
 

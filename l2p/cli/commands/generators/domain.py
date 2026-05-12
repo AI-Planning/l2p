@@ -8,8 +8,8 @@ import argparse
 from pathlib import Path
 from typing import Optional, Tuple
 
-from l2p.utils.pddl_format import format_types_to_string
-from l2p.utils.pddl_parser import load_file
+from l2p.utils.temp.pddl_format import format_types_to_string
+from l2p.utils.temp.pddl_parser import load_file
 from l2p.cli.commands.generate import GeneratorBase
 from l2p.cli.utils.errors import handle_error
 from l2p.cli.utils.helpers import _input_or_exit, BOLD, GREEN, CYAN, YELLOW, RESET

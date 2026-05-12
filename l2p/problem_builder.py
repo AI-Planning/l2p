@@ -12,8 +12,8 @@ for how to structurally prompt LLMs so they are compatible with class function p
 import time
 from l2p.llm import BaseLLM, require_llm
 from l2p.utils import *
-from l2p.utils.pddl_format_new import *
-from l2p.utils.pddl_types_new import DomainDetails, ProblemDetails
+from l2p.utils.pddl_format import *
+from l2p.utils.pddl_types import DomainDetails, ProblemDetails
 
 T = TypeVar('T')
 
@@ -22,23 +22,39 @@ class ProblemBuilder:
             self, 
             problem_details: Optional[ProblemDetails] = None,
             domain_details: Optional[DomainDetails] = None,
+            **kwargs
         ) -> None:
         """
-        Initializes an L2P task builder object using the new Pydantic ProblemDetails root model.
+        Initializes an L2P problem builder object using Pydantic ProblemDetails root model.
 
         Args:
-            problem_details (ProblemDetails | None): A fully validated Pydantic model 
-            containing the entire PDDL problem structure.
-            domain_details (DomainDetails | None): The corresponding domain details.
+            problem_details (ProblemDetails | None): A fully validated Problem Pydantic model.
+            domain_details (DomainDetails | None): A fully validated Domain Pydantic model.
+            **kwargs: Optional keyword arguments to initialize ProblemDetails directly 
+                (e.g., name="my-problem", objects=[...]).
         """
-        fallback_domain_name = domain_details.name if domain_details else "domain-placeholder"
-        self.problem_details = problem_details or ProblemDetails(
-            name="problem-placeholder", 
-            domain_name=fallback_domain_name
-        )
-
-        if problem_details and getattr(self.problem_details, "domain_name", None) in [None, ""]:
-            self.problem_details.domain_name = fallback_domain_name
+        if problem_details:
+            self.problem_details = problem_details
+            if not self.problem_details.domain_name or self.problem_details.domain_name == "domain-placeholder":
+                if domain_details:
+                    self.problem_details.domain_name = domain_details.name
+        else:
+            problem_name = kwargs.pop("name", "problem-placeholder")
+            
+            if "domain_name" in kwargs:
+                dom_name = kwargs.pop("domain_name")
+            elif domain_details:
+                dom_name = domain_details.name
+            else:
+                dom_name = "domain-placeholder"
+                
+            self.problem_details = ProblemDetails(
+                name=problem_name, 
+                domain_name=dom_name, 
+                **kwargs
+            )
+        
+        self.domain_details = domain_details
 
     
     # ---------------------------------------------------------------------------
