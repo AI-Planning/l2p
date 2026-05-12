@@ -67,12 +67,16 @@ PDDL 3.1/+:
   - :time
 
 ## RULES
-1. The JSON block above is strictly an ILLUSTRATIVE EXAMPLE. You must extract the actual requirements needed based on the capabilities 
-  described in the text (e.g., if the text mentions time limits, you need `:durative-actions`; if it mentions soft goals, you need `:preferences`).
+1. The JSON block above is strictly an ILLUSTRATIVE EXAMPLE. You must extract the actual requirements needed based on the capabilities described in the text (e.g., if the text mentions time limits, you need `:durative-actions`; if it mentions soft goals, you need `:preferences`).
+
 2. Provide ONLY a valid JSON list wrapped in `<requirements>` tags.
+
 3. Every requirement MUST have a "name" (string) and an optional description "desc" (string).
+
 4. The "name" MUST be exactly one of the valid strings from the permitted list provided above. It must include the leading colon (`:`).
+
 5. Ensure `:strips` is always included as a baseline.
+
 6. Ensure the final JSON is perfectly formatted with no trailing commas.
 
 ## TASK

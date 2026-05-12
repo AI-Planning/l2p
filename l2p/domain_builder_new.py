@@ -46,6 +46,20 @@ class DomainBuilder:
     # PDDL DOMAIN GENERATE FUNCTIONS
     # ---------------------------------------------------------------------------
 
+    @require_llm
+    def formalize_domain(
+            self,
+            model: BaseLLM,
+            prompt_template: str,
+            validate_syntax: bool = True,
+            max_retries: int = 3
+            ) -> tuple[DomainDetails, str, tuple[bool,str]]:
+        """
+        Formalizes a whole PDDL domain (:domain) using BaseLLM.
+        """
+        pass
+
+    @require_llm
     def formalize_requirements(
             self,
             model: BaseLLM,
@@ -58,6 +72,7 @@ class DomainBuilder:
         """
         pass
 
+    @require_llm
     def formalize_types(
             self,
             model: BaseLLM,
@@ -70,6 +85,7 @@ class DomainBuilder:
         """
         pass
 
+    @require_llm
     def formalize_constants(
             self,
             model: BaseLLM,
@@ -81,50 +97,54 @@ class DomainBuilder:
         Formalizes PDDL constants (:constants) using BaseLLM.
         """
         pass
-
+    
+    @require_llm
     def formalize_predicates(
             self,
             model: BaseLLM,
             prompt_template: str,
             validate_syntax: bool = True,
             max_retries: int = 3
-            ) -> tuple[list[Predicate], str, tuple[bool,str]]:
+        ) -> tuple[list[Predicate], str, tuple[bool,str]]:
         """
         Formalizes PDDL predicates (:predicates) using BaseLLM.
         """
         pass
 
+    @require_llm
     def formalize_functions(
             self,
             model: BaseLLM,
             prompt_template: str,
             validate_syntax: bool = True,
             max_retries: int = 3
-            ) -> tuple[list[Function], str, tuple[bool,str]]:
+        ) -> tuple[list[Function], str, tuple[bool,str]]:
         """
         Formalizes PDDL functions (:functions) using BaseLLM.
         """
         pass
-
+    
+    @require_llm
     def formalize_constraints(
             self,
             model: BaseLLM,
             prompt_template: str,
             validate_syntax: bool = True,
             max_retries: int = 3
-            ) -> tuple[list[Constraint], str, tuple[bool,str]]:
+        ) -> tuple[list[Constraint], str, tuple[bool,str]]:
         """
         Formalizes PDDL constraints (:constraints) using BaseLLM.
         """
         pass
 
+    @require_llm
     def formalize_derived_predicates(
             self,
             model: BaseLLM,
             prompt_template: str,
             validate_syntax: bool = True,
             max_retries: int = 3
-            ) -> tuple[list[DerivedPredicate], str, tuple[bool,str]]:
+        ) -> tuple[list[DerivedPredicate], str, tuple[bool,str]]:
         """
         Formalizes PDDL derived predicates / axioms (:derived) using BaseLLM.
         """
@@ -136,114 +156,123 @@ class DomainBuilder:
             prompt_template: str,
             validate_syntax: bool = True,
             max_retries: int = 3
-            ) -> tuple[list[Parameter], str, tuple[bool,str]]:
+        ) -> tuple[list[Parameter], str, tuple[bool,str]]:
         """
         Formalizes a PDDL action parameters (:parameters) using BaseLLM.
         """
         pass
 
+    @require_llm
     def formalize_action_preconditions(
             self,
             model: BaseLLM,
             prompt_template: str,
             validate_syntax: bool = True,
             max_retries: int = 3
-            ) -> tuple[ActionPrecondition, str, tuple[bool,str]]:
+        ) -> tuple[ActionPrecondition, str, tuple[bool,str]]:
         """
         Formalizes a PDDL action precondition (:precondition) using BaseLLM.
         """
         pass
 
+    @require_llm
     def formalize_action_effects(
             self,
             model: BaseLLM,
             prompt_template: str,
             validate_syntax: bool = True,
             max_retries: int = 3
-            ) -> tuple[ActionEffect, str, tuple[bool,str]]:
+        ) -> tuple[ActionEffect, str, tuple[bool,str]]:
         """
         Formalizes a PDDL action effect (:effect) using BaseLLM.
         """
         pass
 
+    @require_llm
     def formalize_nl_actions(
             self,
             model: BaseLLM,
             prompt_template: str,
             max_retries: int = 3
-            ) -> tuple[list[dict[str,str]], str]:
+        ) -> tuple[list[dict[str,str]], str]:
         """
         Extract actions in natural language given domain description using BaseLLM.
         """
         pass
 
+    @require_llm
     def formalize_actions(
             self,
             model: BaseLLM,
             prompt_template: str,
             validate_syntax: bool = True,
             max_retries: int = 3
-            ) -> tuple[list[Action], list[Predicate], str, tuple[bool,str]]:
+        ) -> tuple[list[Action], list[Predicate], str, tuple[bool,str]]:
         """
         Formalizes PDDL action instances (:action <n>) using BaseLLM.
         """
         pass
 
+    @require_llm
     def formalize_durative_conditions(
             self,
             model: BaseLLM,
             prompt_template: str,
             validate_syntax: bool = True,
             max_retries: int = 3
-            ) -> tuple[DurativeActionConditions, str, tuple[bool,str]]:
+        ) -> tuple[DurativeActionConditions, str, tuple[bool,str]]:
         """
         Formalizes a PDDL durative action conditions (:condition) using BaseLLM.
         """
         pass
 
+    @require_llm
     def formalize_durative_effects(
             self,
             model: BaseLLM,
             prompt_template: str,
             validate_syntax: bool = True,
             max_retries: int = 3
-            ) -> tuple[DurativeActionEffect, str, tuple[bool,str]]:
+        ) -> tuple[DurativeActionEffect, str, tuple[bool,str]]:
         """
         Formalizes a PDDL durative action effects (:effect) using BaseLLM.
         """
         pass
 
+    @require_llm
     def formalize_durative_actions(
             self,
             model: BaseLLM,
             prompt_template: str,
             validate_syntax: bool = True,
             max_retries: int = 3
-            ) -> tuple[list[DurativeAction], str, tuple[bool,str]]:
+        ) -> tuple[list[DurativeAction], str, tuple[bool,str]]:
         """
         Formalizes PDDL durative action instances (:durative-action <n>) using BaseLLM.
         """
         pass
 
+    @require_llm
     def formalize_events(
             self,
             model: BaseLLM,
             prompt_template: str,
             validate_syntax: bool = True,
             max_retries: int = 3
-            ) -> tuple[list[Event], str, tuple[bool,str]]:
+        ) -> tuple[list[Event], str, tuple[bool,str]]:
         """
         Formalizes PDDL event instances (:event <n>) using BaseLLM.
         """
         pass
 
+    @require_llm
     def formalize_processes(
             self,
             model: BaseLLM,
             prompt_template: str,
             validate_syntax: bool = True,
             max_retries: int = 3
-            ) -> tuple[list[Process], str, tuple[bool,str]]:
+        ) -> tuple[list[Process], str, tuple[bool,str]]:
         """
         Formalizes PDDL process instances (:process <n>) using BaseLLM.
         """

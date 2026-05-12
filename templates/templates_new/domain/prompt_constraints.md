@@ -36,15 +36,20 @@ End your final answer by wrapping the PDDL components inside specific XML tag `<
 </constraints>
 
 ## RULES
-1. The JSON block above is strictly an ILLUSTRATIVE EXAMPLE. Do not copy names like "rover", "battery-level", or "?r" 
-    unless they are explicitly defined in the domain description. You must extract the actual predicates, functions, and types from the text.
+1. The JSON block above is strictly an ILLUSTRATIVE EXAMPLE. Do not copy names like "rover", "battery-level", or "?r" unless they are explicitly defined in the domain description. You must extract the actual predicates, functions, and types from the text.
+
 2. Provide ONLY a valid JSON list wrapped in `<constraints>` tags.
+
 3. Every constraint MUST have a "condition" field and an optional description "desc" (string). 
+
 4. The "condition" field represents a PDDL LogicalCondition. Domain constraints MUST be written using valid PDDL 3.0 trajectory modal operators (e.g., "always", "sometime", "at-most-once", "within", "sometime-after").
-5. Because these constraints apply to the entire domain, they generally apply to all instances of a type. 
-    Therefore, you should wrap the constraint inside a "forall" quantifier block specifying the relevant parameters (e.g., `?r - rover`), rather than using hardcoded object names.
+
+5. Because these constraints apply to the entire domain, they generally apply to all instances of a type. Therefore, you should wrap the constraint inside a "forall" quantifier block specifying the relevant parameters (e.g., `?r - rover`), rather than using hardcoded object names.
+
 6. Parameter variables must ALWAYS be prefixed with a question mark (e.g., `?r`, not `r`).
+
 7. If there are no domain-wide constraints described, output an empty list `[]`.
+
 8. Ensure the final JSON is perfectly formatted with no trailing commas.
 
 ## TASK

@@ -441,14 +441,20 @@ class DomainDetails(BaseModel):
     Root model for parsing a complete PDDL domain.
     Expected JSON format (truncated example):
     {
-        "name": "rover_domain",
-        "requirements": [":typing", ":durative-actions"],
+        "name": "domain-name",
+        "requirements": [":strips", ":typing"],
         "types": [
-            {"name": "rover", "parent": "vehicle"}
+            {"name": "type_1", "parent": "object"}
         ],
+        "constants": [...],
         "predicates": [...],
+        "functions": [...],
+        "derived_predicates": [...],
         "actions": [...],
-        "durative_actions": [...]
+        "durative_actions": [...],
+        "events": [...],
+        "processes": [...]
+        "constraints": [...]
     }
     """
     name: str

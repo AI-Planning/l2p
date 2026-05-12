@@ -15,6 +15,7 @@ from l2p.utils import *
 from l2p.utils.pddl_format_new import *
 from l2p.utils.pddl_types_new import DomainDetails, ProblemDetails
 
+T = TypeVar('T')
 
 class ProblemBuilder:
     def __init__(
@@ -44,6 +45,20 @@ class ProblemBuilder:
     # PDDL DOMAIN GENERATE FUNCTIONS
     # ---------------------------------------------------------------------------
 
+    @require_llm
+    def formalize_problem(
+            self,    
+            model: BaseLLM,
+            prompt_template: str,
+            validate_syntax: bool = True,
+            max_retries: int = 3
+        ) -> tuple[ProblemDetails, str, tuple[bool,str]]:
+        """
+        Formalizes a whole PDDL problem (:problem) using BaseLLM.
+        """
+        pass
+
+    @require_llm
     def formalize_objects(
             self,
             model: BaseLLM,
@@ -53,6 +68,7 @@ class ProblemBuilder:
         ) -> tuple[list[PDDLObject], str, tuple[bool,str]]:
         pass
 
+    @require_llm
     def formalize_initial_states(
             self,
             model: BaseLLM,
@@ -62,6 +78,7 @@ class ProblemBuilder:
         ) -> tuple[InitialState, str, tuple[bool,str]]:
         pass
 
+    @require_llm
     def formalize_goal_states(
             self,
             model: BaseLLM,
@@ -71,6 +88,7 @@ class ProblemBuilder:
         ) -> tuple[GoalState, str, tuple[bool,str]]:
         pass
 
+    @require_llm
     def formalize_constraints(
             self,
             model: BaseLLM,
@@ -80,6 +98,7 @@ class ProblemBuilder:
         ) -> tuple[list[Constraint], str, tuple[bool,str]]:
         pass
 
+    @require_llm
     def formalize_metric(
             self,
             model: BaseLLM,
@@ -87,15 +106,6 @@ class ProblemBuilder:
             validate_syntax: bool = True,
             max_retries: int = 3
         ) -> tuple[Metric, str, tuple[bool,str]]:
-        pass
-
-    def formalize_tasks(
-        self,    
-        model: BaseLLM,
-        prompt_template: str,
-        validate_syntax: bool = True,
-        max_retries: int = 3
-        ):
         pass
 
 

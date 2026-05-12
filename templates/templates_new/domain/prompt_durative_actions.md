@@ -79,23 +79,30 @@ End your final answer by wrapping the PDDL components inside specific XML tag `<
 </durative_actions>
 
 ## RULES
-1. The JSON block above is strictly an ILLUSTRATIVE EXAMPLE. Do not copy names like "transmit_data" or "rover" 
-  unless explicitly defined in the domain description. You must extract actual durative actions, variables, conditions, and effects from the text.
+1. The JSON block above is strictly an ILLUSTRATIVE EXAMPLE. Do not copy names like "transmit_data" or "rover" unless explicitly defined in the domain description. You must extract actual durative actions, variables, conditions, and effects from the text.
+
 2. Provide ONLY a valid JSON list wrapped in `<durative_actions>` tags.
+
 3. Every durative action MUST have "name", "params", "duration", "conditions", and "effects".
+
 4. **Params List:** Must contain objects with "variable" and "type". Variables MUST be prefixed with a question mark (e.g., `?r`).
+
 5. **Duration Array:** If the duration is an exact time, provide a single string like `["(= ?duration 5.0)"]`. If it is bounded, use multiple strings like `["(>= ?duration 5.0)", "(<= ?duration 10.0)"]`.
+
 6. **Conditions Object:** Contains "at_start", "over_all", and "at_end" lists. You can use plain strings for simple predicates, or dictionaries for complex logic. Valid logic dictionaries include:
    - {"operator": "not", "condition": "(pred ?t)"}
    - {"operator": "and", "conditions": ["(pred1 ?t)", "(pred2 ?t)"]}
    - {"operator": "or", "conditions": ["(pred1 ?t)", "(pred2 ?t)"]}
    - {"operator": "imply", "antecedent": ["(pred1 ?t)"], "consequent": ["(pred2 ?t)"]}
    - {"quantifier": "forall", "parameters": [{"variable": "?t", "type": "type"}], "conditions": ["(pred ?t)"]}
+
 7. **Effects Object:** Contains "at_start", "at_end", and "continuous". 
    - "at_start" and "at_end" contain "add", "delete", "numeric", and "conditional" lists. Do NOT use "add" or "delete" in conditions; they belong strictly here.
    - If an effect removes a state, put the plain string in the "delete" array (do not wrap it in a "not" operator).
    - "continuous" is a list of strings representing continuous numeric changes over time (e.g., using `#t` like `(decrease (battery ?r) (* #t 1.5))`).
+
 8. If a temporal block (like `at_end`) has no conditions or effects, leave the array/object completely empty.
+
 9. Ensure the final JSON is perfectly formatted with no trailing commas.
 
 ## TASK
