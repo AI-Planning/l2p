@@ -1,8 +1,7 @@
 ## ROLE
-Based off of the natural language description (found under `## TASK`), your role is to model PDDL problem constraints in the following format.
+Based on the natural language description (found under `## TASK`), your role is to model PDDL problem constraints (:constraints) in the following format.
 
-{context_injection}
-End your final answer by wrapping the PDDL components inside specific XML tag `<constraints> ... </constraints>` with the specified JSON object as shown below. Do not include Markdown backticks.
+End your final answer by wrapping the constraint definitions inside specific XML tag `<constraints> ... </constraints>` using the JSON format shown below. Do not include Markdown backticks.
 
 <constraints>
 [

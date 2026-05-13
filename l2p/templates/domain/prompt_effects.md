@@ -1,8 +1,8 @@
 ## ROLE
-Based off of the natural language description (found under `## TASK`), your role is to model a PDDL domain's action effects in the following format.
+Based on the natural language description (found under `## TASK`), your role is to model a PDDL domain's action effects (:effect) in the following format.
 
 ## OUTPUT FORMAT
-End your final answer by wrapping the PDDL components inside specific XML tag `<effects> ... </effects>` with the specified JSON object as shown below. Do not include Markdown backticks.
+End your final answer by wrapping the effect definitions inside specific XML tag `<effects> ... </effects>` using the JSON format shown below. Do not include Markdown backticks.
 
 <effects>
 {
@@ -34,8 +34,7 @@ End your final answer by wrapping the PDDL components inside specific XML tag `<
 </effects>
 
 ## RULES
-1. The JSON block above is strictly an ILLUSTRATIVE EXAMPLE. Do not copy names like "battery-level", "total-cost", or "?r" 
-  unless they are explicitly defined in the domain description.
+1. The JSON block above is strictly an ILLUSTRATIVE EXAMPLE. Do not copy names like "battery-level", "total-cost", or "?r" unless they are explicitly defined in the domain description.
 
 2. Provide ONLY a valid JSON object wrapped in `<effects>` tags.
 

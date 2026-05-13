@@ -1,8 +1,8 @@
 ## ROLE
-Based off of the natural language description (found under `## TASK`), your role is to model PDDL domain events in the following format.
+Based on the natural language description (found under `## TASK`), your role is to model PDDL domain events (:event) in the following format.
 
 ## OUTPUT FORMAT
-End your final answer by wrapping the PDDL components inside specific XML tag `<events> ... </events>` with the specified JSON object as shown below. Do not include Markdown backticks.
+End your final answer by wrapping the event definitions inside specific XML tag `<events> ... </events>` using the JSON format shown below. Do not include Markdown backticks.
 
 <events>
 [

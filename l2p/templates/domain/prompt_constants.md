@@ -1,8 +1,8 @@
 ## ROLE
-Based off of the natural language description (found under `## TASK`), your role is to model PDDL domain constants in the following format.
+Based on the natural language description (found under `## TASK`), your role is to model PDDL domain constants (:constants) in the following format.
 
 ## OUTPUT FORMAT
-End your final answer by wrapping the PDDL components inside specific XML tag `<constants> ... </constants>` with the specified JSON object as shown below. Do not include Markdown backticks.
+End your final answer by wrapping the constant definitions inside specific XML tag `<constants> ... </constants>` using the JSON format shown below. Do not include Markdown backticks.
 
 <constants>
 [
@@ -14,7 +14,7 @@ End your final answer by wrapping the PDDL components inside specific XML tag `<
     {
         "name": "constant_n",
         "type": "type_n",
-        "desc": ""
+        "desc": null
     }
 ]
 </constants>

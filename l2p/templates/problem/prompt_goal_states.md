@@ -1,8 +1,8 @@
 ## ROLE
-Based off of the natural language description (found under `## TASK`), your role is to model PDDL problem goal states in the following format.
+Based on the natural language description (found under `## TASK`), your role is to model PDDL problem goal states (:goal) in the following format.
 
 ## OUTPUT FORMAT
-End your final answer by wrapping the PDDL components inside specific XML tag `<goal_states> ... </goal_states>` with the specified JSON object as shown below. Do not include Markdown backticks.
+End your final answer by wrapping the goal state definitions inside specific XML tag `<goal_states> ... </goal_states>` using the JSON format shown below. Do not include Markdown backticks.
 
 <goal_states>
 {

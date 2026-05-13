@@ -1,8 +1,8 @@
 ## ROLE
-Based off of the natural language description (found under `## TASK`), your role is to model an entire PDDL problem instance in the following format.
+Based on the natural language description (found under `## TASK`), your role is to model an entire PDDL problem instance in the following format.
 
 ## OUTPUT FORMAT
-End your final answer by wrapping the PDDL components inside specific XML tag `<problem> ... </problem>` with the specified JSON object as shown below. Do not include Markdown backticks.
+End your final answer by wrapping the PDDL problem definitions inside specific XML tag `<problem> ... </problem>` using the JSON format shown below. Do not include Markdown backticks.
 
 <problem>
 {
@@ -48,7 +48,7 @@ End your final answer by wrapping the PDDL components inside specific XML tag `<
     ],
     "metric": {
         "optimization": "minimize",
-        "expression": "total-time",
+        "expression": "(+ (total-cost) (* 10.0 (is-violated pref_name)) (* 5.0 (is-violated pref_name2)))",
         "desc": "Optional (str)"
     },
     "desc": "Optional description of the problem instance"

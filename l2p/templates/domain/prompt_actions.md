@@ -1,8 +1,8 @@
 ## ROLE
-Based off of the natural language description (found under `## TASK`), your role is to model PDDL domain actions in the following format.
+Based on the natural language description (found under `## TASK`), your role is to model PDDL domain actions (:action) in the following format.
 
 ## OUTPUT FORMAT
-End your final answer by wrapping the PDDL components inside specific XML tag `<actions> ... </actions>` with the specified JSON object as shown below. Do not include Markdown backticks.
+End your final answer by wrapping the action definitions inside specific XML tag `<actions> ... </actions>` using the JSON format shown below. Do not include Markdown backticks.
 
 <actions>
 [
@@ -54,24 +54,50 @@ End your final answer by wrapping the PDDL components inside specific XML tag `<
 ## RULES
 1. The JSON block above is strictly an ILLUSTRATIVE EXAMPLE. Do not copy names like "navigate", "rover", or "battery-level" unless explicitly defined in the domain description. You must extract actual actions, variables, conditions, and effects from the text.
 
-2. Provide ONLY valid JSON list wrapped in `<actions>` tags.
+2. **Strict JSON & XML Wrapping:** Output strictly valid JSON wrapped in the `<actions>` tags. Do not include trailing commas, and do not wrap the JSON in Markdown formatting backticks (e.g., ` ```json `).
 
-3. Every action MUST have a "name" (string), "params" (list), "preconditions" (object), and "effects" (object).
+3. **Required Action Fields:** Every action object MUST have "name", "params", "preconditions", "effects", and optional "desc".
+   - "name": The action name as a string.
+   - "params": A list of parameter objects.
+   - "preconditions": An object containing the action preconditions.
+   - "effects": An object containing the action effects.
+   - "desc": Optional natural language description of the action.
 
-4. The "params" list must contain objects with a "variable" (string) and "type" (string). Parameter variables MUST ALWAYS be prefixed with a question mark (e.g., `?r`).
+4. **Parameter Objects:** The "params" list must contain objects with "variable" and "type" keys.
+   - "variable": Must be a string beginning with a question mark (e.g., `?r`, `?from`).
+   - "type": Must be a valid object type for that parameter.
+   - Parameters must logically correspond to the action described in the natural language input.
 
-5. The "preconditions" object contains a "conditions" list. All conditions in this list are implicitly joined by an "AND" operator. Use nested dictionaries for operators like "or", "not", "forall", or "exists".
+5. **Variable Naming:** All parameter variables used in "params", "preconditions", and "effects" must begin with a question mark (e.g., `?r`, `?x`) and must match the parameters of that action.
 
-6. The "effects" object contains "add", "delete", and "numeric" lists. 
-   - Put positive boolean facts in "add".
-   - Put negative boolean facts in "delete" (do not use the "not" operator here, just list the fact).
-   - Put math operations like `(increase ...)` or `(decrease ...)` in "numeric".
+6. **Preconditions Object:** The "preconditions" object must contain "conditions" and optional "desc".
+   - "conditions": A list of logical conditions.
+   - Multiple entries in "conditions" are implicitly joined by "and".
+   - Use plain strings for simple predicates and numeric comparisons.
+   - Use dictionaries for structured logic such as "not", "and", "or", "imply", "forall", and "exists".
 
-7. The "effects" object can optionally include a "conditional" list for PDDL `when` effects. The "effect" field inside a conditional effect must be a dictionary with "add", "delete", and "numeric" lists.
+7. **Effects Object:** The "effects" object must contain "add", "delete", "numeric", "conditional", and optional "desc".
+   - "add": Positive boolean facts made true by the action.
+   - "delete": Boolean facts removed by the action. Do not wrap them in "not"; just list the fact itself.
+   - "numeric": Numeric update expressions such as `(increase ...)`, `(decrease ...)`, `(assign ...)`, `(scale-up ...)`, or `(scale-down ...)`.
+   - "conditional": A list of conditional effects using the PDDL `when` structure.
 
-8. Empty lists should be represented as `[]`. If an action has no preconditions, use `{"conditions": []}`.
+8. **Conditional Effects:** Each item in the "conditional" list must be an object with "condition", "effect", and "desc".
+   - "condition": A list of logical conditions that trigger the conditional effect.
+   - "effect": An object containing "add", "delete", and "numeric" lists.
+   - Use conditional effects only when the natural language description explicitly implies an effect that occurs only under certain circumstances.
 
-9. Ensure the final JSON is perfectly formatted with no trailing commas.
+9. **Logical Condition Format:** Valid condition dictionaries include:
+   - {"operator": "not", "condition": "(pred ?x)"}
+   - {"operator": "and", "conditions": ["(pred1 ?x)", "(pred2 ?x)"]}
+   - {"operator": "or", "conditions": ["(pred1 ?x)", "(pred2 ?x)"]}
+   - {"operator": "imply", "antecedent": ["(pred1 ?x)"], "consequent": ["(pred2 ?x)"]}
+   - {"quantifier": "forall", "parameters": [{"variable": "?x", "type": "type"}], "conditions": ["(pred ?x)"]}
+   - {"quantifier": "exists", "parameters": [{"variable": "?x", "type": "type"}], "conditions": ["(pred ?x)"]}
+
+10. **Empty Arrays:** If a field has no values, you must explicitly return an empty list `[]`. Do not omit required keys from the JSON.
+   - If an action has no preconditions, use `"preconditions": {"conditions": []}`.
+   - If an action has no added, deleted, numeric, or conditional effects, use empty lists for those fields.
 
 ## TASK
 Please process the following domain:

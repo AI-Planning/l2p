@@ -1,8 +1,8 @@
 ## ROLE
-Based off of the natural language description (found under `## TASK`), your role is to model PDDL durative-actions in natural language in the following format.
+Based on the natural language description (found under `## TASK`), your role is to model PDDL durative-actions in natural language in the following format.
 
 ## OUTPUT FORMAT
-End your final answer by wrapping the dictionary inside specific XML tag `<nl_durative_actions> ... </nl_durative_actions>` with the specified JSON object as shown below. Do not include Markdown backticks.
+End your final answer by wrapping the dictionary inside specific XML tag `<nl_durative_actions> ... </nl_durative_actions>` using the JSON format shown below. Do not include Markdown backticks.
 
 <nl_durative_actions>
 {

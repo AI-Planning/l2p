@@ -1,8 +1,8 @@
 ## ROLE
-Based off of the natural language description (found under `## TASK`), your role is to model PDDL domain types in the following format.
+Based on the natural language description (found under `## TASK`), your role is to model PDDL domain types (:types) in the following format.
 
 ## OUTPUT FORMAT
-End your final answer by wrapping the PDDL components inside specific XML tag `<types> ... </types>` with the specified JSON object as shown below. Do not include Markdown backticks.
+End your final answer by wrapping the type definitions inside specific XML tag `<types> ... </types>` using the JSON format shown below. Do not include Markdown backticks.
 
 <types>
 [

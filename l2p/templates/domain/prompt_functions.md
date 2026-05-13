@@ -1,8 +1,8 @@
 ## ROLE
-Based off of the natural language description (found under `## TASK`), your role is to model PDDL domain functions in the following format.
+Based on the natural language description (found under `## TASK`), your role is to model PDDL domain functions (:functions) in the following format.
 
 ## OUTPUT FORMAT
-End your final answer by wrapping the PDDL components inside specific XML tag `<functions> ... </functions>` with the specified JSON object as shown below. Do not include Markdown backticks.
+End your final answer by wrapping the function definitions inside specific XML tag `<functions> ... </functions>` using the JSON format shown below. Do not include Markdown backticks.
 
 <functions>
 [

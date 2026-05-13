@@ -1,13 +1,13 @@
 ## ROLE
-Based off of the natural language description (found under `## TASK`), your role is to model a PDDL problem metric in the following format.
+Based on natural language description (found under `## TASK`), your role is to model a PDDL problem metric (:metric) in the following format.
 
 ## OUTPUT FORMAT
-End your final answer by wrapping the PDDL components inside specific XML tag `<metric> ... </metric>` with the specified JSON object as shown below. Do not include Markdown backticks.
+End your final answer by wrapping the metric definitions inside specific XML tag `<metric> ... </metric>` using the JSON format shown below. Do not include Markdown backticks.
 
 <metric>
 {
     "optimization": "minimize",
-    "expression": "(+ (total-cost) (* 10.0 (is-violated pref_name)))",
+    "expression": "(+ (total-cost) (* 10.0 (is-violated pref_name)) (* 5.0 (is-violated pref_name2)))",
     "desc": "Optional (str)"
 }
 </metric>

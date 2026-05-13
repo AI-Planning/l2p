@@ -1,8 +1,8 @@
 ## ROLE
-Based off of the natural language description (found under `## TASK`), your role is to model a PDDL domain derived predicate (axiom) in the following format.
+Based on the natural language description (found under `## TASK`), your role is to model PDDL domain derived predicates/axiom (:derived) in the following format.
 
 ## OUTPUT FORMAT
-End your final answer by wrapping the PDDL components inside specific XML tag `<derived_predicates> ... </derived_predicates>` with the specified JSON object as shown below. Do not include Markdown backticks.
+End your final answer by wrapping the derived predicate definitions inside specific XML tag `<derived_predicates> ... </derived_predicates>` using the JSON format shown below. Do not include Markdown backticks.
 
 <derived_predicates>
 [

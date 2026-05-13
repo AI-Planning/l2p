@@ -1,8 +1,8 @@
 ## ROLE
-Based off of the natural language description (found under `## TASK`), your role is to model PDDL actions in natural language in the following format.
+Based on the natural language description (found under `## TASK`), your role is to model PDDL actions in natural language in the following format.
 
 ## OUTPUT FORMAT
-End your final answer by wrapping the dictionary inside specific XML tag `<nl_actions> ... </nl_actions>` with the specified JSON object as shown below. Do not include Markdown backticks.
+End your final answer by wrapping the dictionary inside specific XML tag `<nl_actions> ... </nl_actions>` using the JSON format shown below. Do not include Markdown backticks.
 
 <nl_actions>
 {
