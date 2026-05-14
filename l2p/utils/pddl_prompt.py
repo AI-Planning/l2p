@@ -107,7 +107,7 @@ CTX_MAPPING: Dict[str, tuple[str, Callable[[Any], str]]] = {
 # DEFAULT DOMAIN SYSTEM PROMPT TEMPLATES  
 DEF_DOMAIN_PROMPTS = SimpleNamespace(
     domain      = load_default_template(folder="domain", filename="prompt_domain.md"),
-    reqs        = load_default_template(folder="domain", filename="prompt_requirements.md"),
+    requirements = load_default_template(folder="domain", filename="prompt_requirements.md"),
     types       = load_default_template(folder="domain", filename="prompt_types.md"),
     constants   = load_default_template(folder="domain", filename="prompt_constants.md"),
     predicates  = load_default_template(folder="domain", filename="prompt_predicates.md"),

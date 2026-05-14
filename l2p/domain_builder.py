@@ -6,16 +6,16 @@ PDDL domain specifications programmatically using structured Pydantic models.
 """
 
 import time
-from typing import Optional, Set, TypeVar, Union
+from typing import Optional, Set, TypeVar, Union, Type
 
 from l2p.llm import BaseLLM, require_llm
+
 from l2p.utils.pddl_types import *
 from l2p.utils.pddl_format import *
 from l2p.utils.pddl_prompt import DEF_DOMAIN_PROMPTS, DEF_PROBLEM_PROMPTS, build_ctx, safe_format
 from l2p.utils.pddl_parser import parse_xml_tags, parse_list, parse_element
-from l2p.utils import SyntaxValidator
 
-T = TypeVar('T')
+T = TypeVar('T', bound=BaseModel)
 
 class DomainBuilder:
     def __init__(
@@ -47,36 +47,59 @@ class DomainBuilder:
     # ---------------------------------------------------------------------------
 
     @require_llm
-    def formalize_domain(
-            self,
-            model: BaseLLM,
-            description: str,
-            prompt_template: Optional[str] = None,
-            validate_syntax: bool = True,
-            max_retries: int = 3,
-            **ctx_kwargs
-            ) -> tuple[DomainDetails, str, tuple[bool,str]]:
+    def formalize_component(
+        self,
+        model: BaseLLM,
+        prompt_template: str,
+        component_class: Union[List[Type[T]], Type[T]],
+        description: Optional[str] = None,
+        max_retries: int = 3,
+        **ctx_kwargs
+    ):
         """
-        Formalizes a whole PDDL domain (:domain) using BaseLLM.
-        Pass existing PDDL components (e.g., types=[...], predicates=[...]) via
-        **ctx_kwargs to inject them into the LLM content
+        Formalizes L2P Domain components using BaseLLM
+        Args:
+            model (BaseLLM):
+            prompt_template (str):
+            component_class (List[Type[T]] | Type[T]):
+            description (Optional[str] = None):
+            max_retries (int = 3):
+            **ctx_kwargs:
         """
-
-        prompt = prompt_template or DEF_DOMAIN_PROMPTS.domain
-
-        rendered_prompt = safe_format(
-            template=prompt,
+        classes = component_class if isinstance(component_class, list) else [component_class]
+        
+        context = build_ctx(**ctx_kwargs)
+        prompt = safe_format(
+            template=prompt_template,
             domain_desc=description,
-            context_injection=build_ctx(**ctx_kwargs)
+            context_injection=context
         )
-
+        
         for attempt in range(max_retries):
             try:
                 model.reset_tokens()
-                llm_output = model.query(prompt=rendered_prompt)
-                raw_blocks = parse_xml_tags(llm_output=llm_output, tag_name="domain")
-                domain = parse_element(raw_blocks=raw_blocks, model_class=DomainDetails, tag_name="domain")
-                return domain
+                llm_output = model.query(prompt=prompt)
+                extracted_results = {}
+
+                for cls in classes:
+                    raw_blocks = None
+                    matched_tag = None
+
+                    for t in cls.tag:
+                        raw_blocks = parse_xml_tags(llm_output=llm_output,tag_name=t)
+                        if raw_blocks:
+                            matched_tag = t
+                            break
+
+                    if not raw_blocks:
+                        raise ValueError(f"[ERROR] Missing expected XML block in LLM output. Looked for: {cls.tag}")
+                    
+                    parsed_items = parse_list(raw_blocks=raw_blocks, model_class=cls, tag_name=matched_tag)
+                    extracted_results[cls] = parsed_items
+
+                returned_classes = extracted_results if isinstance(component_class, list) else extracted_results[classes[0]]
+                return returned_classes, llm_output
+
             except Exception as e:
                 print(
                     f"Error encountered during attempt {attempt + 1}/{max_retries}: {e}. "
@@ -85,227 +108,6 @@ class DomainBuilder:
                 time.sleep(2)  # add a delay before retrying
 
         raise RuntimeError("Max retries exceeded. Failed to extract types.")
-                
-
-
-    @require_llm
-    def formalize_requirements(
-            self,
-            model: BaseLLM,
-            prompt_template: str,
-            validate_syntax: bool = True,
-            max_retries: int = 3
-            ) -> tuple[list[Requirement], str, tuple[bool,str]]:
-        """
-        Formalizes PDDL requirements (:requirements) using BaseLLM.
-        """
-        pass
-
-    @require_llm
-    def formalize_types(
-            self,
-            model: BaseLLM,
-            prompt_template: str,
-            validate_syntax: bool = True,
-            max_retries: int = 3
-            ) -> tuple[list[PDDLType], str, tuple[bool,str]]:
-        """
-        Formalizes PDDL types (:types) using BaseLLM.
-        """
-        pass
-
-    @require_llm
-    def formalize_constants(
-            self,
-            model: BaseLLM,
-            prompt_template: str,
-            validate_syntax: bool = True,
-            max_retries: int = 3
-            ) -> tuple[list[Constant], str, tuple[bool,str]]:
-        """
-        Formalizes PDDL constants (:constants) using BaseLLM.
-        """
-        pass
-    
-    @require_llm
-    def formalize_predicates(
-            self,
-            model: BaseLLM,
-            prompt_template: str,
-            validate_syntax: bool = True,
-            max_retries: int = 3
-        ) -> tuple[list[Predicate], str, tuple[bool,str]]:
-        """
-        Formalizes PDDL predicates (:predicates) using BaseLLM.
-        """
-        pass
-
-    @require_llm
-    def formalize_functions(
-            self,
-            model: BaseLLM,
-            prompt_template: str,
-            validate_syntax: bool = True,
-            max_retries: int = 3
-        ) -> tuple[list[Function], str, tuple[bool,str]]:
-        """
-        Formalizes PDDL functions (:functions) using BaseLLM.
-        """
-        pass
-    
-    @require_llm
-    def formalize_constraints(
-            self,
-            model: BaseLLM,
-            prompt_template: str,
-            validate_syntax: bool = True,
-            max_retries: int = 3
-        ) -> tuple[list[Constraint], str, tuple[bool,str]]:
-        """
-        Formalizes PDDL constraints (:constraints) using BaseLLM.
-        """
-        pass
-
-    @require_llm
-    def formalize_derived_predicates(
-            self,
-            model: BaseLLM,
-            prompt_template: str,
-            validate_syntax: bool = True,
-            max_retries: int = 3
-        ) -> tuple[list[DerivedPredicate], str, tuple[bool,str]]:
-        """
-        Formalizes PDDL derived predicates / axioms (:derived) using BaseLLM.
-        """
-        pass
-
-    def formalize_action_parameters(
-            self,
-            model: BaseLLM,
-            prompt_template: str,
-            validate_syntax: bool = True,
-            max_retries: int = 3
-        ) -> tuple[list[Parameter], str, tuple[bool,str]]:
-        """
-        Formalizes a PDDL action parameters (:parameters) using BaseLLM.
-        """
-        pass
-
-    @require_llm
-    def formalize_action_preconditions(
-            self,
-            model: BaseLLM,
-            prompt_template: str,
-            validate_syntax: bool = True,
-            max_retries: int = 3
-        ) -> tuple[ActionPrecondition, str, tuple[bool,str]]:
-        """
-        Formalizes a PDDL action precondition (:precondition) using BaseLLM.
-        """
-        pass
-
-    @require_llm
-    def formalize_action_effects(
-            self,
-            model: BaseLLM,
-            prompt_template: str,
-            validate_syntax: bool = True,
-            max_retries: int = 3
-        ) -> tuple[ActionEffect, str, tuple[bool,str]]:
-        """
-        Formalizes a PDDL action effect (:effect) using BaseLLM.
-        """
-        pass
-
-    @require_llm
-    def formalize_nl_actions(
-            self,
-            model: BaseLLM,
-            prompt_template: str,
-            max_retries: int = 3
-        ) -> tuple[list[dict[str,str]], str]:
-        """
-        Extract actions in natural language given domain description using BaseLLM.
-        """
-        pass
-
-    @require_llm
-    def formalize_actions(
-            self,
-            model: BaseLLM,
-            prompt_template: str,
-            validate_syntax: bool = True,
-            max_retries: int = 3
-        ) -> tuple[list[Action], list[Predicate], str, tuple[bool,str]]:
-        """
-        Formalizes PDDL action instances (:action <n>) using BaseLLM.
-        """
-        pass
-
-    @require_llm
-    def formalize_durative_conditions(
-            self,
-            model: BaseLLM,
-            prompt_template: str,
-            validate_syntax: bool = True,
-            max_retries: int = 3
-        ) -> tuple[DurativeActionConditions, str, tuple[bool,str]]:
-        """
-        Formalizes a PDDL durative action conditions (:condition) using BaseLLM.
-        """
-        pass
-
-    @require_llm
-    def formalize_durative_effects(
-            self,
-            model: BaseLLM,
-            prompt_template: str,
-            validate_syntax: bool = True,
-            max_retries: int = 3
-        ) -> tuple[DurativeActionEffect, str, tuple[bool,str]]:
-        """
-        Formalizes a PDDL durative action effects (:effect) using BaseLLM.
-        """
-        pass
-
-    @require_llm
-    def formalize_durative_actions(
-            self,
-            model: BaseLLM,
-            prompt_template: str,
-            validate_syntax: bool = True,
-            max_retries: int = 3
-        ) -> tuple[list[DurativeAction], str, tuple[bool,str]]:
-        """
-        Formalizes PDDL durative action instances (:durative-action <n>) using BaseLLM.
-        """
-        pass
-
-    @require_llm
-    def formalize_events(
-            self,
-            model: BaseLLM,
-            prompt_template: str,
-            validate_syntax: bool = True,
-            max_retries: int = 3
-        ) -> tuple[list[Event], str, tuple[bool,str]]:
-        """
-        Formalizes PDDL event instances (:event <n>) using BaseLLM.
-        """
-        pass
-
-    @require_llm
-    def formalize_processes(
-            self,
-            model: BaseLLM,
-            prompt_template: str,
-            validate_syntax: bool = True,
-            max_retries: int = 3
-        ) -> tuple[list[Process], str, tuple[bool,str]]:
-        """
-        Formalizes PDDL process instances (:process <n>) using BaseLLM.
-        """
-        pass
     
     
     def generate_requirements(
@@ -716,6 +518,36 @@ class DomainBuilder:
                 Defaults to False.
         """
         self._set_component("constraint", constraints, append=append)
+
+    def set_components(self, extracted_dict: dict, append: bool = False):
+        """
+        Takes a dictionary of components (e.g., output from formalize_components()) 
+        and automatically assigns them to the correct fields in DomainDetails.
+        
+        Args:
+            extracted_dict (dict): Mapping of Pydantic Class -> List of instances.
+            append (bool): If True, appends to existing lists. If False, overwrites.
+        """
+        class_to_field_mapping = {
+            Requirement: "requirements",
+            PDDLType: "types",
+            Constant: "constants",
+            Predicate: "predicates",
+            Function: "functions",
+            Constraint: "constraint",
+            DerivedPredicate: "derived_predicates",
+            Action: "actions",
+            DurativeAction: "durative_actions",
+            Event: "events",
+            Process: "processes"
+        }
+
+        for component_class, items_list in extracted_dict.items():
+            if component_class in class_to_field_mapping:
+                field_name = class_to_field_mapping[component_class]
+                self._set_component(field_name=field_name, component=items_list, append=append)
+            else:
+                print(f"[WARNING] Unrecognized component class: {component_class}. Skipping assignment.")
 
     # ---------------------------------------------------------------------------
     # PDDL DOMAIN DISPLAY FUNCTIONS

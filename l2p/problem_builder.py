@@ -66,8 +66,8 @@ class ProblemBuilder:
             self,    
             model: BaseLLM,
             prompt_template: str,
-            validate_syntax: bool = True,
-            max_retries: int = 3
+            max_retries: int = 3,
+            **ctx_kwargs
         ) -> tuple[ProblemDetails, str, tuple[bool,str]]:
         """
         Formalizes a whole PDDL problem (:problem) using BaseLLM.
@@ -79,8 +79,8 @@ class ProblemBuilder:
             self,
             model: BaseLLM,
             prompt_template: str,
-            validate_syntax: bool = True,
-            max_retries: int = 3
+            max_retries: int = 3,
+            **ctx_kwargs
         ) -> tuple[list[PDDLObject], str, tuple[bool,str]]:
         pass
 
@@ -89,8 +89,8 @@ class ProblemBuilder:
             self,
             model: BaseLLM,
             prompt_template: str,
-            validate_syntax: bool = True,
-            max_retries: int = 3
+            max_retries: int = 3,
+            **ctx_kwargs
         ) -> tuple[InitialState, str, tuple[bool,str]]:
         pass
 
@@ -99,8 +99,8 @@ class ProblemBuilder:
             self,
             model: BaseLLM,
             prompt_template: str,
-            validate_syntax: bool = True,
-            max_retries: int = 3
+            max_retries: int = 3,
+            **ctx_kwargs
         ) -> tuple[GoalState, str, tuple[bool,str]]:
         pass
 
@@ -109,8 +109,8 @@ class ProblemBuilder:
             self,
             model: BaseLLM,
             prompt_template: str,
-            validate_syntax: bool = True,
-            max_retries: int = 3
+            max_retries: int = 3,
+            **ctx_kwargs
         ) -> tuple[list[Constraint], str, tuple[bool,str]]:
         pass
 
@@ -119,8 +119,8 @@ class ProblemBuilder:
             self,
             model: BaseLLM,
             prompt_template: str,
-            validate_syntax: bool = True,
-            max_retries: int = 3
+            max_retries: int = 3,
+            **ctx_kwargs
         ) -> tuple[Metric, str, tuple[bool,str]]:
         pass
 
