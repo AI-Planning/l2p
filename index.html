@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>L2P: Language-to-Plan | ICAPS-26 Tutorial</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Fira+Code:wght@400;500&display=swap');
+        
+        :root {
+            --bg-dark: #020617;
+            --accent-primary: #38bdf8;
+            --accent-secondary: #818cf8;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+
+        .glass {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .text-gradient {
+            background: linear-gradient(to right, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .code-font {
+            font-family: 'Fira Code', monospace;
+        }
+
+        .hero-gradient {
+            background: radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.1) 0%, rgba(2, 6, 23, 0) 50%);
+        }
+
+        .node-pattern {
+            background-image: radial-gradient(rgba(56, 189, 248, 0.15) 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+
+        /* Hide the default details arrow */
+        details > summary {
+            list-style: none;
+        }
+        details > summary::-webkit-details-marker {
+            display: none;
+        }
+        
+        /* Animate the custom arrow icon when open */
+        details[open] summary .expand-icon {
+            transform: rotate(180deg);
+        }
+    </style>
+</head>
+<body class="node-pattern">
+
+        <!-- Top Announcement Bar -->
+    <a href="https://icaps26.icaps-conference.org" target="_blank" class="fixed top-0 w-full h-10 z-[60] bg-indigo-600/20 backdrop-blur-md border-b border-indigo-500/30 hover:bg-indigo-600/30 transition-colors cursor-pointer group flex items-center justify-center">
+        <div class="max-w-7xl mx-auto px-6 flex items-center justify-center gap-2">
+            <span class="flex h-2 w-2 relative">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2 w-2 bg-sky-500"></span>
+            </span>
+            <p class="text-xs md:text-sm font-medium text-slate-200">
+                Official Tutorial of the <span class="text-gradient font-bold group-hover:text-white transition-colors">36th International Conference on Automated Planning and Scheduling (ICAPS-26)</span>
+            </p>
+            <i data-lucide="external-link" class="w-3 h-3 text-sky-400 ml-1"></i>
+        </div>
+    </a>
+
+    <!-- Navigation -->
+    <!-- Set to top-10 exactly matching the h-10 of the announcement bar above -->
+    <nav class="fixed top-10 w-full z-50 glass border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="text-xl font-bold tracking-tighter text-gradient">Language-to-Plan (L2P)</div>
+            <div class="hidden md:flex space-x-8 text-sm font-medium text-slate-400">
+                <a href="#about" class="hover:text-sky-400 transition-colors">About</a>
+                <a href="#outline" class="hover:text-sky-400 transition-colors">Outline</a>
+                <a href="#demo" class="hover:text-sky-400 transition-colors">Demo</a>
+                <a href="#resources" class="hover:text-sky-400 transition-colors">Resources</a>
+                <a href="#authors" class="hover:text-sky-400 transition-colors">Authors</a>
+            </div>
+            <a href="https://github.com/AI-Planning/l2p" class="px-4 py-2 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-400 text-xs font-bold hover:bg-sky-500 hover:text-white transition-all">
+                View GitHub
+            </a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative pt-32 pb-20 px-6 hero-gradient">
+        <div class="max-w-5xl mx-auto text-center" data-aos="fade-up">
+            <span class="px-4 py-1.5 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-400 text-xs font-bold uppercase tracking-widest mb-6 inline-block">
+                ICAPS-26 Tutorial | Dublin, Ireland (June 27-July 2, 2026)
+            </span>
+            <h1 class="text-5xl md:text-7xl font-bold tracking-tight mb-6">
+                Language-to-Plan <span class="text-gradient">(L2P)</span>
+            </h1>
+            <p class="text-xl md:text-2xl text-slate-400 max-w-3xl mx-auto leading-relaxed font-light">
+                Hands-On <span class="text-white italic text-decoration-underline">PDDL Crafting</span> with Large Language Models
+            </p>
+            <div class="mt-10 flex flex-wrap justify-center gap-4">
+                <a href="#about" class="px-8 py-3 rounded-xl bg-white text-slate-950 font-bold hover:scale-105 transition-transform">Learn More</a>
+                <a href="#demo" class="px-8 py-3 rounded-xl glass text-white font-bold hover:bg-white/10 transition-all">Watch Demo</a>
+            </div>
+        </div>
+    </section>
+
+        <!-- Authors Section -->
+    <section id="authors" class="py-20 px-6 bg-slate-950/50">
+        <div class="max-w-7xl mx-auto">
+            <h2 class="text-sm font-bold text-sky-500 uppercase tracking-[0.3em] text-center mb-12" data-aos="fade-up">The Presenters</h2>
+            <div class="grid md:grid-cols-2 gap-8">
+                <!-- Author 1 -->
+                <details class="glass p-8 rounded-3xl flex flex-col items-center text-center group" data-aos="fade-right">
+                  <summary class="flex flex-col items-center cursor-pointer w-full">
+                    <div class="w-24 h-24 rounded-full bg-gradient-to-br from-sky-400 to-indigo-500 p-1 mb-6 group-hover:rotate-6 transition-transform">
+                      <div class="w-full h-full rounded-full bg-slate-900 flex items-center justify-center overflow-hidden">
+                        <img src="images/marcus.tantakoun.png" alt="Marcus Tantakoun" class="w-full h-full object-cover">
+                      </div>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-2">Marcus Tantakoun</h3>
+                    <p class="text-slate-400 text-sm mb-6">PhD in Computing, Queen's University | Pronouns: he/him</p>
+                    <div class="flex flex-wrap justify-center gap-4 mb-4">
+                      <a href="20mt1@queensu.ca" class="p-2 rounded-lg bg-white/5 hover:bg-sky-500/20 transition-colors" title="Email"><i data-lucide="mail" class="w-5 h-5 text-sky-400"></i></a>
+                      <a href="https://github.com/MarcusTantakoun" class="p-2 rounded-lg bg-white/5 hover:bg-sky-500/20 transition-colors text-sky-400" title="GitHub"><i data-lucide="code" class="w-5 h-5"></i></a>
+                      <a href="https://scholar.google.ca/citations?user=WmVgcIgAAAAJ&hl=en" class="p-2 rounded-lg bg-white/5 hover:bg-sky-500/20 transition-colors" title="Google Scholar"><i data-lucide="graduation-cap" class="w-5 h-5 text-sky-400"></i></a>
+                      <a href="https://www.linkedin.com/in/marcus-tantakoun/" class="p-2 rounded-lg bg-white/5 hover:bg-sky-500/20 transition-colors" title="LinkedIn"><i data-lucide="contact" class="w-5 h-5 text-sky-400"></i></a>
+                      <!-- Personal Website Icon -->
+                      <a href="https://marcustantakoun.github.io" target="_blank" class="p-2 rounded-lg bg-white/5 hover:bg-sky-500/20 transition-colors" title="Personal Website"><i data-lucide="globe" class="w-5 h-5 text-sky-400"></i></a>
+                    </div>
+                    <!-- Custom Arrow positioned centrally below contact icons -->
+                    <div class="mt-2 text-slate-500 transition-colors group-hover:text-sky-400">
+                        <i data-lucide="chevron-down" class="w-6 h-6 expand-icon transition-transform duration-300"></i>
+                    </div>
+                  </summary>
+                  <p class="mt-4 text-sm text-slate-400 px-4">I am currently a second-year PhD computing student, co-supervised by Professors Christian Muise and Xiaodan Zhu, at Queen’s University; previously completed my undergrad at Queen’s with a Bachelor’s of Computing (BCPH) in Artificial Intelligence. My research is interdisciplinary between NLP and Automated Planning. Particularly, involving the exploration of Large Language Models' (LLMs) powerful generative capabilities to complement Automated Planning systems. Outside of academics, I am an active participant in Kingston’s local music scene with a primary focus on playing bass and occasional dabbling in keys and guitar.</p>
+                </details>
+                
+                <!-- Author 2 -->
+                <details class="glass p-8 rounded-3xl flex flex-col items-center text-center group" data-aos="fade-left">
+                  <summary class="flex flex-col items-center cursor-pointer w-full">
+                    <div class="w-24 h-24 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 p-1 mb-6 group-hover:-rotate-6 transition-transform">
+                      <div class="w-full h-full rounded-full bg-slate-900 flex items-center justify-center overflow-hidden">
+                        <img src="images/christian.muise.png" alt="Christian Muise" class="w-full h-full object-cover">
+                      </div>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-2">Christian Muise</h3>
+                    <p class="text-slate-400 text-sm mb-6">Associate Professor, Queen's University | Pronouns: he/him</p>
+                    <div class="flex flex-wrap justify-center gap-4 mb-4">
+                      <a href="christian.muise@queensu.ca" class="p-2 rounded-lg bg-white/5 hover:bg-sky-500/20 transition-colors" title="Email"><i data-lucide="mail" class="w-5 h-5 text-sky-400"></i></a>
+                      <a href="https://github.com/haz" class="p-2 rounded-lg bg-white/5 hover:bg-sky-500/20 transition-colors" title="GitHub"><span class='text-sky-400'><i data-lucide="code" class="w-5 h-5"></i></span></a>
+                      <a href="https://scholar.google.com/citations?user=HUzuGj8AAAAJ&hl=en" class="p-2 rounded-lg bg-white/5 hover:bg-sky-500/20 transition-colors" title="Google Scholar"><i data-lucide="graduation-cap" class="w-5 h-5 text-sky-400"></i></a>
+                      <a href="https://www.linkedin.com/in/christianmuise/" class="p-2 rounded-lg bg-white/5 hover:bg-sky-500/20 transition-colors" title="LinkedIn"><i data-lucide="contact" class="w-5 h-5 text-sky-400"></i></a>
+                      <!-- Personal Website Icon -->
+                      <a href="http://www.haz.ca" target="_blank" class="p-2 rounded-lg bg-white/5 hover:bg-sky-500/20 transition-colors" title="Personal Website"><i data-lucide="globe" class="w-5 h-5 text-sky-400"></i></a>
+                    </div>
+                    <!-- Custom Arrow positioned centrally below contact icons -->
+                    <div class="mt-2 text-slate-500 transition-colors group-hover:text-sky-400">
+                        <i data-lucide="chevron-down" class="w-6 h-6 expand-icon transition-transform duration-300"></i>
+                    </div>
+                  </summary>
+                  <p class="mt-4 text-sm text-slate-400 px-4">I’m an Assistant Professor in the School of Computing at Queen’s University, where my research explores how intelligent systems can make decisions under uncertainty. My work combines ideas from automated planning, machine learning, and reasoning to better understand and model sequential decision-making. Before joining Queen’s, I completed my PhD at the University of Toronto, followed by postdoctoral research at the University of Melbourne and MIT. I also spent time in industry as a research scientist with the MIT-IBM Watson AI Lab. At Queen’s, I’m part of Ingenuity Labs and the Scotiabank Centre for Customer Analytics, serve as a Faculty Affiliate with the Vector Institute for Artificial Intelligence, and co-direct the Master’s of Digital Product Management program. I also serve on the ICAPS Council and the Editorial Board of the Artificial Intelligence Journal (AIJ).</p>
+                </details>
+            </div>
+        </div>
+    </section>
+
+    <!-- About/Summary Section -->
+    <section id="about" class="py-24 px-6">
+        <div class="max-w-4xl mx-auto">
+            <div class="text-center mb-16" data-aos="fade-up">
+                <h2 class="text-4xl font-bold mb-6">The Framework</h2>
+                <div class="h-1 w-20 bg-sky-500 mx-auto rounded-full"></div>
+            </div>
+            <div class="glass p-8 md:p-12 rounded-[2.5rem] space-y-8" data-aos="zoom-in">
+                <p class="text-lg md:text-xl text-slate-300 leading-relaxed">
+                    Large Language Models (LLMs) have demonstrated strong capabilities in structured code generation, yet their use in automated planning remains underdeveloped. 
+                </p>
+                <p class="text-lg text-slate-400 leading-relaxed">
+                    In planning, correctness is non-negotiable: syntactic validity, semantic consistency, and executability of valid plans are essential. This tutorial introduces <strong>Language-to-Plan (L2P)</strong>, a principled framework for generating, validating, and iteratively refining PDDL domain and problem models from natural language descriptions.
+                </p>
+                <div class="grid md:grid-cols-3 gap-6 pt-8">
+                    <div class="p-6 rounded-2xl bg-white/5 border border-white/5">
+                        <i data-lucide="check-circle" class="w-8 h-8 text-sky-400 mb-4"></i>
+                        <h4 class="font-bold mb-2">Generative</h4>
+                        <p class="text-sm text-slate-500">NL-to-PDDL pipelines</p>
+                    </div>
+                    <div class="p-6 rounded-2xl bg-white/5 border border-white/5">
+                        <i data-lucide="shield-check" class="w-8 h-8 text-indigo-400 mb-4"></i>
+                        <h4 class="font-bold mb-2">Validation</h4>
+                        <p class="text-sm text-slate-500">Iterative refinement loops</p>
+                    </div>
+                    <div class="p-6 rounded-2xl bg-white/5 border border-white/5">
+                        <i data-lucide="cpu" class="w-8 h-8 text-purple-400 mb-4"></i>
+                        <h4 class="font-bold mb-2">Integration</h4>
+                        <p class="text-sm text-slate-500">Python-based toolkit</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tutorial Outline Section -->
+    <section id="outline" class="py-24 px-6 bg-slate-900/30">
+        <div class="max-w-5xl mx-auto">
+            <div class="text-center mb-16" data-aos="fade-up">
+                <h2 class="text-4xl font-bold mb-4">Tutorial Schedule</h2>
+                <p class="text-slate-400">A three-part, hands-on learning experience</p>
+            </div>
+            <div class="space-y-8">
+                <!-- Part 1 -->
+                <div class="glass p-8 rounded-3xl border-l-4 border-l-sky-500" data-aos="fade-left">
+                    <div class="flex items-center gap-4 mb-6">
+                        <span class="text-4xl font-bold text-sky-500/30">01</span>
+                        <h3 class="text-2xl font-bold">Foundations (IN DEVELOPMENT)</h3>
+                    </div>
+                    <ul class="grid md:grid-cols-2 gap-4 text-slate-400">
+                        <li class="flex items-center gap-2"><i data-lucide="arrow-right" class="w-4 h-4 text-sky-500"></i> Why LLMs Should Not Replace Planners</li>
+                        <li class="flex items-center gap-2"><i data-lucide="arrow-right" class="w-4 h-4 text-sky-500"></i> Empirical reasoning limitations</li>
+                        <li class="flex items-center gap-2"><i data-lucide="arrow-right" class="w-4 h-4 text-sky-500"></i> Separation of modelling vs. solving</li>
+                        <li class="flex items-center gap-2"><i data-lucide="arrow-right" class="w-4 h-4 text-sky-500"></i> PDDL recap & failure modes</li>
+                    </ul>
+                </div>
+                <!-- Part 2 -->
+                <div class="glass p-8 rounded-3xl border-l-4 border-l-indigo-500" data-aos="fade-left" data-aos-delay="100">
+                    <div class="flex items-center gap-4 mb-6">
+                        <span class="text-4xl font-bold text-indigo-500/30">02</span>
+                        <h3 class="text-2xl font-bold">Live L2P Tutorial (IN DEVELOPMENT)</h3>
+                    </div>
+                    <p class="text-slate-400">A live demonstration walking through the L2P toolkit architecture and basic deployment.</p>
+                </div>
+                <!-- Part 3 -->
+                <div class="glass p-8 rounded-3xl border-l-4 border-l-purple-500" data-aos="fade-left" data-aos-delay="200">
+                    <div class="flex items-center gap-4 mb-6">
+                        <span class="text-4xl font-bold text-purple-500/30">03</span>
+                        <h3 class="text-2xl font-bold">Hands-On Session (IN DEVELOPMENT)</h3>
+                    </div>
+                    <p class="text-slate-400 mb-6">The core interactive component. Use your own local LLM or API keys to build pipelines.</p>
+                    <div class="grid md:grid-grid-scale-2 gap-4 bg-white/5 p-6 rounded-2xl">
+                        <div class="flex items-center gap-3 text-sm text-slate-300"><i data-lucide="terminal" class="w-4 h-4 text-purple-400"></i> Connect local LLM (Ollama)</li>
+                        <div class="flex items-center gap-3 text-sm text-slate-300"><i data-lucide="terminal" class="w-4 h-4 text-purple-400"></i> Generate entire domains/problems</li>
+                        <div class="flex items-center gap-3 text-sm text-slate-300"><i data-lucide="terminal" class="w-4 h-4 text-purple-400"></i> Create custom generation pipelines</li>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Demo & Code Section -->
+    <section id="demo" class="py-24 px-6">
+        <div class="max-w-6xl mx-auto">
+            <div class="grid md:grid-grid-cols-2 gap-12 items-center">
+                <div data-aos="fade-right">
+                    <h2 class="text-4xl font-bold mb-6">Visualizing the <span class="text-gradient">Pipeline</span></h2>
+                    <p class="text-slate-400 mb-8 text-lg">Watch how the L2P toolkit transforms unstructured natural language into executable PDDL models via a streamlined CLI experience.</p>
+                    <div class="glass aspect-video rounded-2xl overflow-hidden border border-white/10 flex items-center justify-center group cursor-pointer relative">
+                        <i data-lucide="play-circle" class="w-16 h-16 text-sky-500 group-hover:scale-110 transition-transform"></i>
+                        <span class="absolute bottom-4 left-4 text-xs text-slate-500">Video Demonstration (Coming soon!)</span>
+                    </div>
+                </div>
+                <div data-aos="fade-left" class="flex flex-col gap-4">
+                    <!-- Python Code Block -->
+                    <div class="glass rounded-2xl overflow-hidden border border-white/10">
+                        <div class="bg-slate-800 px-4 py-2 flex items-center gap-2">
+                            <div class="flex gap-1.5">
+                                <div class="w-3 h-3 rounded-full bg-red-500/50"></div>
+                                <div class="w-3 h-3 rounded-full bg-amber-500/50"></div>
+                                <div class="w-3 h-3 rounded-full bg-emerald-500/50"></div>
+                            </div>
+                            <span class="text-xs text-slate-500 ml-2 code-font">bw_generate_predicates.py</span>
+                        </div>
+                        <div class="p-5 code-font text-xs leading-relaxed overflow-x-auto">
+<pre><code><span class="text-purple-400">import</span> <span class="text-white">os</span>
+<span class="text-purple-400">from</span> <span class="text-white">l2p.llm.unified</span> <span class="text-purple-400">import</span> <span class="text-white">UnifiedLLM</span>
+<span class="text-purple-400">from</span> <span class="text-white">l2p.utils</span> <span class="text-purple-400">import</span> <span class="text-white">load_file</span>
+<span class="text-purple-400">from</span> <span class="text-white">l2p.domain_builder</span> <span class="text-purple-400">import</span> <span class="text-white">DomainBuilder</span>
+
+<span class="text-white">domain_builder = DomainBuilder()</span>
+
+<span class="text-white">api_key = os.environ.get(</span><span class="text-sky-400">'OPENAI_API_KEY'</span><span class="text-white">)</span>
+<span class="text-white">llm = UnifiedLLM(model=</span><span class="text-sky-400">"gpt-4o-mini"</span><span class="text-white">, api_key=api_key)</span>
+
+<span class="text-slate-500"># retrieve prompt information</span>
+<span class="text-white">base_path = </span><span class="text-sky-400">'tests/usage/prompts/domain/'</span>
+<span class="text-white">domain_desc = load_file(</span><span class="text-sky-400">f'{base_path}blocksworld_domain.txt'</span><span class="text-white">)</span>
+<span class="text-white">predicates_prompt = load_file(</span><span class="text-sky-400">f'{base_path}formalize_predicates.txt'</span><span class="text-white">)</span>
+<span class="text-white">types = load_file(</span><span class="text-sky-400">f'{base_path}types.json'</span><span class="text-white">)</span>
+<span class="text-white">action = load_file(</span><span class="text-sky-400">f'{base_path}action.json'</span><span class="text-white">)</span>
+
+<span class="text-slate-500"># extract predicates via LLM</span>
+<span class="text-white">predicates, llm_output, validation_info = domain_builder.formalize_predicates(</span>
+<span class="text-white">    model=llm,</span>
+<span class="text-white">    domain_desc=domain_desc,</span>
+<span class="text-white">    prompt_template=predicates_prompt,</span>
+<span class="text-white">    types=types</span>
+<span class="text-white">)</span>
+
+<span class="text-slate-500"># format key info into PDDL strings</span>
+<span class="text-white">predicate_str = </span><span class="text-sky-400">"\n"</span><span class="text-white">.join([pred[</span><span class="text-sky-400">"raw"</span><span class="text-white">].replace(</span><span class="text-sky-400">":"</span><span class="text-white">, </span><span class="text-sky-400">" ; "</span><span class="text-white">) </span><span class="text-purple-400">for</span> <span class="text-white">pred</span> <span class="text-purple-400">in</span> <span class="text-white">predicates])</span>
+
+<span class="text-purple-400">print</span><span class="text-white">(</span><span class="text-sky-400">f"PDDL domain predicates:\n{predicate_str}"</span><span class="text-white">)</span></code></pre>
+                        </div>
+                    </div>
+
+                    <!-- Output Terminal Block -->
+                    <div class="glass rounded-2xl overflow-hidden border border-white/10">
+                        <div class="bg-slate-800 px-4 py-2 flex items-center gap-2">
+                            <i data-lucide="terminal" class="w-4 h-4 text-slate-400"></i>
+                            <span class="text-xs text-slate-400 ml-1 code-font">Terminal Output</span>
+                        </div>
+                        <div class="p-5 code-font text-xs leading-relaxed overflow-x-auto bg-black/40">
+<pre><code><span class="text-slate-600">1  -------------------------------------------------------------------------------------</span>
+<span class="text-slate-600">2</span>  <span class="text-white font-bold">### OUTPUT</span>
+<span class="text-slate-600">3</span>  <span class="text-slate-300">-</span> <span class="text-purple-400">(holding ?a - arm ?b - block)</span> <span class="text-slate-500">; true if the arm ?a is currently holding the block ?b</span>
+<span class="text-slate-600">4</span>  <span class="text-slate-300">-</span> <span class="text-purple-400">(on_table ?b - block)</span> <span class="text-slate-500">; true if the block ?b is on the table</span>
+<span class="text-slate-600">5</span>  <span class="text-slate-300">-</span> <span class="text-purple-400">(clear ?b - block)</span> <span class="text-slate-500">; true if the block ?b is clear (no block on top of it)</span>
+<span class="text-slate-600">6</span>  <span class="text-slate-300">-</span> <span class="text-purple-400">(on_top ?b1 - block ?b2 - block)</span> <span class="text-slate-500">; true if the block ?b1 is on top of the block ?b2</span></code></pre>
+                        </div>
+                    </div>
+                    
+                    <p class="mt-2 text-sm text-slate-500 italic">Example of automated PDDL predicate generation using the L2P Python API.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Resources Section -->
+    <section id="resources" class="py-24 px-6 bg-slate-950/50">
+        <div class="max-w-5xl mx-auto text-center">
+            <h2 class="text-3xl font-extrabold mb-12" data-aos="fade-up">Other Resources</h2>
+            <div class="grid md:grid-cols-3 gap-6" data-aos="zoom-in">
+                <a href="https://aclanthology.org/2025.findings-acl.1291.pdf" target="_blank" class="glass p-8 rounded-3xl hover:border-sky-500/50 transition-all group">
+                    <i data-lucide="file-text" class="w-10 h-10 text-sky-400 mx-auto mb-4 group-hover:-translate-y-2 transition-transform"></i>
+                    <h3 class="font-bold mb-2">ACL Paper</h3>
+                    <p class="text-sm text-slate-500">The complete research findings</p>
+                </a>
+                <a href="https://github.com/AI-Planning/l2p" target="_blank" class="glass p-8 rounded-3xl hover:border-sky-500/50 transition-all group">
+                    <i data-lib-icon data-lucide="code" class="w-10 h-10 text-white mx-auto mb-4 group-hover:-translate-y-2 transition-transform"></i>
+                    <h3 class="font-bold mb-2">GitHub Repo</h3>
+                    <p class="text-sm text-slate-500">Access the L2P toolkit</p>
+                </a>
+                <a href="https://marcustantakoun.github.io/l2p.github.io/" target="_blank" class="glass p-8 rounded-3xl hover:border-sky-500/50 transition-all group">
+                    <i data-lucide="book-open" class="w-10 h-10 text-sky-400 mx-auto mb-4 group-hover:-translate-y-2 transition-transform"></i>
+                    <h3 class="font-bold mb-2">Documentation</h3>
+                    <p class="text-sm text-slate-500">Detailed usage guides</p>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-12 px-6 border-t border-white/5 text-center text-slate-500 text-sm">
+        <div class="max-w-7xl mx-auto">
+            <p class="mb-4">Proposed for ICAPS-26: Generative AI Techniques for Planning and Scheduling</p>
+            <div class="flex justify-center gap-6">
+                <a href="#" class="hover:text-white transition-colors">Privacy</a>
+                <a href="#" class="hover:text-white transition-colors">Contact</a>
+                <a href="#" class="hover:text-white transition-colors">All Rights Reserved &copy; 2026</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scroll to Top Button -->
+    <button id="scrollToTopBtn" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="fixed bottom-8 right-8 p-3 rounded-full bg-sky-500/20 text-sky-400 border border-sky-500/30 hover:bg-sky-500 hover:text-white transition-all duration-300 z-50 opacity-0 pointer-events-none translate-y-4">
+        <i data-lucide="arrow-up" class="w-6 h-6"></i>
+    </button>
+
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        // Initialize animations
+        AOS.init({
+            duration: 800,
+            once: true,
+            easing: 'ease-out-quad'
+        });
+
+        // Initialize icons
+        lucide.createIcons();
+
+        // Scroll to Top functionality
+        const scrollToTopBtn = document.getElementById("scrollToTopBtn");
+        
+        window.addEventListener("scroll", () => {
+            if (window.scrollY > 300) {
+                // Show button when scrolled down
+                scrollToTopBtn.classList.remove("opacity-0", "pointer-events-none", "translate-y-4");
+                scrollToTopBtn.classList.add("opacity-100", "translate-y-0");
+            } else {
+                // Hide button when near top
+                scrollToTopBtn.classList.add("opacity-0", "pointer-events-none", "translate-y-4");
+                scrollToTopBtn.classList.remove("opacity-100", "translate-y-0");
+            }
+        });
+    </script>
+</body>
+</html>
