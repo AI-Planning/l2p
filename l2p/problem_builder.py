@@ -10,12 +10,15 @@ for how to structurally prompt LLMs so they are compatible with class function p
 """
 
 import time
-from l2p.llm import BaseLLM, require_llm
-from l2p.utils import *
-from l2p.utils.pddl_format import *
-from l2p.utils.pddl_types import DomainDetails, ProblemDetails
+from typing import Optional, Set, TypeVar, Union, Type
 
-T = TypeVar('T')
+from l2p.llm import BaseLLM, require_llm
+from l2p.utils.pddl_types import DomainDetails, ProblemDetails
+from l2p.utils.pddl_format import *
+from l2p.utils.pddl_prompt import DEF_PROBLEM_PROMPTS, build_ctx, safe_format
+from l2p.utils.pddl_parser import parse_xml_tags, parse_component
+
+T = TypeVar('T', bound=BaseModel)
 
 class ProblemBuilder:
     def __init__(
@@ -62,67 +65,79 @@ class ProblemBuilder:
     # ---------------------------------------------------------------------------
 
     @require_llm
-    def formalize_problem(
-            self,    
-            model: BaseLLM,
-            prompt_template: str,
-            max_retries: int = 3,
-            **ctx_kwargs
-        ) -> tuple[ProblemDetails, str, tuple[bool,str]]:
+    def formalize_component(
+        self,
+        model: BaseLLM,
+        component_class: Union[List[Type[T]], Type[T]],
+        prompt_template: Optional[str] = None,
+        problem_desc: Optional[str] = None,
+        max_retries: int = 3,
+        **ctx_kwargs
+    ):
         """
-        Formalizes a whole PDDL problem (:problem) using BaseLLM.
+        Formalizes L2P Domain components using BaseLLM
+        Args:
+            model (BaseLLM):
+            prompt_template (str):
+            component_class (List[Type[T]] | Type[T]):
+            description (Optional[str] = None):
+            max_retries (int = 3):
+            **ctx_kwargs:
         """
-        pass
+        classes = component_class if isinstance(component_class, list) else [component_class]
 
-    @require_llm
-    def formalize_objects(
-            self,
-            model: BaseLLM,
-            prompt_template: str,
-            max_retries: int = 3,
-            **ctx_kwargs
-        ) -> tuple[list[PDDLObject], str, tuple[bool,str]]:
-        pass
+        if not prompt_template:
+            if len(classes) > 1:
+                prompt_template = getattr(DEF_PROBLEM_PROMPTS, "combined", None)
+            else:
+                cls = classes[0]
+                tag = cls.tag[0] if cls.tag else cls.__name__
+                prompt_template = getattr(DEF_PROBLEM_PROMPTS, tag, 
+                                          getattr(DEF_PROBLEM_PROMPTS, cls.__name__, None))
 
-    @require_llm
-    def formalize_initial_states(
-            self,
-            model: BaseLLM,
-            prompt_template: str,
-            max_retries: int = 3,
-            **ctx_kwargs
-        ) -> tuple[InitialState, str, tuple[bool,str]]:
-        pass
+            if not prompt_template:
+                raise ValueError(f"[ERROR] No prompt template provided and no default found for {classes}")
 
-    @require_llm
-    def formalize_goal_states(
-            self,
-            model: BaseLLM,
-            prompt_template: str,
-            max_retries: int = 3,
-            **ctx_kwargs
-        ) -> tuple[GoalState, str, tuple[bool,str]]:
-        pass
+        context = build_ctx(**ctx_kwargs)
+        prompt = safe_format(
+            template=prompt_template,
+            problem_desc=problem_desc,
+            context_injection=context
+        )
+        
+        for attempt in range(max_retries):
+            try:
+                model.reset_tokens()
+                llm_output = model.query(prompt=prompt)
+                
+                extracted_results = {}
 
-    @require_llm
-    def formalize_constraints(
-            self,
-            model: BaseLLM,
-            prompt_template: str,
-            max_retries: int = 3,
-            **ctx_kwargs
-        ) -> tuple[list[Constraint], str, tuple[bool,str]]:
-        pass
+                for cls in classes:
+                    raw_blocks, matched_tag = None, None
 
-    @require_llm
-    def formalize_metric(
-            self,
-            model: BaseLLM,
-            prompt_template: str,
-            max_retries: int = 3,
-            **ctx_kwargs
-        ) -> tuple[Metric, str, tuple[bool,str]]:
-        pass
+                    for t in cls.tag:
+                        raw_blocks = parse_xml_tags(llm_output=llm_output,tag_name=t)
+                        if raw_blocks:
+                            matched_tag = t
+                            break
+
+                    if not raw_blocks:
+                        raise ValueError(f"[ERROR] Missing expected XML block in LLM output. Looked for: {cls.tag}")
+                    
+                    parsed_items = parse_component(raw_blocks=raw_blocks, model_class=cls, tag_name=matched_tag)
+                    extracted_results[cls] = parsed_items
+
+                returned_classes = extracted_results if isinstance(component_class, list) else extracted_results[classes[0]]
+                return returned_classes, llm_output
+
+            except Exception as e:
+                print(
+                    f"Error encountered during attempt {attempt + 1}/{max_retries}: {e}. "
+                    f"\nLLM Output: \n\n{llm_output if 'llm_output' in locals() else 'None'}\n\n Retrying..."
+                )
+                time.sleep(2)  # add a delay before retrying
+
+        raise RuntimeError("Max retries exceeded. Failed to extract types.")
 
 
     def generate_problem(self, problem_details: ProblemDetails) -> str:

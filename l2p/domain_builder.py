@@ -9,11 +9,10 @@ import time
 from typing import Optional, Set, TypeVar, Union, Type
 
 from l2p.llm import BaseLLM, require_llm
-
-from l2p.utils.pddl_types import *
+from l2p.utils.pddl_types import DomainDetails, ProblemDetails
 from l2p.utils.pddl_format import *
-from l2p.utils.pddl_prompt import DEF_DOMAIN_PROMPTS, DEF_PROBLEM_PROMPTS, build_ctx, safe_format
-from l2p.utils.pddl_parser import parse_xml_tags, parse_list, parse_element
+from l2p.utils.pddl_prompt import DEF_DOMAIN_PROMPTS, build_ctx, safe_format
+from l2p.utils.pddl_parser import parse_xml_tags, parse_component
 
 T = TypeVar('T', bound=BaseModel)
 
@@ -50,9 +49,9 @@ class DomainBuilder:
     def formalize_component(
         self,
         model: BaseLLM,
-        prompt_template: str,
         component_class: Union[List[Type[T]], Type[T]],
-        description: Optional[str] = None,
+        prompt_template: Optional[str] = None,
+        domain_desc: Optional[str] = None,
         max_retries: int = 3,
         **ctx_kwargs
     ):
@@ -67,11 +66,23 @@ class DomainBuilder:
             **ctx_kwargs:
         """
         classes = component_class if isinstance(component_class, list) else [component_class]
-        
+
+        if not prompt_template:
+            if len(classes) > 1:
+                prompt_template = getattr(DEF_DOMAIN_PROMPTS, "combined", None)
+            else:
+                cls = classes[0]
+                tag = cls.tag[0] if cls.tag else cls.__name__
+                prompt_template = getattr(DEF_DOMAIN_PROMPTS, tag, 
+                                          getattr(DEF_DOMAIN_PROMPTS, cls.__name__, None))
+
+            if not prompt_template:
+                raise ValueError(f"[ERROR] No prompt template provided and no default found for {classes}")
+
         context = build_ctx(**ctx_kwargs)
         prompt = safe_format(
             template=prompt_template,
-            domain_desc=description,
+            domain_desc=domain_desc,
             context_injection=context
         )
         
@@ -79,11 +90,11 @@ class DomainBuilder:
             try:
                 model.reset_tokens()
                 llm_output = model.query(prompt=prompt)
+                
                 extracted_results = {}
 
                 for cls in classes:
-                    raw_blocks = None
-                    matched_tag = None
+                    raw_blocks, matched_tag = None, None
 
                     for t in cls.tag:
                         raw_blocks = parse_xml_tags(llm_output=llm_output,tag_name=t)
@@ -94,7 +105,7 @@ class DomainBuilder:
                     if not raw_blocks:
                         raise ValueError(f"[ERROR] Missing expected XML block in LLM output. Looked for: {cls.tag}")
                     
-                    parsed_items = parse_list(raw_blocks=raw_blocks, model_class=cls, tag_name=matched_tag)
+                    parsed_items = parse_component(raw_blocks=raw_blocks, model_class=cls, tag_name=matched_tag)
                     extracted_results[cls] = parsed_items
 
                 returned_classes = extracted_results if isinstance(component_class, list) else extracted_results[classes[0]]
@@ -518,36 +529,6 @@ class DomainBuilder:
                 Defaults to False.
         """
         self._set_component("constraint", constraints, append=append)
-
-    def set_components(self, extracted_dict: dict, append: bool = False):
-        """
-        Takes a dictionary of components (e.g., output from formalize_components()) 
-        and automatically assigns them to the correct fields in DomainDetails.
-        
-        Args:
-            extracted_dict (dict): Mapping of Pydantic Class -> List of instances.
-            append (bool): If True, appends to existing lists. If False, overwrites.
-        """
-        class_to_field_mapping = {
-            Requirement: "requirements",
-            PDDLType: "types",
-            Constant: "constants",
-            Predicate: "predicates",
-            Function: "functions",
-            Constraint: "constraint",
-            DerivedPredicate: "derived_predicates",
-            Action: "actions",
-            DurativeAction: "durative_actions",
-            Event: "events",
-            Process: "processes"
-        }
-
-        for component_class, items_list in extracted_dict.items():
-            if component_class in class_to_field_mapping:
-                field_name = class_to_field_mapping[component_class]
-                self._set_component(field_name=field_name, component=items_list, append=append)
-            else:
-                print(f"[WARNING] Unrecognized component class: {component_class}. Skipping assignment.")
 
     # ---------------------------------------------------------------------------
     # PDDL DOMAIN DISPLAY FUNCTIONS

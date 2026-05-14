@@ -20,7 +20,7 @@ def parse_xml_tags(llm_output: str, tag_name: str) -> List[str]:
     return [match.strip() for match in matches]
 
 
-def parse_list(raw_blocks: List[str], model_class: PyType[T], tag_name: str) -> List[T]:
+def parse_component(raw_blocks: List[str], model_class: PyType[T], tag_name: str) -> List[T]:
     """
     Iterates through raw text blocks and attempts to parse them into a List of Pydantic models.
     Returns the first successfully parsed list.
