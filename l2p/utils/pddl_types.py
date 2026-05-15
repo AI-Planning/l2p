@@ -474,7 +474,7 @@ class DomainDetails(BaseModel):
         "constraints": [...]
     }
     """
-    tag: ClassVar[str] = "domain"
+    tag: ClassVar[tuple] = ("domain", "environment")
     name: str
     desc: Optional[str] = None
     domain_pddl: Optional[str] = None # optional raw PDDL string for whole domain
@@ -613,7 +613,7 @@ class ProblemDetails(BaseModel):
         "goal_state": {"conditions": [...]}
     }
     """
-    tag: ClassVar[str] = "problem"
+    tag: ClassVar[tuple] = ("problem", "task")
     name: str
     domain_name: str
     desc: Optional[str] = None
