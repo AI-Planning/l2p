@@ -116,12 +116,17 @@
     </section>
 
         <!-- Authors Section -->
+        <!-- Authors Section -->
     <section id="authors" class="py-20 px-6 bg-slate-950/50">
         <div class="max-w-7xl mx-auto">
-            <h2 class="text-sm font-bold text-sky-500 uppercase tracking-[0.3em] text-center mb-12" data-aos="fade-up">The Presenters</h2>
-            <div class="grid md:grid-cols-2 gap-8">
+            <h2 class="text-sm font-bold text-sky-500 uppercase tracking-[0.3em] text-center mb-12" data-aos="fade-up">Presenter</h2>
+            
+            <!-- CHANGED: Replaced the 2-column grid with a centered, max-width container -->
+            <div class="max-w-3xl mx-auto">
+                
                 <!-- Author 1 -->
-                <details class="glass p-8 rounded-3xl flex flex-col items-center text-center group" data-aos="fade-right">
+                <!-- CHANGED: Updated animation to fade-up instead of fade-right -->
+                <details class="glass p-8 rounded-3xl flex flex-col items-center text-center group" data-aos="fade-up">
                   <summary class="flex flex-col items-center cursor-pointer w-full">
                     <div class="w-24 h-24 rounded-full bg-gradient-to-br from-sky-400 to-indigo-500 p-1 mb-6 group-hover:rotate-6 transition-transform">
                       <div class="w-full h-full rounded-full bg-slate-900 flex items-center justify-center overflow-hidden">
@@ -146,31 +151,6 @@
                   <p class="mt-4 text-sm text-slate-400 px-4">I am currently a second-year PhD computing student, co-supervised by Professors Christian Muise and Xiaodan Zhu, at Queen’s University; previously completed my undergrad at Queen’s with a Bachelor’s of Computing (BCPH) in Artificial Intelligence. My research is interdisciplinary between NLP and Automated Planning. Particularly, involving the exploration of Large Language Models' (LLMs) powerful generative capabilities to complement Automated Planning systems. Outside of academics, I am an active participant in Kingston’s local music scene with a primary focus on playing bass and occasional dabbling in keys and guitar.</p>
                 </details>
                 
-                <!-- Author 2 -->
-                <details class="glass p-8 rounded-3xl flex flex-col items-center text-center group" data-aos="fade-left">
-                  <summary class="flex flex-col items-center cursor-pointer w-full">
-                    <div class="w-24 h-24 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 p-1 mb-6 group-hover:-rotate-6 transition-transform">
-                      <div class="w-full h-full rounded-full bg-slate-900 flex items-center justify-center overflow-hidden">
-                        <img src="images/christian.muise.png" alt="Christian Muise" class="w-full h-full object-cover">
-                      </div>
-                    </div>
-                    <h3 class="text-2xl font-bold text-white mb-2">Christian Muise</h3>
-                    <p class="text-slate-400 text-sm mb-6">Associate Professor, Queen's University | Pronouns: he/him</p>
-                    <div class="flex flex-wrap justify-center gap-4 mb-4">
-                      <a href="christian.muise@queensu.ca" class="p-2 rounded-lg bg-white/5 hover:bg-sky-500/20 transition-colors" title="Email"><i data-lucide="mail" class="w-5 h-5 text-sky-400"></i></a>
-                      <a href="https://github.com/haz" class="p-2 rounded-lg bg-white/5 hover:bg-sky-500/20 transition-colors" title="GitHub"><span class='text-sky-400'><i data-lucide="code" class="w-5 h-5"></i></span></a>
-                      <a href="https://scholar.google.com/citations?user=HUzuGj8AAAAJ&hl=en" class="p-2 rounded-lg bg-white/5 hover:bg-sky-500/20 transition-colors" title="Google Scholar"><i data-lucide="graduation-cap" class="w-5 h-5 text-sky-400"></i></a>
-                      <a href="https://www.linkedin.com/in/christianmuise/" class="p-2 rounded-lg bg-white/5 hover:bg-sky-500/20 transition-colors" title="LinkedIn"><i data-lucide="contact" class="w-5 h-5 text-sky-400"></i></a>
-                      <!-- Personal Website Icon -->
-                      <a href="http://www.haz.ca" target="_blank" class="p-2 rounded-lg bg-white/5 hover:bg-sky-500/20 transition-colors" title="Personal Website"><i data-lucide="globe" class="w-5 h-5 text-sky-400"></i></a>
-                    </div>
-                    <!-- Custom Arrow positioned centrally below contact icons -->
-                    <div class="mt-2 text-slate-500 transition-colors group-hover:text-sky-400">
-                        <i data-lucide="chevron-down" class="w-6 h-6 expand-icon transition-transform duration-300"></i>
-                    </div>
-                  </summary>
-                  <p class="mt-4 text-sm text-slate-400 px-4">I’m an Assistant Professor in the School of Computing at Queen’s University, where my research explores how intelligent systems can make decisions under uncertainty. My work combines ideas from automated planning, machine learning, and reasoning to better understand and model sequential decision-making. Before joining Queen’s, I completed my PhD at the University of Toronto, followed by postdoctoral research at the University of Melbourne and MIT. I also spent time in industry as a research scientist with the MIT-IBM Watson AI Lab. At Queen’s, I’m part of Ingenuity Labs and the Scotiabank Centre for Customer Analytics, serve as a Faculty Affiliate with the Vector Institute for Artificial Intelligence, and co-direct the Master’s of Digital Product Management program. I also serve on the ICAPS Council and the Editorial Board of the Artificial Intelligence Journal (AIJ).</p>
-                </details>
             </div>
         </div>
     </section>
@@ -215,7 +195,11 @@
         <div class="max-w-5xl mx-auto">
             <div class="text-center mb-16" data-aos="fade-up">
                 <h2 class="text-4xl font-bold mb-4">Tutorial Schedule</h2>
-                <p class="text-slate-400">A three-part, hands-on learning experience</p>
+                <p class="text-slate-400 text-lg">A three-part tutorial including a hands-on interactive session.</p>
+                <p class="text-slate-500 text-sm mt-2 flex items-center justify-center gap-2">
+                    <i data-lucide="info" class="w-4 h-4"></i>
+                    Please bring your own LLM API keys or capable local machine (to run local models) to participate.
+                </p>
             </div>
             <div class="space-y-8">
                 <!-- Part 1 -->
@@ -341,8 +325,8 @@
             <div class="grid md:grid-cols-3 gap-6" data-aos="zoom-in">
                 <a href="https://aclanthology.org/2025.findings-acl.1291.pdf" target="_blank" class="glass p-8 rounded-3xl hover:border-sky-500/50 transition-all group">
                     <i data-lucide="file-text" class="w-10 h-10 text-sky-400 mx-auto mb-4 group-hover:-translate-y-2 transition-transform"></i>
-                    <h3 class="font-bold mb-2">ACL Paper</h3>
-                    <p class="text-sm text-slate-500">The complete research findings</p>
+                    <h3 class="font-bold mb-2">Survey Paper</h3>
+                    <p class="text-sm text-slate-500">Survey on LLM-AP-Formalisms</p>
                 </a>
                 <a href="https://github.com/AI-Planning/l2p" target="_blank" class="glass p-8 rounded-3xl hover:border-sky-500/50 transition-all group">
                     <i data-lib-icon data-lucide="code" class="w-10 h-10 text-white mx-auto mb-4 group-hover:-translate-y-2 transition-transform"></i>
