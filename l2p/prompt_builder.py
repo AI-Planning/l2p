@@ -26,9 +26,7 @@ Standardized format prompt.md:
 ## TASK
 [...]
 
-<existing_context>
-{PLACEHOLDER}
-</existing_context>
+{context}
 ```
 """
 
@@ -43,8 +41,7 @@ class PromptBuilder:
             format: Optional[str] = None,
             rules: Optional[Union[str, List[str]]] = None,
             examples: Optional[List[str]] = None,
-            task: Optional[str] = None,
-            placeholders: Optional[List[str]] = None
+            task: Optional[str] = None
             ):
         
         self.role = role
@@ -53,7 +50,6 @@ class PromptBuilder:
 
         self.rules: List[str] = self._parse_to_list(rules)
         self.examples: List[str] = examples or []
-        self.placeholders: List[str] = placeholders or []
 
     def _parse_to_list(self, item: Optional[Union[str, List[str]]]) -> List[str]:
         """Helper function to allow users to pass either a single string or a list."""
@@ -105,19 +101,6 @@ class PromptBuilder:
         self.examples.append(example)
         return self
     
-    def add_placeholder(self, header: str, placeholder: str) -> 'PromptBuilder':
-        """
-        Adds a dynamically replaceable block inside the `<existing_context>` XML tags.
-        
-        Args:
-            header (str): The XML tag name to wrap the content in (e.g., 'types' -> `<types>`).
-            placeholder (str): The literal keyword that will be targeted by `.format(**kwargs)`
-                               later. Do NOT include curly braces here (e.g., pass 'types', 
-                               not '{types}').
-        """
-        self.placeholders.append(f"<{header}>\n{{{placeholder}}}\n</{header}>")
-        return self
-    
     def set_task(self, task_str: str) -> 'PromptBuilder':
         """
         Sets the `## TASK` section of the prompt.
@@ -154,10 +137,8 @@ class PromptBuilder:
         if self.task:
             sections.append(f"## TASK\n{self.task}")
 
-        if self.placeholders:
-            placeholders_str = "\n\n".join(self.placeholders).strip()
-            context_block = f"<existing_context>\n{placeholders_str}\n</existing_context>"
-            sections.append(context_block)
+        # inject context placeholder
+        sections.append(f"{{context}}")
 
         raw_prompt = "\n\n".join(sections).strip()
 

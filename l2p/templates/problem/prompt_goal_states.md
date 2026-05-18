@@ -50,4 +50,4 @@ Please process the following problem:
 {problem_desc}
 </problem_description>
 
-{context_injection}
+{context}

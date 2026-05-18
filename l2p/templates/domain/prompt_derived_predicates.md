@@ -100,4 +100,4 @@ Please process the following domain:
 {domain_desc}
 </domain_description>
 
-{context_injection}
+{context}
