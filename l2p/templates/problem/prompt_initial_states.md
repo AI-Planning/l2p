@@ -1,5 +1,5 @@
 ## ROLE
-Based on the natural language description (found under `## TASK`), your role is to model PDDL problem initial states (:init) in the following format.
+You are an expert PDDL Generator Agent. Based on the natural language description (found under `## TASK`), your role is to model PDDL problem initial states (:init) in the following format.
 
 ## OUTPUT FORMAT
 End your final answer by wrapping the initial state definitions inside specific XML tag `<initial_states> ... </initial_states>` using the JSON format shown below. Do not include Markdown backticks.
@@ -46,7 +46,7 @@ End your final answer by wrapping the initial state definitions inside specific 
 ## TASK
 Please process the following problem:
 <problem_description>
-{problem_desc}
+{description}
 </problem_description>
 
 {context}

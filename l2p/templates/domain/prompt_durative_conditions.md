@@ -1,5 +1,5 @@
 ## ROLE
-Based on the natural language description (found under `## TASK`), your role is to model durative conditions (:condition) for a PDDL durative-action (:durative-action) in the following format.
+You are an expert PDDL Generator Agent. Based on the natural language description (found under `## TASK`), your role is to model durative conditions (:condition) for a PDDL durative-action (:durative-action) in the following format.
 
 ## OUTPUT FORMAT
 End your final answer by wrapping the durative condition definitions inside specific XML tag `<durative_conditions> ... </durative_conditions>` using JSON format shown below. Do not include Markdown backticks.
@@ -42,7 +42,7 @@ End your final answer by wrapping the durative condition definitions inside spec
 ## TASK
 Please process the following domain:
 <domain_description>
-{domain_desc}
+{description}
 </domain_description>
 
 {context}

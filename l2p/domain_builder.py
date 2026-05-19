@@ -9,10 +9,10 @@ import time
 from typing import Optional, Set, Type, TypeVar, Union
 
 from l2p.llm import BaseLLM, require_llm
-from l2p.utils.pddl_types import DomainDetails, ProblemDetails
 from l2p.utils.pddl_format import *
 from l2p.utils.pddl_prompt import DEF_DOMAIN_PROMPTS, build_ctx, safe_format
 from l2p.utils.pddl_parser import parse_xml_tags, parse_component
+from l2p.utils.pddl_types import DomainDetails, ProblemDetails
 
 T = TypeVar('T', bound=BaseModel)
 
@@ -51,7 +51,7 @@ class DomainBuilder:
         model: BaseLLM,
         component_class: Union[List[Type[T]], Type[T]],
         prompt_template: Optional[str] = None,
-        domain_desc: Optional[str] = None,
+        description: Optional[str] = None,
         max_retries: int = 3,
         **ctx_kwargs
     ) -> tuple[Dict[Type[BaseModel], List[BaseModel]], str]:
@@ -68,7 +68,7 @@ class DomainBuilder:
                 defining the expected PDDL structures to extract.
             prompt_template (str = None): Query prompt template. If None, the method will 
                 attempt to auto-detect the correct default template based on the component class.
-            domain_desc (str = None): Natural language description of the PDDL domain to guide the LLM.
+            description (str = None): Natural language description of the PDDL domain to guide the LLM.
             max_retries (int = 3): The maximum number of retry attempts if the LLM output is malformed.
             **ctx_kwargs: Additional context variables to inject into the prompt template 
                 (e.g., existing list[Type], list[Predicate]).
@@ -106,7 +106,7 @@ class DomainBuilder:
         # inject context in placeholders
         prompt = safe_format(
             template=prompt_template,
-            domain_desc=domain_desc,
+            description=description,
             context=build_ctx(**ctx_kwargs)
         )
         
@@ -138,7 +138,7 @@ class DomainBuilder:
                 )
                 time.sleep(2)  # add a delay before retrying
 
-        raise RuntimeError("Max retries exceeded. Failed to extract types.")
+        raise RuntimeError("Max retries exceeded. Failed to extract component(s).")
     
     
     def generate_requirements(
@@ -167,9 +167,8 @@ class DomainBuilder:
             if problem_details.constraint:
                 reqs.add(":constraints")
 
-            for fact in problem_details.initial_state:
-                if isinstance(fact, dict) and "time" in fact:
-                    reqs.add(":timed-initial-literals")
+            if problem_details.initial_state.timed_facts:
+                reqs.add(":timed-initial-literals")
 
             if problem_details.metric:
                 if "is-violated" in problem_details.metric.expression:
@@ -263,7 +262,7 @@ class DomainBuilder:
         if problem_details:
             if problem_details.goal_state:
                 check_logical_condition(problem_details.goal_state)
-            for constraint in problem_details.constraints:
+            for constraint in problem_details.constraint:
                 check_logical_condition(constraint.condition)
 
         # handle Quantified Preconditions
@@ -407,14 +406,14 @@ class DomainBuilder:
         else:
             self.domain_details.name = "domain-placeholder"
         
-    def set_domain_desc(self, domain_desc: str = None):
+    def set_domain_desc(self, description: str = None):
         """
         Sets PDDL domain description for current specification
         Args:
-            domain_desc (str = None): Description for domain.
+            description (str = None): Description for domain.
         """
-        if domain_desc:
-            self.domain_details.desc = domain_desc
+        if description:
+            self.domain_details.desc = description
         else:
             return
         

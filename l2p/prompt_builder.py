@@ -137,7 +137,8 @@ class PromptBuilder:
         if self.task:
             sections.append(f"## TASK\n{self.task}")
 
-        # inject context placeholder
+        # inject context placeholders
+        sections.append(f"{{description}}")
         sections.append(f"{{context}}")
 
         raw_prompt = "\n\n".join(sections).strip()

@@ -1,5 +1,5 @@
 ## ROLE
-Based on the natural language description (found under `## TASK`), your role is to model an entire PDDL problem instance in the following format.
+You are an expert PDDL Generator Agent. Based on the natural language description (found under `## TASK`), your role is to model an entire PDDL problem instance in the following format.
 
 ## OUTPUT FORMAT
 End your final answer by wrapping the PDDL problem definitions inside specific XML tag `<problem> ... </problem>` using the JSON format shown below. Do not include Markdown backticks.
@@ -121,7 +121,7 @@ When populating the initial state facts, timed facts, goal conditions, and const
 ## TASK
 Please process the following problem:
 <problem_description>
-{problem_desc}
+{description}
 </problem_description>
 
 {context}

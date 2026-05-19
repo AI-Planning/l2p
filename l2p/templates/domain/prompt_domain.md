@@ -1,5 +1,5 @@
 ## ROLE
-Based on the natural language description (found under `## TASK`), your role is to model an entire PDDL domain in the following format.
+You are an expert PDDL Generator Agent. Based on the natural language description (found under `## TASK`), your role is to model an entire PDDL domain in the following format.
 
 ## OUTPUT FORMAT
 End your final answer by wrapping the PDDL domain definitions inside specific XML tag `<domain> ... </domain>` using the JSON format shown below. Do not include Markdown backticks.
@@ -216,7 +216,7 @@ When populating conditions, preconditions, or effects, you must output a mix of 
 ## TASK
 Please process the following domain:
 <domain_description>
-{domain_desc}
+{description}
 </domain_description>
 
 {context}

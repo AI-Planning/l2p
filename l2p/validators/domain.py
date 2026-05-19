@@ -82,7 +82,8 @@ def _check_variables(item: Any, allowed_vars: Set[str], result: ValidationResult
         local_vars = set(allowed_vars)
         
         # PDDL 'forall' and 'exists' introduce new local parameters
-        if item.get("operator") in ["forall", "exists"] and "parameters" in item:
+        is_quantifier = item.get("quantifier") in ["forall", "exists"]
+        if is_quantifier and "parameters" in item:
             for p in item["parameters"]:
                 if isinstance(p, dict) and "variable" in p:
                     local_vars.add(p["variable"])
@@ -439,8 +440,9 @@ def _check_variables_and_types(item: Any, var_types: Dict[str, str], sem: Domain
     elif isinstance(item, dict):
         local_vars = dict(var_types)
         
-        # Scope resolution for forall/exists
-        if item.get("operator") in ["forall", "exists"] and "parameters" in item:
+        # Scope resolution for forall/exists (supports both "operator" and "quantifier" keys)
+        is_quantifier = item.get("operator") in ["forall", "exists"] or item.get("quantifier") in ["forall", "exists"]
+        if is_quantifier and "parameters" in item:
             for p in item["parameters"]:
                 v = p.get("variable") if isinstance(p, dict) else getattr(p, "variable", None)
                 t = p.get("type") if isinstance(p, dict) else getattr(p, "type", "object")

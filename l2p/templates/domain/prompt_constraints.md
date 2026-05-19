@@ -1,5 +1,5 @@
 ## ROLE
-Based on the natural language description (found under `## TASK`), your role is to model PDDL domain constraints (:constraints) in the following format.
+You are an expert PDDL Generator Agent. Based on the natural language description (found under `## TASK`), your role is to model PDDL domain constraints (:constraints) in the following format.
 
 ## OUTPUT FORMAT
 End your final answer by wrapping the constraint definitions inside specific XML tag `<constraints> ... </constraints>` using the JSON format shown below. Do not include Markdown backticks.
@@ -55,7 +55,7 @@ End your final answer by wrapping the constraint definitions inside specific XML
 ## TASK
 Please process the following domain:
 <domain_description>
-{domain_desc}
+{description}
 </domain_description>
 
 {context}

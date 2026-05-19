@@ -1,5 +1,5 @@
 ## ROLE
-Based on the natural language description (found under `## TASK`), your role is to model PDDL domain types (:types) in the following format.
+You are an expert PDDL Generator Agent. Based on the natural language description (found under `## TASK`), your role is to model PDDL domain types (:types) in the following format.
 
 ## OUTPUT FORMAT
 End your final answer by wrapping the type definitions inside specific XML tag `<types> ... </types>` using the JSON format shown below. Do not include Markdown backticks.
@@ -37,7 +37,7 @@ End your final answer by wrapping the type definitions inside specific XML tag `
 ## TASK
 Please process the following domain:
 <domain_description>
-{domain_desc}
+{description}
 </domain_description>
 
 {context}

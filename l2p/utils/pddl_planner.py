@@ -8,7 +8,7 @@ to produce plans from generated domain and problem PDDL specifications via LLMs.
 
 import subprocess, re
 
-# Define the exit codes
+# define the exit codes
 SUCCESS = 0
 SEARCH_PLAN_FOUND_AND_OUT_OF_MEMORY = 1
 SEARCH_PLAN_FOUND_AND_OUT_OF_TIME = 2
@@ -66,20 +66,20 @@ class FastDownward:
             exitcodes = [result.returncode]
 
             if result.returncode == SUCCESS:
-                # Planning succeeded
+                # planning succeeded
                 print("Planning succeeded!")
                 print(
                     "All run components successfully terminated (translator: completed, search: found a plan, validate: validated a plan)"
                 )
 
-                # Extract the plan steps from the output
+                # extract the plan steps from the output
                 plan_output = self.extract_plan_steps(result.stdout)
                 if plan_output:
                     return True, plan_output
                 else:
                     return False, "No plan found in the output."
             else:
-                # Planning failed
+                # planning failed
                 exitcode, plan_found = self.generate_portfolio_exitcode(exitcodes)
                 return False, self.handle_error(exitcode, plan_found)
         except Exception as e:
@@ -148,7 +148,7 @@ class FastDownward:
             code for code in exitcodes if self.is_unrecoverable(code)
         ]
 
-        # There are unrecoverable exit codes.
+        # there are unrecoverable exit codes.
         if unrecoverable_codes:
             print("Error: Unexpected exit codes: {}".format(unrecoverable_codes))
             if len(unrecoverable_codes) == 1:
@@ -156,7 +156,7 @@ class FastDownward:
             else:
                 return (SEARCH_CRITICAL_ERROR, False)
 
-        # At least one plan was found.
+        # at least one plan was found.
         if SUCCESS in exitcodes:
             if SEARCH_OUT_OF_MEMORY in exitcodes and SEARCH_OUT_OF_TIME in exitcodes:
                 return (SEARCH_PLAN_FOUND_AND_OUT_OF_MEMORY_AND_TIME, True)
@@ -167,12 +167,12 @@ class FastDownward:
             else:
                 return (SUCCESS, True)
 
-        # A config proved unsolvability or did not find a plan.
+        # a config proved unsolvability or did not find a plan.
         for code in [SEARCH_UNSOLVABLE, SEARCH_UNSOLVED_INCOMPLETE]:
             if code in exitcodes:
                 return (code, False)
 
-        # No plan was found due to hitting resource limits.
+        # no plan was found due to hitting resource limits.
         if SEARCH_OUT_OF_MEMORY in exitcodes and SEARCH_OUT_OF_TIME in exitcodes:
             return (SEARCH_OUT_OF_MEMORY_AND_TIME, False)
         elif SEARCH_OUT_OF_MEMORY in exitcodes:

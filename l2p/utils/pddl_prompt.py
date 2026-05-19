@@ -137,6 +137,11 @@ DEF_PROBLEM_PROMPTS = SimpleNamespace(
 
 # DEFAULT FEEDBACK SYSTEM PROMPT TEMPLATES
 DEF_FB_PROMPTS = SimpleNamespace(
-    domain  = load_default_template(folder="feedback", filename="prompt_fb_domain.md"),
-    problem = load_default_template(folder="feedback", filename="prompt_fb_problem.md")
+    diagnosis  = load_default_template(folder="feedback", filename="prompt_diagnosis.md"),
+    evaluate = load_default_template(folder="feedback", filename="prompt_evaluate.md"),
+    reflection = load_default_template(folder="feedback", filename="prompt_reflection.md"),
+    revise = load_default_template(folder="feedback", filename="prompt_revise.md"),
+    select = load_default_template(folder="feedback", filename="prompt_select.md"),
+    plan_diagnosis = load_default_template(folder="feedback", filename="prompt_plan_diagnosis.md"),
+    plan_evaluate = load_default_template(folder="feedback", filename="prompt_plan_evaluate.md")
 )

@@ -66,7 +66,7 @@ class ProblemBuilder:
         model: BaseLLM,
         component_class: Union[List[Type[T]], Type[T]],
         prompt_template: Optional[str] = None,
-        problem_desc: Optional[str] = None,
+        description: Optional[str] = None,
         max_retries: int = 3,
         **ctx_kwargs
     ) -> (tuple[dict, str] | tuple[Any, str]):
@@ -83,7 +83,7 @@ class ProblemBuilder:
                 defining the expected PDDL structures to extract.
             prompt_template (str = None): Query prompt template. If None, the method will 
                 attempt to auto-detect the correct default template based on the component class.
-            problem_desc (str = None): Natural language description of the PDDL problem instance to guide the LLM.
+            description (str = None): Natural language description of the PDDL problem instance to guide the LLM.
             max_retries (int = 3): The maximum number of retry attempts if the LLM output is malformed.
             **ctx_kwargs: Additional context variables to inject into the prompt template 
                 (e.g., existing list[PDDLObject], list[InitialState]).
@@ -124,8 +124,8 @@ class ProblemBuilder:
         # inject context in placeholders
         prompt = safe_format(
             template=prompt_template,
-            problem_desc=problem_desc,
-            context_injection=build_ctx(**ctx_kwargs)
+            description=description,
+            context=build_ctx(**ctx_kwargs)
         )
         
         # generate component
@@ -162,7 +162,7 @@ class ProblemBuilder:
                 )
                 time.sleep(2)  # add a delay before retrying
 
-        raise RuntimeError("Max retries exceeded. Failed to extract types.")
+        raise RuntimeError("Max retries exceeded. Failed to extract component(s).")
 
 
     def generate_problem(self, problem_details: ProblemDetails) -> str:
@@ -208,27 +208,40 @@ class ProblemBuilder:
     # PDDL PROBLEM SET FUNCTIONS
     # ---------------------------------------------------------------------------
 
+    SINGULAR_FIELDS = {"initial_state", "goal_state", "metric"}
+
     def _set_component(self, field_name: str, component: Union[list[T], T, None], append: bool = False):
         """
         Helper method to assign or append an L2P PDDL component to the problem_details model.
         Args:
-            field_name (str): The exact attribute name on the DomainDetails Pydantic model 
-                (e.g., "objects", "initial_states", "goal_states").
+            field_name (str): The exact attribute name on the ProblemDetails Pydantic model 
+                (e.g., "objects", "initial_state", "goal_state").
             component (Union[list[T], T, None]): The Pydantic model instance(s) to add. 
                 Can be a single instance, a list of instances, or None.
             append (bool, optional): If True, concatenates the new items to the existing 
                 attribute list. If False, overwrites the attribute entirely. Defaults to False.
         """
         if component is None:
-            normalized_list = []
-        elif not isinstance(component, list):
+            if field_name in self.SINGULAR_FIELDS:
+                null_default = InitialState() if field_name == "initial_state" else GoalState() if field_name == "goal_state" else None
+                setattr(self.problem_details, field_name, null_default)
+                return
+            else:
+                setattr(self.problem_details, field_name, [])
+                return
+
+        if field_name in self.SINGULAR_FIELDS:
+            setattr(self.problem_details, field_name, component)
+            return
+
+        if not isinstance(component, list):
             normalized_list = [component]
         else:
             normalized_list = component
         clean_list = [item for item in normalized_list if item is not None]
-        
+
         if append:
-            existing_list = getattr(self.domain_details, field_name, [])
+            existing_list = getattr(self.problem_details, field_name, [])
             updated_list = existing_list + clean_list
         else:
             updated_list = clean_list
@@ -245,14 +258,14 @@ class ProblemBuilder:
         else:
             self.problem_details.name = "problem-placeholder"
         
-    def set_problem_desc(self, problem_desc: str = None):
+    def set_problem_desc(self, description: str = None):
         """
         Sets PDDL problem description for current specification
         Args:
-            problem_desc (str = None): Description for problem instance.
+            description (str = None): Description for problem instance.
         """
-        if problem_desc:
-            self.problem_details.desc = problem_desc
+        if description:
+            self.problem_details.desc = description
         else:
             return
         
