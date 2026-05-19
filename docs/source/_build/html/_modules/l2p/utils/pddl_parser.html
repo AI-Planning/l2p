@@ -1,23 +1,23 @@
 <!doctype html>
 <html class="no-js" lang="en" data-content_root="../../../">
-  <head><meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width,initial-scale=1"/>
-    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" />
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html"><link rel="search" title="Search" href="../../../search.html">
 
-    <!-- Generated with Sphinx 8.2.3 and Furo 2024.08.06 -->
+    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>l2p.utils.pddl_parser - l2p</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=354aac6f" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=302659d7" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     
     
 
 
 <style>
   body {
-    --color-code-background: #f8f8f8;
-  --color-code-foreground: black;
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
   
   }
   @media not print {
@@ -144,14 +144,10 @@
   </symbol>
 </svg>
 
-<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
-<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
-<label class="overlay sidebar-overlay" for="__navigation">
-  <div class="visually-hidden">Hide navigation sidebar</div>
-</label>
-<label class="overlay toc-overlay" for="__toc">
-  <div class="visually-hidden">Hide table of contents sidebar</div>
-</label>
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
 
 <a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
 
@@ -161,8 +157,7 @@
   <header class="mobile-header">
     <div class="header-left">
       <label class="nav-overlay-icon" for="__navigation">
-        <div class="visually-hidden">Toggle site navigation sidebar</div>
-        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
       </label>
     </div>
     <div class="header-center">
@@ -170,8 +165,7 @@
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
-        <button class="theme-toggle">
-          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
           <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
           <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
           <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
@@ -179,8 +173,7 @@
         </button>
       </div>
       <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
-        <div class="visually-hidden">Toggle table of contents sidebar</div>
-        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
       </label>
     </div>
   </header>
@@ -188,7 +181,6 @@
     <div class="sidebar-container">
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../index.html">
-  
   
   <span class="sidebar-brand-text">l2p</span>
   
@@ -226,8 +218,7 @@
         </a>
         <div class="content-icon-container">
           <div class="theme-toggle-container theme-toggle-content">
-            <button class="theme-toggle">
-              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
               <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
               <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
               <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
@@ -235,8 +226,7 @@
             </button>
           </div>
           <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
-            <div class="visually-hidden">Toggle table of contents sidebar</div>
-            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
           </label>
         </div>
         <article role="main" id="furo-main-content">
@@ -273,6 +263,7 @@
 
 <span class="sd">    Args:</span>
 <span class="sd">        llm_output (str): raw string from the LLM expected to contain a flat dictionary</span>
+<span class="sd">        heading (str): header string to extract text. Defaults to `TYPES`</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        types_parsed (dict[str, str]) | None: parsed dictionary of :types if valid, else None.</span>
@@ -315,19 +306,20 @@
 
 <div class="viewcode-block" id="parse_type_hierarchy">
 <a class="viewcode-back" href="../../../l2p.html#l2p.utils.pddl_parser.parse_type_hierarchy">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">parse_type_hierarchy</span><span class="p">(</span><span class="n">llm_output</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_type_hierarchy</span><span class="p">(</span><span class="n">llm_output</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">heading</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;TYPES&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Safely parses LLM response into a list of nested dictionaries representing the type hierarchy.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        llm_output (str): raw LLM output expected to contain a Python list of dictionaries.</span>
+<span class="sd">        heading (str): header string to extract text. Defaults to `TYPES`</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        types_parsed (list[dict[str,str]]) | None: parsed type hierarchy if valid, else None.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">try</span><span class="p">:</span>
 
-        <span class="n">types_head</span> <span class="o">=</span> <span class="n">parse_heading</span><span class="p">(</span><span class="n">llm_output</span><span class="p">,</span> <span class="s2">&quot;TYPES&quot;</span><span class="p">)</span>
+        <span class="n">types_head</span> <span class="o">=</span> <span class="n">parse_heading</span><span class="p">(</span><span class="n">llm_output</span><span class="p">,</span> <span class="n">heading</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">types_head</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;```&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="s2">&quot;Could not find exactly one block in the types section enclosed by [```, ```] of the LLM output.&quot;</span>
@@ -370,19 +362,20 @@
 
 <div class="viewcode-block" id="parse_constants">
 <a class="viewcode-back" href="../../../l2p.html#l2p.utils.pddl_parser.parse_constants">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">parse_constants</span><span class="p">(</span><span class="n">llm_output</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_constants</span><span class="p">(</span><span class="n">llm_output</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">heading</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;CONSTANTS&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Safely extracts and evaluates a dictionary structure from a string (LLM response).</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        llm_output (str): Raw string from the LLM expected to contain a flat dictionary.</span>
+<span class="sd">        heading (str): header string to extract text. Defaults to `CONSTANTS`</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        constants_parsed (dict[str, str]) | None: parsed dictionary if valid, else None.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">try</span><span class="p">:</span>
 
-        <span class="n">constant_head</span> <span class="o">=</span> <span class="n">parse_heading</span><span class="p">(</span><span class="n">llm_output</span><span class="p">,</span> <span class="s2">&quot;CONSTANTS&quot;</span><span class="p">)</span>
+        <span class="n">constant_head</span> <span class="o">=</span> <span class="n">parse_heading</span><span class="p">(</span><span class="n">llm_output</span><span class="p">,</span> <span class="n">heading</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">constant_head</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;```&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="s2">&quot;Could not find exactly one block in the constants section enclosed by [```, ```] of the LLM output.&quot;</span>
@@ -449,7 +442,7 @@
 
 <div class="viewcode-block" id="parse_new_predicates">
 <a class="viewcode-back" href="../../../l2p.html#l2p.utils.pddl_parser.parse_new_predicates">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">parse_new_predicates</span><span class="p">(</span><span class="n">llm_output</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Predicate</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_new_predicates</span><span class="p">(</span><span class="n">llm_output</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">heading</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;New Predicates&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Predicate</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Parses new predicates from LLM into Python format (refer to example templates to see</span>
 <span class="sd">    how these predicates should be formatted in LLM response).</span>
@@ -457,15 +450,13 @@
 <span class="sd">    LLM output header should contain &#39;### New Predicates&#39; along with structured content.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">new_predicates</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">predicate_heading</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">llm_output</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;New Predicates</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;###&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="n">predicates_head</span> <span class="o">=</span> <span class="n">parse_heading</span><span class="p">(</span><span class="n">llm_output</span><span class="p">,</span> <span class="n">heading</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">predicates_head</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;```&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;Could not find exactly one block in the new predicates section enclosed by [```, ```] of the LLM output.&quot;</span>
         <span class="p">)</span>
-    <span class="k">except</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
-            <span class="s2">&quot;Could not find the &#39;New Predicates&#39; section in the output. Provide the entire response, including all headings even if some are unchanged.&quot;</span>
-        <span class="p">)</span>
-    <span class="n">predicate_output</span> <span class="o">=</span> <span class="n">combine_blocks</span><span class="p">(</span><span class="n">predicate_heading</span><span class="p">)</span>
+    <span class="n">predicate_output</span> <span class="o">=</span> <span class="n">combine_blocks</span><span class="p">(</span><span class="n">predicates_head</span><span class="p">)</span>
 
     <span class="k">for</span> <span class="n">p_line</span> <span class="ow">in</span> <span class="n">predicate_output</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">):</span>
         <span class="n">p_line</span> <span class="o">=</span> <span class="n">p_line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
@@ -537,7 +528,7 @@
         <span class="c1"># generate clean PDDL representation</span>
         <span class="n">clean_params</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">param</span><span class="p">,</span> <span class="n">type_</span> <span class="ow">in</span> <span class="n">params</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">type_</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">type_</span> <span class="ow">and</span> <span class="n">type_</span> <span class="o">!=</span> <span class="s2">&quot;object&quot;</span><span class="p">:</span>
                 <span class="n">clean_params</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">param</span><span class="si">}</span><span class="s2"> - </span><span class="si">{</span><span class="n">type_</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">clean_params</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">param</span><span class="p">)</span>
@@ -559,7 +550,7 @@
 
 <div class="viewcode-block" id="parse_functions">
 <a class="viewcode-back" href="../../../l2p.html#l2p.utils.pddl_parser.parse_functions">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">parse_functions</span><span class="p">(</span><span class="n">llm_output</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Function</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_functions</span><span class="p">(</span><span class="n">llm_output</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">heading</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;FUNCTIONS&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Function</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Parses function from LLM into Python format (refer to example templates to see</span>
 <span class="sd">    how these functions should be formatted in LLM response).</span>
@@ -567,13 +558,12 @@
 <span class="sd">    LLM output header should contain &#39;### FUNCTIONS&#39; along with structured content.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">functions</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">function_heading</span> <span class="o">=</span> <span class="n">llm_output</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;FUNCTIONS</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;###&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="k">except</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
-            <span class="s2">&quot;Could not find the &#39;FUNCTIONS&#39; section in the output. Provide the entire response, including all headings even if some are unchanged.&quot;</span>
+    <span class="n">functions_head</span> <span class="o">=</span> <span class="n">parse_heading</span><span class="p">(</span><span class="n">llm_output</span><span class="p">,</span> <span class="n">heading</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">functions_head</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;```&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;Could not find exactly one block in the functions section enclosed by [```, ```] of the LLM output.&quot;</span>
         <span class="p">)</span>
-    <span class="n">function_output</span> <span class="o">=</span> <span class="n">combine_blocks</span><span class="p">(</span><span class="n">function_heading</span><span class="p">)</span>
+    <span class="n">function_output</span> <span class="o">=</span> <span class="n">combine_blocks</span><span class="p">(</span><span class="n">functions_head</span><span class="p">)</span>
 
     <span class="k">for</span> <span class="n">f_line</span> <span class="ow">in</span> <span class="n">function_output</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">):</span>
         <span class="n">f_line</span> <span class="o">=</span> <span class="n">f_line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
@@ -598,6 +588,10 @@
             <span class="n">function_desc</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
 
         <span class="c1"># clean the function signature</span>
+        <span class="n">is_numeric</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;- number\s*$&quot;</span><span class="p">,</span> <span class="n">func_part</span><span class="p">):</span>
+            <span class="n">is_numeric</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">func_part</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\s+- number\s*$&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">func_part</span><span class="p">)</span>
         <span class="n">func_part</span> <span class="o">=</span> <span class="n">func_part</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;- ()&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
 
         <span class="c1"># split into name and parameters</span>
@@ -649,7 +643,11 @@
                 <span class="n">clean_params</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">param</span><span class="si">}</span><span class="s2"> - </span><span class="si">{</span><span class="n">type_</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">clean_params</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">param</span><span class="p">)</span>
+        
         <span class="n">clean</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="n">function_name</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">clean_params</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span>
+
+        <span class="k">if</span> <span class="n">is_numeric</span><span class="p">:</span>
+            <span class="n">clean</span> <span class="o">+=</span> <span class="s2">&quot; - number&quot;</span>
 
         <span class="n">functions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
             <span class="p">{</span>
@@ -667,40 +665,29 @@
 
 <div class="viewcode-block" id="parse_action">
 <a class="viewcode-back" href="../../../l2p.html#l2p.utils.pddl_parser.parse_action">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">parse_action</span><span class="p">(</span><span class="n">llm_output</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">action_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Action</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_action</span><span class="p">(</span>
+        <span class="n">llm_output</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> 
+        <span class="n">action_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> 
+        <span class="n">param_head</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;Action Parameters&quot;</span><span class="p">,</span> 
+        <span class="n">precon_head</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;Action Preconditions&quot;</span><span class="p">,</span>
+        <span class="n">effect_head</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;Action Effects&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Action</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Parse an action from a given LLM output.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        llm_output (str): raw LLM output</span>
 <span class="sd">        action_name (str): the name of the action</span>
+<span class="sd">        param_head (str): parameter header for extraction</span>
+<span class="sd">        precon_head (str): precondition header for extraction</span>
+<span class="sd">        effect_head (str): effect header for extraction</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Action: the parsed PDDL action</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">parameters</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">parse_params</span><span class="p">(</span><span class="n">llm_output</span><span class="p">)</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">preconditions</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">llm_output</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;Preconditions</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
-            <span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;###&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;```&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
-            <span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot; `</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="p">)</span>
-    <span class="k">except</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
-            <span class="s2">&quot;Could not find the &#39;Preconditions&#39; section in the output. Provide the entire response, including all headings even if some are unchanged.&quot;</span>
-        <span class="p">)</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">effects</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">llm_output</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;Effects</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
-            <span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;###&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;```&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
-            <span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot; `</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="p">)</span>
-    <span class="k">except</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
-            <span class="s2">&quot;Could not find the &#39;Effects&#39; section in the output. Provide the entire response, including all headings even if some are unchanged.&quot;</span>
-        <span class="p">)</span>
+    <span class="n">parameters</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">parse_params</span><span class="p">(</span><span class="n">llm_output</span><span class="p">,</span> <span class="n">param_head</span><span class="p">)</span>
+    <span class="n">preconditions</span> <span class="o">=</span> <span class="n">parse_preconditions</span><span class="p">(</span><span class="n">llm_output</span><span class="p">,</span> <span class="n">precon_head</span><span class="p">)</span>
+    <span class="n">effects</span> <span class="o">=</span> <span class="n">parse_effects</span><span class="p">(</span><span class="n">llm_output</span><span class="p">,</span> <span class="n">effect_head</span><span class="p">)</span>
+
     <span class="k">return</span> <span class="p">{</span>
         <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">action_name</span><span class="p">,</span>
         <span class="s2">&quot;params&quot;</span><span class="p">:</span> <span class="n">parameters</span><span class="p">,</span>
@@ -712,7 +699,7 @@
 
 <div class="viewcode-block" id="parse_params">
 <a class="viewcode-back" href="../../../l2p.html#l2p.utils.pddl_parser.parse_params">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">parse_params</span><span class="p">(</span><span class="n">llm_output</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">OrderedDict</span><span class="p">,</span> <span class="nb">list</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_params</span><span class="p">(</span><span class="n">llm_output</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">heading</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;Action Parameters&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">OrderedDict</span><span class="p">,</span> <span class="nb">list</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Parses parameters from LLM into Python format (refer to example templates to see</span>
 <span class="sd">    how these parameters should be formatted in LLM response).</span>
@@ -720,10 +707,12 @@
 <span class="sd">    LLM output header should contain &#39;Parameters&#39; along with structured content.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">params_info</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
-    <span class="n">params_heading</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span>
-        <span class="sa">r</span><span class="s2">&quot;\n#+\s&quot;</span><span class="p">,</span> <span class="n">llm_output</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;Parameters&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="n">maxsplit</span><span class="o">=</span><span class="mi">1</span>
-    <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="n">params_str</span> <span class="o">=</span> <span class="n">combine_blocks</span><span class="p">(</span><span class="n">params_heading</span><span class="p">)</span>
+    <span class="n">params_head</span> <span class="o">=</span> <span class="n">parse_heading</span><span class="p">(</span><span class="n">llm_output</span><span class="p">,</span> <span class="n">heading</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">params_head</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;```&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;Could not find exactly one block in the parameters section enclosed by [```, ```] of the LLM output.&quot;</span>
+        <span class="p">)</span>
+    <span class="n">params_str</span> <span class="o">=</span> <span class="n">combine_blocks</span><span class="p">(</span><span class="n">params_head</span><span class="p">)</span>
     <span class="n">params_raw</span> <span class="o">=</span> <span class="p">[]</span>
 
     <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">params_str</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">):</span>
@@ -735,7 +724,8 @@
             <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>  <span class="c1"># remove the dash and clean up</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;?&quot;</span><span class="p">):</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[WARNING] Invalid parameter line - must start with &#39;?&#39;: &#39;</span><span class="si">{</span><span class="n">line</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[WARNING] Invalid parameter line. Must start with &#39;?&#39;: &#39;</span><span class="si">{</span><span class="n">line</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+            <span class="k">continue</span>
 
         <span class="k">try</span><span class="p">:</span>
             <span class="n">params_raw</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
@@ -743,16 +733,13 @@
             <span class="n">parts</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)</span>
 
             <span class="n">left_side</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-            <span class="n">param_parts</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">left_side</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">)]</span>
+            <span class="n">param_parts</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">left_side</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; - &quot;</span><span class="p">)]</span>
+            <span class="n">param_name</span> <span class="o">=</span> <span class="n">param_parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot; `&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
 
-            <span class="n">param_name</span> <span class="o">=</span> <span class="n">param_parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot; `&quot;</span><span class="p">)</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">param_parts</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">param_parts</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
                 <span class="n">param_type</span> <span class="o">=</span> <span class="n">param_parts</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot; `&quot;</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;[WARNING] Invalid parameter format: &#39;</span><span class="si">{</span><span class="n">line</span><span class="si">}</span><span class="s2">&#39;. Defaulting to no type.&quot;</span>
-                <span class="p">)</span>
-                <span class="n">param_type</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>  <span class="c1"># no type provided</span>
+                <span class="n">param_type</span> <span class="o">=</span> <span class="s2">&quot;object&quot;</span>  <span class="c1"># no type provided</span>
 
             <span class="n">params_info</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">param_type</span>
 
@@ -766,15 +753,15 @@
 
 <div class="viewcode-block" id="parse_preconditions">
 <a class="viewcode-back" href="../../../l2p.html#l2p.utils.pddl_parser.parse_preconditions">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">parse_preconditions</span><span class="p">(</span><span class="n">llm_output</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_preconditions</span><span class="p">(</span><span class="n">llm_output</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">heading</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;Action Preconditions&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Parses precondition string from LLM output&quot;&quot;&quot;</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">preconditions</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">llm_output</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;Preconditions</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
-            <span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;###&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;```&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
-            <span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot; `</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="p">)</span>
+        <span class="n">preconds_head</span> <span class="o">=</span> <span class="n">parse_heading</span><span class="p">(</span><span class="n">llm_output</span><span class="p">,</span> <span class="n">heading</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">preconds_head</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;```&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Could not find exactly one block in the preconditions section enclosed by [```, ```] of the LLM output.&quot;</span>
+            <span class="p">)</span>
+        <span class="n">preconditions</span> <span class="o">=</span> <span class="n">combine_blocks</span><span class="p">(</span><span class="n">preconds_head</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">preconditions</span>
     <span class="k">except</span><span class="p">:</span>
@@ -786,15 +773,15 @@
 
 <div class="viewcode-block" id="parse_effects">
 <a class="viewcode-back" href="../../../l2p.html#l2p.utils.pddl_parser.parse_effects">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">parse_effects</span><span class="p">(</span><span class="n">llm_output</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_effects</span><span class="p">(</span><span class="n">llm_output</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">heading</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;Action Effects&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Parses effect string from LLM output&quot;&quot;&quot;</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">effects</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">llm_output</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;Effects</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
-            <span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;###&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;```&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
-            <span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot; `</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="p">)</span>
+        <span class="n">effects_head</span> <span class="o">=</span> <span class="n">parse_heading</span><span class="p">(</span><span class="n">llm_output</span><span class="p">,</span> <span class="n">heading</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">effects_head</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;```&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Could not find exactly one block in the effects section enclosed by [```, ```] of the LLM output.&quot;</span>
+            <span class="p">)</span>
+        <span class="n">effects</span> <span class="o">=</span> <span class="n">combine_blocks</span><span class="p">(</span><span class="n">effects_head</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">effects</span>
     <span class="k">except</span><span class="p">:</span>
@@ -907,7 +894,7 @@
 
 <div class="viewcode-block" id="parse_objects">
 <a class="viewcode-back" href="../../../l2p.html#l2p.utils.pddl_parser.parse_objects">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">parse_objects</span><span class="p">(</span><span class="n">llm_output</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_objects</span><span class="p">(</span><span class="n">llm_output</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">heading</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;OBJECTS&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Extract objects from LLM response and returns dictionary string pairs object(name, type)</span>
 
@@ -920,7 +907,11 @@
 <span class="sd">        objects_parsed (dict[str,str]): PDDL task objects</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">objects_head</span> <span class="o">=</span> <span class="n">parse_heading</span><span class="p">(</span><span class="n">llm_output</span><span class="p">,</span> <span class="s2">&quot;OBJECTS&quot;</span><span class="p">)</span>
+    <span class="n">objects_head</span> <span class="o">=</span> <span class="n">parse_heading</span><span class="p">(</span><span class="n">llm_output</span><span class="p">,</span> <span class="n">heading</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">objects_head</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;```&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;Could not find exactly one block in the problem objects section enclosed by [```, ```] of the LLM output.&quot;</span>
+        <span class="p">)</span>
     <span class="n">objects_raw</span> <span class="o">=</span> <span class="n">combine_blocks</span><span class="p">(</span><span class="n">objects_head</span><span class="p">)</span>
     <span class="n">objects_clean</span> <span class="o">=</span> <span class="n">remove_comments</span><span class="p">(</span><span class="n">objects_raw</span><span class="p">)</span>
 
@@ -936,7 +927,7 @@
 
 <div class="viewcode-block" id="parse_initial">
 <a class="viewcode-back" href="../../../l2p.html#l2p.utils.pddl_parser.parse_initial">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">parse_initial</span><span class="p">(</span><span class="n">llm_output</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_initial</span><span class="p">(</span><span class="n">llm_output</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">heading</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;INITIAL&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Extracts state (PDDL-init) from LLM response and returns it as a list of dict strings</span>
 
@@ -946,7 +937,7 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        states (list[dict[str,str]]): list of initial states in dictionaries</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">initial_head</span> <span class="o">=</span> <span class="n">parse_heading</span><span class="p">(</span><span class="n">llm_output</span><span class="p">,</span> <span class="s2">&quot;INITIAL&quot;</span><span class="p">)</span>
+    <span class="n">initial_head</span> <span class="o">=</span> <span class="n">parse_heading</span><span class="p">(</span><span class="n">llm_output</span><span class="p">,</span> <span class="n">heading</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">initial_head</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;```&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
             <span class="s2">&quot;Could not find exactly one block in the initial section enclosed by [```, ```] of the LLM output. The initial states have to be specified in a single block Likely this is caused by a too long response and limited context length. If so, try to shorten the message and exclude objects which aren&#39;t needed for the task.&quot;</span>
@@ -962,7 +953,7 @@
 
 <div class="viewcode-block" id="parse_goal">
 <a class="viewcode-back" href="../../../l2p.html#l2p.utils.pddl_parser.parse_goal">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">parse_goal</span><span class="p">(</span><span class="n">llm_output</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_goal</span><span class="p">(</span><span class="n">llm_output</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">heading</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;GOAL&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Extracts goal (PDDL-goal) from LLM response and returns it as a string</span>
 
@@ -972,7 +963,7 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        states (list[dict[str,str]]): list of goal states in dictionaries</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">goal_head</span> <span class="o">=</span> <span class="n">parse_heading</span><span class="p">(</span><span class="n">llm_output</span><span class="p">,</span> <span class="s2">&quot;GOAL&quot;</span><span class="p">)</span>
+    <span class="n">goal_head</span> <span class="o">=</span> <span class="n">parse_heading</span><span class="p">(</span><span class="n">llm_output</span><span class="p">,</span> <span class="n">heading</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">goal_head</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;```&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
             <span class="s2">&quot;Could not find exactly one block in the goal section enclosed by [```, ```] of the LLM output. The goal states have to be specified in a single block Likely this is caused by a too long response and limited context length. If so, try to shorten the message and exclude objects which aren&#39;t needed for the task.&quot;</span>
@@ -1216,9 +1207,9 @@
     </aside>
   </div>
 </div><script src="../../../_static/documentation_options.js?v=000c92bf"></script>
-    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
-    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script src="../../../_static/scripts/furo.js?v=5fa4622c"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/scripts/furo.js?v=46bd48cc"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../../../_static/copybutton.js?v=f281be69"></script>
     </body>
