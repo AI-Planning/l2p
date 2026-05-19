@@ -1,0 +1,614 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="./">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="prev" title="Data Types" href="types.html" />
+
+    <!-- Generated with Sphinx 8.2.3 and Furo 2024.08.06 -->
+        <title>Paper Feed - l2p</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=354aac6f" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=302659d7" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f8f8f8;
+  --color-code-foreground: black;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="index.html"><div class="brand">l2p</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
+  
+  
+  <span class="sidebar-brand-text">l2p</span>
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="l2p.html">L2P</a></li>
+<li class="toctree-l1"><a class="reference internal" href="paper_recreations.html">Paper Recreations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="templates.html">Templates</a></li>
+<li class="toctree-l1"><a class="reference internal" href="types.html">Data Types</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Paper Feed</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="_sources/paper_feed.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="paper-feed">
+<h1>Paper Feed<a class="headerlink" href="#paper-feed" title="Link to this heading">¶</a></h1>
+<p>Must-read papers on LLM-driven automated planning specification.</p>
+<section id="new-papers">
+<h2>New Papers!<a class="headerlink" href="#new-papers" title="Link to this heading">¶</a></h2>
+<blockquote>
+<div><ul class="simple">
+<li><p><strong>“Make Planning Research Rigorous Again!”</strong> Katz et al. (2025) <a class="reference external" href="https://arxiv.org/abs/2505.21674">[paper]</a></p></li>
+<li><p><strong>“Achieving Scalable Robot Autonomy via neurosymbolic planning using lightweight local LLM”</strong> Attolino et al. (2025) <a class="reference external" href="https://arxiv.org/abs/2505.08492">[paper]</a> <a class="reference external" href="https://github.com/NichAttGH/Gideon">[code]</a></p></li>
+<li><p><strong>“LODGE: Joint Hierarchical Task Planning and Learning of Domain Models with Grounded Execution”</strong> Kienle et al. (2025) <a class="reference external" href="https://arxiv.org/abs/2505.13497">[paper]</a> <a class="reference external" href="https://claudius-kienle.github.io/lodge">[code]</a></p></li>
+<li><p><strong>“Large Language Models for Planning: A Comprehensive and Systematic Survey”</strong> Cao et al. (2025) <a class="reference external" href="https://arxiv.org/abs/2505.19683">[paper]</a> <a class="reference external" href="https://github.com/Quester-one/Awesome-LLM-Planning">[code]</a></p></li>
+<li><p><strong>“Text2World: Benchmarking Large Language Models for Symbolic World Model Generation”</strong> Hu et al. (2025) <a class="reference external" href="https://arxiv.org/abs/2502.13092">[paper]</a> <a class="reference external" href="https://github.com/Aaron617/text2world">[code]</a></p></li>
+</ul>
+</div></blockquote>
+</section>
+<section id="paper-list">
+<h2>Paper List<a class="headerlink" href="#paper-list" title="Link to this heading">¶</a></h2>
+<p>This section presents a taxonomy of research within Model Construction, organized into three broad categories: Model Generation, Model Editing, and Model Benchmarks. Within each category, the most recent contributions are listed first (then alphabetically).</p>
+<section id="model-generation">
+<h3><strong>Model Generation</strong><a class="headerlink" href="#model-generation" title="Link to this heading">¶</a></h3>
+<p><strong>Task Modeling</strong></p>
+<div style="max-height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-bottom: 1em;"><div class="table-wrapper docutils container">
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><strong>“Instruction-Augmented Long-Horizon Planning: Embedding Grounding Mechanisms in Embodied Mobile Manipulation”</strong> Wang et al. (2025)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2503.08084">[paper]</a> <a class="reference external" href="https://nicehiro.github.io/IALP/#">[code]</a></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>“TIC: Translate-Infer-Compile for accurate ‘text to plan’ using LLMs and logical intermediate representations”</strong> Agarwal and Sreepathy (2024)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2402.06608">[paper]</a></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>“AutoGPT+P: Affordance-based Task Planning with Large Language Models”</strong> Birr et al. (2024)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2402.10778">[paper]</a> <a class="reference external" href="https://git.h2t.iar.kit.edu/sw/autogpt-p">[code]</a></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>“Leveraging LLMs for Generating Document-Informed Hierarchical Planning Models: A Proposal”</strong> Fine-Morris et al. (2024)</p></td>
+<td><p><a class="reference external" href="https://openreview.net/forum?id=QQltS3Nxj9&amp;referrer=%5Bthe%20profile%20of%20Laura%20M.%20Hiatt%5D(%2Fprofile%3Fid%3D~Laura_M._Hiatt1)">[paper]</a></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>“A Demonstration of Natural Language Understanding in Embodied Planning Agents”</strong> Grover and Mohan (2024)</p></td>
+<td><p><a class="reference external" href="https://openreview.net/forum?id=62frmxeAPp">[paper]</a></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>“CaStL: Constraints as Specifications through LLM Translation for Long-Horizon Task and Motion Planning”</strong> Guo et al. (2024)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2410.22225">[paper]</a></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>“PlanCollabNL: Leveraging Large Language Models for Adaptive Plan Generation in Human-Robot Collaboration”</strong> Izquierdo-Badiola et al. (2024)</p></td>
+<td><p><a class="reference external" href="https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&amp;arnumber=10610055">[paper]</a></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>“Enabling Semantic Reasoning in Robots through Natural Language Processing”</strong> Kalland (2024)</p></td>
+<td><p><a class="reference external" href="https://ntnuopen.ntnu.no/ntnu-xmlui/handle/11250/3157083">[paper]</a></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>“Thought of Search: Planning with Language Models Through The Lens of Efficiency”</strong> Katz et al. (2024)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2404.11833">[paper]</a></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>“Fast and Accurate Task Planning using Neuro-Symbolic Language Models and Multi-level Goal Decomposition”</strong> Kwon et al. (2024)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2409.19250">[paper]</a> <a class="reference external" href="http://graphics.ewha.ac.kr/LLMTAMP/">[code]</a></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>“Planning AI Assistant for Emergency Decision-Making (PlanAID): Framing Planning Problems and Assessing Plans with Large Language Models”</strong> Lee et al. (2024)</p></td>
+<td><p><a class="reference external" href="https://openreview.net/forum?id=LebubIfqae">[paper]</a></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>“Safe Planner: Empowering Safety Awareness in Large Pre-Trained Models for Robot Task Planning”</strong> Li et al. (2024)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2411.06920">[paper]</a></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>“Towards Human Awareness in Robot Task Planning with Large Language Models”</strong> Liu et al. (2024)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2404.11267">[paper]</a></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>“LLM Reasoner and Automated Planner: A New NPC Approach”</strong> Merino and Sabater-Mir (2024)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2501.10106">[paper]</a></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>“Bootstrapping Object-level Planning with Large Language Models”</strong> Paulius et al. (2024)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2409.12262">[paper]</a></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>“TRIP-PAL: Travel Planning with Guarantees by Combining Large Language Models and Automated Planners”</strong> Rosa et al. (2024)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2406.10196">[paper]</a></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>“TwoStep: Multi-agent Task Planning using Classical Planners and Large Language Models”</strong> Singh et al. (2024)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2403.17246">[paper]</a> <a class="reference external" href="https://glamor-usc.github.io/twostep/">[code]</a></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>“Anticipate &amp; Collab: Data-driven Task Anticipation and Knowledge-driven Planning for Human-robot Collaboration”</strong> Singh et al. (2024)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2404.03587">[paper]</a> <a class="reference external" href="https://github.com/dataplan-hrc/DaTAPlan">[code]</a></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>“PDDLEGO: Iterative Planning in Textual Environments”</strong> Zhang et al. (2024)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2405.19793">[paper]</a> <a class="reference external" href="https://github.com/zharry29/nl-to-pddl">[code]</a></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>“LaMMA-P: Generalizable Multi-Agent Long-Horizon Task Allocation and Planning with LM-Driven PDDL Planner”</strong> Zhang et al. (2024)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2409.20560">[paper]</a> <a class="reference external" href="https://drive.google.com/drive/folders/1dFfwJve4isw8E92bEQCSxIcQLmax-mqM">[code]</a></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>“LGMCTS: Language-Guided Monte-Carlo Tree Search for Executable Semantic Object Rearrangement”</strong> Chang et al. (2023)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2309.15821">[paper]</a> <a class="reference external" href="https://github.com/changhaonan/LGMCTS-D">[code]</a></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>“AutoTAMP: Autoregressive Task and Motion Planning with LLMs as Translators and Checkers”</strong> Chen et al. (2023)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2306.06531">[paper]</a> <a class="reference external" href="https://github.com/yongchao98/AutoTAMP">[code]</a></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>“Dynamic Planning with a LLM”</strong> Dagan et al. (2023)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2308.06391">[paper]</a> <a class="reference external" href="https://github.com/itl-ed/llm-dp">[code]</a></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>“Task and Motion Planning with Large Language Models for Object Rearrangement”</strong> Ding et al. (2023)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2303.06247">[paper]</a> <a class="reference external" href="https://sites.google.com/view/llm-grop">[code]</a></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>“LLM+P: Empowering Large Language Models with Optimal Planning Proficiency”</strong> Liu et al. (2023)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2304.11477">[paper]</a> <a class="reference external" href="https://github.com/Cranial-XIX/llm-pddl">[code]</a></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>“Faithful Chain-of-Thought Reasoning”</strong> Lyu et al. (2023)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2301.13379">[paper]</a> <a class="reference external" href="https://github.com/veronica320/faithful-cot">[code]</a></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>“Vision-Language Interpreter for Robot Task Planning”</strong> Shirai et al. (2023)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2311.00967">[paper]</a> <a class="reference external" href="https://github.com/omron-sinicx/ViLaIn">[code]</a></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>“Translating natural language to planning goals with large-language models”</strong> Xie et al. (2023)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2302.05128">[paper]</a> <a class="reference external" href="https://github.com/clear-nus/gpt-pddl">[code]</a></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>“Structured, flexible, and robust: benchmarking and improving large language models towards more human-like behaviour in out-of-distribution reasoning tasks”</strong> Collins et al. (2022)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2205.05718">[paper]</a> <a class="reference external" href="https://github.com/collinskatie/structured_flexible_and_robust">[code]</a></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div><p><strong>Domain Modeling</strong></p>
+<div style="max-height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-bottom: 1em;"><div class="table-wrapper docutils container">
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><strong>“Predicate Invention from Pixels via Pretrained Vision-Language Models”</strong> Athalye et al. (2024)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2501.00296v1">[paper]</a></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>“Language-Augmented Symbolic Planner for Open-World Task Planning”</strong> Chen at al. (2024)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2407.09792">[paper]</a></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>“Planning in the Dark: LLM-Symbolic Planning Pipeline without Experts”</strong> Huang et al. (2024)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2409.15915">[paper]</a> <a class="reference external" href="https://github.com/Sino-Huang/Official-LLM-Symbolic-Planning-without-Experts">[code]</a></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>“Learning Compositional Behaviors from Demonstration and Language”</strong> Liu et al. (2024)</p></td>
+<td><p><a class="reference external" href="https://blade-bot.github.io">[paper]</a></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>“Using Large Language Models to Extract Planning Knowledge from Common Vulnerabilities and Exposures”</strong> Oates et al. (2024)</p></td>
+<td><p><a class="reference external" href="https://icaps24.icaps-conference.org/program/workshops/keps-papers/KEPS-24_paper_12.pdf">[paper]</a> <a class="reference external" href="https://github.com/ronwalf/CLLaMP">[code]</a></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>“Large Language Models as Planning Domain Generators”</strong> Oswald et al. (2024)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2405.06650">[paper]</a> <a class="reference external" href="https://github.com/IBM/NL2PDDL">[code]</a></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>“Autonomously Learning World-Model Representations For Efficient Robot Planning”</strong> Shah (2024)</p></td>
+<td><p><a class="reference external" href="https://keep.lib.asu.edu/items/193613">[paper]</a></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>“Creating PDDL Models from Javascript using LLMs: Preliminary Results”</strong> Sikes et al. (2024)</p></td>
+<td><p><a class="reference external" href="https://openreview.net/forum?id=VyTxXSPmbE&amp;referrer=%5Bthe%20profile%20of%20Kelsey%20Sikes%5D(%2Fprofile%3Fid%3D~Kelsey_Sikes1)">[paper]</a></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>“Leveraging LLMs for HTN domain model generation via prompt engineering”</strong> Sinha (2024)</p></td>
+<td><p><a class="reference external" href="https://elib.uni-stuttgart.de/items/b1534c2c-9310-4348-8202-5db21d219a49">[paper]</a></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>“Making Large Language Models into World Models with Precondition and Effect Knowledge”</strong> Xie at al. (2024)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2409.12278">[paper]</a></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>“PROC2PDDL: Open-Domain Planning Representations from Texts”</strong> Zhang et al. (2024)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2403.00092">[paper]</a> <a class="reference external" href="https://github.com/zharry29/proc2pddl">[code]</a></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>“Integrating Action Knowledge and LLMs for Task Planning and Situation Handling in Open Worlds”</strong> Ding et al. (2023)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2305.17590">[paper]</a> <a class="reference external" href="https://github.com/yding25/GPT-Planner">[code]</a></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>“Leveraging Pre-trained Large Language Models to Construct and Utilize World Models for Model-based Task Planning”</strong> Guan et al. (2023)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2305.14909">[paper]</a> <a class="reference external" href="https://github.com/GuanSuns/LLMs-World-Models-for-Planning">[code]</a></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>“Learning adaptive planning representations with natural language guidance”</strong> Wong et al. (2023)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2312.08566">[paper]</a></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div><p><strong>Hybrid Modeling</strong></p>
+<div style="max-height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-bottom: 1em;"><div class="table-wrapper docutils container">
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><strong>“NL2Plan: Robust LLM-Driven Planning from Minimal Text Descriptions”</strong> Gestrin et al. (2024)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2405.04215">[paper]</a> <a class="reference external" href="https://github.com/mrlab-ai/NL2Plan">[code]</a></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>“InterPreT: Interactive Predicate Learning from Language Feedback for Generalizable Task Planning”</strong> Han et al. (2024)</p></td>
+<td><p><a class="reference external" href="https://interpret-robot.github.io">[paper]</a> <a class="reference external" href="https://github.com/hmz-15/interactive-predicate-learning">[code]</a></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>“Planning Anything with Rigor: General-Purpose Zero-Shot Planning with LLM-based Formalized Programming”</strong> Hao et al. (2024)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2410.12112">[paper]</a> <a class="reference external" href="https://github.com/yih301/LLMFP">[code]</a></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>“AgentGen: Enhancing Planning Abilities for Large Language Model based Agent via Environment and Task Generation”</strong> Hu et al. (2024)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2408.00764">[paper]</a> <a class="reference external" href="https://github.com/Aaron617/AgentGen">[code]</a></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>“DELTA: Decomposed Efficient Long-Term Robot Task Planning using Large Language Models”</strong> Liu et al. (2024)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2404.03275">[paper]</a></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>“Leveraging Environment Interaction for Automated PDDL Generation and Planning with Large Language Models”</strong> Mahdavi et al. (2024)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2407.12979">[paper]</a></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>“Consolidating Trees of Robotic Plans Generated Using Large Language Models to Improve Reliability”</strong> Sakib and Sun (2024)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2401.07868">[paper]</a></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>“Toward a Method to Generate Capability Ontologies from Natural Language Descriptions”</strong> Silva et al. (2024)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2406.07962">[paper]</a></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>“Generating consistent PDDL domains with Large Language Models”</strong> Smirnov et al. (2024)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2404.07751">[paper]</a></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>“MORPHeus: a Multimodal One-armed Robot-assisted Peeling System with Human Users In-the-loop”</strong> Ye et al. (2024)</p></td>
+<td><p><a class="reference external" href="https://emprise.cs.cornell.edu/morpheus/">[paper]</a> <a class="reference external" href="https://emprise.cs.cornell.edu/morpheus/">[code]</a></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>“There and Back Again: Extracting Formal Domains for Controllable Neurosymbolic Story Authoring”</strong> Kelly et al. (2023)</p></td>
+<td><p><a class="reference external" href="https://ojs.aaai.org/index.php/AIIDE/article/view/27502/27275">[paper]</a> <a class="reference external" href="https://github.com/alex-calderwood/there-and-back">[code]</a></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>“The Neuro-Symbolic Inverse Planning Engine (NIPE): Modeling Probabilistic Social Inferences from Linguistic Inputs”</strong> Ying et al. (2023)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2306.14325">[paper]</a></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>“ISR-LLM: Iterative Self-Refined Large Language Model for Long-Horizon Sequential Task Planning”</strong> Zhou et al. (2023)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2308.13724">[paper]</a> <a class="reference external" href="https://github.com/ma-labo/ISR-LLM">[code]</a></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div></section>
+<hr class="docutils" />
+<section id="model-editing">
+<h3><strong>Model Editing</strong><a class="headerlink" href="#model-editing" title="Link to this heading">¶</a></h3>
+<div style="max-height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-bottom: 1em;"><div class="table-wrapper docutils container">
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><strong>“Can LLMs Fix Issues with Reasoning Models? Towards More Likely Models for AI Planning”</strong> Caglar et al. (2024)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2311.13720">[paper]</a></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>“LLMs for AI Planning: A Study on Error Detection and Correction in PDDL Domain Models”</strong> Patil (2024)</p></td>
+<td><p><a class="reference external" href="https://elib.uni-stuttgart.de/server/api/core/bitstreams/efc35e23-7aec-4056-8de6-a56ba5b53249/content">[paper]</a></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>“Traversing the Linguistic Divide: Aligning Semantically Equivalent Fluents Through Model Refinement”</strong> Sikes et al. (2024)</p></td>
+<td><p><a class="reference external" href="https://drive.google.com/file/d/1gd7DOHY6ztiTO1jllDOmP-V8V-q1N0uG/view">[paper]</a></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>“Exploring the limitations of using large language models to fix planning tasks”</strong> Gragera and Pozanco (2023)</p></td>
+<td><p><a class="reference external" href="https://icaps23.icaps-conference.org/program/workshops/keps/KEPS-23_paper_3645.pdf">[paper]</a></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div></section>
+<hr class="docutils" />
+<section id="model-benchmarks">
+<h3><strong>Model Benchmarks</strong><a class="headerlink" href="#model-benchmarks" title="Link to this heading">¶</a></h3>
+<p><strong>LLMs-as-Planners</strong></p>
+<div style="max-height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-bottom: 1em;"><div class="table-wrapper docutils container">
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><strong>“A Roadmap to Guide the Integration of LLMs in Hierarchical Planning”</strong> Puerta-Merino et al. (2025)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2501.08068">[paper]</a> <a class="reference external" href="https://github.com/Corkiray/HTN-LLM">[code]</a></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>“Exploring and Benchmarking the Planning Capabilities of Large Language Models”</strong> Bohnet et al. (2024)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2406.13094">[paper]</a></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>“ACPBench: Reasoning about Action, Change, and Planning”</strong> Kokel et al. (2024)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2410.05669">[paper]</a> <a class="reference external" href="https://github.com/IBM/ACPBench">[code]</a></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>“TravelPlanner: A Benchmark for Real-World Planning with Language Agents”</strong> Xie et al. (2024)</p></td>
+<td><p><a class="reference external" href="https://openreview.net/forum?id=l5XQzNkAOe">[paper]</a> <a class="reference external" href="https://github.com/OSU-NLP-Group/TravelPlanner">[code]</a></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>“NATURAL PLAN: Benchmarking LLMs on Natural Language Planning”</strong> Zheng et al. (2024)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2406.04520">[paper]</a> <a class="reference external" href="https://github.com/google-deepmind/natural-plan">[code]</a></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>“Leveraging Pre-trained Large Language Models to Construct and Utilize World Models for Model-based Task Planning”</strong> (Household) Guan et al. (2023)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2305.14909">[paper]</a> <a class="reference external" href="https://github.com/GuanSuns/LLMs-World-Models-for-Planning">[code]</a></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>“Automating the Generation of Prompts for LLM-based Action Choice in PDDL Planning”</strong> Stein et al. (2023)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2311.09830">[paper]</a> <a class="reference external" href="https://github.com/minecraft-saar/autoplanbench">[code]</a></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>“ON THE PLANNING ABILITIES OF LARGE LANGUAGE MODELS (A CRITICAL INVESTIGATION WITH A PROPOSED BENCHMARK)”</strong> Valmeekam et al. (2023)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/pdf/2302.06706">[paper]</a> <a class="reference external" href="https://github.com/karthikv792/LLMs-Planning">[code]</a></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>“PlanBench: An Extensible Benchmark for Evaluating Large Language Models on Planning and Reasoning about Change”</strong> Valmeekam et al. (2023)</p></td>
+<td><p><a class="reference external" href="https://papers.nips.cc/paper_files/paper/2023/hash/7a92bcdede88c7afd108072faf5485c8-Abstract-Datasets_and_Benchmarks.html">[paper]</a> <a class="reference external" href="https://github.com/karthikv792/LLMs-Planning">[code]</a></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>“ALFWorld: Aligning Text and Embodied Environments for Interactive Learning”</strong> Shridhar et al. (2021)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2010.03768">[paper]</a> <a class="reference external" href="https://github.com/alfworld/alfworld">[code]</a></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div><p><strong>LLMs-as-Formalizers PDDL Benchmarks</strong></p>
+<div style="max-height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-bottom: 1em;"><div class="table-wrapper docutils container">
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><strong>“Text2World: Benchmarking Large Language Models for Symbolic World Model Generation”</strong> Hu et al. (2025)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2502.13092">[paper]</a> <a class="reference external" href="https://github.com/Aaron617/text2world">[code]</a></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>“Planetarium: A Rigorous Benchmark for Translating Text to Structured Planning Languages”</strong> Zuo et al. (2024)</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2407.03321">[paper]</a> <a class="reference external" href="https://github.com/batsresearch/planetarium">[code]</a></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div><p>The following is the core summary of model generation frameworks in <a class="reference external" href="https://arxiv.org/abs/2503.18971v1">“LLMs as Planning Formalizers: A Survey for Leveraging Large Language Models to Construct Automated Planning Models”</a>:</p>
+<img alt="no image available" src="_static/survey_table.png" />
+</section>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          
+          <a class="prev-page" href="types.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Data Types</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2025, Marcus Tantakoun
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Paper Feed</a><ul>
+<li><a class="reference internal" href="#new-papers">New Papers!</a></li>
+<li><a class="reference internal" href="#paper-list">Paper List</a><ul>
+<li><a class="reference internal" href="#model-generation"><strong>Model Generation</strong></a></li>
+<li><a class="reference internal" href="#model-editing"><strong>Model Editing</strong></a></li>
+<li><a class="reference internal" href="#model-benchmarks"><strong>Model Benchmarks</strong></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="_static/documentation_options.js?v=000c92bf"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/scripts/furo.js?v=5fa4622c"></script>
+    <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="_static/copybutton.js?v=f281be69"></script>
+    </body>
+</html>
