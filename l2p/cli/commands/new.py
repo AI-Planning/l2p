@@ -4,8 +4,8 @@ New command for L2P CLI.
 Creates blank PDDL domain/problem files.
 """
 
-import sys
 import argparse
+import sys
 from pathlib import Path
 
 

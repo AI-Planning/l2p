@@ -4,15 +4,15 @@ Model management commands for L2P CLI.
 List available models, test connections, and show model information.
 """
 
+import argparse
 import os
 import sys
-import argparse
 import yaml
 from pathlib import Path
 
+from l2p.llm.base import resolve_config_path
 from l2p.cli.utils.config import CLIError, get_config_manager
 from l2p.cli.utils.errors import handle_error
-from l2p.llm.base import resolve_config_path
 from l2p.cli.utils.helpers import _input_or_exit, YELLOW, RESET
 
 

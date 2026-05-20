@@ -649,25 +649,3 @@ class PlanStep(BaseModel):
     start_time: float = 0.0      # for durative actions / temporal planning
     duration: Optional[float] = None  # None for classical actions, float for durative
     desc: Optional[str] = None
-
-class PlanDetails(BaseModel):
-    """
-    Expected JSON format (truncated example):
-    {
-        "domain": {...},
-        "problem": {...},
-        "raw_plan": "0.0: (drive rover1 loc1 loc2) [5.5]",
-        "steps": [
-            {"action": "drive", "args": ["rover1", "loc1", "loc2"]}
-        ],
-        "cost": 10.0,
-        "makespan": 5.5
-    }
-    """
-    domain: DomainDetails
-    problem: ProblemDetails
-    raw_plan: str                # keep the raw text for logging or standard VAL validation
-    steps: List[PlanStep] = Field(default_factory=list)
-    cost: Optional[float] = None # total plan cost (if using action costs)
-    makespan: Optional[float] = None # total time to complete (for durative plans)
-    desc: Optional[str] = None

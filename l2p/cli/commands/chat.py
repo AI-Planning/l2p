@@ -6,11 +6,11 @@ Interactive single-exchange chat with the configured LLM model:
         Sub-commands: /exit, /edit <file.pddl>, /validate <file.pddl>
 """
 
+import argparse
 import os
 import re
 import sys
 import tempfile
-import argparse
 from pathlib import Path
 
 from l2p.cli.utils.config import get_config_manager

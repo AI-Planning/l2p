@@ -4,12 +4,12 @@ Initialization command for L2P CLI.
 Sets up model configuration and creates config file.
 """
 
-import sys
 import argparse
+import sys
 
-from l2p.cli.utils.helpers import _input_or_exit, YELLOW, RESET
 from l2p.cli.utils.config import get_config_manager
 from l2p.cli.utils.errors import handle_error
+from l2p.cli.utils.helpers import _input_or_exit, YELLOW, RESET
 
 VALID_BACKENDS = {"unified", "openai"}
 VALID_PROVIDERS = [

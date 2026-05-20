@@ -4,14 +4,14 @@ Generation commands for L2P CLI.
 Generate PDDL components using configured LLM models.
 """
 
-import sys
 import argparse
+import sys
 
 from l2p import DomainBuilder, ProblemBuilder
-from l2p.cli.utils.config import CLIError, get_config_manager
-from l2p.cli.utils.templates import get_template_manager
-from l2p.cli.utils.errors import handle_error
 from l2p.llm.base import resolve_config_path
+from l2p.cli.utils.config import CLIError, get_config_manager
+from l2p.cli.utils.errors import handle_error
+from l2p.cli.utils.templates import get_template_manager
 
 
 def add_subparser(subparsers):

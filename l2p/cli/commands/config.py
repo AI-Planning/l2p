@@ -6,10 +6,10 @@ Configuration management commands for L2P CLI: l2p config <sub-arg>
     - `l2p config validate`
 """
 
-import os
-import sys
 import argparse
+import os
 import subprocess
+import sys
 from pathlib import Path
 
 from l2p.cli.utils.config import CLIError, get_config_manager

@@ -26,7 +26,7 @@ setup(
     include_package_data=True,
     package_data={
         "l2p.llm.utils": ["*"],
-        "l2p.templates": ["domain/*", "task/*", "feedback/*"],
+        "l2p.templates": ["domain/*", "problem/*", "feedback/*"],
     },
     classifiers=[
         "Programming Language :: Python :: 3",

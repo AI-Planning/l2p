@@ -6,7 +6,6 @@ Custom/user-defined templates are not supported — the CLI uses the built-in
 prompts that ship with L2P.
 """
 
-from pathlib import Path
 from typing import Dict, List, Optional
 
 from l2p.utils.pddl_prompt import load_default_template

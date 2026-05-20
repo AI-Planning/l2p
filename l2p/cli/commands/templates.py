@@ -4,12 +4,12 @@ Template management commands for L2P CLI.
 List and manage prompt templates.
 """
 
-import sys
 import argparse
+import sys
 
 from l2p.cli.utils.config import get_config_manager
-from l2p.cli.utils.templates import get_template_manager
 from l2p.cli.utils.errors import handle_error
+from l2p.cli.utils.templates import get_template_manager
 
 
 def add_subparser(subparsers):
