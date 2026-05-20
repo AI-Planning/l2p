@@ -5,6 +5,7 @@ This module defines the `DomainBuilder` class and related utilities for construc
 PDDL domain specifications programmatically using structured Pydantic models.
 """
 
+import json
 import time
 from typing import Optional, Set, Type, TypeVar, Union
 
@@ -139,6 +140,84 @@ class DomainBuilder:
                 time.sleep(2)  # add a delay before retrying
 
         raise RuntimeError("Max retries exceeded. Failed to extract component(s).")
+    
+    
+    @require_llm
+    def extract_nl(
+        self,
+        model: BaseLLM,
+        template_key: str,
+        description: Optional[str] = None,
+        prompt_template: Optional[str] = None,
+        max_retries: int = 3,
+        **kwargs
+    ) -> tuple[dict, str]:
+        """
+        Extract a natural-language dictionary from the LLM.
+
+        The LLM is prompted to output a JSON dict wrapped in ``<{template_key}>``
+        XML tags.  The *template_key* is used as both the lookup key in
+        ``DEF_DOMAIN_PROMPTS`` and the expected XML tag name.
+
+        Typical use cases:
+
+        * ``extract_nl(model, "nl_actions", description=domain_desc)`` — extract
+          action names and short descriptions from a NL domain description.
+        * ``extract_nl(model, "nl_durative_actions", description=domain_desc)`` —
+          same for durative actions.
+
+        Args:
+            model: LLM instance.
+            template_key: Key into ``DEF_DOMAIN_PROMPTS`` *and* XML tag to parse.
+            description: Natural-language description of the domain.
+            prompt_template: Override the default prompt.
+            max_retries: Maximum retry attempts on malformed output.
+            **kwargs: Extra context (e.g. ``types=[...]``, ``predicates=[...]``).
+
+        Returns:
+            ``(parsed_dict, raw_llm_output)``
+
+        Raises:
+            ValueError: If no default template is found for *template_key*.
+            RuntimeError: If extraction fails after *max_retries* attempts.
+        """
+        # resolve template
+        if not prompt_template:
+            prompt_template = getattr(DEF_DOMAIN_PROMPTS, template_key, None)
+            if not prompt_template:
+                raise ValueError(
+                    f"[ERROR] No default template for '{template_key}'. "
+                    f"Available: {[a for a in dir(DEF_DOMAIN_PROMPTS) if not a.startswith('_')]}"
+                )
+
+        prompt = safe_format(
+            template=prompt_template,
+            description=description or "",
+            context=build_ctx(**kwargs)
+        )
+
+        for attempt in range(max_retries):
+            try:
+                model.reset_tokens()
+                llm_output = model.query(prompt=prompt)
+                blocks = parse_xml_tags(llm_output, template_key)
+                if not blocks:
+                    raise ValueError(
+                        f"[ERROR] Missing expected <{template_key}> block in LLM output."
+                    )
+                result = json.loads(blocks[0])
+                return result, llm_output
+
+            except Exception as e:
+                print(
+                    f"Error encountered during attempt {attempt + 1}/{max_retries}: {e}. "
+                    f"\nLLM Output:\n\n{llm_output if 'llm_output' in locals() else 'None'}\n\nRetrying..."
+                )
+                time.sleep(2)
+
+        raise RuntimeError(
+            f"Max retries ({max_retries}) exceeded for 'extract_nl({template_key})'."
+        )
     
     
     def generate_requirements(

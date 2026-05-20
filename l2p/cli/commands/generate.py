@@ -7,8 +7,7 @@ Generate PDDL components using configured LLM models.
 import sys
 import argparse
 
-from l2p.temp.domain_builder import DomainBuilder
-from l2p.temp.task_builder import TaskBuilder
+from l2p import DomainBuilder, ProblemBuilder
 from l2p.cli.utils.config import CLIError, get_config_manager
 from l2p.cli.utils.templates import get_template_manager
 from l2p.cli.utils.errors import handle_error
@@ -50,8 +49,6 @@ Examples:
 def generate_command(args):
     """Execute generate command."""
     try:
-        # this function is just a dispatcher - the actual work is done
-        # by the subcommand functions set via set_defaults
         if hasattr(args, 'func'):
             args.func(args)
         else:
@@ -68,8 +65,7 @@ class GeneratorBase:
     """Base class for PDDL generators."""
     
     def __init__(self, config_manager=None, template_manager=None):
-        """Initialize generator.
-        
+        """
         Args:
             config_manager: ConfigManager instance.
             template_manager: TemplateManager instance.
@@ -77,19 +73,12 @@ class GeneratorBase:
         self.config_manager = config_manager or get_config_manager()
         self.template_manager = template_manager or get_template_manager(self.config_manager)
         self.domain_builder = DomainBuilder()
-        self.problem_builder = TaskBuilder()
+        self.problem_builder = ProblemBuilder()
         self.llm = None
         self.llm = self.load_llm()
     
     def load_llm(self):
-        """Load and initialize LLM from configuration.
-        
-        Returns:
-            Initialized LLM instance.
-            
-        Raises:
-            CLIError: If LLM cannot be loaded.
-        """
+        """Load and initialise LLM from configuration."""
         if self.llm is not None:
             return self.llm
         

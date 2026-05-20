@@ -115,6 +115,7 @@ DEF_DOMAIN_PROMPTS = SimpleNamespace(
     constraints = load_default_template(folder="domain", filename="prompt_constraints.md"),
     der_preds   = load_default_template(folder="domain", filename="prompt_derived_predicates.md"),
     actions     = load_default_template(folder="domain", filename="prompt_actions.md"),
+    parameters  = load_default_template(folder="domain", filename="prompt_parameters.md"),
     preconds    = load_default_template(folder="domain", filename="prompt_preconditions.md"),
     effects     = load_default_template(folder="domain", filename="prompt_effects.md"),
     nl_actions  = load_default_template(folder="domain", filename="prompt_nl_actions.md"),

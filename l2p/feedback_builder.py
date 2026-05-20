@@ -9,14 +9,12 @@ Users can subclass to add custom feedback methods or override hooks.
 
 import json
 import time
-from typing import Any, Dict, Optional, Tuple, Union, TypeVar, Type
+from typing import Any, Dict, Optional, Tuple, Union
 
 from l2p.llm import BaseLLM, require_llm
-from l2p.utils.pddl_format import *
-from l2p.utils.pddl_prompt import DEF_FB_PROMPTS, build_ctx, safe_format, jsonify_components
-from l2p.utils.pddl_parser import parse_xml_tags, parse_component
+from l2p.utils.pddl_prompt import DEF_FB_PROMPTS, build_ctx, safe_format
+from l2p.utils.pddl_parser import parse_xml_tags
 
-T = TypeVar('T', bound=BaseModel)
 
 class FeedbackBuilder:
     """
@@ -25,8 +23,9 @@ class FeedbackBuilder:
     Provides default implementations using prompts from ``l2p/templates/feedback/``.
     Subclass to add custom feedback methods or override the three extension hooks:
 
-    * ``resolve_template`` — choose which prompt template to use
-    * ``build_prompt`` — fill placeholders into the template
+    * ``resolve_template`` -- choose which prompt template to use
+    * ``build_prompt`` -- fill placeholders into the template
+    * ``parse_result`` -- turn raw LLM output into a structured dict
     """
 
     default_prompts = DEF_FB_PROMPTS
@@ -36,12 +35,6 @@ class FeedbackBuilder:
     # ------------------------------------------------------------------
 
     def resolve_template(self, feedback_type: str, prompt_template: Optional[str] = None) -> str:
-        """
-        Return the prompt template for *feedback_type*.
-
-        If *prompt_template* is provided it is returned as-is.
-        Otherwise the method looks up ``self.default_prompts``.
-        """
         if prompt_template:
             return prompt_template
         template = getattr(self.default_prompts, feedback_type, None)
@@ -53,12 +46,16 @@ class FeedbackBuilder:
         return template
 
     def build_prompt(self, template: str, **placeholders: Any) -> str:
-        """
-        Inject *placeholders* into *template* and return the result.
-
-        Override this to use a custom templating engine.
-        """
         return safe_format(template, **placeholders)
+
+    def parse_result(self, llm_output: str, xml_tag: str) -> Union[Dict[str, Any], str]:
+        blocks = parse_xml_tags(llm_output, xml_tag)
+        if not blocks:
+            raise ValueError(
+                f"[ERROR] Missing expected <{xml_tag}> block in LLM output."
+                f"\nLLM Output:\n{llm_output}"
+            )
+        return json.loads(blocks[0])
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -74,17 +71,8 @@ class FeedbackBuilder:
         output_as_raw: bool,
         **placeholders: Any,
     ) -> Tuple[Union[Dict[str, Any], str], str]:
-        """
-        Core feedback loop: resolve template → build prompt → query → parse.
-
-        *output_as_raw* — if ``True`` the raw JSON string inside the XML tag is
-        returned instead of a parsed dict (used by :meth:`revise`).
-        """
         template = self.resolve_template(feedback_type, prompt_template)
-        # Include xml_tag as a prompt placeholder so templates with {xml_tag} (e.g. revise) work
         prompt = self.build_prompt(template, xml_tag=xml_tag, **placeholders)
-
-        print(prompt)
 
         for attempt in range(max_retries):
             try:
@@ -98,14 +86,8 @@ class FeedbackBuilder:
                             f"[ERROR] Missing <{xml_tag}> block in LLM output."
                         )
                     return blocks[0], llm_output
-                
-                blocks = parse_xml_tags(llm_output, xml_tag)
-                if not blocks:
-                    raise ValueError(
-                        f"[ERROR] Missing expected <{xml_tag}> block in LLM output."
-                        f"\nLLM Output:\n{llm_output}"
-                    )
-                result = json.loads(blocks[0])
+
+                result = self.parse_result(llm_output, xml_tag)
                 return result, llm_output
 
             except Exception as e:
@@ -127,72 +109,25 @@ class FeedbackBuilder:
     def diagnose(
         self,
         model: BaseLLM,
-        errors: list[str] | str,
-        generated_output: Union[List[Type[T]], Type[T]],
+        description: str,
+        errors: str,
+        generated_output: str,
         prompt_template: Optional[str] = None,
-        xml_tag: Optional[str] = None,
-        description: Optional[str] = None,
         max_retries: int = 3,
-        **ctx_kwargs: Any,
+        **kwargs: Any,
     ) -> Tuple[Dict[str, Any], str]:
-        """
-        Analyse validator errors and produce a structured diagnosis / repair plan.
-
-        Default XML tag: ``<diagnosis>``
-
-        Args:
-            model: LLM instance.
-            description: Original natural-language description of the domain/problem.
-            errors: Validator error messages.
-            generated_output: The failed PDDL generation (raw text).
-            prompt_template: Override the default prompt template.
-            max_retries: Maximum number of retry attempts.
-            **ctx_kwargs: Extra context (e.g. ``types=[...]``, ``predicates=[...]``).
-
-        Returns:
-            ``(diagnosis_dict, raw_llm_output)``
-        """
-
-        # retrieve prompt template (None retrieves default)
-        if not prompt_template:
-            prompt_template = self.default_prompts.diagnosis
-            if not prompt_template:
-                raise ValueError(f"[ERROR] No prompt template provided and no default found.")
-        
-        if not xml_tag:
-            xml_tag = "diagnosis"
-
-        print(generated_output)
-            
-        # inject context in placeholders
-        prompt = safe_format(
-            template=prompt_template,
+        return self._run_feedback(
+            model=model,
+            feedback_type="diagnosis",
+            xml_tag="diagnosis",
+            prompt_template=prompt_template,
+            max_retries=max_retries,
+            output_as_raw=False,
+            description=description,
+            context=build_ctx(**kwargs),
             errors=errors,
             generated_output=generated_output,
-            xml_tag=xml_tag,
-            description=description,
-            context=build_ctx(**ctx_kwargs)
         )
-
-        print(prompt)
-
-        # return self._run_feedback(
-        #     model=model,
-
-        # )
-
-        # return self._run_feedback(
-        #     model=model,
-        #     feedback_type="diagnosis",
-        #     xml_tag="diagnosis",
-        #     prompt_template=prompt_template,
-        #     max_retries=max_retries,
-        #     output_as_raw=False,
-        #     description=description,
-        #     context=build_ctx(**ctx_kwargs),
-        #     errors=errors,
-        #     generated_output=generated_output,
-        # )
 
     @require_llm
     def evaluate(
@@ -202,16 +137,8 @@ class FeedbackBuilder:
         generated_output: str,
         prompt_template: Optional[str] = None,
         max_retries: int = 3,
-        **ctx_kwargs: Any,
+        **kwargs: Any,
     ) -> Tuple[Dict[str, Any], str]:
-        """
-        Evaluate a generated PDDL component for semantic quality.
-
-        Default XML tag: ``<evaluation>``
-
-        Returns:
-            ``(evaluation_dict, raw_llm_output)``
-        """
         return self._run_feedback(
             model=model,
             feedback_type="evaluate",
@@ -220,7 +147,7 @@ class FeedbackBuilder:
             max_retries=max_retries,
             output_as_raw=False,
             description=description,
-            context=build_ctx(**ctx_kwargs),
+            context=build_ctx(**kwargs),
             generated_output=generated_output,
         )
 
@@ -233,16 +160,8 @@ class FeedbackBuilder:
         generated_output: str,
         prompt_template: Optional[str] = None,
         max_retries: int = 3,
-        **ctx_kwargs: Any,
+        **kwargs: Any,
     ) -> Tuple[Dict[str, Any], str]:
-        """
-        Extract generalised lessons from a specific failure.
-
-        Default XML tag: ``<reflection>``
-
-        Returns:
-            ``(reflection_dict, raw_llm_output)``
-        """
         return self._run_feedback(
             model=model,
             feedback_type="reflection",
@@ -251,7 +170,7 @@ class FeedbackBuilder:
             max_retries=max_retries,
             output_as_raw=False,
             description=description,
-            context=build_ctx(**ctx_kwargs),
+            context=build_ctx(**kwargs),
             diagnosis=diagnosis,
             generated_output=generated_output,
         )
@@ -266,17 +185,8 @@ class FeedbackBuilder:
         xml_tag: str,
         prompt_template: Optional[str] = None,
         max_retries: int = 3,
-        **ctx_kwargs: Any,
+        **kwargs: Any,
     ) -> Tuple[str, str]:
-        """
-        Revise a failed PDDL generation by following a repair plan.
-
-        Unlike other methods, the XML tag is dynamic (e.g. ``<types>``) and
-        the result is the **raw JSON string** inside the tag rather than a parsed dict.
-
-        Returns:
-            ``(corrected_json_string, raw_llm_output)``
-        """
         return self._run_feedback(
             model=model,
             feedback_type="revise",
@@ -285,7 +195,7 @@ class FeedbackBuilder:
             max_retries=max_retries,
             output_as_raw=True,
             description=description,
-            context=build_ctx(**ctx_kwargs),
+            context=build_ctx(**kwargs),
             repair_plan=repair_plan,
             generated_output=generated_output,
         )
@@ -298,16 +208,8 @@ class FeedbackBuilder:
         candidates: str,
         prompt_template: Optional[str] = None,
         max_retries: int = 3,
-        **ctx_kwargs: Any,
+        **kwargs: Any,
     ) -> Tuple[Dict[str, Any], str]:
-        """
-        Select the best candidate from multiple PDDL generations.
-
-        Default XML tag: ``<selection>``
-
-        Returns:
-            ``(selection_dict, raw_llm_output)``
-        """
         return self._run_feedback(
             model=model,
             feedback_type="select",
@@ -316,7 +218,7 @@ class FeedbackBuilder:
             max_retries=max_retries,
             output_as_raw=False,
             original_prompt=original_prompt,
-            context=build_ctx(**ctx_kwargs),
+            context=build_ctx(**kwargs),
             candidates=candidates,
         )
 
@@ -329,16 +231,8 @@ class FeedbackBuilder:
         planner_output: str,
         prompt_template: Optional[str] = None,
         max_retries: int = 3,
-        **ctx_kwargs: Any,
+        **kwargs: Any,
     ) -> Tuple[Dict[str, Any], str]:
-        """
-        Diagnose why a planner failed to find a solution.
-
-        Default XML tag: ``<plan_diagnosis>``
-
-        Returns:
-            ``(plan_diagnosis_dict, raw_llm_output)``
-        """
         return self._run_feedback(
             model=model,
             feedback_type="plan_diagnosis",
@@ -361,16 +255,8 @@ class FeedbackBuilder:
         plan: str,
         prompt_template: Optional[str] = None,
         max_retries: int = 3,
-        **ctx_kwargs: Any,
+        **kwargs: Any,
     ) -> Tuple[Dict[str, Any], str]:
-        """
-        Evaluate a successful plan for semantic alignment.
-
-        Default XML tag: ``<plan_evaluation>``
-
-        Returns:
-            ``(plan_evaluation_dict, raw_llm_output)``
-        """
         return self._run_feedback(
             model=model,
             feedback_type="plan_evaluate",
@@ -379,7 +265,7 @@ class FeedbackBuilder:
             max_retries=max_retries,
             output_as_raw=False,
             description=description,
-            context=build_ctx(**ctx_kwargs),
+            context=build_ctx(**kwargs),
             domain=domain_pddl,
             problem=problem_pddl,
             plan=plan,

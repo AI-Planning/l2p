@@ -209,7 +209,7 @@ class DerivedPredicate(BaseModel):
         "desc": "Derived from having positive battery"
     }
     """
-    tag: ClassVar[tuple] = ("derived_predicates", "derived_predicate")
+    tag: ClassVar[tuple] = ("der_preds", "derived_predicates", "derived_predicate")
     name: str
     params: List[Parameter]
     condition: LogicalCondition
@@ -227,7 +227,7 @@ class ActionPrecondition(BaseModel):
         "desc": "Rover must be at the start location and not busy"
     }
     """
-    tag: ClassVar[tuple] = ("preconditions", "precondition")
+    tag: ClassVar[tuple] = ("preconds", "preconditions", "precondition")
     conditions: List[LogicalCondition] = Field(default_factory=list)
     desc: Optional[str] = None
 
@@ -314,7 +314,7 @@ class DurativeActionConditions(BaseModel):
         "desc": null
     }
     """
-    tag: ClassVar[tuple] = ("durative_conditions", "durative_condition")
+    tag: ClassVar[tuple] = ("dur_conds", "durative_conditions", "durative_condition")
     at_start: List[LogicalCondition] = Field(default_factory=list)
     at_end: List[LogicalCondition] = Field(default_factory=list)
     over_all: List[LogicalCondition] = Field(default_factory=list)
@@ -340,7 +340,7 @@ class DurativeActionEffect(BaseModel):
         "desc": null
     }
     """
-    tag: ClassVar[tuple] = ("durative_effects", "durative_effect")
+    tag: ClassVar[tuple] = ("dur_effects", "durative_effects", "durative_effect")
     at_start: ActionEffect = Field(default_factory=ActionEffect)
     at_end: ActionEffect = Field(default_factory=ActionEffect)
     continuous: List[LogicalCondition] = Field(default_factory=list)  # added for PDDL 2.1/+ continuous numeric changes using #t
@@ -364,7 +364,7 @@ class DurativeAction(BaseModel):
         "desc": "Durative transmission action"
     }
     """
-    tag: ClassVar[tuple] = ("durative_actions", "durative_action")
+    tag: ClassVar[tuple] = ("dur_actions", "durative_actions", "durative_action")
     name: str
     params: List[Parameter]
     duration: List[str]
@@ -559,7 +559,7 @@ class InitialState(BaseModel):
         "desc": "Starting state"
     }
     """
-    tag: ClassVar[tuple] = ("initial_states", "initial_state", "inital", "init")
+    tag: ClassVar[tuple] = ("initial", "initial_states", "initial_state", "init")
     facts: List[LogicalCondition] = Field(default_factory=list)
     timed_facts: List[TimedFact] = Field(default_factory=list)
     desc: Optional[str] = None
@@ -575,7 +575,7 @@ class GoalState(BaseModel):
         "desc": "Target state"
     }
     """
-    tag: ClassVar[tuple] = ("goal_states", "goal_state", "goals", "goal")
+    tag: ClassVar[tuple] = ("goal", "goal_states", "goal_state", "goals")
     conditions: List[LogicalCondition] = Field(default_factory=list)
     desc: Optional[str] = None
 
@@ -589,7 +589,7 @@ class Metric(BaseModel):
         "desc": "Minimize makespan"
     }
     """
-    tag: ClassVar[tuple] = ("metrics", "metric")
+    tag: ClassVar[tuple] = ("metric", "metrics")
     optimization: str   # must be 'minimize' or 'maximize'
     expression: str     # e.g., 'total-time', '(* (fuel-used) 2)', or '(is-violated pref1)'
     desc: Optional[str] = None
