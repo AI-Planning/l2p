@@ -23,16 +23,16 @@ End your final answer by wrapping the structured diagnostic report inside specif
 </{xml_tag}>
 
 ## RULES
-1. **Grounding:** You must base your {xml_tag} strictly on the [VALIDATOR ERRORS] provided. Do not hallucinate or invent PDDL errors that the validator did not catch.
+1. **Grounding:** You must base your diagnosis strictly on the [VALIDATOR ERRORS] provided. Do not hallucinate or invent PDDL errors that the validator did not catch.
 
 2. **Precision:** Map the exact validator message to the specific field/location in the [FAILED GENERATION].
 
 3. **Actionability:** The `repair_plan` must be specific enough that an AI actor can blindly follow the steps to correct the JSON structure.
 
-4. **No Output Generation:** Do NOT attempt to generate the corrected PDDL `{component_type}` yourself. Only output the interpretation.
+4. **No Output Generation:** Do NOT attempt to generate the corrected PDDL yourself. Only output the interpretation.
 
 ## TASK
-Analyze the following generated PDDL `{component_type}`. 
+Analyze the following list or single generated PDDL. 
 
 [ORIGINAL INSTRUCTIONS]:
 {description}
@@ -43,6 +43,6 @@ Analyze the following generated PDDL `{component_type}`.
 {errors}
 
 [FAILED GENERATION (to diagnose)]:
-{generated_output}
-
-Based on the rules and context above, generate your diagnostic report.
+<artifact>
+{artifact}
+</artifact>

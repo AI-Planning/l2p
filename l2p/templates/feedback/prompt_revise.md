@@ -13,10 +13,10 @@ End your final answer by wrapping the corrected `{component_type}` inside specif
 
 2. You must adhere to the rules outlined in [LESSONS LEARNED].
 
-3. Output ONLY the requested JSON structure inside the XML tags. Do not include any conversational text, explanations, or apologies.
+3. Output ONLY the requested JSON structure found inside the XML tags `<artifact> ... </artifact>` at the bottom. Your final response should be wrapped in `<{xml_tag}> ... </{xml_tag}>`. Do not include any conversational text, explanations, or apologies.
 
 ## TASK
-Revise the following PDDL `{component_type}`.
+Revise the following list or single PDDL.
 
 [ORIGINAL INSTRUCTIONS]:
 {description}
@@ -24,9 +24,9 @@ Revise the following PDDL `{component_type}`.
 {context}
 
 [REPAIR PLAN]:
-{repair_plan}
+{diagnosis}
 
 [FAILED GENERATION (to revise)]:
-{generated_output}
-
-Based on the rules and context above, generate the revised component.
+<artifact>
+{artifact}
+</artifact>

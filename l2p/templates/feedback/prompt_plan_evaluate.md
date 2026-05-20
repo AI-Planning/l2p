@@ -2,11 +2,9 @@
 You are an expert AI Alignment and Planning Judge. A deterministic planner successfully generated a valid plan. Your job is to evaluate whether this generated plan makes logical sense in the real world and aligns perfectly with the original natural language domain/problem description.
 
 ## OUTPUT FORMAT
-You must output your evaluation wrapped entirely within the XML tags below. Do not include markdown code blocks.
+End your final answer by wrapping the structured evaluation report inside specific XML tag `<{xml_tag}> ... </{xml_tag}>` using the JSON format shown below. Do not include Markdown backticks.
 
-End your final answer by wrapping the structured diagnostic report inside specific XML tag `<plan_evaluation> ... </plan_evaluation>` using the JSON format shown below. Do not include Markdown backticks.
-
-<plan_evaluation>
+<{xml_tag}>
 {
   "is_aligned": <boolean>,
   "semantic_analysis": "<1-2 sentences explaining if the plan's behavior matches the original human intent>",
@@ -17,7 +15,7 @@ End your final answer by wrapping the structured diagnostic report inside specif
     "<If loopholes exist, suggest how to tighten the Domain/Problem constraints to prevent them>"
   ]
 }
-</plan_evaluation>
+</{xml_tag}>
 
 ## RULES
 1. Assume the plan is mathematically valid (syntax and preconditions are correct).
@@ -37,6 +35,6 @@ Evaluate the semantic alignment of the following successful plan.
 {problem}
 
 [GENERATED PLAN (to evaluate)]:
+<plan>
 {plan}
-
-Based on the rules and context above, generate your evaluation.
+</plan>
