@@ -19,39 +19,39 @@ class TemplateManager:
     # Mapping:  friendly name  →  folder / filename  (without extension)
     # ------------------------------------------------------------------
     DOMAIN_TEMPLATES: Dict[str, str] = {
-        "domain":               "domain/prompt_domain",
-        "requirements":         "domain/prompt_requirements",
-        "types":                "domain/prompt_types",
-        "constants":            "domain/prompt_constants",
-        "predicates":           "domain/prompt_predicates",
-        "functions":            "domain/prompt_functions",
-        "constraints":          "domain/prompt_constraints",
-        "derived_predicates":   "domain/prompt_derived_predicates",
-        "actions":              "domain/prompt_actions",
-        "durative_actions":     "domain/prompt_durative_actions",
-        "nl_actions":           "domain/prompt_nl_actions",
-        "nl_durative_actions":  "domain/prompt_nl_durative_actions",
-        "preconditions":        "domain/prompt_preconditions",
-        "effects":              "domain/prompt_effects",
-        "durative_conditions":  "domain/prompt_durative_conditions",
-        "durative_effects":     "domain/prompt_durative_effects",
-        "parameters":           "domain/prompt_parameters",
-        "events":               "domain/prompt_events",
-        "processes":            "domain/prompt_processes",
+        "domain": "domain/prompt_domain",
+        "requirements": "domain/prompt_requirements",
+        "types": "domain/prompt_types",
+        "constants": "domain/prompt_constants",
+        "predicates": "domain/prompt_predicates",
+        "functions": "domain/prompt_functions",
+        "constraints": "domain/prompt_constraints",
+        "derived_predicates": "domain/prompt_derived_predicates",
+        "actions": "domain/prompt_actions",
+        "durative_actions": "domain/prompt_durative_actions",
+        "nl_actions": "domain/prompt_nl_actions",
+        "nl_durative_actions": "domain/prompt_nl_durative_actions",
+        "preconditions": "domain/prompt_preconditions",
+        "effects": "domain/prompt_effects",
+        "durative_conditions": "domain/prompt_durative_conditions",
+        "durative_effects": "domain/prompt_durative_effects",
+        "parameters": "domain/prompt_parameters",
+        "events": "domain/prompt_events",
+        "processes": "domain/prompt_processes",
     }
 
     PROBLEM_TEMPLATES: Dict[str, str] = {
-        "problem":              "problem/prompt_problem",
-        "objects":              "problem/prompt_objects",
-        "initial_states":       "problem/prompt_initial_states",
-        "goal_states":          "problem/prompt_goal_states",
-        "constraints":          "problem/prompt_constraints",
-        "metric":               "problem/prompt_metric",
+        "problem": "problem/prompt_problem",
+        "objects": "problem/prompt_objects",
+        "initial_states": "problem/prompt_initial_states",
+        "goal_states": "problem/prompt_goal_states",
+        "constraints": "problem/prompt_constraints",
+        "metric": "problem/prompt_metric",
     }
 
     CATEGORY_MAP: Dict[str, Dict[str, str]] = {
-        "domain":               DOMAIN_TEMPLATES,
-        "problem":              PROBLEM_TEMPLATES,
+        "domain": DOMAIN_TEMPLATES,
+        "problem": PROBLEM_TEMPLATES,
     }
 
     def __init__(self, config_manager=None):
@@ -111,9 +111,7 @@ class TemplateManager:
                 )
             return {category: list(cat_templates.keys())}
 
-        return {
-            cat: list(t.keys()) for cat, t in self.CATEGORY_MAP.items()
-        }
+        return {cat: list(t.keys()) for cat, t in self.CATEGORY_MAP.items()}
 
 
 # ------------------------------------------------------------------

@@ -99,6 +99,7 @@ alias allows the LLM to output a mix of simple strings and recursive dictionarie
 """
 LogicalCondition = Union[str, Dict[str, Any]]
 
+
 class Requirement(BaseModel):
     """
     Expected JSON format (example):
@@ -107,16 +108,18 @@ class Requirement(BaseModel):
         "desc": "Enables typed variables"
     }
     """
+
     tag: ClassVar[tuple] = ("requirements", "requirement")
     name: str
     desc: Optional[str] = None
 
-    @field_validator('name')
+    @field_validator("name")
     @classmethod
     def check_colon(cls, r: str) -> str:
-        if not r.startswith(':'):
+        if not r.startswith(":"):
             raise ValueError(f"Requirement name '{r}' must start with ':'")
         return r
+
 
 class PDDLType(BaseModel):
     """
@@ -127,10 +130,12 @@ class PDDLType(BaseModel):
         "desc": "A planetary rover"
     }
     """
+
     tag: ClassVar[tuple] = ("types", "type")
     name: str
     parent: str
     desc: Optional[str] = None
+
 
 class Constant(BaseModel):
     """
@@ -141,10 +146,12 @@ class Constant(BaseModel):
         "desc": "The main hub"
     }
     """
+
     tag: ClassVar[tuple] = ("constants", "constant")
     name: str
     type: str
     desc: Optional[str] = None
+
 
 class Parameter(BaseModel):
     """
@@ -155,17 +162,19 @@ class Parameter(BaseModel):
         "desc": "A rover"
     }
     """
+
     tag: ClassVar[tuple] = ("parameters", "parameter")
     variable: str
     type: str
     desc: Optional[str] = None
 
-    @field_validator('variable')
+    @field_validator("variable")
     @classmethod
     def check_question_mark(cls, v: str) -> str:
-        if not v.startswith('?'):
+        if not v.startswith("?"):
             raise ValueError(f"Parameter variable '{v}' must start with '?'")
         return v
+
 
 class Predicate(BaseModel):
     """
@@ -179,10 +188,12 @@ class Predicate(BaseModel):
         "desc": "True if rover is at location"
     }
     """
+
     tag: ClassVar[tuple] = ("predicates", "predicate")
     name: str
     params: List[Parameter]
     desc: Optional[str] = None
+
 
 class Function(BaseModel):
     """
@@ -193,10 +204,12 @@ class Function(BaseModel):
         "desc": "Current battery level of the rover"
     }
     """
+
     tag: ClassVar[tuple] = ("functions", "function")
     name: str
     params: List[Parameter]
     desc: Optional[str] = None
+
 
 # PDDL 2.2 Derived Predicates (Axioms)
 class DerivedPredicate(BaseModel):
@@ -209,6 +222,7 @@ class DerivedPredicate(BaseModel):
         "desc": "Derived from having positive battery"
     }
     """
+
     tag: ClassVar[tuple] = ("der_preds", "derived_predicates", "derived_predicate")
     name: str
     params: List[Parameter]
@@ -227,9 +241,11 @@ class ActionPrecondition(BaseModel):
         "desc": "Rover must be at the start location and not busy"
     }
     """
+
     tag: ClassVar[tuple] = ("preconds", "preconditions", "precondition")
     conditions: List[LogicalCondition] = Field(default_factory=list)
     desc: Optional[str] = None
+
 
 class ConditionalEffect(BaseModel):
     """
@@ -244,10 +260,14 @@ class ConditionalEffect(BaseModel):
         "desc": "If it has a payload, it is delivered"
     }
     """
+
     tag: ClassVar[tuple] = ("conditional_effects", "conditional_effect")
     condition: List[LogicalCondition]
-    effect: Dict[str, List[LogicalCondition]] # e.g., {"add": [], "delete": [], "numeric": []}
+    effect: Dict[
+        str, List[LogicalCondition]
+    ]  # e.g., {"add": [], "delete": [], "numeric": []}
     desc: Optional[str] = None
+
 
 class ActionEffect(BaseModel):
     """
@@ -267,12 +287,14 @@ class ActionEffect(BaseModel):
         "desc": "Optional description"
     }
     """
+
     tag: ClassVar[tuple] = ("effects", "effect")
     add: List[LogicalCondition] = Field(default_factory=list)
     delete: List[LogicalCondition] = Field(default_factory=list)
     numeric: List[LogicalCondition] = Field(default_factory=list)
     conditional: List[ConditionalEffect] = Field(default_factory=list)
     desc: Optional[str] = None
+
 
 class Action(BaseModel):
     """
@@ -288,14 +310,15 @@ class Action(BaseModel):
             "desc": null
         },
         "effects": {
-            "add": [], 
-            "delete": [], 
-            "numeric": [], 
+            "add": [],
+            "delete": [],
+            "numeric": [],
             "conditional": []
         },
         "desc": "Classical action to drive"
     }
     """
+
     tag: ClassVar[tuple] = ("actions", "action")
     name: str
     params: List[Parameter]
@@ -314,37 +337,43 @@ class DurativeActionConditions(BaseModel):
         "desc": null
     }
     """
+
     tag: ClassVar[tuple] = ("dur_conds", "durative_conditions", "durative_condition")
     at_start: List[LogicalCondition] = Field(default_factory=list)
     at_end: List[LogicalCondition] = Field(default_factory=list)
     over_all: List[LogicalCondition] = Field(default_factory=list)
     desc: Optional[str] = None
 
+
 class DurativeActionEffect(BaseModel):
     """
     Expected JSON format (example):
     {
         "at_start": {
-            "add": [], 
-            "delete": [], 
-            "numeric": [], 
+            "add": [],
+            "delete": [],
+            "numeric": [],
             "conditional": []
         },
         "at_end": {
-            "add": ["(at ?r ?to)"], 
-            "delete": ["(at ?r ?from)"], 
-            "numeric": [], 
+            "add": ["(at ?r ?to)"],
+            "delete": ["(at ?r ?from)"],
+            "numeric": [],
             "conditional": []
         },
         "continuous": ["(decrease (battery-level ?r) (* #t 1.0))"],
         "desc": null
     }
     """
+
     tag: ClassVar[tuple] = ("dur_effects", "durative_effects", "durative_effect")
     at_start: ActionEffect = Field(default_factory=ActionEffect)
     at_end: ActionEffect = Field(default_factory=ActionEffect)
-    continuous: List[LogicalCondition] = Field(default_factory=list)  # added for PDDL 2.1/+ continuous numeric changes using #t
+    continuous: List[LogicalCondition] = Field(
+        default_factory=list
+    )  # added for PDDL 2.1/+ continuous numeric changes using #t
     desc: Optional[str] = None
+
 
 class DurativeAction(BaseModel):
     """
@@ -364,6 +393,7 @@ class DurativeAction(BaseModel):
         "desc": "Durative transmission action"
     }
     """
+
     tag: ClassVar[tuple] = ("dur_actions", "durative_actions", "durative_action")
     name: str
     params: List[Parameter]
@@ -372,18 +402,20 @@ class DurativeAction(BaseModel):
     effects: DurativeActionEffect
     desc: Optional[str] = None
 
+
 # PDDL 3.0
 class Constraint(BaseModel):
     """
     Expected JSON format (example):
     {
         "condition": {
-            "operator": "always", 
+            "operator": "always",
             "condition": "(> (battery-level ?r) 0.0)"
         },
         "desc": "Battery must always be positive"
     }
     """
+
     tag: ClassVar[tuple] = ("constraints", "constraint")
     condition: LogicalCondition
     desc: Optional[str] = None
@@ -401,24 +433,26 @@ class Event(BaseModel):
         "preconditions": {
             "conditions": [
                 "(<= (battery-level ?r) 0)"
-            ], 
+            ],
             "desc": null
         },
         "effects": {
-            "add": ["(dead ?r)"], 
-            "delete": [], 
-            "numeric": [], 
+            "add": ["(dead ?r)"],
+            "delete": [],
+            "numeric": [],
             "conditional": []
         },
         "desc": "Triggers when battery dies"
     }
     """
+
     tag: ClassVar[tuple] = ("events", "event")
     name: str
     params: List[Parameter]
     preconditions: ActionPrecondition = Field(default_factory=ActionPrecondition)
     effects: ActionEffect = Field(default_factory=ActionEffect)
     desc: Optional[str] = None
+
 
 class Process(BaseModel):
     """
@@ -431,20 +465,21 @@ class Process(BaseModel):
         "preconditions": {
             "conditions": [
                 "(in-sun ?r)"
-            ], 
+            ],
             "desc": null
         },
         "effects": {
-            "add": [], 
-            "delete": [], 
+            "add": [],
+            "delete": [],
             "numeric": [
                 "(increase (battery-level ?r) (* #t 2.0))"
-            ], 
+            ],
             "conditional": []
         },
         "desc": "Charges continuously in sun"
     }
     """
+
     tag: ClassVar[tuple] = ("processes", "process")
     name: str
     params: List[Parameter]
@@ -474,16 +509,17 @@ class DomainDetails(BaseModel):
         "constraints": [...]
     }
     """
+
     tag: ClassVar[tuple] = ("domain", "environment")
     name: str
     desc: Optional[str] = None
-    domain_pddl: Optional[str] = None # optional raw PDDL string for whole domain
-    
+    domain_pddl: Optional[str] = None  # optional raw PDDL string for whole domain
+
     # meta-data
     requirements: List[Requirement] = Field(default_factory=list)
     types: List[PDDLType] = Field(default_factory=list)
     constants: List[Constant] = Field(default_factory=list)
-    
+
     # state variables
     predicates: List[Predicate] = Field(default_factory=list)
     functions: List[Function] = Field(default_factory=list)
@@ -519,6 +555,7 @@ This allows a mix of standard PDDL strings and PDDL 2.2 Timed Initial Literals (
         }
 """
 
+
 class PDDLObject(BaseModel):
     """
     Expected JSON format (example):
@@ -528,10 +565,12 @@ class PDDLObject(BaseModel):
         "desc": "Instance of a rover"
     }
     """
+
     tag: ClassVar[tuple] = ("objects", "object")
-    name: str   # e.g., "r1"
-    type: str   # e.g., "rover"
+    name: str  # e.g., "r1"
+    type: str  # e.g., "rover"
     desc: Optional[str] = None
+
 
 class TimedFact(BaseModel):
     """
@@ -542,42 +581,48 @@ class TimedFact(BaseModel):
         "desc": "Event triggers at t=15.5"
     }
     """
+
     tag: ClassVar[tuple] = ("timed_facts", "timed_fact")
     time: float
     fact: LogicalCondition
     desc: Optional[str] = None
+
 
 class InitialState(BaseModel):
     """
     Expected JSON format (example):
     {
         "facts": [
-            "(at rover1 loc1)", 
+            "(at rover1 loc1)",
             "(= (battery-level rover1) 100)"
         ],
         "timed_facts": [],
         "desc": "Starting state"
     }
     """
+
     tag: ClassVar[tuple] = ("initial", "initial_states", "initial_state", "init")
     facts: List[LogicalCondition] = Field(default_factory=list)
     timed_facts: List[TimedFact] = Field(default_factory=list)
     desc: Optional[str] = None
+
 
 class GoalState(BaseModel):
     """
     Expected JSON format (example):
     {
         "conditions": [
-            "(at rover1 loc2)", 
+            "(at rover1 loc2)",
             "(data-transmitted)"
         ],
         "desc": "Target state"
     }
     """
+
     tag: ClassVar[tuple] = ("goal", "goal_states", "goal_state", "goals")
     conditions: List[LogicalCondition] = Field(default_factory=list)
     desc: Optional[str] = None
+
 
 # PDDL 2.1 & PDDL 3.0 Plan Optimization Metrics
 class Metric(BaseModel):
@@ -589,18 +634,20 @@ class Metric(BaseModel):
         "desc": "Minimize makespan"
     }
     """
+
     tag: ClassVar[tuple] = ("metric", "metrics")
-    optimization: str   # must be 'minimize' or 'maximize'
-    expression: str     # e.g., 'total-time', '(* (fuel-used) 2)', or '(is-violated pref1)'
+    optimization: str  # must be 'minimize' or 'maximize'
+    expression: str  # e.g., 'total-time', '(* (fuel-used) 2)', or '(is-violated pref1)'
     desc: Optional[str] = None
 
-    @field_validator('optimization')
+    @field_validator("optimization")
     @classmethod
     def check_optimization_type(cls, v: str) -> str:
         v = v.lower()
         if v not in ["minimize", "maximize"]:
             raise ValueError("Optimization must be 'minimize' or 'maximize'")
         return v
+
 
 class ProblemDetails(BaseModel):
     """
@@ -613,11 +660,12 @@ class ProblemDetails(BaseModel):
         "goal_state": {"conditions": [...]}
     }
     """
+
     tag: ClassVar[tuple] = ("problem", "task")
     name: str
     domain_name: str
     desc: Optional[str] = None
-    problem_pddl: Optional[str] = None # optional raw PDDL string for whole problem
+    problem_pddl: Optional[str] = None  # optional raw PDDL string for whole problem
 
     # typed object instances
     objects: List[PDDLObject] = Field(default_factory=list)
@@ -633,6 +681,7 @@ class ProblemDetails(BaseModel):
 # PDDL PLAN CLASSES
 # ---------------------------------------------------------------------------
 
+
 class PlanStep(BaseModel):
     """
     Expected JSON format (example):
@@ -644,8 +693,9 @@ class PlanStep(BaseModel):
         "desc": "Optional description"
     }
     """
-    action: str                  # e.g., "drive"
-    args: List[str]              # e.g., ["rover1", "loc1", "loc2"] (grounded objects)
-    start_time: float = 0.0      # for durative actions / temporal planning
+
+    action: str  # e.g., "drive"
+    args: List[str]  # e.g., ["rover1", "loc1", "loc2"] (grounded objects)
+    start_time: float = 0.0  # for durative actions / temporal planning
     duration: Optional[float] = None  # None for classical actions, float for durative
     desc: Optional[str] = None

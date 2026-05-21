@@ -18,6 +18,7 @@ def resolve_config_path(config_path: str) -> str:
         yaml_filename = parts[-1] if parts else "llm.yaml"
         try:
             import importlib.resources
+
             with importlib.resources.path("l2p.llm.utils", yaml_filename) as p:
                 resolved = p.resolve()
         except Exception:

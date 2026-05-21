@@ -11,12 +11,14 @@ CYAN = "\033[96m"
 YELLOW = "\033[93m"
 RESET = "\033[0m"
 
+
 def _input_or_exit(prompt: str = "") -> str:
     value = input(prompt).strip()
     if value == "/exit":
         print("Operation cancelled.")
         sys.exit(0)
     return value
+
 
 def _show_diff(original: str, modified: str):
     """Show a colored unified diff between original and modified content."""

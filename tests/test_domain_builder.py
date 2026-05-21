@@ -28,8 +28,11 @@ class TestDomainBuilderFormalize(unittest.TestCase):
         ]
         </types>""")
         results, output = self.builder.formalize_component(
-            model=self.mock, component_class=PDDLType,
-            prompt_template=self.prompt, domain_desc="blocksworld")
+            model=self.mock,
+            component_class=PDDLType,
+            prompt_template=self.prompt,
+            domain_desc="blocksworld",
+        )
         self.assertIn(PDDLType, results)
         types = results[PDDLType]
         self.assertEqual(len(types), 3)
@@ -47,8 +50,11 @@ class TestDomainBuilderFormalize(unittest.TestCase):
         ]
         </types>""")
         results, _ = self.builder.formalize_component(
-            model=self.mock, component_class=PDDLType,
-            prompt_template=self.prompt, domain_desc="rovers")
+            model=self.mock,
+            component_class=PDDLType,
+            prompt_template=self.prompt,
+            domain_desc="rovers",
+        )
         types = results[PDDLType]
         self.assertEqual(len(types), 3)
         rover = next(t for t in types if t.name == "rover")
@@ -57,8 +63,11 @@ class TestDomainBuilderFormalize(unittest.TestCase):
     def test_formalize_empty_types(self):
         self.mock.output = "<types>\n[]\n</types>"
         results, _ = self.builder.formalize_component(
-            model=self.mock, component_class=PDDLType,
-            prompt_template=self.prompt, domain_desc="empty")
+            model=self.mock,
+            component_class=PDDLType,
+            prompt_template=self.prompt,
+            domain_desc="empty",
+        )
         self.assertEqual(results[PDDLType], [])
 
     # ---- PREDICATES ----
@@ -73,8 +82,11 @@ class TestDomainBuilderFormalize(unittest.TestCase):
         ]
         </predicates>""")
         results, _ = self.builder.formalize_component(
-            model=self.mock, component_class=Predicate,
-            prompt_template=self.prompt, domain_desc="test")
+            model=self.mock,
+            component_class=Predicate,
+            prompt_template=self.prompt,
+            domain_desc="test",
+        )
         preds = results[Predicate]
         self.assertEqual(len(preds), 3)
         at = next(p for p in preds if p.name == "at")
@@ -91,8 +103,11 @@ class TestDomainBuilderFormalize(unittest.TestCase):
         ]
         </predicates>""")
         results, _ = self.builder.formalize_component(
-            model=self.mock, component_class=Predicate,
-            prompt_template=self.prompt, domain_desc="test")
+            model=self.mock,
+            component_class=Predicate,
+            prompt_template=self.prompt,
+            domain_desc="test",
+        )
         preds = results[Predicate]
         self.assertEqual(len(preds), 1)
         self.assertEqual(preds[0].params[0].type, "object")
@@ -108,8 +123,11 @@ class TestDomainBuilderFormalize(unittest.TestCase):
         ]
         </functions>""")
         results, _ = self.builder.formalize_component(
-            model=self.mock, component_class=Function,
-            prompt_template=self.prompt, domain_desc="test")
+            model=self.mock,
+            component_class=Function,
+            prompt_template=self.prompt,
+            domain_desc="test",
+        )
         funcs = results[Function]
         self.assertEqual(len(funcs), 2)
         self.assertEqual(funcs[0].name, "battery-level")
@@ -127,8 +145,11 @@ class TestDomainBuilderFormalize(unittest.TestCase):
         ]
         </constants>""")
         results, _ = self.builder.formalize_component(
-            model=self.mock, component_class=Constant,
-            prompt_template=self.prompt, domain_desc="test")
+            model=self.mock,
+            component_class=Constant,
+            prompt_template=self.prompt,
+            domain_desc="test",
+        )
         consts = results[Constant]
         self.assertEqual(len(consts), 2)
         self.assertEqual(consts[0].name, "robot1")
@@ -146,8 +167,11 @@ class TestDomainBuilderFormalize(unittest.TestCase):
         ]
         </requirements>""")
         results, _ = self.builder.formalize_component(
-            model=self.mock, component_class=Requirement,
-            prompt_template=self.prompt, domain_desc="test")
+            model=self.mock,
+            component_class=Requirement,
+            prompt_template=self.prompt,
+            domain_desc="test",
+        )
         reqs = results[Requirement]
         self.assertEqual(len(reqs), 3)
         self.assertEqual(reqs[0].name, ":strips")
@@ -169,8 +193,11 @@ class TestDomainBuilderFormalize(unittest.TestCase):
         ]
         </actions>""")
         results, _ = self.builder.formalize_component(
-            model=self.mock, component_class=Action,
-            prompt_template=self.prompt, domain_desc="test")
+            model=self.mock,
+            component_class=Action,
+            prompt_template=self.prompt,
+            domain_desc="test",
+        )
         actions = results[Action]
         self.assertEqual(len(actions), 1)
         a = actions[0]
@@ -202,8 +229,11 @@ class TestDomainBuilderFormalize(unittest.TestCase):
         ]
         </actions>""")
         results, _ = self.builder.formalize_component(
-            model=self.mock, component_class=Action,
-            prompt_template=self.prompt, domain_desc="test")
+            model=self.mock,
+            component_class=Action,
+            prompt_template=self.prompt,
+            domain_desc="test",
+        )
         a = results[Action][0]
         self.assertTrue(len(a.preconditions.conditions) > 0)
         self.assertEqual(len(a.effects.numeric), 1)
@@ -226,8 +256,11 @@ class TestDomainBuilderFormalize(unittest.TestCase):
         ]
         </actions>""")
         results, _ = self.builder.formalize_component(
-            model=self.mock, component_class=Action,
-            prompt_template=self.prompt, domain_desc="test")
+            model=self.mock,
+            component_class=Action,
+            prompt_template=self.prompt,
+            domain_desc="test",
+        )
         a = results[Action][0]
         self.assertEqual(len(a.preconditions.conditions), 0)
         self.assertEqual(len(a.effects.add), 0)
@@ -250,7 +283,8 @@ class TestDomainBuilderFormalize(unittest.TestCase):
             model=self.mock,
             component_class=[PDDLType, Predicate],
             prompt_template="Extract types and predicates",
-            domain_desc="test")
+            domain_desc="test",
+        )
         self.assertIn(PDDLType, results)
         self.assertIn(Predicate, results)
         self.assertEqual(len(results[PDDLType]), 1)
@@ -259,16 +293,22 @@ class TestDomainBuilderFormalize(unittest.TestCase):
     # ---- LLM OUTPUT PRESERVED ----
 
     def test_llm_output_preserved(self):
-        self.mock.output = "<types>\n[{\"name\": \"robot\", \"parent\": \"object\", \"desc\": null}]\n</types>"
+        self.mock.output = (
+            '<types>\n[{"name": "robot", "parent": "object", "desc": null}]\n</types>'
+        )
         results, llm_output = self.builder.formalize_component(
-            model=self.mock, component_class=PDDLType,
-            prompt_template=self.prompt, domain_desc="test")
+            model=self.mock,
+            component_class=PDDLType,
+            prompt_template=self.prompt,
+            domain_desc="test",
+        )
         self.assertIn("robot", llm_output)
 
     # ---- RETRY ON FAILURE ----
 
     def test_retry_eventually_succeeds(self):
         """Simulates first attempt failing (bad XML), second succeeding."""
+
         class RetryMock(MockLLM):
             def __init__(self):
                 super().__init__()
@@ -278,13 +318,16 @@ class TestDomainBuilderFormalize(unittest.TestCase):
                 self.call_count += 1
                 if self.call_count == 1:
                     return "bad output"
-                return "<types>\n[{\"name\": \"robot\", \"parent\": \"object\", \"desc\": null}]\n</types>"
+                return '<types>\n[{"name": "robot", "parent": "object", "desc": null}]\n</types>'
 
         retry_mock = RetryMock()
         results, _ = self.builder.formalize_component(
-            model=retry_mock, component_class=PDDLType,
-            prompt_template=self.prompt, domain_desc="test",
-            max_retries=3)
+            model=retry_mock,
+            component_class=PDDLType,
+            prompt_template=self.prompt,
+            domain_desc="test",
+            max_retries=3,
+        )
         self.assertEqual(len(results[PDDLType]), 1)
         self.assertEqual(results[PDDLType][0].name, "robot")
 
@@ -303,8 +346,17 @@ class TestDomainBuilderGenerateDomain(unittest.TestCase):
             name="test-domain",
             requirements=[Requirement(name=":strips"), Requirement(name=":typing")],
             types=[PDDLType(name="robot", parent="object")],
-            predicates=[Predicate(name="at", params=[Parameter(variable="?r", type="robot")])],
-            actions=[Action(name="nop", params=[], preconditions=ActionPrecondition(), effects=ActionEffect())]
+            predicates=[
+                Predicate(name="at", params=[Parameter(variable="?r", type="robot")])
+            ],
+            actions=[
+                Action(
+                    name="nop",
+                    params=[],
+                    preconditions=ActionPrecondition(),
+                    effects=ActionEffect(),
+                )
+            ],
         )
         result = self.builder.generate_domain(domain)
         self.assertIn("(define (domain test-domain)", result)
@@ -324,17 +376,27 @@ class TestDomainBuilderGenerateDomain(unittest.TestCase):
             ],
             constants=[Constant(name="table1", type="object")],
             predicates=[
-                Predicate(name="on", params=[
-                    Parameter(variable="?b1", type="block"),
-                    Parameter(variable="?b2", type="block"),
-                ]),
-                Predicate(name="holding", params=[
-                    Parameter(variable="?a", type="arm"),
-                    Parameter(variable="?b", type="block"),
-                ]),
-                Predicate(name="clear", params=[Parameter(variable="?b", type="block")]),
+                Predicate(
+                    name="on",
+                    params=[
+                        Parameter(variable="?b1", type="block"),
+                        Parameter(variable="?b2", type="block"),
+                    ],
+                ),
+                Predicate(
+                    name="holding",
+                    params=[
+                        Parameter(variable="?a", type="arm"),
+                        Parameter(variable="?b", type="block"),
+                    ],
+                ),
+                Predicate(
+                    name="clear", params=[Parameter(variable="?b", type="block")]
+                ),
             ],
-            functions=[Function(name="weight", params=[Parameter(variable="?b", type="block")])],
+            functions=[
+                Function(name="weight", params=[Parameter(variable="?b", type="block")])
+            ],
             actions=[
                 Action(
                     name="stack",
@@ -343,13 +405,15 @@ class TestDomainBuilderGenerateDomain(unittest.TestCase):
                         Parameter(variable="?b2", type="block"),
                         Parameter(variable="?a", type="arm"),
                     ],
-                    preconditions=ActionPrecondition(conditions=["(holding ?a ?b1)", "(clear ?b2)"]),
+                    preconditions=ActionPrecondition(
+                        conditions=["(holding ?a ?b1)", "(clear ?b2)"]
+                    ),
                     effects=ActionEffect(
                         add=["(on ?b1 ?b2)"],
                         delete=["(holding ?a ?b1)", "(clear ?b2)"],
-                    )
+                    ),
                 )
-            ]
+            ],
         )
         result = self.builder.generate_domain(domain)
         self.assertIn(":constants", result)
@@ -367,8 +431,7 @@ class TestDomainBuilderGenerateDomain(unittest.TestCase):
 
     def test_generate_domain_no_actions_warning(self):
         domain = DomainDetails(
-            name="no-actions",
-            predicates=[Predicate(name="p", params=[])]
+            name="no-actions", predicates=[Predicate(name="p", params=[])]
         )
         f = io.StringIO()
         with redirect_stdout(f):
@@ -378,15 +441,22 @@ class TestDomainBuilderGenerateDomain(unittest.TestCase):
     def test_generate_domain_with_derived_predicates(self):
         domain = DomainDetails(
             name="derived",
-            requirements=[Requirement(name=":strips"), Requirement(name=":derived-predicates")],
-            predicates=[Predicate(name="battery-low", params=[Parameter(variable="?r", type="object")])],
+            requirements=[
+                Requirement(name=":strips"),
+                Requirement(name=":derived-predicates"),
+            ],
+            predicates=[
+                Predicate(
+                    name="battery-low", params=[Parameter(variable="?r", type="object")]
+                )
+            ],
             derived_predicates=[
                 DerivedPredicate(
                     name="needs-charge",
                     params=[Parameter(variable="?r", type="object")],
-                    condition="(battery-low ?r)"
+                    condition="(battery-low ?r)",
                 )
-            ]
+            ],
         )
         result = self.builder.generate_domain(domain)
         self.assertIn(":derived", result)
@@ -395,9 +465,18 @@ class TestDomainBuilderGenerateDomain(unittest.TestCase):
     def test_generate_domain_with_constraint(self):
         domain = DomainDetails(
             name="constrained",
-            requirements=[Requirement(name=":strips"), Requirement(name=":constraints")],
-            predicates=[Predicate(name="active", params=[Parameter(variable="?r", type="object")])],
-            constraint=[Constraint(condition={"operator": "always", "condition": "(active ?r)"})]
+            requirements=[
+                Requirement(name=":strips"),
+                Requirement(name=":constraints"),
+            ],
+            predicates=[
+                Predicate(
+                    name="active", params=[Parameter(variable="?r", type="object")]
+                )
+            ],
+            constraint=[
+                Constraint(condition={"operator": "always", "condition": "(active ?r)"})
+            ],
         )
         result = self.builder.generate_domain(domain)
         self.assertIn(":constraints", result)
@@ -408,8 +487,17 @@ class TestDomainBuilderGenerateDomain(unittest.TestCase):
         domain = DomainDetails(
             name="auto-req",
             types=[PDDLType(name="robot", parent="object")],
-            predicates=[Predicate(name="at", params=[Parameter(variable="?r", type="robot")])],
-            actions=[Action(name="nop", params=[], preconditions=ActionPrecondition(), effects=ActionEffect())]
+            predicates=[
+                Predicate(name="at", params=[Parameter(variable="?r", type="robot")])
+            ],
+            actions=[
+                Action(
+                    name="nop",
+                    params=[],
+                    preconditions=ActionPrecondition(),
+                    effects=ActionEffect(),
+                )
+            ],
         )
         result = self.builder.generate_domain(domain)
         self.assertIn(":typing", result)
@@ -420,13 +508,17 @@ class TestDomainBuilderGenerateDomain(unittest.TestCase):
         domain = DomainDetails(
             name="format-check",
             types=[PDDLType(name="obj", parent="object")],
-            predicates=[Predicate(name="p", params=[Parameter(variable="?x", type="obj")])],
-            actions=[Action(
-                name="act",
-                params=[Parameter(variable="?x", type="obj")],
-                preconditions=ActionPrecondition(conditions=["(p ?x)"]),
-                effects=ActionEffect(add=["(p ?x)"], delete=[])
-            )]
+            predicates=[
+                Predicate(name="p", params=[Parameter(variable="?x", type="obj")])
+            ],
+            actions=[
+                Action(
+                    name="act",
+                    params=[Parameter(variable="?x", type="obj")],
+                    preconditions=ActionPrecondition(conditions=["(p ?x)"]),
+                    effects=ActionEffect(add=["(p ?x)"], delete=[]),
+                )
+            ],
         )
         result = self.builder.generate_domain(domain)
         # Should start with define
@@ -462,41 +554,61 @@ class TestDomainBuilderGenerateRequirements(unittest.TestCase):
         self.assertIn(":numeric-fluents", n)
 
     def test_derived_predicates(self):
-        dp = DerivedPredicate(name="can", params=[Parameter(variable="?x", type="o")], condition="(> (b ?x) 0)")
+        dp = DerivedPredicate(
+            name="can",
+            params=[Parameter(variable="?x", type="o")],
+            condition="(> (b ?x) 0)",
+        )
         d = DomainDetails(name="t", derived_predicates=[dp])
         n = self._names(self.builder.generate_requirements(d))
         self.assertIn(":derived-predicates", n)
 
     def test_durative_actions(self):
-        da = DurativeAction(name="fly", params=[Parameter(variable="?d", type="d")],
-                             duration=[">= ?duration 5.0"],
-                             conditions=DurativeActionConditions(),
-                             effects=DurativeActionEffect())
+        da = DurativeAction(
+            name="fly",
+            params=[Parameter(variable="?d", type="d")],
+            duration=[">= ?duration 5.0"],
+            conditions=DurativeActionConditions(),
+            effects=DurativeActionEffect(),
+        )
         d = DomainDetails(name="t", durative_actions=[da])
         n = self._names(self.builder.generate_requirements(d))
         self.assertIn(":durative-actions", n)
 
     def test_negative_preconditions(self):
-        a = Action(name="go", params=[],
-                   preconditions=ActionPrecondition(conditions=[{"operator": "not", "condition": "(blocked)"}]),
-                   effects=ActionEffect())
+        a = Action(
+            name="go",
+            params=[],
+            preconditions=ActionPrecondition(
+                conditions=[{"operator": "not", "condition": "(blocked)"}]
+            ),
+            effects=ActionEffect(),
+        )
         d = DomainDetails(name="t", actions=[a])
         n = self._names(self.builder.generate_requirements(d))
         self.assertIn(":negative-preconditions", n)
 
     def test_conditional_effects(self):
-        ce = ConditionalEffect(condition=["(has-item)"], effect={"add": [], "delete": [], "numeric": []})
-        a = Action(name="proc", params=[],
-                   preconditions=ActionPrecondition(),
-                   effects=ActionEffect(conditional=[ce]))
+        ce = ConditionalEffect(
+            condition=["(has-item)"], effect={"add": [], "delete": [], "numeric": []}
+        )
+        a = Action(
+            name="proc",
+            params=[],
+            preconditions=ActionPrecondition(),
+            effects=ActionEffect(conditional=[ce]),
+        )
         d = DomainDetails(name="t", actions=[a])
         n = self._names(self.builder.generate_requirements(d))
         self.assertIn(":conditional-effects", n)
 
     def test_equality(self):
-        a = Action(name="eq", params=[],
-                   preconditions=ActionPrecondition(conditions=["(>= ?x ?y)"]),
-                   effects=ActionEffect())
+        a = Action(
+            name="eq",
+            params=[],
+            preconditions=ActionPrecondition(conditions=["(>= ?x ?y)"]),
+            effects=ActionEffect(),
+        )
         d = DomainDetails(name="t", actions=[a])
         n = self._names(self.builder.generate_requirements(d))
         self.assertIn(":equality", n)
@@ -508,14 +620,34 @@ class TestDomainBuilderGenerateRequirements(unittest.TestCase):
         self.assertIn(":constraints", n)
 
     def test_quantified_preconditions(self):
-        a1 = Action(name="all", params=[],
-                    preconditions=ActionPrecondition(conditions=[
-                        {"quantifier": "forall", "parameters": [{"variable": "?x", "type": "t"}], "conditions": ["(p ?x)"]}
-                    ]), effects=ActionEffect())
-        a2 = Action(name="some", params=[],
-                    preconditions=ActionPrecondition(conditions=[
-                        {"quantifier": "exists", "parameters": [{"variable": "?y", "type": "t"}], "conditions": ["(p ?y)"]}
-                    ]), effects=ActionEffect())
+        a1 = Action(
+            name="all",
+            params=[],
+            preconditions=ActionPrecondition(
+                conditions=[
+                    {
+                        "quantifier": "forall",
+                        "parameters": [{"variable": "?x", "type": "t"}],
+                        "conditions": ["(p ?x)"],
+                    }
+                ]
+            ),
+            effects=ActionEffect(),
+        )
+        a2 = Action(
+            name="some",
+            params=[],
+            preconditions=ActionPrecondition(
+                conditions=[
+                    {
+                        "quantifier": "exists",
+                        "parameters": [{"variable": "?y", "type": "t"}],
+                        "conditions": ["(p ?y)"],
+                    }
+                ]
+            ),
+            effects=ActionEffect(),
+        )
         d = DomainDetails(name="t", actions=[a1, a2])
         n = self._names(self.builder.generate_requirements(d))
         self.assertIn(":quantified-preconditions", n)
@@ -523,32 +655,48 @@ class TestDomainBuilderGenerateRequirements(unittest.TestCase):
         self.assertNotIn(":universal-preconditions", n)
 
     def test_timed_initial_literals(self):
-        problem = ProblemDetails(name="p", domain_name="d",
-                                 initial_state=InitialState(timed_facts=[TimedFact(time=5.0, fact="(event)")]))
+        problem = ProblemDetails(
+            name="p",
+            domain_name="d",
+            initial_state=InitialState(
+                timed_facts=[TimedFact(time=5.0, fact="(event)")]
+            ),
+        )
         d = DomainDetails(name="t")
         n = self._names(self.builder.generate_requirements(d, problem_details=problem))
         self.assertIn(":timed-initial-literals", n)
 
     def test_action_costs(self):
         f = Function(name="total-cost", params=[])
-        a = Action(name="do", params=[],
-                   preconditions=ActionPrecondition(),
-                   effects=ActionEffect(numeric=["(increase (total-cost) 1)"]))
+        a = Action(
+            name="do",
+            params=[],
+            preconditions=ActionPrecondition(),
+            effects=ActionEffect(numeric=["(increase (total-cost) 1)"]),
+        )
         d = DomainDetails(name="t", functions=[f], actions=[a])
         n = self._names(self.builder.generate_requirements(d))
         self.assertIn(":action-costs", n)
 
     def test_durative_inequalities(self):
-        da = DurativeAction(name="fly", params=[Parameter(variable="?d", type="d")],
-                             duration=["(< ?duration 10.0)"],
-                             conditions=DurativeActionConditions(),
-                             effects=DurativeActionEffect())
+        da = DurativeAction(
+            name="fly",
+            params=[Parameter(variable="?d", type="d")],
+            duration=["(< ?duration 10.0)"],
+            conditions=DurativeActionConditions(),
+            effects=DurativeActionEffect(),
+        )
         d = DomainDetails(name="t", durative_actions=[da])
         n = self._names(self.builder.generate_requirements(d))
         self.assertIn(":durative-inequalities", n)
 
     def test_events_and_processes(self):
-        evt = Event(name="e", params=[], preconditions=ActionPrecondition(), effects=ActionEffect())
+        evt = Event(
+            name="e",
+            params=[],
+            preconditions=ActionPrecondition(),
+            effects=ActionEffect(),
+        )
         d = DomainDetails(name="t", events=[evt])
         n = self._names(self.builder.generate_requirements(d))
         self.assertIn(":time", n)
@@ -578,7 +726,10 @@ class TestDomainBuilderSetters(unittest.TestCase):
         self.assertEqual(self.builder.domain_details.types[0].name, "b")
 
     def test_set_types_list(self):
-        types = [PDDLType(name="a", parent="object"), PDDLType(name="b", parent="object")]
+        types = [
+            PDDLType(name="a", parent="object"),
+            PDDLType(name="b", parent="object"),
+        ]
         self.builder.set_types(types)
         self.assertEqual(len(self.builder.domain_details.types), 2)
 
@@ -593,7 +744,12 @@ class TestDomainBuilderSetters(unittest.TestCase):
         self.assertEqual(len(self.builder.domain_details.predicates), 1)
 
     def test_set_actions(self):
-        a = Action(name="move", params=[], preconditions=ActionPrecondition(), effects=ActionEffect())
+        a = Action(
+            name="move",
+            params=[],
+            preconditions=ActionPrecondition(),
+            effects=ActionEffect(),
+        )
         self.builder.set_actions(a)
         self.assertEqual(len(self.builder.domain_details.actions), 1)
 
@@ -616,7 +772,11 @@ class TestDomainBuilderSetters(unittest.TestCase):
         self.assertEqual(len(self.builder.domain_details.functions), 1)
 
     def test_set_derived_predicates(self):
-        dp = DerivedPredicate(name="can", params=[Parameter(variable="?r", type="robot")], condition="(> (b ?r) 0)")
+        dp = DerivedPredicate(
+            name="can",
+            params=[Parameter(variable="?r", type="robot")],
+            condition="(> (b ?r) 0)",
+        )
         self.builder.set_derived_predicates(dp)
         self.assertEqual(len(self.builder.domain_details.derived_predicates), 1)
 
@@ -631,26 +791,42 @@ class TestDomainBuilderSetters(unittest.TestCase):
         self.assertEqual(len(self.builder.domain_details.requirements), 1)
 
     def test_set_append_multiple_types(self):
-        types = [PDDLType(name="a", parent="object"), PDDLType(name="b", parent="object")]
+        types = [
+            PDDLType(name="a", parent="object"),
+            PDDLType(name="b", parent="object"),
+        ]
         self.builder.set_types(types)
         self.builder.set_types(PDDLType(name="c", parent="object"), append=True)
         self.assertEqual(len(self.builder.domain_details.types), 3)
 
     def test_set_events(self):
-        e = Event(name="e", params=[], preconditions=ActionPrecondition(), effects=ActionEffect())
+        e = Event(
+            name="e",
+            params=[],
+            preconditions=ActionPrecondition(),
+            effects=ActionEffect(),
+        )
         self.builder.set_events(e)
         self.assertEqual(len(self.builder.domain_details.events), 1)
 
     def test_set_processes(self):
-        p = Process(name="p", params=[], preconditions=ActionPrecondition(), effects=ActionEffect())
+        p = Process(
+            name="p",
+            params=[],
+            preconditions=ActionPrecondition(),
+            effects=ActionEffect(),
+        )
         self.builder.set_processes(p)
         self.assertEqual(len(self.builder.domain_details.processes), 1)
 
     def test_set_durative_actions(self):
-        da = DurativeAction(name="fly", params=[Parameter(variable="?d", type="d")],
-                             duration=[">= ?duration 5.0"],
-                             conditions=DurativeActionConditions(),
-                             effects=DurativeActionEffect())
+        da = DurativeAction(
+            name="fly",
+            params=[Parameter(variable="?d", type="d")],
+            duration=[">= ?duration 5.0"],
+            conditions=DurativeActionConditions(),
+            effects=DurativeActionEffect(),
+        )
         self.builder.set_durative_actions(da)
         self.assertEqual(len(self.builder.domain_details.durative_actions), 1)
 

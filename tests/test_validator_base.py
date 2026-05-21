@@ -1,11 +1,20 @@
 import unittest
 from pydantic import BaseModel
 from l2p.validators.base import (
-    ValidationResult, FunctionalRule, SyntaxValidator,
-    _extract_symbols, _verify_symbols, get_ordinal
+    ValidationResult,
+    FunctionalRule,
+    SyntaxValidator,
+    _extract_symbols,
+    _verify_symbols,
+    get_ordinal,
 )
 from l2p.utils.pddl_types import (
-    PDDLType, Predicate, Parameter, Action, ActionPrecondition, ActionEffect
+    PDDLType,
+    Predicate,
+    Parameter,
+    Action,
+    ActionPrecondition,
+    ActionEffect,
 )
 
 
@@ -64,6 +73,7 @@ class TestFunctionalRule(unittest.TestCase):
     def test_multiple_targets(self):
         def dummy(t, c):
             return ValidationResult()
+
         rule = FunctionalRule(name="multi", targets=[PDDLType, Predicate], func=dummy)
         self.assertIn(PDDLType, rule.target_models)
         self.assertIn(Predicate, rule.target_models)
@@ -73,11 +83,13 @@ class TestSyntaxValidator(unittest.TestCase):
 
     def test_register_and_run(self):
         v = SyntaxValidator()
+
         def check_name(target, context):
             r = ValidationResult()
-            if not getattr(target, 'name', ''):
+            if not getattr(target, "name", ""):
                 r.add_error("empty name")
             return r
+
         v.register_rule(FunctionalRule("chk", [PDDLType], check_name))
 
         self.assertTrue(v.validate_component(PDDLType(name="r", parent="o"), {}).valid)
@@ -85,24 +97,29 @@ class TestSyntaxValidator(unittest.TestCase):
 
     def test_no_applicable_rules_returns_valid(self):
         v = SyntaxValidator()
+
         def dummy(t, c):
             return ValidationResult()
+
         v.register_rule(FunctionalRule("pred_only", [Predicate], dummy))
         r = v.validate_component(PDDLType(name="r", parent="o"), {})
         self.assertTrue(r.valid)
 
     def test_multiple_rules_on_same_target(self):
         v = SyntaxValidator()
+
         def r1(t, c):
             res = ValidationResult()
-            if not getattr(t, 'name', ''):
+            if not getattr(t, "name", ""):
                 res.add_error("no name")
             return res
+
         def r2(t, c):
             res = ValidationResult()
-            if not getattr(t, 'parent', ''):
+            if not getattr(t, "parent", ""):
                 res.add_error("no parent")
             return res
+
         v.register_rule(FunctionalRule("r1", [PDDLType], r1))
         v.register_rule(FunctionalRule("r2", [PDDLType], r2))
 
@@ -115,10 +132,12 @@ class TestSyntaxValidator(unittest.TestCase):
 
     def test_warnings_aggregated(self):
         v = SyntaxValidator()
+
         def warn(t, c):
             res = ValidationResult()
             res.add_warning("warning")
             return res
+
         v.register_rule(FunctionalRule("w", [PDDLType], warn))
         r = v.validate_component(PDDLType(name="x", parent="y"), {})
         self.assertEqual(len(r.warnings), 1)
@@ -142,7 +161,13 @@ class TestExtractSymbols(unittest.TestCase):
         self.assertIn("clear", s)
 
     def test_from_nested_dict(self):
-        data = {"operator": "not", "condition": {"operator": "and", "conditions": ["(pred1 ?x)", "(pred2 ?y)"]}}
+        data = {
+            "operator": "not",
+            "condition": {
+                "operator": "and",
+                "conditions": ["(pred1 ?x)", "(pred2 ?y)"],
+            },
+        }
         s = _extract_symbols(data)
         self.assertIn("pred1", s)
         self.assertIn("pred2", s)
@@ -162,7 +187,7 @@ class TestExtractSymbols(unittest.TestCase):
             name="move",
             params=[Parameter(variable="?r", type="robot")],
             preconditions=ActionPrecondition(conditions=["(at ?r ?l)"]),
-            effects=ActionEffect(add=["(moved ?r)"])
+            effects=ActionEffect(add=["(moved ?r)"]),
         )
         s = _extract_symbols(action)
         self.assertIn("at", s)
@@ -175,7 +200,9 @@ class TestVerifySymbols(unittest.TestCase):
         ctx = {
             Predicate: [
                 Predicate(name="at", params=[Parameter(variable="?r", type="robot")]),
-                Predicate(name="clear", params=[Parameter(variable="?b", type="block")]),
+                Predicate(
+                    name="clear", params=[Parameter(variable="?b", type="block")]
+                ),
             ]
         }
         self.assertTrue(_verify_symbols({"at", "clear"}, ctx, "loc").valid)
@@ -188,11 +215,25 @@ class TestVerifySymbols(unittest.TestCase):
 
     def test_pddl_keywords_are_allowed(self):
         ctx = {Predicate: []}
-        keywords = {"and", "or", "not", "forall", "when", "increase", "decrease", "assign"}
+        keywords = {
+            "and",
+            "or",
+            "not",
+            "forall",
+            "when",
+            "increase",
+            "decrease",
+            "assign",
+        }
         self.assertTrue(_verify_symbols(keywords, ctx, "test").valid)
 
     def test_mixed_valid_and_invalid(self):
-        ctx = {Predicate: [Predicate(name="at", params=[]), Predicate(name="holding", params=[])]}
+        ctx = {
+            Predicate: [
+                Predicate(name="at", params=[]),
+                Predicate(name="holding", params=[]),
+            ]
+        }
         r = _verify_symbols({"at", "holding", "fly"}, ctx, "test")
         self.assertFalse(r.valid)
         self.assertEqual(len(r.errors), 1)
@@ -206,9 +247,21 @@ class TestVerifySymbols(unittest.TestCase):
 class TestGetOrdinal(unittest.TestCase):
 
     def test_ordinals(self):
-        cases = {1: "1st", 2: "2nd", 3: "3rd", 4: "4th", 11: "11th",
-                 12: "12th", 13: "13th", 21: "21st", 22: "22nd", 23: "23rd",
-                 100: "100th", 101: "101st", 111: "111th"}
+        cases = {
+            1: "1st",
+            2: "2nd",
+            3: "3rd",
+            4: "4th",
+            11: "11th",
+            12: "12th",
+            13: "13th",
+            21: "21st",
+            22: "22nd",
+            23: "23rd",
+            100: "100th",
+            101: "101st",
+            111: "111th",
+        }
         for n, expected in cases.items():
             self.assertEqual(get_ordinal(n), expected)
 

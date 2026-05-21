@@ -24,37 +24,31 @@ Examples:
         """,
     )
 
-    parser.add_argument(
-        "filename",
-        type=str,
-        help="Name of the PDDL file to create"
-    )
+    parser.add_argument("filename", type=str, help="Name of the PDDL file to create")
 
     parser.add_argument(
         "--type",
         choices=["domain", "problem"],
         default="domain",
-        help="Type of PDDL file (default: domain)"
+        help="Type of PDDL file (default: domain)",
     )
 
     parser.add_argument(
         "--domain-name",
         type=str,
         default="my-domain",
-        help="Domain name (default: my-domain)"
+        help="Domain name (default: my-domain)",
     )
 
     parser.add_argument(
         "--problem-name",
         type=str,
         default="my-problem",
-        help="Problem name (default: my-problem)"
+        help="Problem name (default: my-problem)",
     )
 
     parser.add_argument(
-        "--force", "-f",
-        action="store_true",
-        help="Overwrite existing file"
+        "--force", "-f", action="store_true", help="Overwrite existing file"
     )
 
     parser.set_defaults(func=new_command)

@@ -11,8 +11,13 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from l2p.utils.pddl_types import (
-    DomainDetails, PDDLType, Constant, Predicate, Function,
-    Action, Parameter,
+    DomainDetails,
+    PDDLType,
+    Constant,
+    Predicate,
+    Function,
+    Action,
+    Parameter,
 )
 from l2p.cli.commands.generate import GeneratorBase
 from l2p.cli.utils.errors import handle_error
@@ -85,7 +90,11 @@ class DomainGenerator(GeneratorBase):
             context["constants"] = self._confirm_stage(
                 label="constants",
                 llm_func=lambda feedback="": self._generate_constants(
-                    domain_desc, context["types"], args.max_retries, const_desc, feedback
+                    domain_desc,
+                    context["types"],
+                    args.max_retries,
+                    const_desc,
+                    feedback,
                 ),
                 manual_func=self._manual_constants if manual else None,
             )
@@ -100,8 +109,12 @@ class DomainGenerator(GeneratorBase):
             context["predicates"] = self._confirm_stage(
                 label="predicates",
                 llm_func=lambda feedback="": self._generate_predicates(
-                    domain_desc, context["types"], context["constants"],
-                    args.max_retries, pred_desc, feedback,
+                    domain_desc,
+                    context["types"],
+                    context["constants"],
+                    args.max_retries,
+                    pred_desc,
+                    feedback,
                 ),
                 manual_func=self._manual_predicates if manual else None,
             )
@@ -116,8 +129,13 @@ class DomainGenerator(GeneratorBase):
             context["functions"] = self._confirm_stage(
                 label="functions",
                 llm_func=lambda feedback="": self._generate_functions(
-                    domain_desc, context["types"], context["constants"],
-                    context["predicates"], args.max_retries, func_desc, feedback,
+                    domain_desc,
+                    context["types"],
+                    context["constants"],
+                    context["predicates"],
+                    args.max_retries,
+                    func_desc,
+                    feedback,
                 ),
                 manual_func=self._manual_functions if manual else None,
             )
@@ -158,7 +176,12 @@ class DomainGenerator(GeneratorBase):
 
     def _prompt_domain_name(self) -> str:
         while True:
-            name = _input_or_exit(f"{GREEN}Enter domain name:{RESET} ").strip().lower().replace(" ", "-")
+            name = (
+                _input_or_exit(f"{GREEN}Enter domain name:{RESET} ")
+                .strip()
+                .lower()
+                .replace(" ", "-")
+            )
             if name:
                 return re.sub(r"[^a-z0-9-]", "", name)
             print("Domain name cannot be empty.")
@@ -169,7 +192,11 @@ class DomainGenerator(GeneratorBase):
         return desc or "A general planning domain."
 
     def _prompt_component(self, name: str, default_include: bool) -> Tuple[bool, bool]:
-        resp = _input_or_exit(f"Include {name}? ({'Y/n' if default_include else 'y/N'}): ").strip().lower()
+        resp = (
+            _input_or_exit(f"Include {name}? ({'Y/n' if default_include else 'y/N'}): ")
+            .strip()
+            .lower()
+        )
         include = default_include if not resp else resp == "y"
         if not include:
             return False, False
@@ -284,7 +311,9 @@ class DomainGenerator(GeneratorBase):
         name = ""
         while True:
             if state == 0:
-                raw = _input_or_exit(f"\n  {GREEN}Constant name:{RESET} ").strip().lower()
+                raw = (
+                    _input_or_exit(f"\n  {GREEN}Constant name:{RESET} ").strip().lower()
+                )
                 if not raw:
                     continue
                 if raw == "done":
@@ -314,7 +343,11 @@ class DomainGenerator(GeneratorBase):
         params: List[Parameter] = []
         while True:
             if state == 0:
-                raw = _input_or_exit(f"\n  {GREEN}Predicate name:{RESET} ").strip().lower()
+                raw = (
+                    _input_or_exit(f"\n  {GREEN}Predicate name:{RESET} ")
+                    .strip()
+                    .lower()
+                )
                 if not raw:
                     continue
                 if raw == "done":
@@ -364,7 +397,9 @@ class DomainGenerator(GeneratorBase):
         params: List[Parameter] = []
         while True:
             if state == 0:
-                raw = _input_or_exit(f"\n  {GREEN}Function name:{RESET} ").strip().lower()
+                raw = (
+                    _input_or_exit(f"\n  {GREEN}Function name:{RESET} ").strip().lower()
+                )
                 if not raw:
                     continue
                 if raw == "done":
@@ -410,7 +445,9 @@ class DomainGenerator(GeneratorBase):
     # Action handling  (single call to generate ALL actions at once)
     # ------------------------------------------------------------------
 
-    def _handle_actions_interactive(self, domain_desc: str, context: dict, max_retries: int):
+    def _handle_actions_interactive(
+        self, domain_desc: str, context: dict, max_retries: int
+    ):
         while True:
             print(
                 "  How do you want to define actions?\n"
@@ -426,7 +463,9 @@ class DomainGenerator(GeneratorBase):
             action_names: Optional[List[str]] = None
 
             if not choice or choice == "1":
-                action_names = self._llm_extract_names(domain_desc, context, max_retries)
+                action_names = self._llm_extract_names(
+                    domain_desc, context, max_retries
+                )
             elif choice == "2":
                 action_names = self._manual_action_names()
             else:
@@ -445,7 +484,10 @@ class DomainGenerator(GeneratorBase):
             actions = self._confirm_stage(
                 label="actions",
                 llm_func=lambda: self._generate_all_actions(
-                    domain_desc, action_names, context, max_retries,
+                    domain_desc,
+                    action_names,
+                    context,
+                    max_retries,
                 ),
             )
             if actions is not None:
@@ -454,7 +496,9 @@ class DomainGenerator(GeneratorBase):
                 context["actions"] = []
             return
 
-    def _llm_extract_names(self, domain_desc: str, context: dict, max_retries: int) -> Optional[List[str]]:
+    def _llm_extract_names(
+        self, domain_desc: str, context: dict, max_retries: int
+    ) -> Optional[List[str]]:
         """Extract action names from the NL description and confirm with the user."""
         print("\n  Extracting action names from description...")
         try:
@@ -497,7 +541,12 @@ class DomainGenerator(GeneratorBase):
         names: List[str] = []
         print("  Enter action names. Name or 'done' to finish.\n")
         while True:
-            raw = _input_or_exit(f"\n  {GREEN}Action name:{RESET} ").strip().lower().replace(" ", "-")
+            raw = (
+                _input_or_exit(f"\n  {GREEN}Action name:{RESET} ")
+                .strip()
+                .lower()
+                .replace(" ", "-")
+            )
             if not raw:
                 continue
             if raw == "done":
@@ -515,8 +564,11 @@ class DomainGenerator(GeneratorBase):
         return names if names else None
 
     def _generate_all_actions(
-        self, domain_desc: str, action_names: List[str],
-        context: dict, max_retries: int,
+        self,
+        domain_desc: str,
+        action_names: List[str],
+        context: dict,
+        max_retries: int,
     ) -> Optional[List[Action]]:
         """Generate all actions in a single LLM call."""
         print("  Generating all actions from description...")
@@ -546,7 +598,11 @@ class DomainGenerator(GeneratorBase):
     # ------------------------------------------------------------------
 
     def _generate_types(
-        self, domain_desc: str, max_retries: int, comp_desc: str = "", feedback: str = ""
+        self,
+        domain_desc: str,
+        max_retries: int,
+        comp_desc: str = "",
+        feedback: str = "",
     ) -> List[PDDLType]:
         desc = domain_desc
         if comp_desc:
@@ -564,8 +620,12 @@ class DomainGenerator(GeneratorBase):
         return result.get(PDDLType, [])
 
     def _generate_constants(
-        self, domain_desc: str, types: List[PDDLType], max_retries: int,
-        comp_desc: str = "", feedback: str = "",
+        self,
+        domain_desc: str,
+        types: List[PDDLType],
+        max_retries: int,
+        comp_desc: str = "",
+        feedback: str = "",
     ) -> List[Constant]:
         desc = domain_desc
         if comp_desc:
@@ -584,8 +644,13 @@ class DomainGenerator(GeneratorBase):
         return result.get(Constant, [])
 
     def _generate_predicates(
-        self, domain_desc: str, types: List[PDDLType], constants: List[Constant],
-        max_retries: int, comp_desc: str = "", feedback: str = "",
+        self,
+        domain_desc: str,
+        types: List[PDDLType],
+        constants: List[Constant],
+        max_retries: int,
+        comp_desc: str = "",
+        feedback: str = "",
     ) -> List[Predicate]:
         desc = domain_desc
         if comp_desc:
@@ -605,9 +670,14 @@ class DomainGenerator(GeneratorBase):
         return result.get(Predicate, [])
 
     def _generate_functions(
-        self, domain_desc: str, types: List[PDDLType], constants: List[Constant],
-        predicates: List[Predicate], max_retries: int,
-        comp_desc: str = "", feedback: str = "",
+        self,
+        domain_desc: str,
+        types: List[PDDLType],
+        constants: List[Constant],
+        predicates: List[Predicate],
+        max_retries: int,
+        comp_desc: str = "",
+        feedback: str = "",
     ) -> List[Function]:
         desc = domain_desc
         if comp_desc:
@@ -640,9 +710,11 @@ class DomainGenerator(GeneratorBase):
             path_str = default_path
         output_path = Path(path_str)
         if output_path.exists():
-            resp = _input_or_exit(
-                f"  {YELLOW}File exists. Overwrite? (y/N):{RESET} "
-            ).strip().lower()
+            resp = (
+                _input_or_exit(f"  {YELLOW}File exists. Overwrite? (y/N):{RESET} ")
+                .strip()
+                .lower()
+            )
             if resp != "y":
                 print(f"\n{BOLD}Generated domain:{RESET}\n{content}\n")
                 return

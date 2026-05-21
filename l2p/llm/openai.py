@@ -75,7 +75,7 @@ class OPENAI(BaseLLM):
         super().__init__(model, api_key)
 
         if provider == "mistral":
-            self.client = Mistral(api_key=api_key, base_url=base_url)    
+            self.client = Mistral(api_key=api_key, base_url=base_url)
         else:
             self.client = OpenAI(api_key=api_key, base_url=base_url)
 
@@ -121,9 +121,11 @@ class OPENAI(BaseLLM):
             raise ValueError("Prompt must be a non-empty string.")
 
         messages = messages or [{"role": "user", "content": prompt}]
-        
+
         kwargs = dict(self.model_params)
-        self.max_completion_tokens = kwargs.get('max_completion_tokens', kwargs.get('max_tokens', None))
+        self.max_completion_tokens = kwargs.get(
+            "max_completion_tokens", kwargs.get("max_tokens", None)
+        )
 
         # estimate current usage of tokens
         current_tokens = sum(len(self.tok.encode(m["content"])) for m in messages)
@@ -171,7 +173,7 @@ class OPENAI(BaseLLM):
                 output_cost = (self.out_tokens / 1_000_000) * self.cost_per_output_token
                 total_cost = input_cost + output_cost
 
-                self.reset_tokens() # reset tokens after each query
+                self.reset_tokens()  # reset tokens after each query
 
                 conn_success = True
 
@@ -215,7 +217,7 @@ class OPENAI(BaseLLM):
                 ),
                 "input_cost_usd": input_cost,
                 "output_cost_usd": output_cost,
-                "total_cost_usd": total_cost
+                "total_cost_usd": total_cost,
             }
         )
 

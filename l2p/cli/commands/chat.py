@@ -79,9 +79,7 @@ Examples:
     )
 
     parser.add_argument(
-        "--model",
-        type=str,
-        help="Model to use (default: use configured model)"
+        "--model", type=str, help="Model to use (default: use configured model)"
     )
 
     parser.set_defaults(func=chat_command)
@@ -89,12 +87,15 @@ Examples:
 
 def _check_pddl_syntax(content: str) -> str | None:
     """Run PDDL syntax check on content. Returns None if valid, error string if not."""
-    from pddl import parse_domain as pddl_parse_domain, parse_problem as pddl_parse_problem
+    from pddl import (
+        parse_domain as pddl_parse_domain,
+        parse_problem as pddl_parse_problem,
+    )
 
-    match = re.search(r"\(\s*define\s*\(\s*(domain|problem)", content, re.IGNORECASE)    
+    match = re.search(r"\(\s*define\s*\(\s*(domain|problem)", content, re.IGNORECASE)
     if not match:
         return "[ERROR] Unknown PDDL type — could not find (define (domain ...) or (define (problem ...)"
-        
+
     pddl_type = match.group(1).lower()
 
     tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".pddl", delete=False)
@@ -120,15 +121,17 @@ def _handle_validate_command(filepath: str):
         print(f"  {YELLOW}[ERROR] File not found:{RESET} {path}")
         return
     if path.suffix.lower() != ".pddl":
-        print(f"  {YELLOW}[ERROR] Invalid file type:{RESET} Expected a '.pddl' file, but got '{path.suffix}' ({path.name})")
+        print(
+            f"  {YELLOW}[ERROR] Invalid file type:{RESET} Expected a '.pddl' file, but got '{path.suffix}' ({path.name})"
+        )
         return
-    
+
     content = path.read_text()
-    
-    match = re.search(r"\(\s*define\s*\(\s*(domain|problem)", content, re.IGNORECASE)    
+
+    match = re.search(r"\(\s*define\s*\(\s*(domain|problem)", content, re.IGNORECASE)
     if not match:
         return "[ERROR] Unknown PDDL type — could not find (define (domain ...) or (define (problem ...)"
-        
+
     pddl_type = match.group(1).lower()
 
     print(f"  Loaded {CYAN}{path}{RESET} ({len(content)} chars, {pddl_type} file)")
@@ -148,7 +151,9 @@ def _handle_edit_command(llm, backend: str, filepath: str):
         print(f"  {YELLOW}[ERROR] File not found:{RESET} {path}")
         return
     if path.suffix.lower() != ".pddl":
-        print(f"  {YELLOW}[ERROR] Invalid file type:{RESET} Expected a '.pddl' file, but got '{path.suffix}' ({path.name})")
+        print(
+            f"  {YELLOW}[ERROR] Invalid file type:{RESET} Expected a '.pddl' file, but got '{path.suffix}' ({path.name})"
+        )
         return
 
     content = path.read_text()
@@ -174,7 +179,9 @@ def _handle_edit_command(llm, backend: str, filepath: str):
             ]
             response = llm.query(prompt, messages=messages, max_retry=1)
         else:
-            prefixed = f"[System Instructions]\n{EDIT_SYSTEM_PROMPT}\n\n[User]\n{prompt}"
+            prefixed = (
+                f"[System Instructions]\n{EDIT_SYSTEM_PROMPT}\n\n[User]\n{prompt}"
+            )
             response = llm.query(prefixed, max_retry=1)
     except Exception as e:
         print(f"\n{YELLOW}LLM error: {e}{RESET}")
@@ -184,7 +191,9 @@ def _handle_edit_command(llm, backend: str, filepath: str):
     m = re.search(r"```pddl\s*\n(.*?)```", response, re.DOTALL)
     if not m:
         print(f"\n{CYAN}{response}{RESET}\n")
-        print(f"  {YELLOW}Could not find a ```pddl block in the response. Edit aborted.{RESET}")
+        print(
+            f"  {YELLOW}Could not find a ```pddl block in the response. Edit aborted.{RESET}"
+        )
         return
 
     new_content = m.group(1).strip()
@@ -213,7 +222,9 @@ def _handle_edit_command(llm, backend: str, filepath: str):
 def chat_command(args):
     """Execute chat command."""
     try:
-        config_manager = get_config_manager(args.config if hasattr(args, 'config') else None)
+        config_manager = get_config_manager(
+            args.config if hasattr(args, "config") else None
+        )
         model_config = config_manager.get_model_config().copy()
 
         provider = model_config.get("provider")
@@ -224,7 +235,9 @@ def chat_command(args):
 
         if not provider or not model:
             print("[ERROR] No model configured.")
-            print("Run 'l2p init' to configure a model first or 'l2p config edit' to edit an existing config file.")
+            print(
+                "Run 'l2p init' to configure a model first or 'l2p config edit' to edit an existing config file."
+            )
             sys.exit(1)
 
         # resolve API key
@@ -269,11 +282,11 @@ def chat_command(args):
             if user_input == "/exit":
                 break
             if user_input.startswith("/edit "):
-                filepath = user_input[len("/edit "):].strip()
+                filepath = user_input[len("/edit ") :].strip()
                 _handle_edit_command(llm, backend, filepath)
                 continue
             if user_input.startswith("/validate "):
-                filepath = user_input[len("/validate "):].strip()
+                filepath = user_input[len("/validate ") :].strip()
                 _handle_validate_command(filepath)
                 continue
 

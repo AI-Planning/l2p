@@ -37,7 +37,7 @@ class TestFeedbackBuilderDiagnose(unittest.TestCase):
             model=self.mock,
             description="a robot domain",
             errors="Type 'location' not found",
-            generated_output='[{"name": "rover", "parent": "vehicle"}]'
+            generated_output='[{"name": "rover", "parent": "vehicle"}]',
         )
         self.assertIsInstance(result, dict)
         self.assertEqual(result["summary"], "Missing type declaration")
@@ -56,7 +56,7 @@ class TestFeedbackBuilderDiagnose(unittest.TestCase):
             description="test",
             errors="some error",
             generated_output="output",
-            types=[PDDLType(name="robot", parent="object")]
+            types=[PDDLType(name="robot", parent="object")],
         )
         self.assertEqual(result["summary"], "OK")
 
@@ -70,7 +70,7 @@ class TestFeedbackBuilderDiagnose(unittest.TestCase):
             description="test",
             errors="err",
             generated_output="out",
-            prompt_template="Custom template {description} {errors} {generated_output} {context}"
+            prompt_template="Custom template {description} {errors} {generated_output} {context}",
         )
         self.assertEqual(result["summary"], "custom")
 
@@ -82,7 +82,7 @@ class TestFeedbackBuilderDiagnose(unittest.TestCase):
                 description="test",
                 errors="err",
                 generated_output="out",
-                max_retries=1
+                max_retries=1,
             )
         self.assertIn("Max retries", str(ctx.exception))
 
@@ -91,18 +91,20 @@ class TestFeedbackBuilderDiagnose(unittest.TestCase):
             def __init__(self):
                 super().__init__()
                 self.count = 0
+
             def query(self, prompt):
                 self.count += 1
                 if self.count <= 1:
                     return "bad output"
                 return '<diagnosis>{"summary": "ok", "identified_errors": [], "repair_plan": []}</diagnosis>'
+
         retry_mock = RetryMock()
         result, _ = self.fb.diagnose(
             model=retry_mock,
             description="test",
             errors="err",
             generated_output="out",
-            max_retries=3
+            max_retries=3,
         )
         self.assertEqual(result["summary"], "ok")
         self.assertEqual(retry_mock.count, 2)
@@ -128,7 +130,7 @@ class TestFeedbackBuilderEvaluate(unittest.TestCase):
         result, raw = self.fb.evaluate(
             model=self.mock,
             description="a robot domain",
-            generated_output="some PDDL output"
+            generated_output="some PDDL output",
         )
         self.assertEqual(result["score"], 8)
         self.assertTrue(result["is_passing"])
@@ -145,9 +147,7 @@ class TestFeedbackBuilderEvaluate(unittest.TestCase):
         }
         </evaluation>""")
         result, _ = self.fb.evaluate(
-            model=self.mock,
-            description="test",
-            generated_output="output"
+            model=self.mock, description="test", generated_output="output"
         )
         self.assertFalse(result["is_passing"])
         self.assertEqual(len(result["critique"]), 1)
@@ -161,7 +161,7 @@ class TestFeedbackBuilderEvaluate(unittest.TestCase):
             model=self.mock,
             description="test",
             generated_output="out",
-            predicates=["pred1"]
+            predicates=["pred1"],
         )
         self.assertEqual(result["score"], 10)
 
@@ -187,9 +187,11 @@ class TestFeedbackBuilderReflect(unittest.TestCase):
             model=self.mock,
             description="rover domain",
             diagnosis="Missing vehicle type",
-            generated_output="some output"
+            generated_output="some output",
         )
-        self.assertEqual(result["lesson_learned"], "Always declare parent types before subtypes")
+        self.assertEqual(
+            result["lesson_learned"], "Always declare parent types before subtypes"
+        )
         self.assertEqual(result["anti_pattern"], "Declaring rover before vehicle")
         self.assertIn("<reflection>", raw)
 
@@ -203,7 +205,7 @@ class TestFeedbackBuilderReflect(unittest.TestCase):
             description="d",
             diagnosis="diag",
             generated_output="out",
-            types=[PDDLType(name="robot", parent="object")]
+            types=[PDDLType(name="robot", parent="object")],
         )
         self.assertEqual(result["lesson_learned"], "l")
 
@@ -227,8 +229,8 @@ class TestFeedbackBuilderRevise(unittest.TestCase):
             model=self.mock,
             description="rover domain",
             repair_plan="Add location type",
-            generated_output="[{\"name\": \"robot\"}]",
-            xml_tag="types"
+            generated_output='[{"name": "robot"}]',
+            xml_tag="types",
         )
         self.assertIsInstance(corrected, str)
         parsed = json.loads(corrected)
@@ -244,20 +246,20 @@ class TestFeedbackBuilderRevise(unittest.TestCase):
             description="test",
             repair_plan="fix it",
             generated_output="old",
-            xml_tag="predicates"
+            xml_tag="predicates",
         )
         parsed = json.loads(corrected)
         self.assertEqual(parsed[0]["name"], "at")
 
     def test_revise_with_context(self):
-        self.mock.output = '<actions>\n[]\n</actions>'
+        self.mock.output = "<actions>\n[]\n</actions>"
         corrected, _ = self.fb.revise(
             model=self.mock,
             description="d",
             repair_plan="p",
             generated_output="out",
             xml_tag="actions",
-            predicates=["existing_pred"]
+            predicates=["existing_pred"],
         )
         self.assertEqual(json.loads(corrected), [])
 
@@ -284,7 +286,7 @@ class TestFeedbackBuilderSelect(unittest.TestCase):
         result, raw = self.fb.select_best(
             model=self.mock,
             original_prompt="generate types",
-            candidates="candidate_1: ..., candidate_2: ..., candidate_3: ..."
+            candidates="candidate_1: ..., candidate_2: ..., candidate_3: ...",
         )
         self.assertEqual(result["best_candidate_id"], "candidate_2")
         self.assertIn("candidate_1", result["rejected_candidates_flaws"])
@@ -299,7 +301,7 @@ class TestFeedbackBuilderSelect(unittest.TestCase):
             model=self.mock,
             original_prompt="p",
             candidates="candidates",
-            types=[PDDLType(name="robot", parent="object")]
+            types=[PDDLType(name="robot", parent="object")],
         )
         self.assertEqual(result["best_candidate_id"], "a")
 
@@ -326,7 +328,7 @@ class TestFeedbackBuilderPlanDiagnosis(unittest.TestCase):
             model=self.mock,
             domain_pddl="(define (domain test) ...)",
             problem_pddl="(define (problem p) ...)",
-            planner_output="ff: goal can be simplified to FALSE"
+            planner_output="ff: goal can be simplified to FALSE",
         )
         self.assertIn("Robot cannot reach", result["failure_point"])
         self.assertEqual(len(result["recommended_fix"]), 1)
@@ -355,7 +357,7 @@ class TestFeedbackBuilderPlanEvaluate(unittest.TestCase):
             description="rover should reach waypoint3",
             domain_pddl="(define (domain test) ...)",
             problem_pddl="(define (problem p) ...)",
-            plan="0.0: (move rover1 wp1 wp2) [1.0]"
+            plan="0.0: (move rover1 wp1 wp2) [1.0]",
         )
         self.assertTrue(result["is_aligned"])
         self.assertIn("rover", result["semantic_analysis"])
@@ -376,7 +378,7 @@ class TestFeedbackBuilderPlanEvaluate(unittest.TestCase):
             description="robot should only move along connected paths",
             domain_pddl="...",
             problem_pddl="...",
-            plan="..."
+            plan="...",
         )
         self.assertFalse(result["is_aligned"])
         self.assertEqual(len(result["identified_loopholes"]), 1)
@@ -391,7 +393,7 @@ class TestFeedbackBuilderPlanEvaluate(unittest.TestCase):
             description="d",
             domain_pddl="dom",
             problem_pddl="prob",
-            plan="plan"
+            plan="plan",
         )
         self.assertTrue(result["is_aligned"])
 
@@ -432,8 +434,7 @@ class TestFeedbackBuilderHooks(unittest.TestCase):
     def test_parse_result_extracts_and_parses_json(self):
         fb = FeedbackBuilder()
         result = fb.parse_result(
-            '<diagnosis>{"summary": "ok"}</diagnosis>',
-            "diagnosis"
+            '<diagnosis>{"summary": "ok"}</diagnosis>', "diagnosis"
         )
         self.assertEqual(result, {"summary": "ok"})
 
@@ -478,7 +479,7 @@ class TestFeedbackBuilderCustomSubclass(unittest.TestCase):
             description="test",
             errors="err",
             generated_output="out",
-            max_retries=1
+            max_retries=1,
         )
         self.assertEqual(result["custom"], "parsed")
         self.assertEqual(result["length"], len("<diagnosis>some data</diagnosis>"))
@@ -495,6 +496,7 @@ class TestFeedbackBuilderCustomSubclass(unittest.TestCase):
             def __init__(self):
                 super().__init__()
                 self.last_prompt = ""
+
             def query(self, prompt):
                 self.last_prompt = prompt
                 return '<evaluation>{"prompt_used": "ok"}</evaluation>'
@@ -502,10 +504,7 @@ class TestFeedbackBuilderCustomSubclass(unittest.TestCase):
         fb = CustomPrompt()
         track = TrackMock()
         result, _ = fb.evaluate(
-            model=track,
-            description="my desc",
-            generated_output="out",
-            max_retries=1
+            model=track, description="my desc", generated_output="out", max_retries=1
         )
         self.assertIn("CUSTOM: my desc", track.last_prompt)
 
@@ -522,7 +521,7 @@ class TestFeedbackBuilderCustomSubclass(unittest.TestCase):
             description="test",
             errors="err",
             generated_output="out",
-            max_retries=1
+            max_retries=1,
         )
         self.assertIsInstance(result, dict)
 
@@ -542,17 +541,14 @@ class TestFeedbackBuilderEdgeCases(unittest.TestCase):
                 description="test",
                 errors="err",
                 generated_output="out",
-                max_retries=2
+                max_retries=2,
             )
         self.assertIn("Max retries", str(ctx.exception))
 
     def test_no_model_raises(self):
         with self.assertRaises(ValueError) as ctx:
             self.fb.diagnose(
-                model=None,
-                description="test",
-                errors="err",
-                generated_output="out"
+                model=None, description="test", errors="err", generated_output="out"
             )
         self.assertIn("LLM instance must be provided", str(ctx.exception))
 
@@ -564,17 +560,14 @@ class TestFeedbackBuilderEdgeCases(unittest.TestCase):
                 description="test",
                 errors="err",
                 generated_output="out",
-                max_retries=1
+                max_retries=1,
             )
 
     def test_llm_output_preserved_in_result(self):
-        expected_raw = "<diagnosis>\n{\"summary\": \"test\", \"identified_errors\": [], \"repair_plan\": []}\n</diagnosis>"
+        expected_raw = '<diagnosis>\n{"summary": "test", "identified_errors": [], "repair_plan": []}\n</diagnosis>'
         self.mock.output = expected_raw
         _, raw = self.fb.diagnose(
-            model=self.mock,
-            description="test",
-            errors="err",
-            generated_output="out"
+            model=self.mock, description="test", errors="err", generated_output="out"
         )
         self.assertEqual(raw, expected_raw)
 
@@ -585,7 +578,7 @@ class TestFeedbackBuilderEdgeCases(unittest.TestCase):
             description="test",
             errors="err",
             generated_output="out",
-            max_retries=1
+            max_retries=1,
         )
         self.assertEqual(result, {})
 
@@ -596,7 +589,7 @@ class TestFeedbackBuilderEdgeCases(unittest.TestCase):
             description="test",
             repair_plan="fix",
             generated_output="old",
-            xml_tag="anything"
+            xml_tag="anything",
         )
         self.assertEqual(corrected, "[]")
 

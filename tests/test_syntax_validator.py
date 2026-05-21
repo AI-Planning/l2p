@@ -3,18 +3,22 @@ import textwrap
 from l2p.utils.pddl_types import *
 from l2p.validators.base import PDDL_KEYWORDS
 from l2p.validators.domain import (
-    DomainValidator, DomainSemantics, DOMAIN_REGISTRY,
-    _check_variables_and_types
+    DomainValidator,
+    DomainSemantics,
+    DOMAIN_REGISTRY,
+    _check_variables_and_types,
 )
 from l2p.validators.problem import (
-    ProblemValidator, ProblemSemantics, PROBLEM_REGISTRY,
-    _check_problem_state_types
+    ProblemValidator,
+    ProblemSemantics,
+    PROBLEM_REGISTRY,
+    _check_problem_state_types,
 )
-
 
 # =============================================================================
 # DOMAIN VALIDATOR RULES
 # =============================================================================
+
 
 class TestDomainValidatorNaming(unittest.TestCase):
     """Tests for validate_pddl_naming rule on domain components."""
@@ -116,12 +120,16 @@ class TestDomainValidatorNaming(unittest.TestCase):
     # --- applies to all relevant types ---
     def test_naming_applies_to_constant(self):
         c = Constant(name="base1", type="location")
-        r = self._validate(c, {Constant: [c], PDDLType: [PDDLType(name="location", parent="object")]})
+        r = self._validate(
+            c, {Constant: [c], PDDLType: [PDDLType(name="location", parent="object")]}
+        )
         self.assertTrue(r.valid)
 
     def test_naming_applies_to_function(self):
         f = Function(name="battery", params=[Parameter(variable="?r", type="robot")])
-        r = self._validate(f, {Function: [f], PDDLType: [PDDLType(name="robot", parent="object")]})
+        r = self._validate(
+            f, {Function: [f], PDDLType: [PDDLType(name="robot", parent="object")]}
+        )
         self.assertTrue(r.valid)
 
 
@@ -232,14 +240,26 @@ class TestDomainValidatorParameterTypes(unittest.TestCase):
         self.validator = DomainValidator()
 
     def test_valid_typed_params_passes(self):
-        types = [PDDLType(name="robot", parent="object"), PDDLType(name="location", parent="object")]
-        p = Predicate(name="at-location", params=[Parameter(variable="?r", type="robot"), Parameter(variable="?l", type="location")])
+        types = [
+            PDDLType(name="robot", parent="object"),
+            PDDLType(name="location", parent="object"),
+        ]
+        p = Predicate(
+            name="at-location",
+            params=[
+                Parameter(variable="?r", type="robot"),
+                Parameter(variable="?l", type="location"),
+            ],
+        )
         r = self.validator.validate_component(p, {PDDLType: types, Predicate: [p]})
         self.assertTrue(r.valid)
 
     def test_missing_question_mark_fails(self):
         types = [PDDLType(name="robot", parent="object")]
-        p = Predicate.model_construct(name="at-location", params=[Parameter.model_construct(variable="r", type="robot")])
+        p = Predicate.model_construct(
+            name="at-location",
+            params=[Parameter.model_construct(variable="r", type="robot")],
+        )
         r = self.validator.validate_component(p, {PDDLType: types, Predicate: [p]})
         self.assertFalse(r.valid)
 
@@ -257,8 +277,12 @@ class TestDomainValidatorParameterTypes(unittest.TestCase):
     def test_allows_constant_types(self):
         types = [PDDLType(name="robot", parent="object")]
         consts = [Constant(name="r1", type="robot")]
-        p = Predicate(name="at-location", params=[Parameter(variable="?r", type="robot")])
-        r = self.validator.validate_component(p, {PDDLType: types, Constant: consts, Predicate: [p]})
+        p = Predicate(
+            name="at-location", params=[Parameter(variable="?r", type="robot")]
+        )
+        r = self.validator.validate_component(
+            p, {PDDLType: types, Constant: consts, Predicate: [p]}
+        )
         self.assertTrue(r.valid)
 
     def test_applies_to_functions(self):
@@ -277,15 +301,27 @@ class TestDomainValidatorDerivedPredicate(unittest.TestCase):
     def test_valid_symbols_passes(self):
         ctx = {
             PDDLType: [PDDLType(name="robot", parent="object")],
-            Predicate: [Predicate(name="battery", params=[Parameter(variable="?r", type="robot")])],
+            Predicate: [
+                Predicate(
+                    name="battery", params=[Parameter(variable="?r", type="robot")]
+                )
+            ],
         }
-        dp = DerivedPredicate(name="can-move", params=[Parameter(variable="?r", type="robot")], condition="(> (battery ?r) 0)")
+        dp = DerivedPredicate(
+            name="can-move",
+            params=[Parameter(variable="?r", type="robot")],
+            condition="(> (battery ?r) 0)",
+        )
         r = self.validator.validate_component(dp, ctx | {DerivedPredicate: [dp]})
         self.assertTrue(r.valid)
 
     def test_undeclared_symbol_fails(self):
         ctx = {Predicate: []}
-        dp = DerivedPredicate(name="can-move", params=[Parameter(variable="?r", type="robot")], condition="(> (unknown ?r) 0)")
+        dp = DerivedPredicate(
+            name="can-move",
+            params=[Parameter(variable="?r", type="robot")],
+            condition="(> (unknown ?r) 0)",
+        )
         r = self.validator.validate_component(dp, ctx | {DerivedPredicate: [dp]})
         self.assertFalse(r.valid)
 
@@ -298,17 +334,36 @@ class TestDomainValidatorActionPrecondition(unittest.TestCase):
 
     def test_valid_symbols_passes(self):
         ctx = {
-            PDDLType: [PDDLType(name="robot", parent="object"), PDDLType(name="location", parent="object")],
+            PDDLType: [
+                PDDLType(name="robot", parent="object"),
+                PDDLType(name="location", parent="object"),
+            ],
             Predicate: [
-                Predicate(name="at-location", params=[Parameter(variable="?r", type="robot"), Parameter(variable="?l", type="location")]),
-                Predicate(name="battery-dead", params=[Parameter(variable="?r", type="robot")]),
-            ]
+                Predicate(
+                    name="at-location",
+                    params=[
+                        Parameter(variable="?r", type="robot"),
+                        Parameter(variable="?l", type="location"),
+                    ],
+                ),
+                Predicate(
+                    name="battery-dead", params=[Parameter(variable="?r", type="robot")]
+                ),
+            ],
         }
         action = Action(
             name="move",
-            params=[Parameter(variable="?r", type="robot"), Parameter(variable="?l", type="location")],
-            preconditions=ActionPrecondition(conditions=["(at-location ?r ?l)", {"operator": "not", "condition": "(battery-dead ?r)"}]),
-            effects=ActionEffect()
+            params=[
+                Parameter(variable="?r", type="robot"),
+                Parameter(variable="?l", type="location"),
+            ],
+            preconditions=ActionPrecondition(
+                conditions=[
+                    "(at-location ?r ?l)",
+                    {"operator": "not", "condition": "(battery-dead ?r)"},
+                ]
+            ),
+            effects=ActionEffect(),
         )
         r = self.validator.validate_component(action, ctx | {Action: [action]})
         self.assertTrue(r.valid)
@@ -319,7 +374,7 @@ class TestDomainValidatorActionPrecondition(unittest.TestCase):
             name="move",
             params=[],
             preconditions=ActionPrecondition(conditions=["(at ?r)", "(fly ?r)"]),
-            effects=ActionEffect()
+            effects=ActionEffect(),
         )
         r = self.validator.validate_component(action, ctx | {Action: [action]})
         self.assertFalse(r.valid)
@@ -333,14 +388,31 @@ class TestDomainValidatorActionEffect(unittest.TestCase):
 
     def test_valid_symbols_passes(self):
         ctx = {
-            PDDLType: [PDDLType(name="robot", parent="object"), PDDLType(name="location", parent="object")],
-            Predicate: [Predicate(name="at-location", params=[Parameter(variable="?r", type="robot"), Parameter(variable="?l", type="location")])],
+            PDDLType: [
+                PDDLType(name="robot", parent="object"),
+                PDDLType(name="location", parent="object"),
+            ],
+            Predicate: [
+                Predicate(
+                    name="at-location",
+                    params=[
+                        Parameter(variable="?r", type="robot"),
+                        Parameter(variable="?l", type="location"),
+                    ],
+                )
+            ],
         }
         action = Action(
             name="move",
-            params=[Parameter(variable="?r", type="robot"), Parameter(variable="?l", type="location"), Parameter(variable="?old", type="location")],
+            params=[
+                Parameter(variable="?r", type="robot"),
+                Parameter(variable="?l", type="location"),
+                Parameter(variable="?old", type="location"),
+            ],
             preconditions=ActionPrecondition(),
-            effects=ActionEffect(add=["(at-location ?r ?l)"], delete=["(at-location ?r ?old)"])
+            effects=ActionEffect(
+                add=["(at-location ?r ?l)"], delete=["(at-location ?r ?old)"]
+            ),
         )
         r = self.validator.validate_component(action, ctx | {Action: [action]})
         self.assertTrue(r.valid)
@@ -348,13 +420,17 @@ class TestDomainValidatorActionEffect(unittest.TestCase):
     def test_numeric_effects_with_declared_function(self):
         ctx = {
             PDDLType: [PDDLType(name="robot", parent="object")],
-            Function: [Function(name="battery", params=[Parameter(variable="?r", type="robot")])],
+            Function: [
+                Function(
+                    name="battery", params=[Parameter(variable="?r", type="robot")]
+                )
+            ],
         }
         action = Action(
             name="charge",
             params=[Parameter(variable="?r", type="robot")],
             preconditions=ActionPrecondition(),
-            effects=ActionEffect(numeric=["(increase (battery ?r) 10)"])
+            effects=ActionEffect(numeric=["(increase (battery ?r) 10)"]),
         )
         r = self.validator.validate_component(action, ctx | {Action: [action]})
         # increase is a keyword, battery is a declared function
@@ -366,7 +442,7 @@ class TestDomainValidatorActionEffect(unittest.TestCase):
             name="charge",
             params=[],
             preconditions=ActionPrecondition(),
-            effects=ActionEffect(numeric=["(increase (unknown) 10)"])
+            effects=ActionEffect(numeric=["(increase (unknown) 10)"]),
         )
         r = self.validator.validate_component(action, ctx | {Action: [action]})
         self.assertFalse(r.valid)
@@ -382,13 +458,15 @@ class TestDomainValidatorComponentVariables(unittest.TestCase):
     def test_all_variables_declared_passes(self):
         ctx = {
             PDDLType: [PDDLType(name="block", parent="object")],
-            Predicate: [Predicate(name="clear", params=[Parameter(variable="?b", type="block")])],
+            Predicate: [
+                Predicate(name="clear", params=[Parameter(variable="?b", type="block")])
+            ],
         }
         action = Action(
             name="pickup",
             params=[Parameter(variable="?b", type="block")],
             preconditions=ActionPrecondition(conditions=["(clear ?b)"]),
-            effects=ActionEffect(add=[], delete=["(clear ?b)"])
+            effects=ActionEffect(add=[], delete=["(clear ?b)"]),
         )
         r = self.validator.validate_component(action, ctx | {Action: [action]})
         self.assertTrue(r.valid)
@@ -396,13 +474,15 @@ class TestDomainValidatorComponentVariables(unittest.TestCase):
     def test_undeclared_variable_fails(self):
         ctx = {
             PDDLType: [PDDLType(name="block", parent="object")],
-            Predicate: [Predicate(name="clear", params=[Parameter(variable="?b", type="block")])],
+            Predicate: [
+                Predicate(name="clear", params=[Parameter(variable="?b", type="block")])
+            ],
         }
         action = Action(
             name="pickup",
             params=[Parameter(variable="?b", type="block")],
             preconditions=ActionPrecondition(conditions=["(clear ?x)"]),
-            effects=ActionEffect()
+            effects=ActionEffect(),
         )
         r = self.validator.validate_component(action, ctx | {Action: [action]})
         self.assertFalse(r.valid)
@@ -412,16 +492,21 @@ class TestDomainValidatorComponentVariables(unittest.TestCase):
     def test_arity_mismatch_fails(self):
         ctx = {
             PDDLType: [PDDLType(name="block", parent="object")],
-            Predicate: [Predicate(name="on", params=[
-                Parameter(variable="?b1", type="block"),
-                Parameter(variable="?b2", type="block")
-            ])],
+            Predicate: [
+                Predicate(
+                    name="on",
+                    params=[
+                        Parameter(variable="?b1", type="block"),
+                        Parameter(variable="?b2", type="block"),
+                    ],
+                )
+            ],
         }
         action = Action(
             name="check",
             params=[Parameter(variable="?b", type="block")],
             preconditions=ActionPrecondition(conditions=["(on ?b)"]),
-            effects=ActionEffect()
+            effects=ActionEffect(),
         )
         r = self.validator.validate_component(action, ctx | {Action: [action]})
         self.assertFalse(r.valid)
@@ -434,16 +519,24 @@ class TestDomainValidatorComponentVariables(unittest.TestCase):
                 PDDLType(name="arm", parent="object"),
                 PDDLType(name="block", parent="object"),
             ],
-            Predicate: [Predicate(name="holding", params=[
-                Parameter(variable="?a", type="arm"),
-                Parameter(variable="?b", type="block")
-            ])],
+            Predicate: [
+                Predicate(
+                    name="holding",
+                    params=[
+                        Parameter(variable="?a", type="arm"),
+                        Parameter(variable="?b", type="block"),
+                    ],
+                )
+            ],
         }
         action = Action(
             name="pickup",
-            params=[Parameter(variable="?b", type="block"), Parameter(variable="?a", type="arm")],
+            params=[
+                Parameter(variable="?b", type="block"),
+                Parameter(variable="?a", type="arm"),
+            ],
             preconditions=ActionPrecondition(conditions=["(holding ?b ?a)"]),
-            effects=ActionEffect()
+            effects=ActionEffect(),
         )
         r = self.validator.validate_component(action, ctx | {Action: [action]})
         # ?b is block, ?a is arm - holding expects arm first, block second
@@ -458,16 +551,21 @@ class TestDomainValidatorComponentVariables(unittest.TestCase):
                 PDDLType(name="location", parent="object"),
             ],
             Constant: [Constant(name="base", type="location")],
-            Predicate: [Predicate(name="at-location", params=[
-                Parameter(variable="?v", type="vehicle"),
-                Parameter(variable="?l", type="location"),
-            ])],
+            Predicate: [
+                Predicate(
+                    name="at-location",
+                    params=[
+                        Parameter(variable="?v", type="vehicle"),
+                        Parameter(variable="?l", type="location"),
+                    ],
+                )
+            ],
         }
         action = Action(
             name="move",
             params=[Parameter(variable="?r", type="rover")],
             preconditions=ActionPrecondition(conditions=["(at-location ?r base)"]),
-            effects=ActionEffect()
+            effects=ActionEffect(),
         )
         r = self.validator.validate_component(action, ctx | {Action: [action]})
         self.assertTrue(r.valid)
@@ -476,17 +574,23 @@ class TestDomainValidatorComponentVariables(unittest.TestCase):
     def test_forall_introduces_scope(self):
         ctx = {
             PDDLType: [PDDLType(name="block", parent="object")],
-            Predicate: [Predicate(name="clear", params=[Parameter(variable="?b", type="block")])],
+            Predicate: [
+                Predicate(name="clear", params=[Parameter(variable="?b", type="block")])
+            ],
         }
         action = Action(
             name="check-all",
             params=[Parameter(variable="?r", type="object")],
-            preconditions=ActionPrecondition(conditions=[{
-                "quantifier": "forall",
-                "parameters": [{"variable": "?x", "type": "block"}],
-                "conditions": ["(clear ?x)"]
-            }]),
-            effects=ActionEffect()
+            preconditions=ActionPrecondition(
+                conditions=[
+                    {
+                        "quantifier": "forall",
+                        "parameters": [{"variable": "?x", "type": "block"}],
+                        "conditions": ["(clear ?x)"],
+                    }
+                ]
+            ),
+            effects=ActionEffect(),
         )
         r = self.validator.validate_component(action, ctx | {Action: [action]})
         # ?x is introduced by forall, (clear ?x) should be valid
@@ -495,17 +599,23 @@ class TestDomainValidatorComponentVariables(unittest.TestCase):
     def test_exists_without_scope_but_declared_in_action_fails(self):
         ctx = {
             PDDLType: [PDDLType(name="block", parent="object")],
-            Predicate: [Predicate(name="clear", params=[Parameter(variable="?b", type="block")])],
+            Predicate: [
+                Predicate(name="clear", params=[Parameter(variable="?b", type="block")])
+            ],
         }
         action = Action(
             name="check",
             params=[],
-            preconditions=ActionPrecondition(conditions=[{
-                "quantifier": "exists",
-                "parameters": [{"variable": "?x", "type": "block"}],
-                "conditions": ["(clear ?x)"]
-            }]),
-            effects=ActionEffect()
+            preconditions=ActionPrecondition(
+                conditions=[
+                    {
+                        "quantifier": "exists",
+                        "parameters": [{"variable": "?x", "type": "block"}],
+                        "conditions": ["(clear ?x)"],
+                    }
+                ]
+            ),
+            effects=ActionEffect(),
         )
         r = self.validator.validate_component(action, ctx | {Action: [action]})
         self.assertTrue(r.valid)
@@ -515,13 +625,21 @@ class TestDomainValidatorComponentVariables(unittest.TestCase):
         ctx = {
             PDDLType: [PDDLType(name="location", parent="object")],
             Constant: [Constant(name="base", type="location")],
-            Predicate: [Predicate(name="at", params=[Parameter(variable="?r", type="object"), Parameter(variable="?l", type="location")])],
+            Predicate: [
+                Predicate(
+                    name="at",
+                    params=[
+                        Parameter(variable="?r", type="object"),
+                        Parameter(variable="?l", type="location"),
+                    ],
+                )
+            ],
         }
         action = Action(
             name="move",
             params=[Parameter(variable="?r", type="object")],
             preconditions=ActionPrecondition(conditions=["(at ?r base)"]),
-            effects=ActionEffect()
+            effects=ActionEffect(),
         )
         r = self.validator.validate_component(action, ctx | {Action: [action]})
         self.assertTrue(r.valid)
@@ -530,13 +648,17 @@ class TestDomainValidatorComponentVariables(unittest.TestCase):
     def test_number_literal_as_argument_passes(self):
         ctx = {
             PDDLType: [PDDLType(name="object", parent="object")],
-            Predicate: [Predicate(name="active", params=[Parameter(variable="?r", type="object")])],
+            Predicate: [
+                Predicate(
+                    name="active", params=[Parameter(variable="?r", type="object")]
+                )
+            ],
         }
         action = Action(
             name="nop",
             params=[Parameter(variable="?r", type="object")],
             preconditions=ActionPrecondition(conditions=["(>= ?r 5)"]),
-            effects=ActionEffect()
+            effects=ActionEffect(),
         )
         r = self.validator.validate_component(action, ctx | {Action: [action]})
         self.assertTrue(r.valid)
@@ -572,10 +694,15 @@ class TestDomainSemantics(unittest.TestCase):
 
     def test_signatures(self):
         ctx = {
-            Predicate: [Predicate(name="at", params=[
-                Parameter(variable="?r", type="rover"),
-                Parameter(variable="?l", type="location"),
-            ])]
+            Predicate: [
+                Predicate(
+                    name="at",
+                    params=[
+                        Parameter(variable="?r", type="rover"),
+                        Parameter(variable="?l", type="location"),
+                    ],
+                )
+            ]
         }
         sem = DomainSemantics(ctx)
         self.assertIn("at", sem.signatures)
@@ -595,15 +722,32 @@ class TestDomainValidatorDurativeActions(unittest.TestCase):
 
     def test_dur_action_conditions_valid(self):
         ctx = {
-            PDDLType: [PDDLType(name="robot", parent="object"), PDDLType(name="location", parent="object")],
-            Predicate: [Predicate(name="at-location", params=[Parameter(variable="?r", type="robot"), Parameter(variable="?l", type="location")])],
+            PDDLType: [
+                PDDLType(name="robot", parent="object"),
+                PDDLType(name="location", parent="object"),
+            ],
+            Predicate: [
+                Predicate(
+                    name="at-location",
+                    params=[
+                        Parameter(variable="?r", type="robot"),
+                        Parameter(variable="?l", type="location"),
+                    ],
+                )
+            ],
         }
         da = DurativeAction(
             name="move",
-            params=[Parameter(variable="?r", type="robot"), Parameter(variable="?from", type="location"), Parameter(variable="?to", type="location")],
+            params=[
+                Parameter(variable="?r", type="robot"),
+                Parameter(variable="?from", type="location"),
+                Parameter(variable="?to", type="location"),
+            ],
             duration=["(>= ?duration 5.0)"],
             conditions=DurativeActionConditions(at_start=["(at-location ?r ?from)"]),
-            effects=DurativeActionEffect(at_end=ActionEffect(add=["(at-location ?r ?to)"]))
+            effects=DurativeActionEffect(
+                at_end=ActionEffect(add=["(at-location ?r ?to)"])
+            ),
         )
         r = self.validator.validate_component(da, ctx | {DurativeAction: [da]})
         self.assertTrue(r.valid)
@@ -618,7 +762,7 @@ class TestDomainValidatorDurativeActions(unittest.TestCase):
             params=[Parameter(variable="?r", type="robot")],
             duration=["(>= ?duration 5.0)"],
             conditions=DurativeActionConditions(at_start=["(unknown ?r ?from)"]),
-            effects=DurativeActionEffect(at_end=ActionEffect(add=["(at ?r ?to)"]))
+            effects=DurativeActionEffect(at_end=ActionEffect(add=["(at ?r ?to)"])),
         )
         r = self.validator.validate_component(da, ctx | {DurativeAction: [da]})
         # at should be undeclared; unknown should be undeclared
@@ -627,14 +771,16 @@ class TestDomainValidatorDurativeActions(unittest.TestCase):
     def test_dur_action_duration_variable(self):
         ctx = {
             PDDLType: [PDDLType(name="robot", parent="object")],
-            Predicate: [Predicate(name="at", params=[Parameter(variable="?r", type="robot")])],
+            Predicate: [
+                Predicate(name="at", params=[Parameter(variable="?r", type="robot")])
+            ],
         }
         da = DurativeAction(
             name="move",
             params=[Parameter(variable="?r", type="robot")],
             duration=["(>= ?duration 5.0)"],
             conditions=DurativeActionConditions(),
-            effects=DurativeActionEffect()
+            effects=DurativeActionEffect(),
         )
         r = self.validator.validate_component(da, ctx | {DurativeAction: [da]})
         # ?duration is automatically allowed in duration block
@@ -649,10 +795,20 @@ class TestDomainValidatorConstraint(unittest.TestCase):
 
     def test_valid_constraint_symbols_passes(self):
         ctx = {
-            Predicate: [Predicate(name="battery-dead", params=[Parameter(variable="?r", type="robot")])],
-            Function: [Function(name="battery", params=[Parameter(variable="?r", type="robot")])],
+            Predicate: [
+                Predicate(
+                    name="battery-dead", params=[Parameter(variable="?r", type="robot")]
+                )
+            ],
+            Function: [
+                Function(
+                    name="battery", params=[Parameter(variable="?r", type="robot")]
+                )
+            ],
         }
-        c = Constraint(condition={"operator": "always", "condition": "(not (battery-dead ?r))"})
+        c = Constraint(
+            condition={"operator": "always", "condition": "(not (battery-dead ?r))"}
+        )
         r = self.validator.validate_component(c, ctx | {Constraint: [c]})
         self.assertTrue(r.valid)
 
@@ -672,24 +828,41 @@ class TestDomainValidatorEdgeCases(unittest.TestCase):
     def test_deeply_nested_conditions(self):
         ctx = {
             PDDLType: [PDDLType(name="obj", parent="object")],
-            Predicate: [Predicate(name="p", params=[Parameter(variable="?x", type="obj")])],
+            Predicate: [
+                Predicate(name="p", params=[Parameter(variable="?x", type="obj")])
+            ],
         }
         action = Action(
             name="complex",
             params=[Parameter(variable="?a", type="obj")],
-            preconditions=ActionPrecondition(conditions=[{
-                "operator": "and",
-                "conditions": [
-                    {"operator": "or", "conditions": [
-                        "(p ?a)",
-                        {"operator": "not", "condition": "(p ?a)"}
-                    ]},
-                    {"quantifier": "forall", "parameters": [{"variable": "?x", "type": "obj"}], "conditions": [
-                        {"operator": "imply", "antecedent": ["(p ?x)"], "consequent": ["(p ?x)"]}
-                    ]}
+            preconditions=ActionPrecondition(
+                conditions=[
+                    {
+                        "operator": "and",
+                        "conditions": [
+                            {
+                                "operator": "or",
+                                "conditions": [
+                                    "(p ?a)",
+                                    {"operator": "not", "condition": "(p ?a)"},
+                                ],
+                            },
+                            {
+                                "quantifier": "forall",
+                                "parameters": [{"variable": "?x", "type": "obj"}],
+                                "conditions": [
+                                    {
+                                        "operator": "imply",
+                                        "antecedent": ["(p ?x)"],
+                                        "consequent": ["(p ?x)"],
+                                    }
+                                ],
+                            },
+                        ],
+                    }
                 ]
-            }]),
-            effects=ActionEffect()
+            ),
+            effects=ActionEffect(),
         )
         r = self.validator.validate_component(action, ctx | {Action: [action]})
         self.assertTrue(r.valid)
@@ -697,13 +870,17 @@ class TestDomainValidatorEdgeCases(unittest.TestCase):
     def test_event_validation(self):
         ctx = {
             PDDLType: [PDDLType(name="robot", parent="object")],
-            Predicate: [Predicate(name="battery-dead", params=[Parameter(variable="?r", type="robot")])],
+            Predicate: [
+                Predicate(
+                    name="battery-dead", params=[Parameter(variable="?r", type="robot")]
+                )
+            ],
         }
         evt = Event(
             name="battery-depleted",
             params=[Parameter(variable="?r", type="robot")],
             preconditions=ActionPrecondition(conditions=["(battery-dead ?r)"]),
-            effects=ActionEffect(add=["(dead ?r)"])
+            effects=ActionEffect(add=["(dead ?r)"]),
         )
         r = self.validator.validate_component(evt, ctx | {Event: [evt]})
         self.assertTrue(r.valid)
@@ -711,13 +888,17 @@ class TestDomainValidatorEdgeCases(unittest.TestCase):
     def test_process_validation(self):
         ctx = {
             PDDLType: [PDDLType(name="robot", parent="object")],
-            Function: [Function(name="battery", params=[Parameter(variable="?r", type="robot")])],
+            Function: [
+                Function(
+                    name="battery", params=[Parameter(variable="?r", type="robot")]
+                )
+            ],
         }
         proc = Process(
             name="solar-charging",
             params=[Parameter(variable="?r", type="robot")],
             preconditions=ActionPrecondition(conditions=["(in-sun ?r)"]),
-            effects=ActionEffect(numeric=["(increase (battery ?r) (* #t 2.0))"])
+            effects=ActionEffect(numeric=["(increase (battery ?r) (* #t 2.0))"]),
         )
         r = self.validator.validate_component(proc, ctx | {Process: [proc]})
         # Note: Process is not targeted by check_action_precondition, so undeclared
@@ -730,6 +911,7 @@ class TestDomainValidatorEdgeCases(unittest.TestCase):
 # PROBLEM VALIDATOR RULES
 # =============================================================================
 
+
 class TestProblemValidatorNaming(unittest.TestCase):
     """Tests for validate_pddl_naming on PDDLObject."""
 
@@ -738,7 +920,9 @@ class TestProblemValidatorNaming(unittest.TestCase):
 
     def test_valid_name_passes(self):
         o = PDDLObject(name="rover1", type="robot")
-        r = self.validator.validate_component(o, {PDDLObject: [o], PDDLType: [PDDLType(name="robot", parent="object")]})
+        r = self.validator.validate_component(
+            o, {PDDLObject: [o], PDDLType: [PDDLType(name="robot", parent="object")]}
+        )
         self.assertTrue(r.valid)
 
     def test_name_with_question_mark_fails(self):
@@ -759,7 +943,9 @@ class TestProblemValidatorNaming(unittest.TestCase):
 
     def test_name_with_uppercase_warns(self):
         o = PDDLObject(name="Rover1", type="robot")
-        r = self.validator.validate_component(o, {PDDLObject: [o], PDDLType: [PDDLType(name="robot", parent="object")]})
+        r = self.validator.validate_component(
+            o, {PDDLObject: [o], PDDLType: [PDDLType(name="robot", parent="object")]}
+        )
         self.assertTrue(r.valid)
         self.assertGreater(len(r.warnings), 0)
 
@@ -772,10 +958,9 @@ class TestProblemValidatorObjTypeInheritance(unittest.TestCase):
 
     def test_type_exists_passes(self):
         o = PDDLObject(name="r1", type="robot")
-        r = self.validator.validate_component(o, {
-            PDDLObject: [o],
-            PDDLType: [PDDLType(name="robot", parent="object")]
-        })
+        r = self.validator.validate_component(
+            o, {PDDLObject: [o], PDDLType: [PDDLType(name="robot", parent="object")]}
+        )
         self.assertTrue(r.valid)
 
     def test_type_missing_fails(self):
@@ -798,10 +983,15 @@ class TestProblemValidatorInitialState(unittest.TestCase):
     def test_valid_initial_state_passes(self):
         ctx = {
             PDDLType: [PDDLType(name="block", parent="object")],
-            Predicate: [Predicate(name="on", params=[
-                Parameter(variable="?b1", type="block"),
-                Parameter(variable="?b2", type="block")
-            ])],
+            Predicate: [
+                Predicate(
+                    name="on",
+                    params=[
+                        Parameter(variable="?b1", type="block"),
+                        Parameter(variable="?b2", type="block"),
+                    ],
+                )
+            ],
             PDDLObject: [
                 PDDLObject(name="a", type="block"),
                 PDDLObject(name="b", type="block"),
@@ -814,10 +1004,15 @@ class TestProblemValidatorInitialState(unittest.TestCase):
     def test_undeclared_object_fails(self):
         ctx = {
             PDDLType: [PDDLType(name="block", parent="object")],
-            Predicate: [Predicate(name="on", params=[
-                Parameter(variable="?b1", type="block"),
-                Parameter(variable="?b2", type="block")
-            ])],
+            Predicate: [
+                Predicate(
+                    name="on",
+                    params=[
+                        Parameter(variable="?b1", type="block"),
+                        Parameter(variable="?b2", type="block"),
+                    ],
+                )
+            ],
             PDDLObject: [PDDLObject(name="a", type="block")],
         }
         init = InitialState(facts=["(on a b)"])
@@ -828,10 +1023,15 @@ class TestProblemValidatorInitialState(unittest.TestCase):
     def test_arity_mismatch_fails(self):
         ctx = {
             PDDLType: [PDDLType(name="block", parent="object")],
-            Predicate: [Predicate(name="on", params=[
-                Parameter(variable="?b1", type="block"),
-                Parameter(variable="?b2", type="block")
-            ])],
+            Predicate: [
+                Predicate(
+                    name="on",
+                    params=[
+                        Parameter(variable="?b1", type="block"),
+                        Parameter(variable="?b2", type="block"),
+                    ],
+                )
+            ],
             PDDLObject: [
                 PDDLObject(name="a", type="block"),
                 PDDLObject(name="b", type="block"),
@@ -847,10 +1047,15 @@ class TestProblemValidatorInitialState(unittest.TestCase):
                 PDDLType(name="arm", parent="object"),
                 PDDLType(name="block", parent="object"),
             ],
-            Predicate: [Predicate(name="holding", params=[
-                Parameter(variable="?a", type="arm"),
-                Parameter(variable="?b", type="block"),
-            ])],
+            Predicate: [
+                Predicate(
+                    name="holding",
+                    params=[
+                        Parameter(variable="?a", type="arm"),
+                        Parameter(variable="?b", type="block"),
+                    ],
+                )
+            ],
             PDDLObject: [
                 PDDLObject(name="arm1", type="block"),  # wrong type
                 PDDLObject(name="block1", type="block"),
@@ -863,7 +1068,9 @@ class TestProblemValidatorInitialState(unittest.TestCase):
     def test_variables_in_initial_state_fails(self):
         ctx = {
             PDDLType: [PDDLType(name="block", parent="object")],
-            Predicate: [Predicate(name="clear", params=[Parameter(variable="?b", type="block")])],
+            Predicate: [
+                Predicate(name="clear", params=[Parameter(variable="?b", type="block")])
+            ],
             PDDLObject: [PDDLObject(name="a", type="block")],
         }
         init = InitialState(facts=["(clear ?x)"])
@@ -873,20 +1080,28 @@ class TestProblemValidatorInitialState(unittest.TestCase):
     def test_timed_fact_valid(self):
         ctx = {
             PDDLType: [PDDLType(name="block", parent="object")],
-            Predicate: [Predicate(name="clear", params=[Parameter(variable="?b", type="block")])],
+            Predicate: [
+                Predicate(name="clear", params=[Parameter(variable="?b", type="block")])
+            ],
             PDDLObject: [PDDLObject(name="a", type="block")],
         }
-        init = InitialState(facts=[], timed_facts=[TimedFact(time=5.0, fact="(clear a)")])
+        init = InitialState(
+            facts=[], timed_facts=[TimedFact(time=5.0, fact="(clear a)")]
+        )
         r = self.validator.validate_component(init, ctx | {InitialState: [init]})
         self.assertTrue(r.valid)
 
     def test_timed_fact_with_undeclared_object_fails(self):
         ctx = {
             PDDLType: [PDDLType(name="block", parent="object")],
-            Predicate: [Predicate(name="clear", params=[Parameter(variable="?b", type="block")])],
+            Predicate: [
+                Predicate(name="clear", params=[Parameter(variable="?b", type="block")])
+            ],
             PDDLObject: [],
         }
-        init = InitialState(facts=[], timed_facts=[TimedFact(time=5.0, fact="(clear a)")])
+        init = InitialState(
+            facts=[], timed_facts=[TimedFact(time=5.0, fact="(clear a)")]
+        )
         r = self.validator.validate_component(init, ctx | {InitialState: [init]})
         self.assertFalse(r.valid)
 
@@ -901,10 +1116,15 @@ class TestProblemValidatorInitialState(unittest.TestCase):
                 PDDLType(name="vehicle", parent="object"),
                 PDDLType(name="rover", parent="vehicle"),
             ],
-            Predicate: [Predicate(name="at", params=[
-                Parameter(variable="?v", type="vehicle"),
-                Parameter(variable="?l", type="object"),
-            ])],
+            Predicate: [
+                Predicate(
+                    name="at",
+                    params=[
+                        Parameter(variable="?v", type="vehicle"),
+                        Parameter(variable="?l", type="object"),
+                    ],
+                )
+            ],
             PDDLObject: [
                 PDDLObject(name="perseverance", type="rover"),
                 PDDLObject(name="base", type="object"),
@@ -924,10 +1144,15 @@ class TestProblemValidatorGoalState(unittest.TestCase):
     def test_valid_goal_passes(self):
         ctx = {
             PDDLType: [PDDLType(name="block", parent="object")],
-            Predicate: [Predicate(name="on", params=[
-                Parameter(variable="?b1", type="block"),
-                Parameter(variable="?b2", type="block")
-            ])],
+            Predicate: [
+                Predicate(
+                    name="on",
+                    params=[
+                        Parameter(variable="?b1", type="block"),
+                        Parameter(variable="?b2", type="block"),
+                    ],
+                )
+            ],
             PDDLObject: [
                 PDDLObject(name="a", type="block"),
                 PDDLObject(name="b", type="block"),
@@ -940,19 +1165,34 @@ class TestProblemValidatorGoalState(unittest.TestCase):
     def test_goal_with_logical_operator_passes(self):
         ctx = {
             PDDLType: [PDDLType(name="block", parent="object")],
-            Predicate: [Predicate(name="clear", params=[Parameter(variable="?b", type="block")])],
-            PDDLObject: [PDDLObject(name="a", type="block"), PDDLObject(name="b", type="block")],
+            Predicate: [
+                Predicate(name="clear", params=[Parameter(variable="?b", type="block")])
+            ],
+            PDDLObject: [
+                PDDLObject(name="a", type="block"),
+                PDDLObject(name="b", type="block"),
+            ],
         }
-        goal = GoalState(conditions=[
-            {"operator": "and", "conditions": ["(clear a)", {"operator": "not", "condition": "(clear b)"}]}
-        ])
+        goal = GoalState(
+            conditions=[
+                {
+                    "operator": "and",
+                    "conditions": [
+                        "(clear a)",
+                        {"operator": "not", "condition": "(clear b)"},
+                    ],
+                }
+            ]
+        )
         r = self.validator.validate_component(goal, ctx | {GoalState: [goal]})
         self.assertTrue(r.valid)
 
     def test_goal_undeclared_object_fails(self):
         ctx = {
             PDDLType: [PDDLType(name="block", parent="object")],
-            Predicate: [Predicate(name="clear", params=[Parameter(variable="?b", type="block")])],
+            Predicate: [
+                Predicate(name="clear", params=[Parameter(variable="?b", type="block")])
+            ],
             PDDLObject: [],
         }
         goal = GoalState(conditions=["(clear a)"])
@@ -996,7 +1236,13 @@ class TestProblemValidatorMetric(unittest.TestCase):
         self.assertTrue(r.valid)
 
     def test_variables_in_metric_fails(self):
-        ctx = {Function: [Function(name="battery", params=[Parameter(variable="?r", type="robot")])]}
+        ctx = {
+            Function: [
+                Function(
+                    name="battery", params=[Parameter(variable="?r", type="robot")]
+                )
+            ]
+        }
         m = Metric(optimization="maximize", expression="(battery ?r)")
         r = self.validator.validate_component(m, ctx | {Metric: [m]})
         self.assertFalse(r.valid)
@@ -1008,7 +1254,10 @@ class TestProblemValidatorMetric(unittest.TestCase):
 
     def test_metric_with_expression_and_is_violated_passes(self):
         ctx = {Function: [Function(name="total-cost", params=[])]}
-        m = Metric(optimization="minimize", expression="(+ (total-cost) (* 10 (is-violated pref1)))")
+        m = Metric(
+            optimization="minimize",
+            expression="(+ (total-cost) (* 10 (is-violated pref1)))",
+        )
         r = self.validator.validate_component(m, ctx | {Metric: [m]})
         self.assertTrue(r.valid)
 
@@ -1019,10 +1268,15 @@ class TestProblemSemantics(unittest.TestCase):
     def test_signatures_and_objects(self):
         ctx = {
             PDDLType: [PDDLType(name="block", parent="object")],
-            Predicate: [Predicate(name="on", params=[
-                Parameter(variable="?b1", type="block"),
-                Parameter(variable="?b2", type="block"),
-            ])],
+            Predicate: [
+                Predicate(
+                    name="on",
+                    params=[
+                        Parameter(variable="?b1", type="block"),
+                        Parameter(variable="?b2", type="block"),
+                    ],
+                )
+            ],
         }
         sem = ProblemSemantics(ctx)
         self.assertIn("on", sem.signatures)
@@ -1051,10 +1305,15 @@ class TestProblemValidatorEdgeCases(unittest.TestCase):
             PDDLType: [PDDLType(name="location", parent="object")],
             Constant: [Constant(name="base", type="location")],
             PDDLObject: [PDDLObject(name="rover1", type="object")],
-            Predicate: [Predicate(name="at", params=[
-                Parameter(variable="?r", type="object"),
-                Parameter(variable="?l", type="location"),
-            ])],
+            Predicate: [
+                Predicate(
+                    name="at",
+                    params=[
+                        Parameter(variable="?r", type="object"),
+                        Parameter(variable="?l", type="location"),
+                    ],
+                )
+            ],
         }
         init = InitialState(facts=["(at rover1 base)"])
         r = self.validator.validate_component(init, ctx | {InitialState: [init]})
@@ -1063,7 +1322,11 @@ class TestProblemValidatorEdgeCases(unittest.TestCase):
     def test_initial_state_with_numeric_assignment(self):
         ctx = {
             PDDLType: [PDDLType(name="rover", parent="object")],
-            Function: [Function(name="battery", params=[Parameter(variable="?r", type="rover")])],
+            Function: [
+                Function(
+                    name="battery", params=[Parameter(variable="?r", type="rover")]
+                )
+            ],
             PDDLObject: [PDDLObject(name="r1", type="rover")],
         }
         init = InitialState(facts=["(= (battery r1) 100.0)"])
@@ -1073,20 +1336,24 @@ class TestProblemValidatorEdgeCases(unittest.TestCase):
     def test_goal_with_nested_or(self):
         ctx = {
             PDDLType: [PDDLType(name="block", parent="object")],
-            Predicate: [Predicate(name="on", params=[
-                Parameter(variable="?b1", type="block"),
-                Parameter(variable="?b2", type="block"),
-            ])],
+            Predicate: [
+                Predicate(
+                    name="on",
+                    params=[
+                        Parameter(variable="?b1", type="block"),
+                        Parameter(variable="?b2", type="block"),
+                    ],
+                )
+            ],
             PDDLObject: [
                 PDDLObject(name="a", type="block"),
                 PDDLObject(name="b", type="block"),
                 PDDLObject(name="c", type="block"),
             ],
         }
-        goal = GoalState(conditions=[{
-            "operator": "or",
-            "conditions": ["(on a b)", "(on a c)"]
-        }])
+        goal = GoalState(
+            conditions=[{"operator": "or", "conditions": ["(on a b)", "(on a c)"]}]
+        )
         r = self.validator.validate_component(goal, ctx | {GoalState: [goal]})
         self.assertTrue(r.valid)
 
@@ -1094,6 +1361,7 @@ class TestProblemValidatorEdgeCases(unittest.TestCase):
 # =============================================================================
 # DOMAIN REGISTRY FULL PIPELINE
 # =============================================================================
+
 
 class TestDomainValidatorFullPipeline(unittest.TestCase):
     """Integration: run the full DomainValidator against a realistic scenario."""
@@ -1107,9 +1375,21 @@ class TestDomainValidatorFullPipeline(unittest.TestCase):
             PDDLType(name="block", parent="object"),
         ]
         predicates = [
-            Predicate(name="holding", params=[Parameter(variable="?a", type="arm"), Parameter(variable="?b", type="block")]),
+            Predicate(
+                name="holding",
+                params=[
+                    Parameter(variable="?a", type="arm"),
+                    Parameter(variable="?b", type="block"),
+                ],
+            ),
             Predicate(name="clear", params=[Parameter(variable="?b", type="block")]),
-            Predicate(name="on", params=[Parameter(variable="?b1", type="block"), Parameter(variable="?b2", type="block")]),
+            Predicate(
+                name="on",
+                params=[
+                    Parameter(variable="?b1", type="block"),
+                    Parameter(variable="?b2", type="block"),
+                ],
+            ),
         ]
         functions = [
             Function(name="weight", params=[Parameter(variable="?b", type="block")]),
@@ -1127,16 +1407,18 @@ class TestDomainValidatorFullPipeline(unittest.TestCase):
                 Parameter(variable="?b2", type="block"),
                 Parameter(variable="?a", type="arm"),
             ],
-            preconditions=ActionPrecondition(conditions=[
-                "(holding ?a ?b1)",
-                "(clear ?b2)",
-                {"operator": "not", "condition": "(= ?b1 ?b2)"},
-            ]),
+            preconditions=ActionPrecondition(
+                conditions=[
+                    "(holding ?a ?b1)",
+                    "(clear ?b2)",
+                    {"operator": "not", "condition": "(= ?b1 ?b2)"},
+                ]
+            ),
             effects=ActionEffect(
                 add=["(on ?b1 ?b2)", "(clear ?b1)"],
                 delete=["(holding ?a ?b1)", "(clear ?b2)"],
                 numeric=["(decrease (weight ?b1) 5)"],
-            )
+            ),
         )
         r = self.validator.validate_component(action, ctx | {Action: [action]})
         self.assertTrue(r.valid)
@@ -1152,9 +1434,19 @@ class TestProblemValidatorFullPipeline(unittest.TestCase):
         ctx = {
             PDDLType: [PDDLType(name="block", parent="object")],
             Predicate: [
-                Predicate(name="on", params=[Parameter(variable="?b1", type="block"), Parameter(variable="?b2", type="block")]),
-                Predicate(name="clear", params=[Parameter(variable="?b", type="block")]),
-                Predicate(name="ontable", params=[Parameter(variable="?b", type="block")]),
+                Predicate(
+                    name="on",
+                    params=[
+                        Parameter(variable="?b1", type="block"),
+                        Parameter(variable="?b2", type="block"),
+                    ],
+                ),
+                Predicate(
+                    name="clear", params=[Parameter(variable="?b", type="block")]
+                ),
+                Predicate(
+                    name="ontable", params=[Parameter(variable="?b", type="block")]
+                ),
             ],
             PDDLObject: [
                 PDDLObject(name="a", type="block"),
@@ -1163,17 +1455,30 @@ class TestProblemValidatorFullPipeline(unittest.TestCase):
             ],
         }
 
-        init = InitialState(facts=["(ontable a)", "(ontable b)", "(ontable c)", "(clear a)", "(clear b)", "(clear c)"])
+        init = InitialState(
+            facts=[
+                "(ontable a)",
+                "(ontable b)",
+                "(ontable c)",
+                "(clear a)",
+                "(clear b)",
+                "(clear c)",
+            ]
+        )
         r = self.validator.validate_component(init, ctx | {InitialState: [init]})
         self.assertTrue(r.valid)
 
-        goal = GoalState(conditions=[{"operator": "and", "conditions": ["(on a b)", "(on b c)"]}])
+        goal = GoalState(
+            conditions=[{"operator": "and", "conditions": ["(on a b)", "(on b c)"]}]
+        )
         r = self.validator.validate_component(goal, ctx | {GoalState: [goal]})
         self.assertTrue(r.valid)
 
         # combined: all objects satisfy both checks
         total_failures = 0
-        if not self.validator.validate_component(init, ctx | {InitialState: [init], GoalState: [goal]}).valid:
+        if not self.validator.validate_component(
+            init, ctx | {InitialState: [init], GoalState: [goal]}
+        ).valid:
             total_failures += 1
         self.assertEqual(total_failures, 0)
 

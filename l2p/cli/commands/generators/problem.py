@@ -11,9 +11,15 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from l2p.utils.pddl_types import (
-    ProblemDetails, PDDLObject, PDDLType,
-    Predicate, Function, Parameter, Constant,
-    InitialState, GoalState
+    ProblemDetails,
+    PDDLObject,
+    PDDLType,
+    Predicate,
+    Function,
+    Parameter,
+    Constant,
+    InitialState,
+    GoalState,
 )
 from l2p.cli.commands.generate import GeneratorBase
 from l2p.cli.utils.errors import handle_error
@@ -57,22 +63,29 @@ def _parse_domain_file(filepath: str) -> Dict[str, Any]:
 
     types_list: List[PDDLType] = []
     for type_name, parent in domain.types.items():
-        types_list.append(PDDLType(
-            name=str(type_name),
-            parent=str(parent) if parent else "object",
-        ))
+        types_list.append(
+            PDDLType(
+                name=str(type_name),
+                parent=str(parent) if parent else "object",
+            )
+        )
 
     constants_list: List[Constant] = []
     for c in domain.constants:
-        constants_list.append(Constant(
-            name=str(c.name),
-            type=str(c.type_tag) if c.type_tag else "object",
-        ))
+        constants_list.append(
+            Constant(
+                name=str(c.name),
+                type=str(c.type_tag) if c.type_tag else "object",
+            )
+        )
 
     predicates_list: List[Predicate] = []
     for pred in domain.predicates:
         params = [
-            Parameter(variable=f"?{v.name}", type=str(next(iter(v.type_tags)) if v.type_tags else "object"))
+            Parameter(
+                variable=f"?{v.name}",
+                type=str(next(iter(v.type_tags)) if v.type_tags else "object"),
+            )
             for v in pred.terms
         ]
         predicates_list.append(Predicate(name=str(pred.name), params=params))
@@ -80,7 +93,10 @@ def _parse_domain_file(filepath: str) -> Dict[str, Any]:
     functions_list: List[Function] = []
     for func, _return_type in domain.functions.items():
         params = [
-            Parameter(variable=f"?{v.name}", type=str(next(iter(v.type_tags)) if v.type_tags else "object"))
+            Parameter(
+                variable=f"?{v.name}",
+                type=str(next(iter(v.type_tags)) if v.type_tags else "object"),
+            )
             for v in func.terms
         ]
         functions_list.append(Function(name=str(func.name), params=params))
@@ -130,7 +146,12 @@ class ProblemGenerator(GeneratorBase):
             objects = self._confirm_stage(
                 label="objects",
                 llm_func=lambda feedback="": self._generate_objects(
-                    problem_desc, types, constants, args.max_retries, obj_desc, feedback,
+                    problem_desc,
+                    types,
+                    constants,
+                    args.max_retries,
+                    obj_desc,
+                    feedback,
                 ),
                 manual_func=self._manual_objects(types) if manual else None,
             )
@@ -140,14 +161,24 @@ class ProblemGenerator(GeneratorBase):
         # --- initial state ---
         print(f"\n{BOLD}--- Initial State ---{RESET}")
         init = self._generate_initial(
-            problem_desc, types, predicates, functions, objects, constants,
+            problem_desc,
+            types,
+            predicates,
+            functions,
+            objects,
+            constants,
             args.max_retries,
         )
 
         # --- goal state ---
         print(f"\n{BOLD}--- Goal State ---{RESET}")
         goal = self._generate_goal(
-            problem_desc, types, predicates, functions, objects, constants,
+            problem_desc,
+            types,
+            predicates,
+            functions,
+            objects,
+            constants,
             args.max_retries,
         )
 
@@ -187,8 +218,10 @@ class ProblemGenerator(GeneratorBase):
             path = _input_or_exit("Path to domain PDDL file: ").strip()
             try:
                 info = _parse_domain_file(path)
-                print(f"  {GREEN}Loaded domain '{info['name']}' with "
-                      f"{len(info['types'])} types, {len(info['predicates'])} predicates{RESET}")
+                print(
+                    f"  {GREEN}Loaded domain '{info['name']}' with "
+                    f"{len(info['types'])} types, {len(info['predicates'])} predicates{RESET}"
+                )
                 return info
             except Exception as e:
                 print(f"  {YELLOW}Failed to parse domain file: {e}{RESET}")
@@ -206,7 +239,12 @@ class ProblemGenerator(GeneratorBase):
 
     def _prompt_problem_name(self) -> str:
         while True:
-            name = _input_or_exit(f"{GREEN}Enter problem name:{RESET} ").strip().lower().replace(" ", "-")
+            name = (
+                _input_or_exit(f"{GREEN}Enter problem name:{RESET} ")
+                .strip()
+                .lower()
+                .replace(" ", "-")
+            )
             if name:
                 return re.sub(r"[^a-z0-9-]", "", name)
             print("Problem name cannot be empty.")
@@ -216,7 +254,11 @@ class ProblemGenerator(GeneratorBase):
         return _input_or_exit().strip() or "A planning problem instance."
 
     def _prompt_component(self, name: str, default_include: bool) -> Tuple[bool, bool]:
-        resp = _input_or_exit(f"Include {name}? ({'Y/n' if default_include else 'y/N'}): ").strip().lower()
+        resp = (
+            _input_or_exit(f"Include {name}? ({'Y/n' if default_include else 'y/N'}): ")
+            .strip()
+            .lower()
+        )
         include = default_include if not resp else resp == "y"
         if not include:
             return False, False
@@ -305,8 +347,13 @@ class ProblemGenerator(GeneratorBase):
     # ------------------------------------------------------------------
 
     def _generate_objects(
-        self, problem_desc: str, types: List[PDDLType], constants: List[Constant],
-        max_retries: int, comp_desc: str = "", feedback: str = "",
+        self,
+        problem_desc: str,
+        types: List[PDDLType],
+        constants: List[Constant],
+        max_retries: int,
+        comp_desc: str = "",
+        feedback: str = "",
     ) -> List[PDDLObject]:
         desc = problem_desc
         if comp_desc:
@@ -326,10 +373,14 @@ class ProblemGenerator(GeneratorBase):
         return result if isinstance(result, list) else [result]
 
     def _generate_initial(
-        self, problem_desc: str,
-        types: List[PDDLType], predicates: List[Predicate],
-        functions: List[Function], objects: List[PDDLObject],
-        constants: List[Constant], max_retries: int,
+        self,
+        problem_desc: str,
+        types: List[PDDLType],
+        predicates: List[Predicate],
+        functions: List[Function],
+        objects: List[PDDLObject],
+        constants: List[Constant],
+        max_retries: int,
     ) -> Optional[InitialState]:
         print("  Generating initial state from description...")
         try:
@@ -354,10 +405,14 @@ class ProblemGenerator(GeneratorBase):
             return None
 
     def _generate_goal(
-        self, problem_desc: str,
-        types: List[PDDLType], predicates: List[Predicate],
-        functions: List[Function], objects: List[PDDLObject],
-        constants: List[Constant], max_retries: int,
+        self,
+        problem_desc: str,
+        types: List[PDDLType],
+        predicates: List[Predicate],
+        functions: List[Function],
+        objects: List[PDDLObject],
+        constants: List[Constant],
+        max_retries: int,
     ) -> Optional[GoalState]:
         print("  Generating goal state from description...")
         try:
@@ -394,9 +449,11 @@ class ProblemGenerator(GeneratorBase):
             path_str = default_path
         output_path = Path(path_str)
         if output_path.exists():
-            resp = _input_or_exit(
-                f"  {YELLOW}File exists. Overwrite? (y/N):{RESET} "
-            ).strip().lower()
+            resp = (
+                _input_or_exit(f"  {YELLOW}File exists. Overwrite? (y/N):{RESET} ")
+                .strip()
+                .lower()
+            )
             if resp != "y":
                 print(f"\n{BOLD}Generated problem:{RESET}\n{content}\n")
                 return

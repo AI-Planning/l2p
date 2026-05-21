@@ -44,7 +44,9 @@ class TestProblemBuilderFormalize(unittest.TestCase):
     def setUp(self):
         self.builder = ProblemBuilder()
         self.mock = MockLLM()
-        self.prompt = "Extract PDDL problem components:\n{problem_desc}\n{context_injection}"
+        self.prompt = (
+            "Extract PDDL problem components:\n{problem_desc}\n{context_injection}"
+        )
 
     # ---- OBJECTS (list of items) ----
 
@@ -56,8 +58,11 @@ class TestProblemBuilderFormalize(unittest.TestCase):
         ]
         </objects>""")
         result, output = self.builder.formalize_component(
-            model=self.mock, component_class=PDDLObject,
-            prompt_template=self.prompt, problem_desc="test")
+            model=self.mock,
+            component_class=PDDLObject,
+            prompt_template=self.prompt,
+            problem_desc="test",
+        )
         # Single item is unwrapped
         self.assertIsInstance(result, PDDLObject)
         self.assertEqual(result.name, "rover1")
@@ -73,8 +78,11 @@ class TestProblemBuilderFormalize(unittest.TestCase):
         ]
         </objects>""")
         result, _ = self.builder.formalize_component(
-            model=self.mock, component_class=PDDLObject,
-            prompt_template=self.prompt, problem_desc="test")
+            model=self.mock,
+            component_class=PDDLObject,
+            prompt_template=self.prompt,
+            problem_desc="test",
+        )
         # Multiple items stays as list
         self.assertIsInstance(result, list)
         self.assertEqual(len(result), 3)
@@ -84,8 +92,11 @@ class TestProblemBuilderFormalize(unittest.TestCase):
     def test_formalize_empty_objects(self):
         self.mock.output = "<objects>\n[]\n</objects>"
         result, _ = self.builder.formalize_component(
-            model=self.mock, component_class=PDDLObject,
-            prompt_template=self.prompt, problem_desc="empty")
+            model=self.mock,
+            component_class=PDDLObject,
+            prompt_template=self.prompt,
+            problem_desc="empty",
+        )
         self.assertEqual(result, [])
 
     def test_formalize_objects_with_mixed_types(self):
@@ -98,8 +109,11 @@ class TestProblemBuilderFormalize(unittest.TestCase):
         ]
         </objects>""")
         result, _ = self.builder.formalize_component(
-            model=self.mock, component_class=PDDLObject,
-            prompt_template=self.prompt, problem_desc="test")
+            model=self.mock,
+            component_class=PDDLObject,
+            prompt_template=self.prompt,
+            problem_desc="test",
+        )
         self.assertEqual(len(result), 3)
         types = {o.name: o.type for o in result}
         self.assertEqual(types["a"], "block")
@@ -117,8 +131,11 @@ class TestProblemBuilderFormalize(unittest.TestCase):
         }
         </initial_states>""")
         result, _ = self.builder.formalize_component(
-            model=self.mock, component_class=InitialState,
-            prompt_template=self.prompt, problem_desc="test")
+            model=self.mock,
+            component_class=InitialState,
+            prompt_template=self.prompt,
+            problem_desc="test",
+        )
         self.assertIsInstance(result, InitialState)
         self.assertEqual(len(result.facts), 2)
         self.assertIn("(at rover1 base)", result.facts)
@@ -135,8 +152,11 @@ class TestProblemBuilderFormalize(unittest.TestCase):
         }
         </initial_states>""")
         result, _ = self.builder.formalize_component(
-            model=self.mock, component_class=InitialState,
-            prompt_template=self.prompt, problem_desc="test")
+            model=self.mock,
+            component_class=InitialState,
+            prompt_template=self.prompt,
+            problem_desc="test",
+        )
         self.assertEqual(len(result.timed_facts), 1)
         self.assertEqual(result.timed_facts[0].time, 10.0)
         self.assertEqual(result.timed_facts[0].fact, "(blackout)")
@@ -147,8 +167,11 @@ class TestProblemBuilderFormalize(unittest.TestCase):
         {"facts": [], "timed_facts": [], "desc": null}
         </initial_states>""")
         result, _ = self.builder.formalize_component(
-            model=self.mock, component_class=InitialState,
-            prompt_template=self.prompt, problem_desc="empty")
+            model=self.mock,
+            component_class=InitialState,
+            prompt_template=self.prompt,
+            problem_desc="empty",
+        )
         self.assertEqual(len(result.facts), 0)
         self.assertEqual(len(result.timed_facts), 0)
 
@@ -163,8 +186,11 @@ class TestProblemBuilderFormalize(unittest.TestCase):
         }
         </goal_states>""")
         result, _ = self.builder.formalize_component(
-            model=self.mock, component_class=GoalState,
-            prompt_template=self.prompt, problem_desc="test")
+            model=self.mock,
+            component_class=GoalState,
+            prompt_template=self.prompt,
+            problem_desc="test",
+        )
         self.assertIsInstance(result, GoalState)
         self.assertEqual(len(result.conditions), 2)
         self.assertIn("(at rover1 waypoint3)", result.conditions)
@@ -181,8 +207,11 @@ class TestProblemBuilderFormalize(unittest.TestCase):
         }
         </goal_states>""")
         result, _ = self.builder.formalize_component(
-            model=self.mock, component_class=GoalState,
-            prompt_template=self.prompt, problem_desc="test")
+            model=self.mock,
+            component_class=GoalState,
+            prompt_template=self.prompt,
+            problem_desc="test",
+        )
         self.assertEqual(len(result.conditions), 2)
         first = result.conditions[0]
         self.assertIsInstance(first, dict)
@@ -194,8 +223,11 @@ class TestProblemBuilderFormalize(unittest.TestCase):
         {"conditions": [], "desc": null}
         </goal_states>""")
         result, _ = self.builder.formalize_component(
-            model=self.mock, component_class=GoalState,
-            prompt_template=self.prompt, problem_desc="empty")
+            model=self.mock,
+            component_class=GoalState,
+            prompt_template=self.prompt,
+            problem_desc="empty",
+        )
         self.assertEqual(len(result.conditions), 0)
 
     # ---- METRIC (single object, unwrapped) ----
@@ -206,8 +238,11 @@ class TestProblemBuilderFormalize(unittest.TestCase):
         {"optimization": "minimize", "expression": "total-time", "desc": null}
         </metrics>""")
         result, _ = self.builder.formalize_component(
-            model=self.mock, component_class=Metric,
-            prompt_template=self.prompt, problem_desc="test")
+            model=self.mock,
+            component_class=Metric,
+            prompt_template=self.prompt,
+            problem_desc="test",
+        )
         self.assertIsInstance(result, Metric)
         self.assertEqual(result.optimization, "minimize")
         self.assertEqual(result.expression, "total-time")
@@ -218,8 +253,11 @@ class TestProblemBuilderFormalize(unittest.TestCase):
         {"optimization": "maximize", "expression": "(battery rover1)", "desc": null}
         </metrics>""")
         result, _ = self.builder.formalize_component(
-            model=self.mock, component_class=Metric,
-            prompt_template=self.prompt, problem_desc="test")
+            model=self.mock,
+            component_class=Metric,
+            prompt_template=self.prompt,
+            problem_desc="test",
+        )
         self.assertEqual(result.optimization, "maximize")
         self.assertEqual(result.expression, "(battery rover1)")
 
@@ -239,7 +277,8 @@ class TestProblemBuilderFormalize(unittest.TestCase):
             model=self.mock,
             component_class=[PDDLObject, InitialState],
             prompt_template="Extract problem components",
-            problem_desc="test")
+            problem_desc="test",
+        )
         self.assertIsInstance(results, dict)
         self.assertIn(PDDLObject, results)
         self.assertIn(InitialState, results)
@@ -251,10 +290,15 @@ class TestProblemBuilderFormalize(unittest.TestCase):
     # ---- EDGE CASES ----
 
     def test_llm_output_preserved(self):
-        self.mock.output = "<objects>\n[{\"name\": \"r1\", \"type\": \"robot\", \"desc\": null}]\n</objects>"
+        self.mock.output = (
+            '<objects>\n[{"name": "r1", "type": "robot", "desc": null}]\n</objects>'
+        )
         result, llm_output = self.builder.formalize_component(
-            model=self.mock, component_class=PDDLObject,
-            prompt_template=self.prompt, problem_desc="test")
+            model=self.mock,
+            component_class=PDDLObject,
+            prompt_template=self.prompt,
+            problem_desc="test",
+        )
         self.assertIn("r1", llm_output)
 
     def test_retry_eventually_succeeds(self):
@@ -262,15 +306,21 @@ class TestProblemBuilderFormalize(unittest.TestCase):
             def __init__(self):
                 super().__init__()
                 self.count = 0
+
             def query(self, prompt):
                 self.count += 1
                 if self.count == 1:
                     return "bad output"
-                return "<objects>\n[{\"name\": \"r1\", \"type\": \"robot\", \"desc\": null}]\n</objects>"
+                return '<objects>\n[{"name": "r1", "type": "robot", "desc": null}]\n</objects>'
+
         retry_mock = RetryMockLLM()
         result, _ = self.builder.formalize_component(
-            model=retry_mock, component_class=PDDLObject,
-            prompt_template=self.prompt, problem_desc="test", max_retries=3)
+            model=retry_mock,
+            component_class=PDDLObject,
+            prompt_template=self.prompt,
+            problem_desc="test",
+            max_retries=3,
+        )
         self.assertEqual(result.name, "r1")
 
 
@@ -292,7 +342,7 @@ class TestProblemBuilderGenerateProblem(unittest.TestCase):
                 PDDLObject(name="base", type="location"),
             ],
             initial_state=InitialState(facts=["(at rover1 base)"]),
-            goal_state=GoalState(conditions=["(at rover1 base)"])
+            goal_state=GoalState(conditions=["(at rover1 base)"]),
         )
         result = self.builder.generate_problem(problem)
         self.assertIn("(define (problem test-problem)", result)
@@ -313,11 +363,15 @@ class TestProblemBuilderGenerateProblem(unittest.TestCase):
             ],
             initial_state=InitialState(
                 facts=["(ontable a)", "(ontable b)", "(clear a)", "(clear b)"],
-                timed_facts=[TimedFact(time=5.0, fact="(blackout)")]
+                timed_facts=[TimedFact(time=5.0, fact="(blackout)")],
             ),
             goal_state=GoalState(conditions=["(on a b)", "(on b c)"]),
             metric=Metric(optimization="minimize", expression="total-time"),
-            constraint=[Constraint(condition={"operator": "always", "condition": "(> (battery r) 0)"})]
+            constraint=[
+                Constraint(
+                    condition={"operator": "always", "condition": "(> (battery r) 0)"}
+                )
+            ],
         )
         result = self.builder.generate_problem(problem)
         self.assertIn(":constraints", result)
@@ -327,16 +381,18 @@ class TestProblemBuilderGenerateProblem(unittest.TestCase):
         self.assertIn("(at 5.0", result)  # timed fact
 
     def test_generate_problem_no_init_warning(self):
-        problem = ProblemDetails(name="p", domain_name="d",
-                                 goal_state=GoalState(conditions=["(p)"]))
+        problem = ProblemDetails(
+            name="p", domain_name="d", goal_state=GoalState(conditions=["(p)"])
+        )
         f = io.StringIO()
         with redirect_stdout(f):
             result = self.builder.generate_problem(problem)
         self.assertIn("WARNING", f.getvalue())
 
     def test_generate_problem_no_goal_warning(self):
-        problem = ProblemDetails(name="p", domain_name="d",
-                                 initial_state=InitialState(facts=["(p)"]))
+        problem = ProblemDetails(
+            name="p", domain_name="d", initial_state=InitialState(facts=["(p)"])
+        )
         f = io.StringIO()
         with redirect_stdout(f):
             result = self.builder.generate_problem(problem)
@@ -348,7 +404,7 @@ class TestProblemBuilderGenerateProblem(unittest.TestCase):
             domain_name="d1",
             objects=[PDDLObject(name="o1", type="t1")],
             initial_state=InitialState(facts=["(p o1)"]),
-            goal_state=GoalState(conditions=["(q o1)"])
+            goal_state=GoalState(conditions=["(q o1)"]),
         )
         result = self.builder.generate_problem(problem)
         self.assertTrue(result.startswith("(define"))
@@ -365,7 +421,7 @@ class TestProblemBuilderGenerateProblem(unittest.TestCase):
                 PDDLObject(name="arm1", type="arm"),
             ],
             initial_state=InitialState(facts=[]),
-            goal_state=GoalState(conditions=[])
+            goal_state=GoalState(conditions=[]),
         )
         result = self.builder.generate_problem(problem)
         # blocks should be grouped: "a b - block"
@@ -378,7 +434,9 @@ class TestProblemBuilderGenerateProblem(unittest.TestCase):
             domain_name="d",
             objects=[PDDLObject(name="o", type="t")],
             initial_state=InitialState(facts=["(p o)"]),
-            goal_state=GoalState(conditions=[{"operator": "not", "condition": "(p o)"}])
+            goal_state=GoalState(
+                conditions=[{"operator": "not", "condition": "(p o)"}]
+            ),
         )
         result = self.builder.generate_problem(problem)
         self.assertIn("(not", result)
@@ -389,7 +447,7 @@ class TestProblemBuilderGenerateProblem(unittest.TestCase):
             domain_name="d",
             objects=[],
             initial_state=InitialState(facts=[]),
-            goal_state=GoalState(conditions=["(p)", "(q)"])
+            goal_state=GoalState(conditions=["(p)", "(q)"]),
         )
         result = self.builder.generate_problem(problem)
         # multiple conditions should be wrapped in and

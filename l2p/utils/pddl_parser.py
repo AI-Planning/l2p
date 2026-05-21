@@ -7,7 +7,8 @@ import inspect
 from typing import List, TypeVar, Type as PyType
 from pydantic import TypeAdapter, ValidationError
 
-T = TypeVar('T')
+T = TypeVar("T")
+
 
 def parse_xml_tags(llm_output: str, tag_name: str) -> List[str]:
     """
@@ -16,18 +17,20 @@ def parse_xml_tags(llm_output: str, tag_name: str) -> List[str]:
     """
     pattern = rf"<{tag_name}>(.*?)</{tag_name}>"
     matches = re.findall(pattern, llm_output, flags=re.DOTALL)
-        
+
     return [match.strip() for match in matches]
 
 
-def parse_component(raw_blocks: List[str], model_class: PyType[T], tag_name: str) -> List[T]:
+def parse_component(
+    raw_blocks: List[str], model_class: PyType[T], tag_name: str
+) -> List[T]:
     """
     Iterates through raw text blocks and attempts to parse them into a List of Pydantic models.
     Returns the first successfully parsed list.
     """
     list_adapter = TypeAdapter(List[model_class])
     collected_errors = []
-    
+
     for block in raw_blocks:
         try:
             return list_adapter.validate_json(block)
@@ -38,9 +41,9 @@ def parse_component(raw_blocks: List[str], model_class: PyType[T], tag_name: str
             except (ValidationError, ValueError) as single_err:
                 collected_errors.append(str(list_err))
                 continue
-            
+
     class_source = inspect.getsource(model_class)
-    
+
     error_message = (
         f"Error: The JSON provided inside <{tag_name}> failed validation.\n\n"
         f"--- YOUR ERRORS ---\n"
@@ -58,17 +61,17 @@ def parse_element(raw_blocks: List[str], model_class: PyType[T], tag_name: str) 
     Used for singular components like Problem Details, Metric, or Goal.
     """
     collected_errors = []
-    
+
     for block in raw_blocks:
         try:
             return model_class.model_validate_json(block)
         except (ValidationError, ValueError) as e:
             collected_errors.append(str(e))
             continue
-            
+
     # extract the exact Python source code of the class
     class_source = inspect.getsource(model_class)
-    
+
     error_message = (
         f"Error: The JSON provided inside <{tag_name}> failed validation.\n\n"
         f"--- YOUR ERRORS ---\n"

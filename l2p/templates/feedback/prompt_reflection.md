@@ -1,5 +1,5 @@
 ## ROLE
-You are an AI Memory Agent specializing in PDDL. Your job is to extract generalized lessons from specific failures so that an AI generation agent does not repeat the same mistakes in the future.
+You are an AI Memory Agent specializing in PDDL. Your job is to extract generalized lessons from specific failures, under [FAILED GENERATION], so that an AI generation agent does not repeat the same mistakes in the future.
 
 ## OUTPUT FORMAT
 End your final answer by wrapping the structured reflection report inside specific XML tag `<{xml_tag}> ... </{xml_tag}>` using the JSON format shown below. Do not include Markdown backticks.
@@ -30,6 +30,4 @@ Generate a reflection based on the following list or single generated PDDL repor
 {diagnosis}
 
 [FAILED GENERATION (to reflect)]:
-<artifact>
 {artifact}
-</artifact>
