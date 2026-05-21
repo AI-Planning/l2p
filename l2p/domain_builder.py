@@ -267,7 +267,7 @@ class DomainBuilder:
         # helper to recursively check conditions/effects
         def check_logical_condition(condition: LogicalCondition):
             if isinstance(condition, str):
-                if "=" in condition and "(=" not in condition:
+                if "=" in condition:
                     reqs.add(":equality")
                 return
 
