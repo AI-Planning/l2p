@@ -34,6 +34,54 @@ prompt = pb.save_prompt(filename="my_prompt.md")
 
 Refer to `l2p/templates` for a better idea how to format your prompts.
 
+### Custom Multi-Component Templates
+
+`l2p/templates/custom/` provides pre-built prompt templates that extract **multiple PDDL components in a single LLM call**. This improves cross-component consistency - the LLM sees the full state space and action models simultaneously, eliminating mismatches between components.
+
+**Domain combinations (single LLM call):**
+
+| Template | Components Extracted |
+|----------|---------------------|
+| `prompt_types_predicates` | Types + Predicates |
+| `prompt_types_constants_predicates` | Types + Constants + Predicates |
+| `prompt_types_predicates_functions` | Types + Predicates + Functions |
+| `prompt_predicates_actions` | Predicates + Actions |
+| `prompt_actions_constraints` | Actions + Constraints |
+| `prompt_actions_durative_actions` | Actions + DurativeActions |
+| `prompt_events_processes` | Events + Processes |
+| `prompt_derived_predicates_predicates` | DerivedPredicates + Predicates |
+| `prompt_types_predicates_functions_actions` | Types + Preds + Functions + Actions |
+
+**Problem combinations (single LLM call):**
+
+| Template | Components Extracted |
+|----------|---------------------|
+| `prompt_objects_initial_state` | Objects + InitialState |
+| `prompt_objects_initial_goal` | Objects + Init + Goal |
+| `prompt_initial_goal_metric` | Init + Goal + Metric |
+
+Use them with `formalize_component()` by passing a **list of component classes** and the `prompt_template` argument:
+
+```python
+from l2p.utils.pddl_prompt import load_default_template
+
+prompt = load_default_template("custom", "prompt_types_predicates_functions_actions.md")
+
+parsed, raw = db.formalize_component(
+    model=llm,
+    component_class=[PDDLType, Predicate, Function, Action],
+    prompt_template=prompt,
+    description="A rover domain with battery management.",
+)
+
+types = parsed.get(PDDLType, [])
+predicates = parsed.get(Predicate, [])
+functions = parsed.get(Function, [])
+actions = parsed.get(Action, [])
+```
+
+Each template follows the same structure (Role, Output Format with XML tags, Rules, Task) with added cross-reference constraints — e.g., every predicate used in actions must be defined in the predicates section.
+
 ### `domain_builder.py` — PDDL Domain Generation
 
 Core class for constructing complete PDDL domains via LLM extraction.
