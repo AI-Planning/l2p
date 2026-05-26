@@ -61,6 +61,12 @@ For more information on a specific command, use:
             from .commands.templates import add_subparser as add_templates_parser
             from .commands.new import add_subparser as add_new_parser
             from .commands.chat import add_subparser as add_chat_parser
+            from .commands.set import add_subparser as add_set_parser
+            from .commands.build import add_subparser as add_build_parser
+            from .commands.validate import add_subparser as add_validate_parser
+            from .commands.plan import add_subparser as add_plan_parser
+            from .commands.schema import add_subparser as add_schema_parser
+            from .commands.mcp import add_subparser as add_mcp_parser
 
             add_init_parser(subparsers)
             add_models_parser(subparsers)
@@ -69,6 +75,12 @@ For more information on a specific command, use:
             add_templates_parser(subparsers)
             add_new_parser(subparsers)
             add_chat_parser(subparsers)
+            add_set_parser(subparsers)
+            add_build_parser(subparsers)
+            add_validate_parser(subparsers)
+            add_plan_parser(subparsers)
+            add_schema_parser(subparsers)
+            add_mcp_parser(subparsers)
 
         except ImportError as e:
             print(f"[ERROR] Failed to load CLI commands: {e}")
@@ -115,6 +127,29 @@ For more information on a specific command, use:
             from l2p.cli.commands.chat import chat_command
 
             chat_command(args)
+        elif args.command == "set":
+            from l2p.cli.commands.set import set_command
+
+            set_command(args)
+        elif args.command in ("build", "validate"):
+            if hasattr(args, "func"):
+                args.func(args)
+            else:
+                print(f"Error: No {args.command} subcommand specified.", file=sys.stderr)
+                print(f"Use `l2p {args.command} --help` for usage.", file=sys.stderr)
+                sys.exit(1)
+        elif args.command == "plan":
+            from l2p.cli.commands.plan import plan_command
+
+            plan_command(args)
+        elif args.command == "schema":
+            from l2p.cli.commands.schema import schema_command
+
+            schema_command(args)
+        elif args.command == "mcp":
+            from l2p.cli.commands.mcp import mcp_command
+
+            mcp_command(args)
         else:
             parser.print_help()
             sys.exit(1)

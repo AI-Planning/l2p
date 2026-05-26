@@ -15,6 +15,7 @@ setup(
     install_requires=["retry", "pddl", "typing_extensions", "pyyaml", "pydantic"],
     extras_require={
         "cli": ["llm", "tiktoken", "rich"],
+        "mcp": ["mcp"],
     },
     entry_points={
         "console_scripts": [
