@@ -65,7 +65,6 @@ from l2p.utils.pddl_format import *
 from l2p.validators.domain import DomainValidator
 from l2p.validators.problem import ProblemValidator
 
-
 # ---------------------------------------------------------------------------
 # Component registry
 # ---------------------------------------------------------------------------
@@ -162,9 +161,7 @@ def _format_output(parsed: Any, component: dict) -> str:
     fmt = component.get("format")
     if not fmt:
         items = parsed if isinstance(parsed, list) else [parsed]
-        return json.dumps(
-            [i.model_dump(exclude_none=True) for i in items], indent=2
-        )
+        return json.dumps([i.model_dump(exclude_none=True) for i in items], indent=2)
     items = parsed if isinstance(parsed, list) else [parsed]
     return fmt(items)
 
@@ -273,9 +270,7 @@ def set_command(args):
 
     if args.json:
         items = parsed if isinstance(parsed, list) else [parsed]
-        print(json.dumps(
-            [i.model_dump(exclude_none=True) for i in items], indent=2
-        ))
+        print(json.dumps([i.model_dump(exclude_none=True) for i in items], indent=2))
     elif args.pddl:
         print(_format_output(parsed, component))
     else:

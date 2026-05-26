@@ -15,8 +15,15 @@ from pddl.logic.base import And, Or, Not, Imply, ForallCondition, ExistsConditio
 from pddl.logic.predicates import Predicate as PddlPredicate
 from pddl.logic.effects import When, Forall as ForallEffect
 from pddl.logic.functions import (
-    Increase, Decrease, Assign, ScaleUp, ScaleDown,
-    GreaterThan, LesserThan, GreaterEqualThan, LesserEqualThan,
+    Increase,
+    Decrease,
+    Assign,
+    ScaleUp,
+    ScaleDown,
+    GreaterThan,
+    LesserThan,
+    GreaterEqualThan,
+    LesserEqualThan,
 )
 from pddl.logic.terms import Constant as Variable
 from l2p.utils.pddl_types import *
@@ -27,6 +34,7 @@ T = TypeVar("T")
 # =============================================================================
 # LLM OUTPUT EXTRACTION FUNCTIONS
 # =============================================================================
+
 
 def parse_xml_tags(llm_output: str, tag_name: str) -> List[str]:
     """
@@ -42,7 +50,9 @@ def parse_xml_tags(llm_output: str, tag_name: str) -> List[str]:
     return [match.strip() for match in matches]
 
 
-def parse_component(raw_blocks: List[str], model_class: Type[T], tag_name: str) -> List[T]:
+def parse_component(
+    raw_blocks: List[str], model_class: Type[T], tag_name: str
+) -> List[T]:
     """
     Processes list of content blocks containing specific model class. Returns first valid
     JSON object pertaining to that specific model class.
@@ -51,7 +61,7 @@ def parse_component(raw_blocks: List[str], model_class: Type[T], tag_name: str) 
         model_class (Type[T]): Specific model class to validate content block
         tag_name (str): Specific XML tag to extract blocks from
     Returns:
-        List of JSON object models matching the specific model class 
+        List of JSON object models matching the specific model class
     """
 
     list_adapter = TypeAdapter(List[model_class])
@@ -73,6 +83,7 @@ def parse_component(raw_blocks: List[str], model_class: Type[T], tag_name: str) 
 
     # return diagnostic message if no classes match
     import inspect as _inspect
+
     class_source = _inspect.getsource(model_class)
     error_message = (
         f"Error: The JSON provided inside <{tag_name}> failed validation.\n\n"
@@ -95,7 +106,7 @@ def parse_element(raw_blocks: List[str], model_class: Type[T], tag_name: str) ->
         model_class (Type[T]): Specific model class to validate content block
         tag_name (str): Specific XML tag to extract blocks from
     Returns:
-        A single JSON object model matching the specific model class 
+        A single JSON object model matching the specific model class
     """
     collected_errors = []
 
@@ -107,6 +118,7 @@ def parse_element(raw_blocks: List[str], model_class: Type[T], tag_name: str) ->
             continue
 
     import inspect as _inspect
+
     class_source = _inspect.getsource(model_class)
     error_message = (
         f"Error: The JSON provided inside <{tag_name}> failed validation.\n\n"
@@ -124,6 +136,7 @@ def parse_element(raw_blocks: List[str], model_class: Type[T], tag_name: str) ->
 # PDDL STRING PARSING - convert raw PDDL into L2P Pydantic models
 # **Side Note** - These functions leverage PDDL parser: [INSERT]
 # =============================================================================
+
 
 def parse_domain_pddl(domain_str: str) -> DomainDetails:
     """
@@ -168,6 +181,7 @@ def parse_problem_pddl(pddl_str: str) -> ProblemDetails:
         metric=_convert_metric(problem.metric) if hasattr(problem, "metric") else None,
     )
 
+
 def write_temp_pddl(pddl_str: str, parser_func):
     """Write *pddl_str* to a temp file, parse it with *parser_func*, clean up."""
     with tempfile.NamedTemporaryFile(mode="w", suffix=".pddl", delete=False) as f:
@@ -179,21 +193,27 @@ def write_temp_pddl(pddl_str: str, parser_func):
     finally:
         os.unlink(fname)
 
+
 # ---------------------------------------------------------------------------
 # Domain component converters (from PDDL parser to L2P models)
 # ---------------------------------------------------------------------------
 
+
 def _convert_requirements(reqs: frozenset) -> List[Requirement]:
     return [Requirement(name=str(r)) for r in reqs]
+
 
 def _convert_types(types: Dict) -> List[PDDLType]:
     result: List[PDDLType] = []
     for name, parent in types.items():
-        result.append(PDDLType(
-            name=name,
-            parent=str(parent) if parent else "object",
-        ))
+        result.append(
+            PDDLType(
+                name=name,
+                parent=str(parent) if parent else "object",
+            )
+        )
     return result
+
 
 def _convert_constants(constants: frozenset) -> List[Constant]:
     result: List[Constant] = []
@@ -202,40 +222,51 @@ def _convert_constants(constants: frozenset) -> List[Constant]:
         result.append(Constant(name=c.name, type=type_str))
     return result
 
+
 def _convert_predicates(predicates: frozenset) -> List[Predicate]:
     result: List[Predicate] = []
     for p in predicates:
-        result.append(Predicate(
-            name=p.name,
-            params=_make_params(p.terms),
-        ))
+        result.append(
+            Predicate(
+                name=p.name,
+                params=_make_params(p.terms),
+            )
+        )
     return result
+
 
 def _convert_functions(functions: Dict) -> List[Function]:
     result: List[Function] = []
     for func, _return_type in functions.items():
-        result.append(Function(
-            name=func.name,
-            params=_make_params(func.terms),
-        ))
+        result.append(
+            Function(
+                name=func.name,
+                params=_make_params(func.terms),
+            )
+        )
     return result
+
 
 def _convert_derived_predicates(derived: frozenset) -> List[DerivedPredicate]:
     result: List[DerivedPredicate] = []
     for dp in derived:
         pred = dp.predicate
-        result.append(DerivedPredicate(
-            name=pred.name,
-            params=_make_params(pred.terms),
-            condition=_convert_condition(dp.condition),
-        ))
+        result.append(
+            DerivedPredicate(
+                name=pred.name,
+                params=_make_params(pred.terms),
+                condition=_convert_condition(dp.condition),
+            )
+        )
     return result
+
 
 def _convert_actions(actions: frozenset) -> List[Action]:
     result: List[Action] = []
     for a in actions:
         result.append(_convert_single_action(a))
     return result
+
 
 def _convert_single_action(a: PddlAction) -> Action:
     return Action(
@@ -244,6 +275,7 @@ def _convert_single_action(a: PddlAction) -> Action:
         preconditions=_convert_precondition(a.precondition),
         effects=_parse_effects(a.effect),
     )
+
 
 def _convert_precondition(formula) -> ActionPrecondition:
     """
@@ -257,6 +289,7 @@ def _convert_precondition(formula) -> ActionPrecondition:
     else:
         conditions = [_convert_condition(formula)]
     return ActionPrecondition(conditions=conditions)
+
 
 def _convert_condition(formula) -> LogicalCondition:
     """
@@ -310,6 +343,7 @@ def _convert_condition(formula) -> LogicalCondition:
     # Predicate, EqualTo, numeric comparisons, FunctionExpression, etc.
     return str(formula)
 
+
 def _parse_effects(formula) -> ActionEffect:
     """
     Walk the effect formula tree and categorise each leaf into
@@ -351,14 +385,16 @@ def _parse_effects(formula) -> ActionEffect:
         if isinstance(f, When):
             cond = _convert_condition(f.condition)
             inner_eff = _parse_effects(f.effect)
-            conditional.append(ConditionalEffect(
-                condition=[cond] if isinstance(cond, str) else [cond],
-                effect={
-                    "add": inner_eff.add,
-                    "delete": inner_eff.delete,
-                    "numeric": inner_eff.numeric,
-                },
-            ))
+            conditional.append(
+                ConditionalEffect(
+                    condition=[cond] if isinstance(cond, str) else [cond],
+                    effect={
+                        "add": inner_eff.add,
+                        "delete": inner_eff.delete,
+                        "numeric": inner_eff.numeric,
+                    },
+                )
+            )
             return
 
         if isinstance(f, ForallEffect):
@@ -366,8 +402,20 @@ def _parse_effects(formula) -> ActionEffect:
             return
 
         # numeric assignments / comparisons
-        if isinstance(f, (Increase, Decrease, Assign, ScaleUp, ScaleDown,
-                          GreaterThan, LesserThan, GreaterEqualThan, LesserEqualThan)):
+        if isinstance(
+            f,
+            (
+                Increase,
+                Decrease,
+                Assign,
+                ScaleUp,
+                ScaleDown,
+                GreaterThan,
+                LesserThan,
+                GreaterEqualThan,
+                LesserEqualThan,
+            ),
+        ):
             numeric.append(str(f))
             return
 
@@ -382,6 +430,7 @@ def _parse_effects(formula) -> ActionEffect:
         numeric=numeric,
         conditional=conditional,
     )
+
 
 def _make_params(terms) -> List[Parameter]:
     """Convert a tuple of pddl ``Term`` objects (from Predicate / Function)."""
@@ -400,9 +449,11 @@ def _make_params_from_variables(variables: List[Variable]) -> List[Dict[str, str
         result.append({"variable": f"?{v.name}", "type": type_str})
     return result
 
+
 # ---------------------------------------------------------------------------
 # Problem component converters (from PDDL parser to L2P models)
 # ---------------------------------------------------------------------------
+
 
 def _convert_objects(objects: frozenset) -> List[PDDLObject]:
     result: List[PDDLObject] = []
@@ -411,12 +462,15 @@ def _convert_objects(objects: frozenset) -> List[PDDLObject]:
         result.append(PDDLObject(name=o.name, type=type_str))
     return result
 
+
 def _convert_initial_state(init: frozenset) -> InitialState:
     facts: List[str] = []
     for item in init:
         facts.append(str(item))
     from collections import defaultdict as _dd
+
     return InitialState(facts=facts, timed_facts=[])
+
 
 def _convert_goal_state(goal) -> GoalState:
     if isinstance(goal, And):
@@ -424,6 +478,7 @@ def _convert_goal_state(goal) -> GoalState:
     else:
         conditions = [_convert_condition(goal)]
     return GoalState(conditions=conditions)
+
 
 def _convert_metric(metric) -> Optional[Metric]:
     if metric is None:

@@ -89,7 +89,9 @@ def _load_data(args) -> str:
     raise ValueError("No input provided. Use --data, --file, or <path>.")
 
 
-def _validate_component_json(raw: str, model_cls: Type[BaseModel], validator_cls) -> dict:
+def _validate_component_json(
+    raw: str, model_cls: Type[BaseModel], validator_cls
+) -> dict:
     data = json.loads(raw)
 
     if isinstance(data, list):
@@ -130,7 +132,11 @@ def _validate_full_domain(raw: str) -> dict:
         ("derived_predicates", details.derived_predicates),
         ("actions", details.actions),
     ]
-    context = {PDDLType: details.types, Predicate: details.predicates, Function: details.functions}
+    context = {
+        PDDLType: details.types,
+        Predicate: details.predicates,
+        Function: details.functions,
+    }
 
     for name, items in fields:
         for item in items:
@@ -209,28 +215,44 @@ def add_subparser(subparsers):
     # Individual components
     for name in VALIDATABLE:
         vp = subparsers.add_parser(name, help=f"Validate {name}")
-        vp.add_argument("--data", type=str, default=None, help="JSON string of the component.")
+        vp.add_argument(
+            "--data", type=str, default=None, help="JSON string of the component."
+        )
         vp.add_argument("--file", type=str, default=None, help="Path to JSON file.")
         vp.set_defaults(func=validate_component_command, component_name=name)
 
     # Full domain
     dom_parser = subparsers.add_parser("domain", help="Validate a full domain")
     dom_parser.add_argument(
-        "path", type=str, nargs="?", default=None,
-        help="Path to .pddl domain file (alternative to --data/--file)."
+        "path",
+        type=str,
+        nargs="?",
+        default=None,
+        help="Path to .pddl domain file (alternative to --data/--file).",
     )
-    dom_parser.add_argument("--data", type=str, default=None, help="DomainDetails JSON string.")
-    dom_parser.add_argument("--file", type=str, default=None, help="Path to DomainDetails JSON file.")
+    dom_parser.add_argument(
+        "--data", type=str, default=None, help="DomainDetails JSON string."
+    )
+    dom_parser.add_argument(
+        "--file", type=str, default=None, help="Path to DomainDetails JSON file."
+    )
     dom_parser.set_defaults(func=validate_domain_command)
 
     # Full problem
     prob_parser = subparsers.add_parser("problem", help="Validate a full problem")
     prob_parser.add_argument(
-        "path", type=str, nargs="?", default=None,
-        help="Path to .pddl problem file (alternative to --data/--file)."
+        "path",
+        type=str,
+        nargs="?",
+        default=None,
+        help="Path to .pddl problem file (alternative to --data/--file).",
     )
-    prob_parser.add_argument("--data", type=str, default=None, help="ProblemDetails JSON string.")
-    prob_parser.add_argument("--file", type=str, default=None, help="Path to ProblemDetails JSON file.")
+    prob_parser.add_argument(
+        "--data", type=str, default=None, help="ProblemDetails JSON string."
+    )
+    prob_parser.add_argument(
+        "--file", type=str, default=None, help="Path to ProblemDetails JSON file."
+    )
     prob_parser.set_defaults(func=validate_problem_command)
 
 
@@ -256,7 +278,11 @@ def _validate_domain_from_pddl(path: Path) -> dict:
     try:
         details = parse_domain_pddl(raw)
     except Exception as e:
-        return {"valid": False, "errors": [f"Failed to parse PDDL domain: {e}"], "warnings": []}
+        return {
+            "valid": False,
+            "errors": [f"Failed to parse PDDL domain: {e}"],
+            "warnings": [],
+        }
 
     validator = DomainValidator()
     errors = []
@@ -270,7 +296,11 @@ def _validate_domain_from_pddl(path: Path) -> dict:
         ("derived_predicates", details.derived_predicates),
         ("actions", details.actions),
     ]
-    context = {PDDLType: details.types, Predicate: details.predicates, Function: details.functions}
+    context = {
+        PDDLType: details.types,
+        Predicate: details.predicates,
+        Function: details.functions,
+    }
 
     for name, items in fields:
         for item in items:
@@ -280,8 +310,12 @@ def _validate_domain_from_pddl(path: Path) -> dict:
                     errors.append(f"[{name}] {e}")
             warnings.extend(f"[{name}] {w}" for w in result.warnings)
 
-    return {"valid": len(errors) == 0, "errors": errors, "warnings": warnings,
-            "name": details.name}
+    return {
+        "valid": len(errors) == 0,
+        "errors": errors,
+        "warnings": warnings,
+        "name": details.name,
+    }
 
 
 def _validate_problem_from_pddl(path: Path) -> dict:
@@ -289,7 +323,11 @@ def _validate_problem_from_pddl(path: Path) -> dict:
     try:
         details = parse_problem_pddl(raw)
     except Exception as e:
-        return {"valid": False, "errors": [f"Failed to parse PDDL problem: {e}"], "warnings": []}
+        return {
+            "valid": False,
+            "errors": [f"Failed to parse PDDL problem: {e}"],
+            "warnings": [],
+        }
 
     validator = ProblemValidator()
     errors = []
@@ -314,8 +352,12 @@ def _validate_problem_from_pddl(path: Path) -> dict:
             errors.extend(result.errors)
         warnings.extend(result.warnings)
 
-    return {"valid": len(errors) == 0, "errors": errors, "warnings": warnings,
-            "name": details.name}
+    return {
+        "valid": len(errors) == 0,
+        "errors": errors,
+        "warnings": warnings,
+        "name": details.name,
+    }
 
 
 def validate_domain_command(args):
@@ -326,8 +368,10 @@ def validate_domain_command(args):
         if result["valid"]:
             print(f'[SUCCESS] Domain "{name}" is valid')
         else:
-            print(f'[FAIL] Domain "{name}" has {len(result["errors"])} error(s):',
-                  file=sys.stderr)
+            print(
+                f'[FAIL] Domain "{name}" has {len(result["errors"])} error(s):',
+                file=sys.stderr,
+            )
             for e in result["errors"]:
                 print(f"  {e}", file=sys.stderr)
         if result.get("warnings"):
@@ -354,8 +398,10 @@ def validate_problem_command(args):
         if result["valid"]:
             print(f'[SUCCESS] Problem "{name}" is valid')
         else:
-            print(f'[FAIL] Problem "{name}" has {len(result["errors"])} error(s):',
-                  file=sys.stderr)
+            print(
+                f'[FAIL] Problem "{name}" has {len(result["errors"])} error(s):',
+                file=sys.stderr,
+            )
             for e in result["errors"]:
                 print(f"  {e}", file=sys.stderr)
         if result.get("warnings"):

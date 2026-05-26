@@ -13,7 +13,7 @@ def add_subparser(subparsers):
         "mcp",
         help="Start the L2P MCP server",
         description="Start the Model Context Protocol server for L2P. "
-                    "Configure your MCP client to run this command.",
+        "Configure your MCP client to run this command.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""Configuration (Claude Desktop):
   Add to your claude_desktop_config.json:
@@ -40,6 +40,7 @@ Configuration (Claude Code):
 def mcp_command(args):
     try:
         from l2p.mcp.server import run
+
         run()
     except ImportError as e:
         print(f"[ERROR] MCP dependencies not installed: {e}", file=sys.stderr)

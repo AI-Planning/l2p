@@ -135,7 +135,9 @@ For more information on a specific command, use:
             if hasattr(args, "func"):
                 args.func(args)
             else:
-                print(f"Error: No {args.command} subcommand specified.", file=sys.stderr)
+                print(
+                    f"Error: No {args.command} subcommand specified.", file=sys.stderr
+                )
                 print(f"Use `l2p {args.command} --help` for usage.", file=sys.stderr)
                 sys.exit(1)
         elif args.command == "plan":

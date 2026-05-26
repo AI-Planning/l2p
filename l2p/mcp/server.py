@@ -27,25 +27,40 @@ from l2p.problem_builder import ProblemBuilder
 from l2p.utils.pddl_types import *
 from l2p.utils.pddl_format import *
 
-
 # ---------------------------------------------------------------------------
 # Shared helpers
 # ---------------------------------------------------------------------------
 
 COMPONENT_REGISTRY: Dict[str, Dict[str, Any]] = {
-    "requirements": {"model": Requirement, "is_list": True, "format": format_requirements},
+    "requirements": {
+        "model": Requirement,
+        "is_list": True,
+        "format": format_requirements,
+    },
     "types": {"model": PDDLType, "is_list": True, "format": format_types},
     "constants": {"model": Constant, "is_list": True, "format": format_constants},
     "predicates": {"model": Predicate, "is_list": True, "format": format_predicates},
     "functions": {"model": Function, "is_list": True, "format": format_functions},
-    "derived-predicates": {"model": DerivedPredicate, "is_list": True, "format": format_derived_predicates},
+    "derived-predicates": {
+        "model": DerivedPredicate,
+        "is_list": True,
+        "format": format_derived_predicates,
+    },
     "actions": {"model": Action, "is_list": True, "format": format_actions},
-    "durative-actions": {"model": DurativeAction, "is_list": True, "format": format_durative_actions},
+    "durative-actions": {
+        "model": DurativeAction,
+        "is_list": True,
+        "format": format_durative_actions,
+    },
     "events": {"model": Event, "is_list": True, "format": format_events},
     "processes": {"model": Process, "is_list": True, "format": format_processes},
     "constraints": {"model": Constraint, "is_list": True, "format": format_constraints},
     "objects": {"model": PDDLObject, "is_list": True, "format": format_objects},
-    "initial-state": {"model": InitialState, "is_list": False, "format": format_initial_state},
+    "initial-state": {
+        "model": InitialState,
+        "is_list": False,
+        "format": format_initial_state,
+    },
     "goal-state": {"model": GoalState, "is_list": False, "format": format_goal_states},
     "metric": {"model": Metric, "is_list": False, "format": format_metric},
     "parameters": {"model": Parameter, "is_list": True, "format": None},
@@ -129,7 +144,9 @@ def _run_planner(
         if planner_type == "fast-downward":
             from l2p.planner_builder import FastDownward
 
-            planner = FastDownward(executable_path=executable or "downward/fast-downward.py")
+            planner = FastDownward(
+                executable_path=executable or "downward/fast-downward.py"
+            )
             result = planner.run_planner(
                 domain_path=d_path, problem_path=p_path, alias=alias, timeout=timeout
             )
@@ -138,13 +155,16 @@ def _run_planner(
 
             planner = UnifiedPlanning()
             result = planner.run_planner(
-                domain_path=d_path, problem_path=p_path,
-                engine=engine or "aries", timeout=timeout
+                domain_path=d_path,
+                problem_path=p_path,
+                engine=engine or "aries",
+                timeout=timeout,
             )
         else:
             return {"error": f"Unknown planner: {planner_type}"}
 
         import dataclasses
+
         return dataclasses.asdict(result)
     finally:
         Path(d_path).unlink(missing_ok=True)
@@ -160,6 +180,7 @@ try:
     import mcp.server.stdio
     import mcp.types as types
     from mcp.server.models import InitializationOptions
+
     HAS_MCP = True
 except ImportError:
     HAS_MCP = False
@@ -225,8 +246,17 @@ async def serve():
         from l2p.validators.problem import ProblemValidator as ProbVal
 
         domain_components = {
-            "requirements", "types", "constants", "predicates", "functions",
-            "derived-predicates", "actions", "durative-actions", "events", "processes", "constraints"
+            "requirements",
+            "types",
+            "constants",
+            "predicates",
+            "functions",
+            "derived-predicates",
+            "actions",
+            "durative-actions",
+            "events",
+            "processes",
+            "constraints",
         }
 
         if component in domain_components:
@@ -240,11 +270,14 @@ async def serve():
                 errors.extend(result.errors)
             warnings.extend(result.warnings)
 
-        return json.dumps({
-            "valid": len(errors) == 0,
-            "errors": errors,
-            "warnings": warnings,
-        }, indent=2)
+        return json.dumps(
+            {
+                "valid": len(errors) == 0,
+                "errors": errors,
+                "warnings": warnings,
+            },
+            indent=2,
+        )
 
     @server.tool()
     async def format_component(
@@ -402,6 +435,7 @@ async def serve():
             and optionally "example".
         """
         from l2p.cli.commands.schema import SCHEMAS, EXAMPLES_FULL, EXAMPLES
+
         model_cls = SCHEMAS.get(component)
         if not model_cls:
             return json.dumps({"error": f"Unknown component: {component}"})
@@ -428,6 +462,7 @@ async def serve():
             component: The component name (types, predicates, domain, etc.)
         """
         from l2p.cli.commands.schema import SCHEMAS
+
         model_cls = SCHEMAS.get(component)
         if not model_cls:
             return json.dumps({"error": f"Unknown component: {component}"})
@@ -455,4 +490,5 @@ async def serve():
 def run():
     """Synchronous entry point for `l2p mcp`."""
     import asyncio
+
     asyncio.run(serve())

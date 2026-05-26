@@ -70,12 +70,16 @@ def add_subparser(subparsers):
     )
 
     parser.add_argument(
-        "--domain", type=str, required=True,
-        help="PDDL domain as a raw string, or @path/to/domain.pddl to read from file."
+        "--domain",
+        type=str,
+        required=True,
+        help="PDDL domain as a raw string, or @path/to/domain.pddl to read from file.",
     )
     parser.add_argument(
-        "--problem", type=str, required=True,
-        help="PDDL problem as a raw string, or @path/to/problem.pddl to read from file."
+        "--problem",
+        type=str,
+        required=True,
+        help="PDDL problem as a raw string, or @path/to/problem.pddl to read from file.",
     )
     parser.add_argument(
         "--planner",
@@ -85,28 +89,41 @@ def add_subparser(subparsers):
         help="Planner backend: 'fast-downward' (default) or 'unified'.",
     )
     parser.add_argument(
-        "--alias", type=str, default="lama-first",
-        help="Fast Downward search alias (default: lama-first).  Other options: seq-opt-fdss-1, seq-opt-bjolp, etc."
+        "--alias",
+        type=str,
+        default="lama-first",
+        help="Fast Downward search alias (default: lama-first).  Other options: seq-opt-fdss-1, seq-opt-bjolp, etc.",
     )
     parser.add_argument(
-        "--engine", type=str, default=None,
-        help="Unified Planning engine name (default: aries).  Requires: pip install unified-planning[engines]."
+        "--engine",
+        type=str,
+        default=None,
+        help="Unified Planning engine name (default: aries).  Requires: pip install unified-planning[engines].",
     )
     parser.add_argument(
-        "--timeout", type=int, default=60,
-        help="Planner timeout in seconds (default: 60)."
+        "--timeout",
+        type=int,
+        default=60,
+        help="Planner timeout in seconds (default: 60).",
     )
     parser.add_argument(
-        "--executable", type=str, default=None,
-        help="Path to Fast Downward executable (default: downward/fast-downward.py).  Only for --planner fast-downward."
+        "--executable",
+        type=str,
+        default=None,
+        help="Path to Fast Downward executable (default: downward/fast-downward.py).  Only for --planner fast-downward.",
     )
     parser.add_argument(
-        "--output", "-o", type=str, default=None,
-        help="Path to write plan text (only on success)."
+        "--output",
+        "-o",
+        type=str,
+        default=None,
+        help="Path to write plan text (only on success).",
     )
     parser.add_argument(
-        "--json", action="store_true", default=False,
-        help="Output PlanningResult as structured JSON instead of human-readable text."
+        "--json",
+        action="store_true",
+        default=False,
+        help="Output PlanningResult as structured JSON instead of human-readable text.",
     )
 
     parser.set_defaults(func=plan_command)
@@ -151,6 +168,7 @@ def plan_command(args):
 
         if args.json:
             import dataclasses
+
             output = json.dumps(dataclasses.asdict(result), indent=2, default=str)
             print(output)
         else:
@@ -160,8 +178,10 @@ def plan_command(args):
                     for i, step in enumerate(result.plan, 1):
                         print(f"  {i}: {step}")
             else:
-                print(f"[FAIL] {result.error_message or 'No plan found.'}",
-                      file=sys.stderr)
+                print(
+                    f"[FAIL] {result.error_message or 'No plan found.'}",
+                    file=sys.stderr,
+                )
                 sys.exit(1)
 
             if args.output and result.plan:

@@ -154,102 +154,111 @@ def add_subparser(subparsers):
     )
 
     # --- domain ---
-    dom_parser = subparsers.add_parser(
-        "domain", help="Build a PDDL domain"
+    dom_parser = subparsers.add_parser("domain", help="Build a PDDL domain")
+    dom_parser.add_argument(
+        "--name",
+        type=str,
+        default=None,
+        help="Domain name (used when not passing full --data).",
     )
     dom_parser.add_argument(
-        "--name", type=str, default=None,
-        help="Domain name (used when not passing full --data)."
+        "--data",
+        type=str,
+        default=None,
+        help="Full DomainDetails JSON string, or @path/to/file.json.",
     )
     dom_parser.add_argument(
-        "--data", type=str, default=None,
-        help="Full DomainDetails JSON string, or @path/to/file.json."
+        "--types", type=str, default=None, help="Types JSON array or @file."
     )
     dom_parser.add_argument(
-        "--types", type=str, default=None,
-        help="Types JSON array or @file."
+        "--constants", type=str, default=None, help="Constants JSON array or @file."
     )
     dom_parser.add_argument(
-        "--constants", type=str, default=None,
-        help="Constants JSON array or @file."
+        "--predicates", type=str, default=None, help="Predicates JSON array or @file."
     )
     dom_parser.add_argument(
-        "--predicates", type=str, default=None,
-        help="Predicates JSON array or @file."
+        "--functions", type=str, default=None, help="Functions JSON array or @file."
     )
     dom_parser.add_argument(
-        "--functions", type=str, default=None,
-        help="Functions JSON array or @file."
+        "--derived-predicates",
+        type=str,
+        default=None,
+        help="Derived predicates JSON array or @file.",
     )
     dom_parser.add_argument(
-        "--derived-predicates", type=str, default=None,
-        help="Derived predicates JSON array or @file."
+        "--actions", type=str, default=None, help="Actions JSON array or @file."
     )
     dom_parser.add_argument(
-        "--actions", type=str, default=None,
-        help="Actions JSON array or @file."
+        "--durative-actions",
+        type=str,
+        default=None,
+        help="Durative actions JSON array or @file.",
     )
     dom_parser.add_argument(
-        "--durative-actions", type=str, default=None,
-        help="Durative actions JSON array or @file."
+        "--events", type=str, default=None, help="Events JSON array or @file."
     )
     dom_parser.add_argument(
-        "--events", type=str, default=None,
-        help="Events JSON array or @file."
+        "--processes", type=str, default=None, help="Processes JSON array or @file."
     )
     dom_parser.add_argument(
-        "--processes", type=str, default=None,
-        help="Processes JSON array or @file."
+        "--constraints", type=str, default=None, help="Constraints JSON array or @file."
     )
     dom_parser.add_argument(
-        "--constraints", type=str, default=None,
-        help="Constraints JSON array or @file."
+        "--output",
+        "-o",
+        type=str,
+        default=None,
+        help="Output file path (default: stdout).",
     )
     dom_parser.add_argument(
-        "--output", "-o", type=str, default=None,
-        help="Output file path (default: stdout)."
-    )
-    dom_parser.add_argument(
-        "--json", action="store_true", default=False,
-        help="Output assembled DomainDetails as JSON instead of PDDL."
+        "--json",
+        action="store_true",
+        default=False,
+        help="Output assembled DomainDetails as JSON instead of PDDL.",
     )
     dom_parser.set_defaults(func=build_domain_command)
 
     # --- problem ---
-    prob_parser = subparsers.add_parser(
-        "problem", help="Build a PDDL problem"
+    prob_parser = subparsers.add_parser("problem", help="Build a PDDL problem")
+    prob_parser.add_argument(
+        "--name",
+        type=str,
+        default=None,
+        help="Problem name (used when not passing full --data).",
     )
     prob_parser.add_argument(
-        "--name", type=str, default=None,
-        help="Problem name (used when not passing full --data)."
+        "--domain-name", type=str, default=None, help="Domain this problem belongs to."
     )
     prob_parser.add_argument(
-        "--domain-name", type=str, default=None,
-        help="Domain this problem belongs to."
+        "--data",
+        type=str,
+        default=None,
+        help="Full ProblemDetails JSON string, or @path/to/file.json.",
     )
     prob_parser.add_argument(
-        "--data", type=str, default=None,
-        help="Full ProblemDetails JSON string, or @path/to/file.json."
+        "--objects", type=str, default=None, help="Objects JSON array or @file."
     )
     prob_parser.add_argument(
-        "--objects", type=str, default=None,
-        help="Objects JSON array or @file."
+        "--initial-state",
+        type=str,
+        default=None,
+        help="InitialState JSON object or @file.",
     )
     prob_parser.add_argument(
-        "--initial-state", type=str, default=None,
-        help="InitialState JSON object or @file."
+        "--goal-state", type=str, default=None, help="GoalState JSON object or @file."
     )
     prob_parser.add_argument(
-        "--goal-state", type=str, default=None,
-        help="GoalState JSON object or @file."
+        "--output",
+        "-o",
+        type=str,
+        default=None,
+        help="Output file path (default: stdout).",
     )
     prob_parser.add_argument(
-        "--output", "-o", type=str, default=None,
-        help="Output file path (default: stdout)."
-    )
-    prob_parser.add_argument(
-        "--json", action="store_true", default=False,
-        help="Output assembled ProblemDetails as JSON instead of PDDL."
+        "--json",
+        action="store_true",
+        default=False,
+        help="Output assembled ProblemDetails as JSON instead of PDDL.",
     )
     prob_parser.set_defaults(func=build_problem_command)
 
