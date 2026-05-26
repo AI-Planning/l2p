@@ -67,7 +67,7 @@ class Planner(ABC):
         raise NotImplementedError("This method should be overriden by subclasses.")
 
     @abstractmethod
-    def parse_output(self, raw_output: str) -> PlanningResult:
+    def parse_plan(self, raw_output: str) -> PlanningResult:
         """
         Translates specific planner's messy stdout into standardized PlanningResult class.
         Args:
@@ -167,7 +167,7 @@ class UnifiedPlanning(Planner):
 
             if result.plan is not None:
                 raw_plan_str = str(result.plan)
-                return self.parse_output(raw_plan_str)
+                return self.parse_plan(raw_plan_str)
             else:
                 status_msg = f"UP engine `{engine}` failed to find a plan. Status: {result.status.name}"
                 return self.handle_error(stderr=status_msg, returncode=None)
@@ -186,7 +186,7 @@ class UnifiedPlanning(Planner):
                 stderr=f"Unified Planning execution crashed: {str (e)}", returncode=-2
             )
 
-    def parse_output(self, raw_output: str) -> PlanningResult:
+    def parse_plan(self, raw_output: str) -> PlanningResult:
         """
         Translates UP's string plan object into standardized list of action strings.
         Args:
@@ -291,7 +291,7 @@ class FastDownward(Planner):
             raw_output = result.stdout + "\n" + result.stderr
 
             if result.returncode == SUCCESS:
-                return self.parse_output(raw_output=raw_output)
+                return self.parse_plan(raw_output=raw_output)
             else:
                 return self.handle_error(
                     stderr=raw_output, returncode=result.returncode
@@ -310,7 +310,7 @@ class FastDownward(Planner):
                 raw_output="",
             )
 
-    def parse_output(self, raw_output: str) -> PlanningResult:
+    def parse_plan(self, raw_output: str) -> PlanningResult:
         """
         Translates FD's string plan object into standardized list of action strings.
         Args:
@@ -369,7 +369,7 @@ class FastDownward(Planner):
         }
 
         if returncode in partial_success_codes:
-            result = self.parse_output(stderr)
+            result = self.parse_plan(stderr)
             result.error_message = partial_success_codes[returncode]
             return result
 

@@ -166,7 +166,7 @@ export DEEPSEEK_API_KEY='...'
 export OLLAMA_API_KEY='...'
 ```
 
-We can then use the `OPENAI` class for OpenAI-SDK supported models:
+We can then use the `OPENAI` class for OpenAI-SDK supported models. Refer to [here](https://platform.openai.com/docs/quickstart) for more information:
 ```python
 from l2p.llm.openai import OPENAI
 
@@ -179,8 +179,6 @@ llm = OPENAI(
 response = llm.query("Hello, world!")
 print(response)
 ```
-
-Refer to [here](https://platform.openai.com/docs/quickstart) for more information.
 
 **Ollama**
 

@@ -108,8 +108,6 @@ class FeedbackBuilder:
             **format_kwargs,
         )
 
-        print(prompt)
-
         return self._run_feedback(model, tag, prompt, max_retries)
 
     # ------------------------------------------------------------------

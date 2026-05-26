@@ -1,129 +1,187 @@
-# L2P: LLM-Powered PDDL Planning
+# L2P: LLM-Powered PDDL Planning Library
 
-**Official Documentation:**  
-For detailed function references, visit our website: [**L2P Documention**](https://marcustantakoun.github.io/l2p.github.io/)
+> Generate PDDL domain and problem specifications from natural language using large language models.
 
-The L2P classes can be divided as follows:
-
----
-
-## `domain_builder.py`
-This class is responsible for generating PDDL domain information via LLMs.  
-Full API reference: [**L2P Documention**](https://marcustantakoun.github.io/l2p.github.io/l2p.html)
-
-### Features Supported:
-- [x] **Types** (PDDL 1.2+)
-- [x] **Constants** (PDDL 1.2+)
-- [x] **Predicates** (PDDL 1.2+)
-- [x] **Functions / Numerical Fluents** (PDDL 2.1+)
-- [x] **Basic Action Parameters** (PDDL 1.2+)
-- [x] **Basic Action Preconditions** (PDDL 1.2+)
-- [x] **Basic Action Effects** (PDDL 1.2+)
-- [x] **Quantified Preconditions and Effects** (PDDL 2.2+)
-- [x] **Conditional Effects** (PDDL 2.2+)
-- [x] **Disjunctive Preconditions** (PDDL 2.2+)
-- [ ] **Action Costs** (PDDL 2.1+)
-- [ ] **Temporal Constraints** (PDDL 2.2+)
-- [ ] **Derived Predicates** (PDDL 2.1+)
-- [ ] **Non-deterministic Actions** (PDDL 2.2+)
-- [ ] **Mutex Relations** (PDDL 2.2+)
+**Documentation:** https://ai-planning.github.io/l2p/docs/
 
 ---
 
-## `task_builder.py`
-Responsible for generating PDDL task information via LLMs. 
+## Core Modules
 
-### Features Supported:
-- [x] **Objects** (PDDL 1.2+): Defines objects involved in the problem.
-- [x] **Initial State** (PDDL 1.2+): Specifies the initial configuration of the world.
-- [x] **Goal State** (PDDL 1.2+): Defines the conditions to achieve the goal.
-- [x] **Negative Goals** (PDDL 2.2+): Specifies goals where predicates must be false.
-- [ ] **Temporal Goal Definition** (PDDL 2.2+): Defines time-sensitive goals.
-- [ ] **Quantified Goals** (PDDL 2.2+): Defines goals with quantification.
-- [ ] **Durative Goals** (PDDL 2.2+): Specifies goals over a specific time duration.
-- [ ] **Conditional Goals** (PDDL 2.2+): Defines goals based on certain conditions.
-- [ ] **Metric Optimization** (PDDL 2.1+): Optimizes a given metric, such as minimizing resources.
-- [ ] **Resource Constraints** (PDDL 2.1+): Limits on resources like robots or fuel.
-- [ ] **Timeline Constraints** (PDDL 2.2+): Specifies constraints governing the sequence of events.
-- [ ] **Preferences** (PDDL 3.0+): Defines soft, non-mandatory goals.
+### `prompt_builder.py` — Structured Prompt Assembly
 
----
+All default prompts (found in `l2p/templates`) used for `formalize_component()` in `DomainBuilder`, `ProblemBuilder`, and `FeedbackBuilder` correspond to a strict format template. User can use `PromptBuilder` to standardize LLM prompts with five configurable sections:
 
-## `feedback_builder.py`
-Returns feedback information via LLMs.
+| Section | Purpose |
+|---------|---------|
+| **Role** | System persona (e.g., "You are a PDDL expert") |
+| **Format** | Output schema / instructions |
+| **Rules** | Numbered checklist of constraints |
+| **Examples** | n-shot in-context demonstrations |
+| **Task** | The specific NL input to solve |
 
-### General Functions:
-- **`get_feedback()`**: Retrieves feedback based on user choice ("human", "llm", or "hybrid").
-- **`human_feedback()`**: Allows user-provided human-in-the-loop feedback.
-
-### Domain Feedback Functions:
-- **`type_feedback()`**: Feedback on revised types.
-- **`predicate_feedback()`**: Feedback on predicates.
-- **`nl_action_feedback()`**: Feedback on natural language actions.
-- **`pddl_action_feedback()`**: Feedback on PDDL actions.
-- **`parameter_feedback()`**: Feedback on action parameters.
-- **`precondition_feedback()`**: Feedback on action preconditions.
-- **`effect_feedback()`**: Feedback on action effects.
-
-### Problem Feedback Functions:
-- **`task_feedback()`**: Complete feedback on revised PDDL tasks.
-- **`objects_feedback()`**: Feedback on objects.
-- **`initial_state_feedback()`**: Feedback on initial states.
-- **`goal_state_feedback()`**: Feedback on goal states.
-
----
-
-## `prompt_builder.py`
-Generates prompt templates for LLMs to assemble organized prompts and swap between them.
-
-### Components:
-- **Roles**: Overview task for the LLM.
-- **Format**: Defines format method for LLM to follow as final output.
-- **Example**: Provides in-context examples.
-- **Task**: Placeholder definitions for proper information extraction.
-
----
-
-## ./llm Folder
-This class is responsible for loading models. Currently, we provide LLM interface support for compatible OPENAI SDK providers, as well as Huggingface API. Users can implement specific backend provider LLM interfaces using **BaseLLM**, found in **l2p/llm/base.py**, which contains an abstract class and method for implementing any model classes in the case of other third-party LLM uses. 
-
-Users can refer to l2p/llm/utils/llm.yaml to better understand (and create their own) model configuration options, including tokenizer settings, generation parameters, and provider-specific settings.
-
-## utils
-This parent folder contains other tools necessary for L2P. They consist of:
-
-### pddl_format.py
-Contains tools to format L2P's python structured PDDL components into strings required for **DomainBuilder.generate_domain** and **TaskBuilder.generate_task**.
-
-### pddl_parser.py
-Contains tools to parse L2P information extraction.
-
-### pddl_types.py
-Contains PDDL types 'Action' and 'Predicate' as well as Domain, Problem, Plan details, etc. These can be utilized to help organize builder method calls easier.
-
-### pddl_validator.py
-Contains tools to validate PDDL specifications and returns error feedback. Visit [**L2P Documention**](https://marcustantakoun.github.io/l2p.github.io/) for more information how to use the validators.
-
-### pddl_planner.py
-For ease of use, our library contains submodule [FastDownward](https://github.com/aibasel/downward/tree/308812cf7315fe896dbcd319493277d82aa36bd2). Fast Downward is a domain-independent classical planning system that users can run their PDDL domain and problem files on. The motivation is that the majority of papers involving PDDL-LLM usage uses this library as their planner.
-
-This planner can be run like:
 ```python
-from l2p.utils.pddl_planner import FastDownward
+from l2p.prompt_builder import PromptBuilder
 
-# retrieve pddl files
-domain_file = "tests/pddl/test_domain.pddl"
-problem_file = "tests/pddl/test_problem.pddl"
+pb = (PromptBuilder()
+    .set_role("You are a PDDL generator.")
+    .set_format("Your final answer must be outputted in the following JSON structure.")
+    .add_rule("Use strict PDDL syntax.")
+    .add_example("INPUT: ...\nOUTPUT: ...")
+    .set_task("Generate types for a rover domain."))
+prompt = pb.save_prompt(filename="my_prompt.md")
+```
 
-# instantiate FastDownward class
-planner = FastDownward(planner_path="<PATH_TO>/downward/fast-downward.py")
+Refer to `l2p/templates` for a better idea how to format your prompts.
 
-# run plan
-success, plan_str = planner.run_fast_downward(
-    domain_file=domain_file,
-    problem_file=problem_file,
-    search_alg="lama-first"
+### `domain_builder.py` — PDDL Domain Generation
+
+Core class for constructing complete PDDL domains via LLM extraction.
+
+**Supported features:**
+
+| Component | PDDL Version |
+|-----------|-------------|
+| Types, Constants, Predicates | 1.2+ |
+| Functions / Numeric Fluents | 2.1+ |
+| Actions (params, preconditions, effects) | 1.2+ |
+| Quantified Preconditions/Effects | 2.2+ |
+| Conditional Effects | 2.2+ |
+| Disjunctive Preconditions | 2.2+ |
+| Action Costs | 2.1+ |
+| Temporal Constraints | 2.2+ |
+| Derived Predicates | 2.1+ |
+| Durative Actions | 2.1+ |
+| Events & Processes | PDDL+ |
+
+```python
+from l2p.domain_builder import DomainBuilder
+from l2p.utils.pddl_types import Predicate
+
+db = DomainBuilder()
+parsed, raw = db.formalize_component(
+    model=llm,
+    component_class=Predicate,
+    description="Model predicates for blocksworld.",
+    types=[PDDLType(name="block", parent="object")]
+)
+predicates = parsed[Predicate]
+```
+
+### `problem_builder.py` — PDDL Problem Instance Generation
+
+Generates complete problem instances (objects, initial state, goals) from natural language.
+
+```python
+from l2p.problem_builder import ProblemBuilder
+
+pb = ProblemBuilder()
+parsed, _ = pb.formalize_component(
+    model=llm,
+    component_class=ProblemDetails,
+    description="3 blocks stacked: b2 on b3, b3 on b1, b1 on table.",
+    types=types,
+    predicates=predicates
+)
+problem_pddl = pb.generate_problem(parsed[ProblemDetails][0])
+```
+
+### `feedback_builder.py` — LLM-Driven Quality Control
+
+Provides a self-improvement loop using LLMs for different kinds of feedback strategies in the literature (e.g., diagnosis, revision, evaluation, and candidate selection).
+
+| Method | Purpose |
+|--------|---------|
+| `llm_diagnose()` | Root-cause analysis of syntax/validation errors |
+| `llm_evaluate()` | Semantic correctness against NL intent (LLM judge) |
+| `llm_reflect()` | Extract durable lessons from failures |
+| `llm_revise()` | Fix broken components using a repair plan |
+| `llm_select()` | Choose the best candidate from multiple generations |
+| `llm_evaluate_plan()` | Verify plan-level semantic soundness |
+| `llm_diagnose_plan()` | Diagnose planner failures (unsolvable, timeout) |
+
+```python
+fb = FeedbackBuilder()
+diagnosis, _ = fb.llm_diagnose(
+    model=llm, artifact=predicates,
+    errors="ValidationError: ...",
+    description=domain_desc
+)
+```
+
+### `planner_builder.py` — External Planner Integration
+
+Abstract interface for running classical planners on generated PDDL. Ships with two backends:
+
+**FastDownward** (submodule) — CLI-based:
+```python
+from l2p.planner_builder import FastDownward
+
+planner = FastDownward(executable_path="downward/fast-downward.py")
+result = planner.run_planner(domain_file="d.pddl", problem_file="p.pddl")
+print(result.is_successful, result.plan)
+```
+
+**Unified Planning** — Python API:
+```python
+from l2p.planner_builder import UnifiedPlanning
+
+planner = UnifiedPlanning()
+result = planner.run_planner(
+    domain_path="d.pddl", problem_path="p.pddl", engine="aries"
+)
+```
+
+Both return a `PlanningResult` dataclass:
+```python
+@dataclass
+class PlanningResult:
+    is_successful: bool
+    plan: Optional[List[str]]
+    error_message: Optional[str]
+    raw_output: str
+    metrics: Dict[str, Any]
+```
+
+---
+
+## Quickstart
+
+```python
+import os
+from l2p import UnifiedLLM
+from l2p.domain_builder import DomainBuilder
+from l2p.utils.pddl_types import PDDLType, Predicate
+from l2p.utils.pddl_format import format_predicates
+
+llm = UnifiedLLM(provider="openai", model="gpt-4o-mini",
+                 api_key=os.getenv("OPENAI_API_KEY"))
+
+db = DomainBuilder()
+parsed, _ = db.formalize_component(
+    model=llm,
+    component_class=Predicate,
+    description="Blocksworld predicates.",
+    types=[PDDLType(name="block", parent="object")]
 )
 
-print(plan_str)
+print(format_predicates(parsed[Predicate]))
 ```
+
+---
+
+## PDDL Support & Requirements
+
+The library automatically infers PDDL requirements (`:strips`, `:typing`, `:numeric-fluents`, etc.) from generated components via `DomainBuilder.generate_requirements()`. Requirements are assembled from the structural features present in the model, therefore no manual annotation needed.
+
+---
+
+## Subpackages
+
+| Module | Description |
+|--------|-------------|
+| `l2p/llm/` | LLM backends (OpenAI SDK, simonw/llm, HuggingFace, vLLM) |
+| `l2p/utils/` | PDDL types, formatting, parsing, and prompt templates |
+| `l2p/validators/` | Symbolic validation rules for domain/problem syntax |
+| `l2p/cli/` | Interactive CLI for configuration and generation |
+| `l2p/templates/` | Default prompt templates for domain, problem, and feedback |

@@ -408,6 +408,10 @@ class DomainBuilder:
     def generate_domain(self, domain_details: DomainDetails) -> str:
         """
         Assembles all formatted components into a complete PDDL domain string.
+        Args:
+            domain_details (DomainDetails): Pydantic model containing all PDDL domain components
+        Returns:
+            desc (str): PDDL domain in string format
         """
         requirements = domain_details.requirements
         if not requirements:
