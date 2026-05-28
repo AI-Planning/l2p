@@ -34,7 +34,7 @@ End your final answer by wrapping the structured diagnostic report inside specif
 ## TASK
 Analyze the following list or single generated PDDL. 
 
-[ORIGINAL INSTRUCTIONS]:
+[ORIGINAL DESCRIPTION]:
 {description}
 
 {context}

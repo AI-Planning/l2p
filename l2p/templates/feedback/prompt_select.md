@@ -22,7 +22,7 @@ End your final answer by wrapping the structured decision report inside specific
 ## TASK
 Select the best list or single PDDL component candidate from the options below.
 
-[ORIGINAL INSTRUCTIONS]:
+[ORIGINAL DESCRIPTION]:
 {description}
 
 {context}

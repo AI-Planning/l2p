@@ -228,43 +228,85 @@ class PromptBuilder:
 
 _FORMAT_EXAMPLES: Dict[str, Any] = {
     # ---- Domain components ----
-    "requirements": {"name": ":typing", "desc": "Enables typed variables"},
-    "types": {"name": "rover", "parent": "vehicle", "desc": "A planetary rover"},
+    "requirements": {
+        "name": ":strips",
+        "desc": "Optional (str)"
+    },
+    "types": {
+        "name": "vehicle",
+        "parent": "object",
+        "desc": "Optional (str)"
+    },
     "constants": {
         "name": "base_station",
-        "type": "location",
-        "desc": "The central hub",
+        "type": "waypoint",
+        "desc": "Optional (str)"
     },
     "parameters": {
         "variable": "?r",
         "type": "rover",
-        "desc": "A planetary rover",
+        "desc": "Optional (str)"
     },
     "predicates": {
         "name": "at",
         "params": [
-            {"variable": "?r", "type": "rover"},
-            {"variable": "?l", "type": "location"},
+            {
+                "variable": "?r",
+                "type": "rover"
+            },
+            {
+                "variable": "?w",
+                "type": "waypoint"
+            }
         ],
-        "desc": "True if rover is at location",
+        "desc": "Optional (str)"
     },
     "functions": {
         "name": "battery-level",
-        "params": [{"variable": "?r", "type": "rover"}],
-        "desc": "Current battery level of the rover",
+        "params": [
+            {
+                "variable": "?r",
+                "type": "rover"
+            }
+        ],
+        "desc": "Optional (str)"
     },
     "der_preds": {
-        "name": "can-move",
-        "params": [{"variable": "?r", "type": "rover"}],
-        "condition": "(> (battery-level ?r) 0.0)",
-        "desc": "Derived from having positive battery",
-    },
-    "preconds": {
-        "conditions": [
-            "(has-power ?r)",
-            {"operator": "not", "condition": "(busy ?r)"},
+        "name": "can-transmit",
+        "params": [
+            {"variable": "?r", "type": "rover"}
         ],
-        "desc": "Rover must be powered and not busy",
+        "condition": {
+            "operator": "and",
+            "conditions": [
+                "(at ?r base_station)",
+                "(>= (battery-level ?r) 50.0)"
+            ]
+        },
+        "desc": "Optional (str)"
+    },
+    "preconditions": {
+        "conditions": [
+            "(at ?r ?l)",
+            "(>= (battery-level ?r) 20.0)",
+            {
+                "operator": "not",
+                "condition": "(busy ?r)"
+            },
+            {
+                "quantifier": "forall",
+                "parameters": [
+                    {
+                        "variable": "?w",
+                        "type": "waypoint"
+                    }
+                ],
+                "conditions": [
+                    "(visited ?w)"
+                ]
+            }
+        ],
+        "desc": "Optional (str)"
     },
     "conditional_effects": {
         "condition": ["(has-rock-sample ?r)"],
@@ -276,47 +318,76 @@ _FORMAT_EXAMPLES: Dict[str, Any] = {
         "desc": "Triggers when rover carries a rock sample",
     },
     "effects": {
-        "add": ["(at ?r ?to)"],
-        "delete": ["(at ?r ?from)"],
-        "numeric": ["(decrease (battery-level ?r) 10.0)"],
+        "add": [
+            "(at ?r ?to)"
+        ],
+        "delete": [
+            "(at ?r ?from)"
+        ],
+        "numeric": [
+            "(decrease (battery-level ?r) 5.0)",
+            "(increase (total-cost) 1.0)"
+        ],
         "conditional": [
             {
-                "condition": ["(has-rock-sample ?r)"],
+                "condition": [
+                    "(has-payload ?r)"
+                ],
                 "effect": {
-                    "add": ["(carrying-heavy-load ?r)"],
+                    "add": ["(payload-delivered ?r)"],
                     "delete": [],
-                    "numeric": [],
+                    "numeric": []
                 },
+                "desc": "Optional (str)"
             }
         ],
-        "desc": "Rover moves to destination, consumes battery",
+        "desc": "Optional (str)"
     },
     "actions": {
         "name": "move-rover",
         "params": [
             {"variable": "?r", "type": "rover"},
             {"variable": "?from", "type": "waypoint"},
-            {"variable": "?to", "type": "waypoint"},
+            {"variable": "?to", "type": "waypoint"}
         ],
         "preconditions": {
             "conditions": [
                 "(at ?r ?from)",
-                {"operator": "not", "condition": "(= ?from ?to)"},
-            ]
+                {
+                    "operator": "not",
+                    "condition": "(= ?from ?to)"
+                }
+            ],
+            "desc": "Optional (str)"
         },
         "effects": {
             "add": ["(at ?r ?to)"],
             "delete": ["(at ?r ?from)"],
             "numeric": ["(decrease (battery-level ?r) 10.0)"],
-            "conditional": [],
+            "conditional": [
+                {
+                    "condition": ["(has-rock-sample ?r)"],
+                    "effect": {
+                        "add": ["(carrying-heavy-load ?r)"],
+                        "delete": [],
+                        "numeric": []
+                    },
+                }
+            ],
+            "desc": "Optional (str)"
         },
-        "desc": "Move rover from one waypoint to another",
+        "desc": "Optional (str)"
     },
     "dur_conds": {
-        "at_start": ["(at ?r ?from)"],
-        "over_all": ["(has-power ?r)"],
-        "at_end": ["(at ?r ?to)"],
-        "desc": "Conditions for a durative navigation action",
+        "at_start": ["(at ?r base_station)"],
+        "over_all": [
+            {
+                "operator": "not",
+                "condition": "(safe-mode ?r)"
+            }
+        ],
+        "at_end": [],
+        "desc": "Optional (str)"
     },
     "dur_effects": {
         "at_start": {

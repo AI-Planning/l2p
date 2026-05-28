@@ -3,7 +3,7 @@ import textwrap
 import io
 from contextlib import redirect_stdout
 
-from l2p import ProblemBuilder, DomainBuilder
+from l2p import ProblemBuilder
 from l2p.utils.pddl_types import *
 from tests.mock_llm import MockLLM
 
@@ -63,10 +63,11 @@ class TestProblemBuilderFormalize(unittest.TestCase):
             prompt_template=self.prompt,
             problem_desc="test",
         )
+        objects = result[PDDLObject]
         # Single item is unwrapped
-        self.assertIsInstance(result, PDDLObject)
-        self.assertEqual(result.name, "rover1")
-        self.assertEqual(result.type, "rover")
+        self.assertIsInstance(objects[0], PDDLObject)
+        self.assertEqual(objects[0].name, "rover1")
+        self.assertEqual(objects[0].type, "rover")
 
     def test_formalize_multiple_objects(self):
         self.mock.output = textwrap.dedent("""\
@@ -83,11 +84,12 @@ class TestProblemBuilderFormalize(unittest.TestCase):
             prompt_template=self.prompt,
             problem_desc="test",
         )
+        objects = result[PDDLObject]
         # Multiple items stays as list
-        self.assertIsInstance(result, list)
-        self.assertEqual(len(result), 3)
-        self.assertEqual(result[0].name, "rover1")
-        self.assertEqual(result[2].type, "location")
+        self.assertIsInstance(objects, list)
+        self.assertEqual(len(objects), 3)
+        self.assertEqual(objects[0].name, "rover1")
+        self.assertEqual(objects[2].type, "location")
 
     def test_formalize_empty_objects(self):
         self.mock.output = "<objects>\n[]\n</objects>"
@@ -97,7 +99,8 @@ class TestProblemBuilderFormalize(unittest.TestCase):
             prompt_template=self.prompt,
             problem_desc="empty",
         )
-        self.assertEqual(result, [])
+        objects = result[PDDLObject]
+        self.assertEqual(objects, [])
 
     def test_formalize_objects_with_mixed_types(self):
         self.mock.output = textwrap.dedent("""\
@@ -114,8 +117,9 @@ class TestProblemBuilderFormalize(unittest.TestCase):
             prompt_template=self.prompt,
             problem_desc="test",
         )
-        self.assertEqual(len(result), 3)
-        types = {o.name: o.type for o in result}
+        objects = result[PDDLObject]
+        self.assertEqual(len(objects), 3)
+        types = {o.name: o.type for o in objects}
         self.assertEqual(types["a"], "block")
         self.assertEqual(types["arm1"], "arm")
 
@@ -136,9 +140,10 @@ class TestProblemBuilderFormalize(unittest.TestCase):
             prompt_template=self.prompt,
             problem_desc="test",
         )
-        self.assertIsInstance(result, InitialState)
-        self.assertEqual(len(result.facts), 2)
-        self.assertIn("(at rover1 base)", result.facts)
+        initial_state = result[InitialState]
+        self.assertIsInstance(initial_state[0], InitialState)
+        self.assertEqual(len(initial_state[0].facts), 2)
+        self.assertIn("(at rover1 base)", initial_state[0].facts)
 
     def test_formalize_initial_state_with_timed_facts(self):
         self.mock.output = textwrap.dedent("""\
@@ -157,9 +162,10 @@ class TestProblemBuilderFormalize(unittest.TestCase):
             prompt_template=self.prompt,
             problem_desc="test",
         )
-        self.assertEqual(len(result.timed_facts), 1)
-        self.assertEqual(result.timed_facts[0].time, 10.0)
-        self.assertEqual(result.timed_facts[0].fact, "(blackout)")
+        initial_state = result[InitialState]
+        self.assertEqual(len(initial_state[0].timed_facts), 1)
+        self.assertEqual(initial_state[0].timed_facts[0].time, 10.0)
+        self.assertEqual(initial_state[0].timed_facts[0].fact, "(blackout)")
 
     def test_formalize_empty_initial_state(self):
         self.mock.output = textwrap.dedent("""\
@@ -172,8 +178,9 @@ class TestProblemBuilderFormalize(unittest.TestCase):
             prompt_template=self.prompt,
             problem_desc="empty",
         )
-        self.assertEqual(len(result.facts), 0)
-        self.assertEqual(len(result.timed_facts), 0)
+        initial_state = result[InitialState]
+        self.assertEqual(len(initial_state[0].facts), 0)
+        self.assertEqual(len(initial_state[0].timed_facts), 0)
 
     # ---- GOAL STATE (single object, unwrapped) ----
 
@@ -191,9 +198,10 @@ class TestProblemBuilderFormalize(unittest.TestCase):
             prompt_template=self.prompt,
             problem_desc="test",
         )
-        self.assertIsInstance(result, GoalState)
-        self.assertEqual(len(result.conditions), 2)
-        self.assertIn("(at rover1 waypoint3)", result.conditions)
+        goal_state = result[GoalState]
+        self.assertIsInstance(goal_state[0], GoalState)
+        self.assertEqual(len(goal_state[0].conditions), 2)
+        self.assertIn("(at rover1 waypoint3)", goal_state[0].conditions)
 
     def test_formalize_goal_with_logical_operators(self):
         self.mock.output = textwrap.dedent("""\
@@ -212,8 +220,9 @@ class TestProblemBuilderFormalize(unittest.TestCase):
             prompt_template=self.prompt,
             problem_desc="test",
         )
-        self.assertEqual(len(result.conditions), 2)
-        first = result.conditions[0]
+        goal_state = result[GoalState]
+        self.assertEqual(len(goal_state[0].conditions), 2)
+        first = goal_state[0].conditions[0]
         self.assertIsInstance(first, dict)
         self.assertEqual(first["operator"], "or")
 
@@ -228,7 +237,8 @@ class TestProblemBuilderFormalize(unittest.TestCase):
             prompt_template=self.prompt,
             problem_desc="empty",
         )
-        self.assertEqual(len(result.conditions), 0)
+        goal_state = result[GoalState]
+        self.assertEqual(len(goal_state[0].conditions), 0)
 
     # ---- METRIC (single object, unwrapped) ----
 
@@ -243,9 +253,10 @@ class TestProblemBuilderFormalize(unittest.TestCase):
             prompt_template=self.prompt,
             problem_desc="test",
         )
-        self.assertIsInstance(result, Metric)
-        self.assertEqual(result.optimization, "minimize")
-        self.assertEqual(result.expression, "total-time")
+        metrics = result[Metric]
+        self.assertIsInstance(metrics[0], Metric)
+        self.assertEqual(metrics[0].optimization, "minimize")
+        self.assertEqual(metrics[0].expression, "total-time")
 
     def test_formalize_metric_maximize(self):
         self.mock.output = textwrap.dedent("""\
@@ -258,8 +269,9 @@ class TestProblemBuilderFormalize(unittest.TestCase):
             prompt_template=self.prompt,
             problem_desc="test",
         )
-        self.assertEqual(result.optimization, "maximize")
-        self.assertEqual(result.expression, "(battery rover1)")
+        metrics = result[Metric]
+        self.assertEqual(metrics[0].optimization, "maximize")
+        self.assertEqual(metrics[0].expression, "(battery rover1)")
 
     # ---- MULTI-CLASS EXTRACTION ----
 
@@ -321,7 +333,8 @@ class TestProblemBuilderFormalize(unittest.TestCase):
             problem_desc="test",
             max_retries=3,
         )
-        self.assertEqual(result.name, "r1")
+        objects = result[PDDLObject]
+        self.assertEqual(objects[0].name, "r1")
 
 
 class TestProblemBuilderGenerateProblem(unittest.TestCase):

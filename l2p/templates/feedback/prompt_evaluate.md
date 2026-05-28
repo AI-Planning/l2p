@@ -27,7 +27,7 @@ End your final answer by wrapping the structured evaluation report inside specif
 ## TASK
 Evaluate the following list or single generated PDDL.
 
-[ORIGINAL INSTRUCTIONS]:
+[ORIGINAL DESCRIPTION]:
 {description}
 
 {context}

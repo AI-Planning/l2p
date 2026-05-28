@@ -242,7 +242,7 @@ class ActionPrecondition(BaseModel):
     }
     """
 
-    tag: ClassVar[tuple] = ("preconds", "preconditions", "precondition")
+    tag: ClassVar[tuple] = ("preconditions", "preconds", "precondition")
     conditions: List[LogicalCondition] = Field(default_factory=list)
     desc: Optional[str] = None
 

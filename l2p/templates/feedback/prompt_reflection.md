@@ -21,7 +21,7 @@ End your final answer by wrapping the structured reflection report inside specif
 ## TASK
 Generate a reflection based on the following list or single generated PDDL report.
 
-[ORIGINAL INSTRUCTIONS]:
+[ORIGINAL DESCRIPTION]:
 {description}
 
 {context}

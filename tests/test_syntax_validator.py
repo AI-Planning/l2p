@@ -1,19 +1,7 @@
 import unittest
-import textwrap
 from l2p.utils.pddl_types import *
-from l2p.validators.base import PDDL_KEYWORDS
-from l2p.validators.domain import (
-    DomainValidator,
-    DomainSemantics,
-    DOMAIN_REGISTRY,
-    _check_variables_and_types,
-)
-from l2p.validators.problem import (
-    ProblemValidator,
-    ProblemSemantics,
-    PROBLEM_REGISTRY,
-    _check_problem_state_types,
-)
+from l2p.validators.domain import DomainValidator, DomainSemantics
+from l2p.validators.problem import ProblemValidator, ProblemSemantics
 
 # =============================================================================
 # DOMAIN VALIDATOR RULES

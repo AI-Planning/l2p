@@ -14,7 +14,7 @@ Do not use generic tags and do not include Markdown code blocks (like ```json).
 ## TASK
 Revise the following PDDL component(s) based on the diagnostic feedback.
 
-[ORIGINAL INSTRUCTIONS]:
+[ORIGINAL DESCRIPTION]:
 {description}
 
 {context}

@@ -66,7 +66,6 @@ For more information on a specific command, use:
             from .commands.validate import add_subparser as add_validate_parser
             from .commands.plan import add_subparser as add_plan_parser
             from .commands.schema import add_subparser as add_schema_parser
-            from .commands.mcp import add_subparser as add_mcp_parser
 
             add_init_parser(subparsers)
             add_models_parser(subparsers)
@@ -80,7 +79,6 @@ For more information on a specific command, use:
             add_validate_parser(subparsers)
             add_plan_parser(subparsers)
             add_schema_parser(subparsers)
-            add_mcp_parser(subparsers)
 
         except ImportError as e:
             print(f"[ERROR] Failed to load CLI commands: {e}")
@@ -148,10 +146,6 @@ For more information on a specific command, use:
             from l2p.cli.commands.schema import schema_command
 
             schema_command(args)
-        elif args.command == "mcp":
-            from l2p.cli.commands.mcp import mcp_command
-
-            mcp_command(args)
         else:
             parser.print_help()
             sys.exit(1)

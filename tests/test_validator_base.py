@@ -1,5 +1,4 @@
 import unittest
-from pydantic import BaseModel
 from l2p.validators.base import (
     ValidationResult,
     FunctionalRule,
