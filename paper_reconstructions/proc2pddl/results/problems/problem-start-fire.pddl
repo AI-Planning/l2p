@@ -1,6 +1,0 @@
-(define (problem start_fire)
-    (:domain survive_deserted_island)
-    (:objects down east in north out south up west - direction fire - fire beach jungle ocean - location person - player rock - rock tinder - tinder wood - wood)
-    (:init (at person beach) (at rock ocean) (at tinder beach) (can_light_fire beach) (connected beach east jungle) (connected beach west ocean) (connected jungle north cave) (connected jungle west beach) (connected ocean east beach) (has_wood jungle))
-    (:goal (at fire beach))
-)

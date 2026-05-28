@@ -1,6 +1,0 @@
-(define (problem clean_water)
-    (:domain survive_deserted_island)
-    (:objects down east in north out south up west - direction fire - fire beach jungle ocean river - location person - player rock - rock tinder - tinder water - water wood - wood)
-    (:init (at person beach) (at rock ocean) (at tinder beach) (can_light_fire beach) (connected beach east jungle) (connected beach west ocean) (connected jungle east river) (connected jungle north cave) (connected jungle west beach) (connected ocean east beach) (connected river west jungle) (has_water_source river) (has_wood jungle))
-    (:goal (drank water))
-)
