@@ -9,6 +9,8 @@ New Papers!
     + **"LODGE: Joint Hierarchical Task Planning and Learning of Domain Models with Grounded Execution"** Kienle et al. (2025) `[paper] <https://arxiv.org/abs/2505.13497>`__ `[code] <https://claudius-kienle.github.io/lodge>`__
     + **"Large Language Models for Planning: A Comprehensive and Systematic Survey"** Cao et al. (2025) `[paper] <https://arxiv.org/abs/2505.19683>`__ `[code] <https://github.com/Quester-one/Awesome-LLM-Planning>`__
     + **"Text2World: Benchmarking Large Language Models for Symbolic World Model Generation"** Hu et al. (2025) `[paper] <https://arxiv.org/abs/2502.13092>`__ `[code] <https://github.com/Aaron617/text2world>`__
+    + **"Language Models For Generalised PDDL Planning: Synthesising Sound and Programmatic Policies"** Chen et al. (2025) `[paper] <https://openreview.net/pdf?id=cxpdzaWCFj>`__ `[code] <https://github.com/DillonZChen/lmplan>`__
+    + **"Open-World Planning via Lifted Regression with LLM-based Affordances for Embodied Agents"** Liu et al. (2025) `[paper] <https://aclanthology.org/2025.acl-long.1018.pdf>`__ `[code] <>`__
 
 Paper List
 -------------------------------------------------------
@@ -250,5 +252,5 @@ This section presents a taxonomy of research within Model Construction, organize
 
 The following is the core summary of model generation frameworks in `"LLMs as Planning Formalizers: A Survey for Leveraging Large Language Models to Construct Automated Planning Models" <https://arxiv.org/abs/2503.18971v1>`_:
 
-.. image:: _static/survey_table.png
+.. image:: ../_static/survey_table.png
    :alt: no image available
