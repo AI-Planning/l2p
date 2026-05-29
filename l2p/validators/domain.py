@@ -671,11 +671,14 @@ def check_action_has_effect(
     result = ValidationResult()
     effects = getattr(target, "effects", None)
     if effects is None:
-        result.add_warning(
-            f"[WARNING] Action '{target.name}' has no effects block."
-        )
+        result.add_warning(f"[WARNING] Action '{target.name}' has no effects block.")
         return result
-    if not effects.add and not effects.delete and not effects.numeric and not effects.conditional:
+    if (
+        not effects.add
+        and not effects.delete
+        and not effects.numeric
+        and not effects.conditional
+    ):
         result.add_warning(
             f"[WARNING] Action '{target.name}' has empty effects (add/delete/numeric/conditional all empty)."
         )

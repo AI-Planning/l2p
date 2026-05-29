@@ -418,9 +418,7 @@ def check_duplicate_objects(
             continue
         other_name = getattr(item, "name", None)
         if other_name and other_name.lower() == target_name.lower():
-            result.add_error(
-                f"[ERROR] Duplicate object name '{target_name}'."
-            )
+            result.add_error(f"[ERROR] Duplicate object name '{target_name}'.")
             return result
     return result
 
@@ -443,25 +441,16 @@ def check_unused_objects(
     for init in context.get(InitialState, []):
         for fact in getattr(init, "facts", []):
             if isinstance(fact, str):
-                referenced.update(
-                    m.group(0).lower()
-                    for m in _word_re.finditer(fact)
-                )
+                referenced.update(m.group(0).lower() for m in _word_re.finditer(fact))
         for tf in getattr(init, "timed_facts", []):
             f = getattr(tf, "fact", "")
             if isinstance(f, str):
-                referenced.update(
-                    m.group(0).lower()
-                    for m in _word_re.finditer(f)
-                )
+                referenced.update(m.group(0).lower() for m in _word_re.finditer(f))
 
     for goal in context.get(GoalState, []):
         for cond in getattr(goal, "conditions", []):
             if isinstance(cond, str):
-                referenced.update(
-                    m.group(0).lower()
-                    for m in _word_re.finditer(cond)
-                )
+                referenced.update(m.group(0).lower() for m in _word_re.finditer(cond))
 
     if target_lower not in referenced:
         result.add_warning(
@@ -542,7 +531,7 @@ class ProblemValidator(SyntaxValidator):
             context[PDDLType] = domain.types
             context[Predicate] = domain.predicates
             context[Function] = domain.functions
-            
+
         result = ValidationResult()
 
         for item in problem.objects:
