@@ -10,6 +10,7 @@ for how to structurally prompt LLMs so they are compatible with class function p
 """
 
 import json
+import re
 import time
 from typing import Optional, Set, Type, TypeVar, Union
 
@@ -224,7 +225,12 @@ class DomainBuilder:
                     raise ValueError(
                         f"[ERROR] Missing expected <{template_key}> block in LLM output."
                     )
-                result = json.loads(blocks[0])
+                raw_json = blocks[0]
+                raw_json = re.sub(
+                    r"^```(?:json)?\s*", "", raw_json.strip(), flags=re.IGNORECASE
+                )
+                raw_json = re.sub(r"\s*```$", "", raw_json)
+                result = json.loads(raw_json)
                 return result, llm_output
 
             except Exception as e:
@@ -281,7 +287,14 @@ class DomainBuilder:
                     reqs.add(":preferences")
 
         # helper to recursively check conditions/effects
-        def check_logical_condition(condition: LogicalCondition):
+        _MAX_RECURSION = 100
+
+        def check_logical_condition(condition: LogicalCondition, _depth: int = 0):
+            if _depth > _MAX_RECURSION:
+                raise RecursionError(
+                    f"Exceeded maximum recursion depth ({_MAX_RECURSION}) while checking conditions. "
+                    "The condition structure may contain a cycle or be excessively nested."
+                )
             if isinstance(condition, str):
                 if "=" in condition:
                     reqs.add(":equality")
@@ -320,9 +333,9 @@ class DomainBuilder:
                 for val in condition.values():
                     if isinstance(val, (list, tuple)):
                         for item in val:
-                            check_logical_condition(item)
+                            check_logical_condition(item, _depth + 1)
                     elif isinstance(val, (dict, str)):
-                        check_logical_condition(val)
+                        check_logical_condition(val, _depth + 1)
 
         # check actions, events, and processes
         assignment_ops_used = False
@@ -498,7 +511,10 @@ class DomainBuilder:
                 desc += f"\n\n{indent(string=processes_str, level=1)}"
 
         desc += "\n)"
-        desc = desc.replace("AND", "and").replace("OR", "or")
+        # Safely lowercase PDDL connectives that LLMs sometimes emit in uppercase.
+        # Using word boundaries to avoid mangling identifiers (e.g. "SANDWICH").
+        desc = re.sub(r"\bAND\b", "and", desc)
+        desc = re.sub(r"\bOR\b", "or", desc)
         return desc
 
     # ---------------------------------------------------------------------------

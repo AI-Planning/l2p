@@ -16,6 +16,33 @@ from l2p.cli.utils.errors import CLIError
 from l2p.llm.base import resolve_config_path
 
 
+def _resolve_env_var(raw_value: str) -> Optional[str]:
+    """Resolve an environment variable reference.
+    Supports: ${VAR_NAME}, $VAR_NAME, or bare VAR_NAME ending with _API_KEY/__API_KEY.
+    Returns the resolved value, or None if no env reference was detected.
+    """
+    # ${VAR_NAME} shell-style
+    if raw_value.startswith("${") and raw_value.endswith("}"):
+        var_name = raw_value[2:-1].strip()
+    # plain env var name
+    elif raw_value.startswith("$"):
+        var_name = raw_value[1:].strip()
+    elif raw_value.endswith("_API_KEY") or raw_value.endswith("__API_KEY"):
+        var_name = raw_value
+    else:
+        return None
+
+    resolved = os.environ.get(var_name)
+    if not resolved:
+        print(
+            f"[WARNING] Could not find environment variable: {var_name}. "
+            f"Setting API key to None.\n"
+            f"Set it with: export {var_name}=\"your-key\""
+        )
+        return ""
+    return resolved
+
+
 class ConfigManager:
     """Manages L2P CLI configuration."""
 
@@ -109,20 +136,12 @@ class ConfigManager:
         model_config = self.config.get(
             "model", {}
         ).copy()  # retrieve model configuration file
-        api_key = model_config.get("api_key", "")  # retrieve API key entry
+        raw_key = model_config.get("api_key", "")  # retrieve API key entry
 
-        # check if env variable
-        if api_key.endswith("_API_KEY"):
-            env_key = os.getenv(api_key)
-            # if env key is empty
-            if not env_key:
-                print(
-                    f"[WARNING] Could not find environment variable: {api_key}. Setting API key to None.\n"
-                    f'Env variable must strictly end with `_API_KEY`. Example: export {{MY_API_KEY}}="your-key"'
-                )
-                model_config["api_key"] = ""
-            else:
-                model_config["api_key"] = env_key
+        if raw_key:
+            resolved = _resolve_env_var(raw_key)
+            if resolved is not None:
+                model_config["api_key"] = resolved
 
         return model_config
 

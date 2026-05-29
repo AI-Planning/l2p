@@ -1,3 +1,44 @@
+"""
+PDDL Domain Validation Rules
+
+This module provides a comprehensive rule-based validation system for PDDL domain
+components. It extends the infrastructure in `base.py` with domain-specific rules:
+
+Architecture
+------------
+- Each rule is a standalone function decorated with ``@domain_rule``, which
+  automatically registers it into ``DOMAIN_REGISTRY``.
+- ``DomainValidator`` aggregates the registry and applies rules via 
+  ``validate_component(target, context)``.
+- ``DomainSemantics`` provides fast lookup for type hierarchies, predicate/function
+  signatures, and constants to support type-checking across rules.
+
+Validation Coverage
+-------------------
+- PDDL naming conventions (no ``?`` prefix, no reserved keywords, no duplicates)
+- Type inheritance (parent types must exist)
+- Type cycle detection (no circular ``:types`` hierarchies)
+- Constant type validity (referenced types must be declared)
+- Parameter type validity (parameter types must exist)
+- Predicate/function symbol validation in preconditions, effects, conditions,
+  durative conditions, durative effects, and constraints
+- Variable scoping (forall/exists introduce local scope)
+- Argument arity and type compatibility
+
+Usage
+-----
+    validator = DomainValidator()
+    result = validator.validate_component(
+        action,
+        {PDDLType: [...], Predicate: [...], Action: [action]}
+    )
+    if not result.valid:
+        print(result.errors)
+
+Custom rules can be added by decorating a function or passing a ``FunctionalRule``
+instance to the constructor.
+"""
+
 import re
 from typing import Any, Dict, List, Type, Callable, Set
 from pydantic import BaseModel

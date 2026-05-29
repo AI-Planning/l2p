@@ -1,10 +1,6 @@
 """
-PromptBuilder prompt template generation class.
-
 This module defines the `PromptBuilder` class for constructing prompt templates for
-PDDL generation and feedback messages.
-
-Refer to l2p/templates in: https://github.com/AI-Planning/l2p for how to structurally 
+PDDL generation and feedback messages. Refer to l2p/templates in: https://github.com/AI-Planning/l2p for how to structurally 
 prompt LLMs so they are compatible with class function parsing.
 
 This file uses inputted NL descriptions to generate Markdown prompt templates for the LLM.
@@ -40,9 +36,11 @@ Standardized format prompt.md:
 
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union, Type, TypeVar
+from typing import List, Optional, Union, Type, TypeVar
 from l2p.utils.pddl_prompt import safe_format
 from l2p.utils.pddl_format import BaseModel
+
+__all__ = ["PromptBuilder"]
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -92,7 +90,7 @@ class PromptBuilder:
         self.format = format_str
         return self
 
-    def set_format_example(self, component: Type[T], is_list: bool=True) -> "PromptBuilder":
+    def set_format_example(self, component: Type[T], is_list: bool = True) -> "PromptBuilder":
         """
         Appends a concrete JSON example for *component* (wrapped in the
         model's XML tag) to the ``## OUTPUT FORMAT`` section.
@@ -101,17 +99,16 @@ class PromptBuilder:
                 (e.g. ``PDDLType``, ``Action``, ``InitialState``)
             is_list (bool): sets flag to format list of components (from single extraction)
         """
+        if not hasattr(component, "_example"):
+            raise KeyError(
+                f"[ERROR] No format example defined for '{component.__name__}'. "
+                f"Add a `_example` classmethod to the model."
+            )
+
         primary_tag = (
             component.tag if isinstance(component.tag, str) else component.tag[0]
         )
-        example_data = _FORMAT_EXAMPLES.get(primary_tag)
-        if example_data is None:
-            raise KeyError(
-                f"[ERROR] No predefined format example for '{component.__name__}' "
-                f"(tag='{primary_tag}'). Available tags: "
-                f"{', '.join(sorted(_FORMAT_EXAMPLES))}"
-            )
-        
+        example_data = component._example()
         if is_list:
             example_data = [example_data]
 
@@ -217,292 +214,3 @@ class PromptBuilder:
             f.write(prompt_template)
 
         print(f"[SUCCESS] Prompt saved to: {save_path}")
-
-
-# ---------------------------------------------------------------------------
-# Predefined concrete JSON examples for every PDDL model class.
-# Each entry is keyed by the first element of the class's ``tag`` tuple
-# (the primary XML tag).  The values are realistic PDDL examples that
-# users will see in their generated ``## OUTPUT FORMAT`` section.
-# ---------------------------------------------------------------------------
-
-_FORMAT_EXAMPLES: Dict[str, Any] = {
-    # ---- Domain components ----
-    "requirements": {
-        "name": ":strips",
-        "desc": "Optional (str)"
-    },
-    "types": {
-        "name": "vehicle",
-        "parent": "object",
-        "desc": "Optional (str)"
-    },
-    "constants": {
-        "name": "base_station",
-        "type": "waypoint",
-        "desc": "Optional (str)"
-    },
-    "parameters": {
-        "variable": "?r",
-        "type": "rover",
-        "desc": "Optional (str)"
-    },
-    "predicates": {
-        "name": "at",
-        "params": [
-            {
-                "variable": "?r",
-                "type": "rover"
-            },
-            {
-                "variable": "?w",
-                "type": "waypoint"
-            }
-        ],
-        "desc": "Optional (str)"
-    },
-    "functions": {
-        "name": "battery-level",
-        "params": [
-            {
-                "variable": "?r",
-                "type": "rover"
-            }
-        ],
-        "desc": "Optional (str)"
-    },
-    "der_preds": {
-        "name": "can-transmit",
-        "params": [
-            {"variable": "?r", "type": "rover"}
-        ],
-        "condition": {
-            "operator": "and",
-            "conditions": [
-                "(at ?r base_station)",
-                "(>= (battery-level ?r) 50.0)"
-            ]
-        },
-        "desc": "Optional (str)"
-    },
-    "preconditions": {
-        "conditions": [
-            "(at ?r ?l)",
-            "(>= (battery-level ?r) 20.0)",
-            {
-                "operator": "not",
-                "condition": "(busy ?r)"
-            },
-            {
-                "quantifier": "forall",
-                "parameters": [
-                    {
-                        "variable": "?w",
-                        "type": "waypoint"
-                    }
-                ],
-                "conditions": [
-                    "(visited ?w)"
-                ]
-            }
-        ],
-        "desc": "Optional (str)"
-    },
-    "conditional_effects": {
-        "condition": ["(has-rock-sample ?r)"],
-        "effect": {
-            "add": ["(carrying-heavy-load ?r)"],
-            "delete": [],
-            "numeric": ["(decrease (battery-level ?r) 10.0)"],
-        },
-        "desc": "Triggers when rover carries a rock sample",
-    },
-    "effects": {
-        "add": [
-            "(at ?r ?to)"
-        ],
-        "delete": [
-            "(at ?r ?from)"
-        ],
-        "numeric": [
-            "(decrease (battery-level ?r) 5.0)",
-            "(increase (total-cost) 1.0)"
-        ],
-        "conditional": [
-            {
-                "condition": [
-                    "(has-payload ?r)"
-                ],
-                "effect": {
-                    "add": ["(payload-delivered ?r)"],
-                    "delete": [],
-                    "numeric": []
-                },
-                "desc": "Optional (str)"
-            }
-        ],
-        "desc": "Optional (str)"
-    },
-    "actions": {
-        "name": "move-rover",
-        "params": [
-            {"variable": "?r", "type": "rover"},
-            {"variable": "?from", "type": "waypoint"},
-            {"variable": "?to", "type": "waypoint"}
-        ],
-        "preconditions": {
-            "conditions": [
-                "(at ?r ?from)",
-                {
-                    "operator": "not",
-                    "condition": "(= ?from ?to)"
-                }
-            ],
-            "desc": "Optional (str)"
-        },
-        "effects": {
-            "add": ["(at ?r ?to)"],
-            "delete": ["(at ?r ?from)"],
-            "numeric": ["(decrease (battery-level ?r) 10.0)"],
-            "conditional": [
-                {
-                    "condition": ["(has-rock-sample ?r)"],
-                    "effect": {
-                        "add": ["(carrying-heavy-load ?r)"],
-                        "delete": [],
-                        "numeric": []
-                    },
-                }
-            ],
-            "desc": "Optional (str)"
-        },
-        "desc": "Optional (str)"
-    },
-    "dur_conds": {
-        "at_start": ["(at ?r base_station)"],
-        "over_all": [
-            {
-                "operator": "not",
-                "condition": "(safe-mode ?r)"
-            }
-        ],
-        "at_end": [],
-        "desc": "Optional (str)"
-    },
-    "dur_effects": {
-        "at_start": {
-            "add": ["(moving ?r)"],
-            "delete": ["(idle ?r)"],
-            "numeric": [],
-            "conditional": [],
-        },
-        "at_end": {
-            "add": ["(at ?r ?to)"],
-            "delete": ["(at ?r ?from)", "(moving ?r)"],
-            "numeric": ["(assign (battery-level ?r) 0.0)"],
-            "conditional": [],
-        },
-        "continuous": ["(decrease (battery-level ?r) (* #t 1.0))"],
-        "desc": "Effects split across start and end of durative action",
-    },
-    "dur_actions": {
-        "name": "navigate",
-        "params": [
-            {"variable": "?r", "type": "rover"},
-            {"variable": "?from", "type": "waypoint"},
-            {"variable": "?to", "type": "waypoint"},
-        ],
-        "duration": ["(= ?duration 10.0)"],
-        "conditions": {
-            "at_start": ["(at ?r ?from)"],
-            "over_all": ["(has-power ?r)"],
-            "at_end": ["(at ?r ?to)"],
-        },
-        "effects": {
-            "at_start": {"add": ["(busy ?r)"], "delete": [], "numeric": [], "conditional": []},
-            "at_end": {
-                "add": ["(at ?r ?to)"],
-                "delete": ["(at ?r ?from)", "(busy ?r)"],
-                "numeric": [],
-                "conditional": [],
-            },
-        },
-        "desc": "Rover navigates between waypoints over a fixed duration",
-    },
-    "constraints": {
-        "condition": {
-            "operator": "always",
-            "condition": "(<= (battery-level ?r) 100.0)",
-        },
-        "desc": "Battery level must never exceed 100",
-    },
-    "events": {
-        "name": "battery-depleted",
-        "params": [{"variable": "?r", "type": "rover"}],
-        "preconditions": {
-            "conditions": [
-                {"operator": "and", "conditions": ["(at ?r ?l)", "(<= (battery-level ?r) 0.0)"]}
-            ]
-        },
-        "effects": {
-            "add": ["(dead ?r)"],
-            "delete": ["(has-power ?r)"],
-            "numeric": [],
-            "conditional": [],
-        },
-        "desc": "Triggered when a rover runs out of battery",
-    },
-    "processes": {
-        "name": "drain-battery",
-        "params": [{"variable": "?r", "type": "rover"}],
-        "preconditions": {
-            "conditions": ["(moving ?r)"],
-        },
-        "effects": {
-            "add": [],
-            "delete": [],
-            "numeric": ["(decrease (battery-level ?r) (* #t 0.5))"],
-            "conditional": [],
-        },
-        "desc": "Continuously drains battery while the rover moves",
-    },
-    # ---- Problem components ----
-    "objects": {"name": "rover1", "type": "rover", "desc": "Instance of a rover"},
-    "timed_facts": {
-        "time": 15.5,
-        "fact": "(communications-blackout)",
-        "desc": "Event triggers at t=15.5",
-    },
-    "initial": {
-        "facts": [
-            "(at rover1 waypoint0)",
-            "(= (battery-level rover1) 100.0)",
-            "(has-power rover1)",
-            "(calibrated camera1)",
-            "(connected waypoint0 waypoint1)",
-        ],
-        "timed_facts": [
-            {"time": 50.0, "fact": "(= (solar-flare-level) 80.0)"}
-        ],
-        "desc": "Initial deployment state of the rover",
-    },
-    "goal": {
-        "conditions": [
-            "(at rover1 waypoint3)",
-            "(data-transmitted)",
-            {
-                "operator": "or",
-                "conditions": [
-                    "(has-rock-sample rover1)",
-                    "(has-soil-sample rover1)",
-                ],
-            },
-        ],
-        "desc": "Rover must reach waypoint3 and transmit data",
-    },
-    "metric": {
-        "optimization": "minimize",
-        "expression": "total-time",
-        "desc": "Minimize makespan",
-    },
-}

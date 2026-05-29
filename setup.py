@@ -12,9 +12,14 @@ setup(
     long_description_content_type="text/markdown",
     author="Marcus Tantakoun, Christian Muise",
     author_email="mtantakoun@gmail.com, christian.muise@gmail.com",
-    install_requires=["retry", "pddl", "typing_extensions", "pyyaml", "pydantic"],
+    install_requires=["retry", "pddl", "typing_extensions", "pyyaml", "pydantic>=2.0", "tiktoken"],
     extras_require={
-        "cli": ["llm", "tiktoken", "rich"],
+        "cli": ["llm", "rich"],
+        "openai": ["openai"],
+        "mistral": ["mistralai"],
+        "huggingface": ["transformers", "torch"],
+        "planner": ["unified-planning"],
+        "all": ["llm", "rich", "openai", "mistralai", "transformers", "unified-planning"],
     },
     entry_points={
         "console_scripts": [

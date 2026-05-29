@@ -18,9 +18,11 @@ Optional Dependencies:
   extensions (e.g., `pip install 'unified-planning[engines]'`).
 """
 
+__all__ = ["PlanningResult", "Planner", "TimeoutException", "UnifiedPlanning", "FastDownward"]
+
 import re
-import signal
 import subprocess
+import threading
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import List, Optional, Dict, Any
@@ -52,13 +54,13 @@ class Planner(ABC):
 
     @abstractmethod
     def run_planner(
-        self, domain_path: str, problem_path: str, timeout: int = 60, **kwargs
+        self, domain_path: str, problem_path: Optional[str] = None, timeout: int = 60, **kwargs
     ) -> PlanningResult:
         """
         Executes the planner.
         Args:
             domain_path (str): Path to PDDL domain file
-            problem_path (str): Path to PDDL problem file
+            problem_path (Optional[str]): Path to PDDL problem file
             timeout (int): Seconds before terminating planner process
             **kwargs: Planner specific arguments (e.g., search heuristic, memory limits)
         Returns:
@@ -92,13 +94,29 @@ class Planner(ABC):
         raise NotImplementedError("This method should be overriden by subclasses.")
 
 
-# custom timeout exception for Unix-based systems
 class TimeoutException(Exception):
     pass
 
 
-def timeout_handler(signum, frame):
-    raise TimeoutException("Planner execution timed out")
+def _run_with_timeout(func, timeout: int, *args, **kwargs):
+    """Run *func* in a daemon thread with a timeout. Cross-platform (Unix + Windows)."""
+    result = []
+    exception = []
+
+    def runner():
+        try:
+            result.append(func(*args, **kwargs))
+        except Exception as e:
+            exception.append(e)
+
+    thread = threading.Thread(target=runner, daemon=True)
+    thread.start()
+    thread.join(timeout=timeout)
+    if thread.is_alive():
+        raise TimeoutException(f"Planner execution timed out after {timeout} seconds")
+    if exception:
+        raise exception[0]
+    return result[0]
 
 
 # ---------------------------------------------------------------------------
@@ -148,22 +166,21 @@ class UnifiedPlanning(Planner):
         if not engine:
             engine = "aries"  # default (must still install `aries` engine!)
 
-        if timeout:
-            signal.signal(signal.SIGALRM, timeout_handler)
-            signal.alarm(timeout)
-
         try:
             if problem_path is not None:
                 problem = self.reader.parse_problem(domain_path, problem_path)
             else:
                 problem = self.reader.parse_problem(domain_path)
 
-            result = self.planner(
-                name=engine, problem_kind=problem.kind, **kwargs
-            ).solve(problem)
+            def _solve():
+                return self.planner(
+                    name=engine, problem_kind=problem.kind, **kwargs
+                ).solve(problem)
 
             if timeout:
-                signal.alarm(0)
+                result = _run_with_timeout(_solve, timeout)
+            else:
+                result = _solve()
 
             if result.plan is not None:
                 raw_plan_str = str(result.plan)
@@ -173,17 +190,13 @@ class UnifiedPlanning(Planner):
                 return self.handle_error(stderr=status_msg, returncode=None)
 
         except TimeoutException:
-            if timeout:
-                signal.alarm(0)
             return self.handle_error(
                 stderr=f"Planner timed out after {timeout} seconds", returncode=-1
             )
 
         except Exception as e:
-            if timeout:
-                signal.alarm(0)
             return self.handle_error(
-                stderr=f"Unified Planning execution crashed: {str (e)}", returncode=-2
+                stderr=f"Unified Planning execution crashed: {str(e)}", returncode=-2
             )
 
     def parse_plan(self, raw_output: str) -> PlanningResult:

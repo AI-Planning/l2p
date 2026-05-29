@@ -9,6 +9,7 @@ how to use class functions. Refer to l2p/templates in: https://github.com/AI-Pla
 for how to structurally prompt LLMs so they are compatible with class function parsing.
 """
 
+import re
 import time
 from typing import Optional, Type, TypeVar, Union
 
@@ -63,7 +64,7 @@ class ProblemBuilder:
         self.domain_details = domain_details
 
     # ---------------------------------------------------------------------------
-    # PDDL DOMAIN GENERATE FUNCTIONS
+    # PDDL PROBLEM GENERATE FUNCTIONS
     # ---------------------------------------------------------------------------
 
     @require_llm
@@ -221,7 +222,8 @@ class ProblemBuilder:
             desc += f"\n\n{indent(string=metric_str, level=1)}"
 
         desc += "\n)"
-        desc = desc.replace("AND", "and").replace("OR", "or")
+        desc = re.sub(r"\bAND\b", "and", desc)
+        desc = re.sub(r"\bOR\b", "or", desc)
         return desc
 
     # ---------------------------------------------------------------------------

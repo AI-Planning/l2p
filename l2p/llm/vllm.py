@@ -1,5 +1,7 @@
 # TODO - implement vLLM provider for faster inference
 
+__all__ = ["VLLM"]
+
 """
 This is a subclass (VLLM) for abstract class (BaseLLM) that implements an interface 
 to interact with downloaded text generation models (compatible with HuggingFace models). 
@@ -18,7 +20,7 @@ There are two variations that users can use vLLM:
 
 from typing_extensions import override
 from .base import BaseLLM, load_yaml
-from .utils.prompt_template import prompt_templates
+from .utils.prompt_templates import prompt_templates
 
 class VLLM(BaseLLM):
     def __init__(

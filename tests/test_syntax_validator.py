@@ -1195,10 +1195,11 @@ class TestProblemValidatorGoalState(unittest.TestCase):
         }
         goal = GoalState(conditions=["(unknown a)"])
         r = self.validator.validate_component(goal, ctx | {GoalState: [goal]})
-        # Note: Problem validator does not verify predicate name declaration in goals;
-        # it only checks object existence, arity, and type compatibility.
-        # Predicate declaration checking is handled by the domain validator.
-        self.assertTrue(r.valid)
+        self.assertFalse(r.valid)
+        self.assertTrue(
+            any("unknown" in err for err in r.errors),
+            f"Expected error about undeclared 'unknown', got: {r.errors}",
+        )
 
     def test_empty_goal_passes(self):
         goal = GoalState()

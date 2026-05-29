@@ -1,5 +1,24 @@
 """
-This module contains collection of functions for formatting Python PDDL components into prompt strings.
+Prompt Template Loading & Context Building
+
+Loads the Markdown prompt templates from ``l2p/templates/`` and exposes them
+as ``SimpleNamespace`` objects for use by the builder classes:
+
+    DEF_DOMAIN_PROMPTS  — templates for domain components (types, predicates, actions, etc.)
+    DEF_PROBLEM_PROMPTS — templates for problem components (objects, init, goal, etc.)
+    DEF_FB_PROMPTS      — templates for feedback loops (diagnose, evaluate, revise, select)
+
+Key Functions
+-------------
+- ``safe_format(template, description, context, **kwargs)`` — fills ``{description}``,
+  ``{context}``, and custom placeholders safely (skips unset placeholders rather
+  than crashing like ``str.format``).
+- ``build_ctx(**kwargs)`` — serializes typed Pydantic model lists into a compact
+  PDDL + JSON string suitable for injection into prompts.
+- ``load_custom_template(path)`` / ``load_default_template(name)`` — file I/O
+  for template resolution.
+- ``jsonify_components(components)`` — converts Pydantic models to pretty-printed JSON
+  wrapped in their XML tags, used for few-shot injection.
 """
 
 import importlib.resources

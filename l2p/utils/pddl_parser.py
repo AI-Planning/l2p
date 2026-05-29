@@ -1,6 +1,27 @@
 """
-This module contains helper functions for parsing information from LLM output
-as well as converting raw PDDL strings into L2P's internal Pydantic models.
+PDDL Parsing: LLM Output → Pydantic Models
+
+Two parsing directions:
+
+1. Structured Output Extraction (LLM → Pydantic)
+------------------------------------------------
+Extracts JSON from LLM XML-tagged responses and validates them against L2P's
+Pydantic models.
+
+    blocks = parse_xml_tags(llm_output, "predicates")
+    predicates = parse_component(blocks, Predicate, "predicates")
+    single = parse_element(blocks, DomainDetails, "domain")
+
+- ``parse_xml_tags`` — extracts content between ``<tag>...</tag>`` blocks
+- ``parse_component`` — validates a list of model instances from JSON arrays
+- ``parse_element`` — validates a single model instance from a JSON object
+
+2. Raw PDDL String Parsing (PDDL → Pydantic)
+----------------------------------------------
+Converts standard PDDL syntax into L2P models using the ``pddl`` library:
+
+    details = parse_domain_pddl(pddl_str)
+    problem = parse_problem_pddl(pddl_str)
 """
 
 import os
@@ -134,7 +155,11 @@ def parse_element(raw_blocks: List[str], model_class: Type[T], tag_name: str) ->
 
 # =============================================================================
 # PDDL STRING PARSING - convert raw PDDL into L2P Pydantic models
-# **Side Note** - These functions leverage PDDL parser: [INSERT]
+# **Side Note** - These functions leverage PDDL parser: https://github.com/AI-Planning/pddl
+# CURRENTLY DOES NOT SUPPORT THE FOLLOWING
+#   - Durative Actions
+#   - Processes and Events
+#   - Constraints
 # =============================================================================
 
 
@@ -158,7 +183,7 @@ def parse_domain_pddl(domain_str: str) -> DomainDetails:
         derived_predicates=_convert_derived_predicates(
             getattr(domain, "derived_predicates", frozenset())
         ),
-        actions=_convert_actions(domain.actions),
+        actions=_convert_actions(domain.actions)
     )
 
 
@@ -168,7 +193,7 @@ def parse_problem_pddl(pddl_str: str) -> ProblemDetails:
     Args:
         pddl_str (str): PDDL domain as a string
     Returns:
-        DomainDetails: Pydantic L2P BaseModel
+        ProblemDetails: Pydantic L2P BaseModel
     """
     problem = write_temp_pddl(pddl_str, parse_problem)
 
@@ -200,8 +225,8 @@ def write_temp_pddl(pddl_str: str, parser_func):
 
 
 def _convert_requirements(reqs: frozenset) -> List[Requirement]:
+    """Converts pddl requirements class into L2P class."""
     return [Requirement(name=str(r)) for r in reqs]
-
 
 def _convert_types(types: Dict) -> List[PDDLType]:
     result: List[PDDLType] = []
@@ -216,6 +241,7 @@ def _convert_types(types: Dict) -> List[PDDLType]:
 
 
 def _convert_constants(constants: frozenset) -> List[Constant]:
+    """Converts pddl constants class into L2P class."""
     result: List[Constant] = []
     for c in constants:
         type_str = next(iter(c.type_tags)) if c.type_tags else "object"
@@ -224,6 +250,7 @@ def _convert_constants(constants: frozenset) -> List[Constant]:
 
 
 def _convert_predicates(predicates: frozenset) -> List[Predicate]:
+    """Converts pddl predicates class into L2P class."""
     result: List[Predicate] = []
     for p in predicates:
         result.append(
@@ -236,6 +263,7 @@ def _convert_predicates(predicates: frozenset) -> List[Predicate]:
 
 
 def _convert_functions(functions: Dict) -> List[Function]:
+    """Converts pddl functions class into L2P class."""
     result: List[Function] = []
     for func, _return_type in functions.items():
         result.append(
@@ -248,6 +276,7 @@ def _convert_functions(functions: Dict) -> List[Function]:
 
 
 def _convert_derived_predicates(derived: frozenset) -> List[DerivedPredicate]:
+    """Converts pddl derived predicates class into L2P class."""
     result: List[DerivedPredicate] = []
     for dp in derived:
         pred = dp.predicate
@@ -262,6 +291,7 @@ def _convert_derived_predicates(derived: frozenset) -> List[DerivedPredicate]:
 
 
 def _convert_actions(actions: frozenset) -> List[Action]:
+    """Converts pddl actions class into L2P class."""
     result: List[Action] = []
     for a in actions:
         result.append(_convert_single_action(a))
@@ -269,6 +299,7 @@ def _convert_actions(actions: frozenset) -> List[Action]:
 
 
 def _convert_single_action(a: PddlAction) -> Action:
+    """Converts pddl action class into L2P class."""
     return Action(
         name=a.name,
         params=_make_params(a.parameters),
@@ -355,8 +386,6 @@ def _parse_effects(formula) -> ActionEffect:
     conditional: List[ConditionalEffect] = []
 
     def _walk(f):
-        nonlocal add, delete, numeric, conditional
-
         if isinstance(f, And):
             for op in f.operands:
                 _walk(op)
@@ -398,7 +427,7 @@ def _parse_effects(formula) -> ActionEffect:
             return
 
         if isinstance(f, ForallEffect):
-            numeric.append(str(f))
+            add.append(str(f))
             return
 
         # numeric assignments / comparisons
@@ -456,6 +485,7 @@ def _make_params_from_variables(variables: List[Variable]) -> List[Dict[str, str
 
 
 def _convert_objects(objects: frozenset) -> List[PDDLObject]:
+    """Converts pddl objects class into L2P class."""
     result: List[PDDLObject] = []
     for o in objects:
         type_str = next(iter(o.type_tags)) if o.type_tags else "object"
@@ -464,15 +494,16 @@ def _convert_objects(objects: frozenset) -> List[PDDLObject]:
 
 
 def _convert_initial_state(init: frozenset) -> InitialState:
+    """Converts pddl initial state class into L2P class."""
     facts: List[str] = []
     for item in init:
         facts.append(str(item))
-    from collections import defaultdict as _dd
 
     return InitialState(facts=facts, timed_facts=[])
 
 
 def _convert_goal_state(goal) -> GoalState:
+    """Converts pddl goal state class into L2P class."""
     if isinstance(goal, And):
         conditions = [_convert_condition(op) for op in goal.operands]
     else:
@@ -481,6 +512,7 @@ def _convert_goal_state(goal) -> GoalState:
 
 
 def _convert_metric(metric) -> Optional[Metric]:
+    """Converts pddl metric class into L2P class."""
     if metric is None:
         return None
     return Metric(

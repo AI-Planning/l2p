@@ -1,5 +1,14 @@
 """
-This module contains collection of functions for formatting Python PDDL components into PDDL format strings.
+PDDL String Formatting
+
+Converts L2P's internal Pydantic models into valid PDDL strings suitable for
+downstream planners (FastDownward, Unified Planning, etc.).
+
+Usage
+-----
+    from l2p.utils.pddl_format import format_predicates, format_action
+    preds_str = format_predicates([Predicate(name="on", ...)])
+    action_str = format_action(Action(name="stack", ...))
 """
 
 import re
@@ -9,20 +18,24 @@ from l2p.utils.pddl_types import *
 
 # ---- DOMAIN ----
 def format_requirements(reqs: list[Requirement]) -> str:
-    return " ".join([f"{r.name}" for r in reqs])
+    """Formats requirements into PDDL string."""
+    return " ".join([r.name if r.name.startswith(':') else f":{r.name}" for r in reqs])
 
 
 def format_types(types: list[PDDLType]) -> str:
+    """Formats types into PDDL string."""
     sorted_types = sorted(types, key=lambda t: natural_sort_key(t.name))
     return "\n".join([f"{t.name} - {t.parent}" for t in sorted_types])
 
 
 def format_constants(constants: list[Constant]) -> str:
+    """Formats constants into PDDL string."""
     sorted_constants = sorted(constants, key=lambda c: natural_sort_key(c.name))
     return "\n".join([f"{c.name} - {c.type}" for c in sorted_constants])
 
 
 def format_predicates(predicates: list[Predicate]) -> str:
+    """Formats predicates into PDDL string."""
     sorted_predicates = sorted(predicates, key=lambda p: natural_sort_key(p.name))
     return "\n".join(
         [
@@ -33,6 +46,7 @@ def format_predicates(predicates: list[Predicate]) -> str:
 
 
 def format_functions(functions: list[Function]) -> str:
+    """Formats functions into PDDL string."""
     sorted_functions = sorted(functions, key=lambda f: natural_sort_key(f.name))
     return "\n".join(
         [
@@ -43,6 +57,7 @@ def format_functions(functions: list[Function]) -> str:
 
 
 def format_constraints(constraints: list[Constraint]) -> str:
+    """Formats constraints into PDDL string."""
     parts = [format_logic(c.condition) for c in constraints]
     if len(parts) == 1:
         return parts[0]
@@ -50,6 +65,7 @@ def format_constraints(constraints: list[Constraint]) -> str:
 
 
 def format_params(params: List[Parameter]) -> str:
+    """Formats parameters into PDDL string."""
     grouped_params = {}
     for p in params:
         # normalize empty types to "object"
@@ -99,14 +115,32 @@ def format_logic(cond: LogicalCondition) -> str:
         # Support for PDDL 3 constraints
         elif op in ["always", "sometime", "at-most-once"]:
             return f"({op} {format_logic(cond['condition'])})"
+        elif op == "within":
+            return f"(within {cond['time']} {format_logic(cond['condition'])})"
+        elif op == "hold-after":
+            return f"(hold-after {cond['time']} {format_logic(cond['condition'])})"
+        elif op == "hold-during":
+            return f"(hold-during [{cond['time_start']} {cond['time_end']}] {format_logic(cond['condition'])})"
+        elif op == "sometime-after":
+            return f"(sometime-after {format_logic(cond['antecedent'])} {format_logic(cond['consequent'])})"
+        elif op == "sometime-before":
+            return f"(sometime-before {format_logic(cond['antecedent'])} {format_logic(cond['consequent'])})"
+        elif op == "always-within":
+            return f"(always-within {cond['time']} {format_logic(cond['antecedent'])} {format_logic(cond['consequent'])})"
+        return ""
 
-    elif "quantifier" in cond:
+    if "quantifier" in cond:
         q = cond["quantifier"]
         params = " ".join(
             [f"{p['variable']} - {p['type']}" for p in cond["parameters"]]
         )
         conds_str = format_condition_block(cond["conditions"])
         return f"({q} ({params}) {conds_str})"
+
+    if "preference" in cond:
+        pref_name = cond["preference"]
+        pref_cond = format_logic(cond.get("condition", ""))
+        return f"(preference {pref_name} {pref_cond})"
 
     return ""
 
@@ -165,6 +199,7 @@ def format_action(action: Action) -> str:
 
 
 def format_actions(actions: list[Action]) -> str:
+    """Formats multiple actions into PDDL string."""
     return "\n\n".join([format_action(a) for a in actions])
 
 
@@ -226,6 +261,7 @@ def format_durative_action(d_act: DurativeAction) -> str:
 
 
 def format_durative_actions(d_actions: list[DurativeAction]) -> str:
+    """Formats multiple durative actions into PDDL string."""
     return "\n\n".join([format_durative_action(d) for d in d_actions])
 
 
@@ -241,6 +277,7 @@ def format_derived_predicate(dp: DerivedPredicate) -> str:
 
 
 def format_derived_predicates(d_preds: list[DerivedPredicate]) -> str:
+    """Formats multiple derived predicates into PDDL string."""
     return "\n\n".join([format_derived_predicate(dp) for dp in d_preds])
 
 
@@ -261,6 +298,7 @@ def format_event(event: Event) -> str:
 
 
 def format_events(events: list[Event]) -> str:
+    """Formats multiple events into PDDL string."""
     return "\n\n".join([format_event(e) for e in events])
 
 
@@ -281,11 +319,13 @@ def format_process(process: Process) -> str:
 
 
 def format_processes(processes: list[Process]) -> str:
+    """Formats multiple processes into PDDL string."""
     return "\n\n".join([format_process(p) for p in processes])
 
 
 # ---- PROBLEM ----
 def format_objects(objects: list[PDDLObject]) -> str:
+    """Format objects into PDDL string."""
     grouped_objs = {}
     for obj in objects:
         obj_type = obj.type.lower() if obj.type else "object"
@@ -352,24 +392,17 @@ def indent(string: str, level: int = 2):
     return "   " * level + string.replace("\n", f"\n{'   ' * level}")
 
 
-def remove_comments(text: str, comment_prefixes=[";", "#", "//"]) -> str:
-    """Remove comments from text using multiple prefix styles."""
+def remove_comments(text: str) -> str:
+    """Remove PDDL comments (semicolons). Ignores #, //, and #t which are valid PDDL tokens."""
     lines = text.splitlines()
     cleaned_lines = []
-
     for line in lines:
-        stripped_line = line
-        for prefix in comment_prefixes:
-            if prefix in stripped_line:
-                # only remove comment if prefix is not inside quotes or code
-                stripped_line = stripped_line.split(prefix, 1)[0]
-        cleaned_lines.append(stripped_line.rstrip())
-
-    # remove blank lines and normalize whitespace
-    cleaned = "\n".join(line for line in cleaned_lines if line.strip())
-    cleaned = re.sub(r"\n{2,}", "\n\n", cleaned)  # collapse multiple newlines
-
-    return cleaned
+        stripped = line.strip()
+        if stripped.startswith(";"):
+            continue
+        cleaned_lines.append(line)
+    cleaned = "\n".join(cleaned_lines)
+    return re.sub(r"\n{2,}", "\n\n", cleaned)
 
 
 def natural_sort_key(s: str) -> list:

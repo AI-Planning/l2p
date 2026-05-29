@@ -1,5 +1,20 @@
 """
-L2P PDDL Type and Data Structure Definitions.
+PDDL Data Models (Pydantic)
+
+All PDDL concepts are modeled as ``pydantic.BaseModel`` subclasses with strict
+validation. These are the core data structures that flow through every L2P
+pipeline — generation, validation, formatting, and planning.
+
+Organization
+------------
+Each class has a ``tag`` class variable (XML tag tuple) used by the LLM
+output parser to identify which XML block maps to which model:
+
+Validation
+----------
+Many models carry ``field_validator`` decorators for early rejection of
+invalid data at parse time (e.g., ``Parameter`` requires ``?`` prefix,
+``Metric.optimization`` must be ``minimize``/``maximize``).
 """
 
 from pydantic import BaseModel, Field, field_validator
@@ -120,6 +135,10 @@ class Requirement(BaseModel):
             raise ValueError(f"Requirement name '{r}' must start with ':'")
         return r
 
+    @classmethod
+    def _example(cls) -> dict:
+        return {"name": ":strips", "desc": "Optional (str)"}
+
 
 class PDDLType(BaseModel):
     """
@@ -136,6 +155,10 @@ class PDDLType(BaseModel):
     parent: str
     desc: Optional[str] = None
 
+    @classmethod
+    def _example(cls) -> dict:
+        return {"name": "vehicle", "parent": "object", "desc": "Optional (str)"}
+
 
 class Constant(BaseModel):
     """
@@ -151,6 +174,10 @@ class Constant(BaseModel):
     name: str
     type: str
     desc: Optional[str] = None
+
+    @classmethod
+    def _example(cls) -> dict:
+        return {"name": "base_station", "type": "waypoint", "desc": "Optional (str)"}
 
 
 class Parameter(BaseModel):
@@ -175,6 +202,10 @@ class Parameter(BaseModel):
             raise ValueError(f"Parameter variable '{v}' must start with '?'")
         return v
 
+    @classmethod
+    def _example(cls) -> dict:
+        return {"variable": "?r", "type": "rover", "desc": "Optional (str)"}
+
 
 class Predicate(BaseModel):
     """
@@ -194,6 +225,17 @@ class Predicate(BaseModel):
     params: List[Parameter]
     desc: Optional[str] = None
 
+    @classmethod
+    def _example(cls) -> dict:
+        return {
+            "name": "at",
+            "params": [
+                {"variable": "?r", "type": "rover"},
+                {"variable": "?w", "type": "waypoint"},
+            ],
+            "desc": "Optional (str)",
+        }
+
 
 class Function(BaseModel):
     """
@@ -209,6 +251,14 @@ class Function(BaseModel):
     name: str
     params: List[Parameter]
     desc: Optional[str] = None
+
+    @classmethod
+    def _example(cls) -> dict:
+        return {
+            "name": "battery-level",
+            "params": [{"variable": "?r", "type": "rover"}],
+            "desc": "Optional (str)",
+        }
 
 
 # PDDL 2.2 Derived Predicates (Axioms)
@@ -229,6 +279,18 @@ class DerivedPredicate(BaseModel):
     condition: LogicalCondition
     desc: Optional[str] = None
 
+    @classmethod
+    def _example(cls) -> dict:
+        return {
+            "name": "can-transmit",
+            "params": [{"variable": "?r", "type": "rover"}],
+            "condition": {
+                "operator": "and",
+                "conditions": ["(at ?r base_station)", "(>= (battery-level ?r) 50.0)"],
+            },
+            "desc": "Optional (str)",
+        }
+
 
 class ActionPrecondition(BaseModel):
     """
@@ -245,6 +307,22 @@ class ActionPrecondition(BaseModel):
     tag: ClassVar[tuple] = ("preconditions", "preconds", "precondition")
     conditions: List[LogicalCondition] = Field(default_factory=list)
     desc: Optional[str] = None
+
+    @classmethod
+    def _example(cls) -> dict:
+        return {
+            "conditions": [
+                "(at ?r ?l)",
+                "(>= (battery-level ?r) 20.0)",
+                {"operator": "not", "condition": "(busy ?r)"},
+                {
+                    "quantifier": "forall",
+                    "parameters": [{"variable": "?w", "type": "waypoint"}],
+                    "conditions": ["(visited ?w)"],
+                },
+            ],
+            "desc": "Optional (str)",
+        }
 
 
 class ConditionalEffect(BaseModel):
@@ -267,6 +345,18 @@ class ConditionalEffect(BaseModel):
         str, List[LogicalCondition]
     ]  # e.g., {"add": [], "delete": [], "numeric": []}
     desc: Optional[str] = None
+
+    @classmethod
+    def _example(cls) -> dict:
+        return {
+            "condition": ["(has-rock-sample ?r)"],
+            "effect": {
+                "add": ["(carrying-heavy-load ?r)"],
+                "delete": [],
+                "numeric": ["(decrease (battery-level ?r) 10.0)"],
+            },
+            "desc": "Triggers when rover carries a rock sample",
+        }
 
 
 class ActionEffect(BaseModel):
@@ -294,6 +384,26 @@ class ActionEffect(BaseModel):
     numeric: List[LogicalCondition] = Field(default_factory=list)
     conditional: List[ConditionalEffect] = Field(default_factory=list)
     desc: Optional[str] = None
+
+    @classmethod
+    def _example(cls) -> dict:
+        return {
+            "add": ["(at ?r ?to)"],
+            "delete": ["(at ?r ?from)"],
+            "numeric": ["(decrease (battery-level ?r) 5.0)", "(increase (total-cost) 1.0)"],
+            "conditional": [
+                {
+                    "condition": ["(has-payload ?r)"],
+                    "effect": {
+                        "add": ["(payload-delivered ?r)"],
+                        "delete": [],
+                        "numeric": [],
+                    },
+                    "desc": "Optional (str)",
+                }
+            ],
+            "desc": "Optional (str)",
+        }
 
 
 class Action(BaseModel):
@@ -326,6 +436,41 @@ class Action(BaseModel):
     effects: ActionEffect = Field(default_factory=ActionEffect)
     desc: Optional[str] = None
 
+    @classmethod
+    def _example(cls) -> dict:
+        return {
+            "name": "move-rover",
+            "params": [
+                {"variable": "?r", "type": "rover"},
+                {"variable": "?from", "type": "waypoint"},
+                {"variable": "?to", "type": "waypoint"},
+            ],
+            "preconditions": {
+                "conditions": [
+                    "(at ?r ?from)",
+                    {"operator": "not", "condition": "(= ?from ?to)"},
+                ],
+                "desc": "Optional (str)",
+            },
+            "effects": {
+                "add": ["(at ?r ?to)"],
+                "delete": ["(at ?r ?from)"],
+                "numeric": ["(decrease (battery-level ?r) 10.0)"],
+                "conditional": [
+                    {
+                        "condition": ["(has-rock-sample ?r)"],
+                        "effect": {
+                            "add": ["(carrying-heavy-load ?r)"],
+                            "delete": [],
+                            "numeric": [],
+                        },
+                    }
+                ],
+                "desc": "Optional (str)",
+            },
+            "desc": "Optional (str)",
+        }
+
 
 class DurativeActionConditions(BaseModel):
     """
@@ -343,6 +488,15 @@ class DurativeActionConditions(BaseModel):
     at_end: List[LogicalCondition] = Field(default_factory=list)
     over_all: List[LogicalCondition] = Field(default_factory=list)
     desc: Optional[str] = None
+
+    @classmethod
+    def _example(cls) -> dict:
+        return {
+            "at_start": ["(at ?r base_station)"],
+            "over_all": [{"operator": "not", "condition": "(safe-mode ?r)"}],
+            "at_end": [],
+            "desc": "Optional (str)",
+        }
 
 
 class DurativeActionEffect(BaseModel):
@@ -374,6 +528,25 @@ class DurativeActionEffect(BaseModel):
     )  # added for PDDL 2.1/+ continuous numeric changes using #t
     desc: Optional[str] = None
 
+    @classmethod
+    def _example(cls) -> dict:
+        return {
+            "at_start": {
+                "add": ["(moving ?r)"],
+                "delete": ["(idle ?r)"],
+                "numeric": [],
+                "conditional": [],
+            },
+            "at_end": {
+                "add": ["(at ?r ?to)"],
+                "delete": ["(at ?r ?from)", "(moving ?r)"],
+                "numeric": ["(assign (battery-level ?r) 0.0)"],
+                "conditional": [],
+            },
+            "continuous": ["(decrease (battery-level ?r) (* #t 1.0))"],
+            "desc": "Effects split across start and end of durative action",
+        }
+
 
 class DurativeAction(BaseModel):
     """
@@ -402,6 +575,33 @@ class DurativeAction(BaseModel):
     effects: DurativeActionEffect
     desc: Optional[str] = None
 
+    @classmethod
+    def _example(cls) -> dict:
+        return {
+            "name": "navigate",
+            "params": [
+                {"variable": "?r", "type": "rover"},
+                {"variable": "?from", "type": "waypoint"},
+                {"variable": "?to", "type": "waypoint"},
+            ],
+            "duration": ["(= ?duration 10.0)"],
+            "conditions": {
+                "at_start": ["(at ?r ?from)"],
+                "over_all": ["(has-power ?r)"],
+                "at_end": ["(at ?r ?to)"],
+            },
+            "effects": {
+                "at_start": {"add": ["(busy ?r)"], "delete": [], "numeric": [], "conditional": []},
+                "at_end": {
+                    "add": ["(at ?r ?to)"],
+                    "delete": ["(at ?r ?from)", "(busy ?r)"],
+                    "numeric": [],
+                    "conditional": [],
+                },
+            },
+            "desc": "Rover navigates between waypoints over a fixed duration",
+        }
+
 
 # PDDL 3.0
 class Constraint(BaseModel):
@@ -419,6 +619,16 @@ class Constraint(BaseModel):
     tag: ClassVar[tuple] = ("constraints", "constraint")
     condition: LogicalCondition
     desc: Optional[str] = None
+
+    @classmethod
+    def _example(cls) -> dict:
+        return {
+            "condition": {
+                "operator": "always",
+                "condition": "(<= (battery-level ?r) 100.0)",
+            },
+            "desc": "Battery level must never exceed 100",
+        }
 
 
 # PDDL+
@@ -453,6 +663,31 @@ class Event(BaseModel):
     effects: ActionEffect = Field(default_factory=ActionEffect)
     desc: Optional[str] = None
 
+    @classmethod
+    def _example(cls) -> dict:
+        return {
+            "name": "battery-depleted",
+            "params": [{"variable": "?r", "type": "rover"}],
+            "preconditions": {
+                "conditions": [
+                    {
+                        "operator": "and",
+                        "conditions": [
+                            "(at ?r ?l)",
+                            "(<= (battery-level ?r) 0.0)",
+                        ],
+                    }
+                ]
+            },
+            "effects": {
+                "add": ["(dead ?r)"],
+                "delete": ["(has-power ?r)"],
+                "numeric": [],
+                "conditional": [],
+            },
+            "desc": "Triggered when a rover runs out of battery",
+        }
+
 
 class Process(BaseModel):
     """
@@ -486,6 +721,23 @@ class Process(BaseModel):
     preconditions: ActionPrecondition = Field(default_factory=ActionPrecondition)
     effects: ActionEffect = Field(default_factory=ActionEffect)
     desc: Optional[str] = None
+
+    @classmethod
+    def _example(cls) -> dict:
+        return {
+            "name": "drain-battery",
+            "params": [{"variable": "?r", "type": "rover"}],
+            "preconditions": {
+                "conditions": ["(moving ?r)"],
+            },
+            "effects": {
+                "add": [],
+                "delete": [],
+                "numeric": ["(decrease (battery-level ?r) (* #t 0.5))"],
+                "conditional": [],
+            },
+            "desc": "Continuously drains battery while the rover moves",
+        }
 
 
 class DomainDetails(BaseModel):
@@ -571,6 +823,10 @@ class PDDLObject(BaseModel):
     type: str  # e.g., "rover"
     desc: Optional[str] = None
 
+    @classmethod
+    def _example(cls) -> dict:
+        return {"name": "rover1", "type": "rover", "desc": "Instance of a rover"}
+
 
 class TimedFact(BaseModel):
     """
@@ -586,6 +842,14 @@ class TimedFact(BaseModel):
     time: float
     fact: LogicalCondition
     desc: Optional[str] = None
+
+    @classmethod
+    def _example(cls) -> dict:
+        return {
+            "time": 15.5,
+            "fact": "(communications-blackout)",
+            "desc": "Event triggers at t=15.5",
+        }
 
 
 class InitialState(BaseModel):
@@ -606,6 +870,20 @@ class InitialState(BaseModel):
     timed_facts: List[TimedFact] = Field(default_factory=list)
     desc: Optional[str] = None
 
+    @classmethod
+    def _example(cls) -> dict:
+        return {
+            "facts": [
+                "(at rover1 waypoint0)",
+                "(= (battery-level rover1) 100.0)",
+                "(has-power rover1)",
+                "(calibrated camera1)",
+                "(connected waypoint0 waypoint1)",
+            ],
+            "timed_facts": [{"time": 50.0, "fact": "(= (solar-flare-level) 80.0)"}],
+            "desc": "Initial deployment state of the rover",
+        }
+
 
 class GoalState(BaseModel):
     """
@@ -623,6 +901,23 @@ class GoalState(BaseModel):
     conditions: List[LogicalCondition] = Field(default_factory=list)
     desc: Optional[str] = None
 
+    @classmethod
+    def _example(cls) -> dict:
+        return {
+            "conditions": [
+                "(at rover1 waypoint3)",
+                "(data-transmitted)",
+                {
+                    "operator": "or",
+                    "conditions": [
+                        "(has-rock-sample rover1)",
+                        "(has-soil-sample rover1)",
+                    ],
+                },
+            ],
+            "desc": "Rover must reach waypoint3 and transmit data",
+        }
+
 
 # PDDL 2.1 & PDDL 3.0 Plan Optimization Metrics
 class Metric(BaseModel):
@@ -639,6 +934,14 @@ class Metric(BaseModel):
     optimization: str  # must be 'minimize' or 'maximize'
     expression: str  # e.g., 'total-time', '(* (fuel-used) 2)', or '(is-violated pref1)'
     desc: Optional[str] = None
+
+    @classmethod
+    def _example(cls) -> dict:
+        return {
+            "optimization": "minimize",
+            "expression": "total-time",
+            "desc": "Minimize makespan",
+        }
 
     @field_validator("optimization")
     @classmethod
@@ -675,27 +978,3 @@ class ProblemDetails(BaseModel):
     # PDDL 3.0 problem-specific trajectory constraints
     constraint: List[Constraint] = Field(default_factory=list)
     metric: Optional[Metric] = None
-
-
-# ---------------------------------------------------------------------------
-# PDDL PLAN CLASSES
-# ---------------------------------------------------------------------------
-
-
-class PlanStep(BaseModel):
-    """
-    Expected JSON format (example):
-    {
-        "action": "drive",
-        "args": ["rover1", "loc1", "loc2"],
-        "start_time": 0.0,
-        "duration": 5.5,
-        "desc": "Optional description"
-    }
-    """
-
-    action: str  # e.g., "drive"
-    args: List[str]  # e.g., ["rover1", "loc1", "loc2"] (grounded objects)
-    start_time: float = 0.0  # for durative actions / temporal planning
-    duration: Optional[float] = None  # None for classical actions, float for durative
-    desc: Optional[str] = None

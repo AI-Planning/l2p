@@ -15,6 +15,8 @@ from .base import BaseLLM, load_yaml
 from .utils.prompt_templates import prompt_templates
 import warnings
 
+__all__ = ["HUGGING_FACE"]
+
 warnings.filterwarnings("ignore", message="`do_sample` is set to `False`.*")
 
 

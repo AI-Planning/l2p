@@ -16,6 +16,8 @@ configuration using the same format template.
 from typing_extensions import override
 from .base import BaseLLM, load_yaml
 
+__all__ = ["UnifiedLLM"]
+
 
 class UnifiedLLM(BaseLLM):
     def __init__(

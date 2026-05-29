@@ -2,7 +2,8 @@
 Base Orchestrator and Rule Engine for L2P Component Validation.
 This module for validates generated PDDL components generated.
 
-Classes:
+Classes
+-------------------
     ValidationResult: Stores the outcome of a rule check (errors and warnings).
     ValidationRule: Abstract base class defining the contract for all rules.
     FunctionalRule: Wrapper that converts standalone functions into ValidationRules.

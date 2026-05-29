@@ -1,3 +1,42 @@
+"""
+PDDL Problem Validation Rules
+
+This module provides a rule-based validation system for PDDL problem instances.
+It extends the infrastructure in `base.py` with problem-specific rules:
+
+Architecture
+------------
+- Each rule is a standalone function decorated with ``@problem_rule``, which
+  automatically registers it into ``PROBLEM_REGISTRY``.
+- ``ProblemValidator`` aggregates the registry and applies rules via
+  ``validate_component(target, context)``.
+- ``ProblemSemantics`` provides fast lookup for type hierarchies, predicate
+  signatures, and constants to support type-checking across rules.
+
+Validation Coverage
+-------------------
+- PDDL naming conventions for objects (no ``?`` prefix, no reserved keywords)
+- Object type inheritance (declared types must exist in the domain)
+- Initial state validation (objects exist, predicate arity matches, argument
+  types are compatible, undeclared predicate symbols are flagged)
+- Timed Initial Literal validation (same checks applied to timed facts)
+- Goal state validation (same structural checks as initial state)
+- Metric expression validation (declared functions, no variables, valid syntax)
+
+Usage
+-----
+    validator = ProblemValidator()
+    result = validator.validate_component(
+        initial_state,
+        {PDDLType: [...], PDDLObject: [...], InitialState: [initial_state]}
+    )
+    if not result.valid:
+        print(result.errors)
+
+Custom rules can be added by decorating a function or passing a ``FunctionalRule``
+instance to the constructor.
+"""
+
 import re
 from typing import Any, Dict, List, Type, Callable
 from pydantic import BaseModel
@@ -145,6 +184,11 @@ def _check_problem_state_types(
                             f"[ERROR] {location_desc}: The {pos} argument '{arg}' in '{sym}' is of type "
                             f"'{arg_type}', which is not compatible with the expected type '{exp_type}'."
                         )
+            elif sym not in PDDL_KEYWORDS:
+                result.add_error(
+                    f"[ERROR] {location_desc}: '{sym}' is neither a declared domain predicate/function "
+                    f"nor a built-in PDDL keyword."
+                )
 
     elif isinstance(item, dict):
         for val in item.values():

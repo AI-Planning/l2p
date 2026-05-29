@@ -108,8 +108,6 @@ class FeedbackBuilder:
             **format_kwargs,
         )
 
-        print(prompt)
-
         return self._run_feedback(model, tag, prompt, max_retries)
 
     # ------------------------------------------------------------------
@@ -323,11 +321,6 @@ class FeedbackBuilder:
                         raise ValueError(
                             f"[ERROR] Missing expected XML block in LLM output. Looked for: {cls.tag}"
                         )
-
-                if not results:
-                    raise ValueError(
-                        f"[ERROR] No expected XML blocks found for classes: {[c.__name__ for c in classes]}"
-                    )
 
                 return results, llm_output
 
