@@ -403,7 +403,8 @@ class DomainBuilder:
         # check problem file
         if problem_details:
             if problem_details.goal_state:
-                check_logical_condition(problem_details.goal_state)
+                for cond in problem_details.goal_state.conditions:
+                    check_logical_condition(cond)
             for constraint in problem_details.constraint:
                 check_logical_condition(constraint.condition)
 
