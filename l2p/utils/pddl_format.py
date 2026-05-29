@@ -19,7 +19,7 @@ from l2p.utils.pddl_types import *
 # ---- DOMAIN ----
 def format_requirements(reqs: list[Requirement]) -> str:
     """Formats requirements into PDDL string."""
-    return " ".join([r.name if r.name.startswith(':') else f":{r.name}" for r in reqs])
+    return " ".join([r.name if r.name.startswith(":") else f":{r.name}" for r in reqs])
 
 
 def format_types(types: list[PDDLType]) -> str:

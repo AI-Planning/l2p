@@ -148,7 +148,9 @@ DEF_DOMAIN_PROMPTS = SimpleNamespace(
     preconds=load_default_template(folder="domain", filename="prompt_preconditions.md"),
     effects=load_default_template(folder="domain", filename="prompt_effects.md"),
     nl_actions=load_default_template(folder="domain", filename="prompt_nl_actions.md"),
-    nl_dur_actions=load_default_template(folder="domain", filename="prompt_nl_durative_actions.md"),
+    nl_dur_actions=load_default_template(
+        folder="domain", filename="prompt_nl_durative_actions.md"
+    ),
     dur_actions=load_default_template(
         folder="domain", filename="prompt_durative_actions.md"
     ),

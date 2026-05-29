@@ -8,7 +8,7 @@ Architecture
 ------------
 - Each rule is a standalone function decorated with ``@domain_rule``, which
   automatically registers it into ``DOMAIN_REGISTRY``.
-- ``DomainValidator`` aggregates the registry and applies rules via 
+- ``DomainValidator`` aggregates the registry and applies rules via
   ``validate_component(target, context)``.
 - ``DomainSemantics`` provides fast lookup for type hierarchies, predicate/function
   signatures, and constants to support type-checking across rules.

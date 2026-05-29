@@ -23,6 +23,7 @@ def _load_yaml_config(config_path: str) -> dict:
         yaml_filename = parts[-1] if parts else "llm.yaml"
         try:
             import importlib.resources
+
             return yaml.safe_load(
                 importlib.resources.read_text("l2p.llm.utils", yaml_filename)
             )
@@ -30,7 +31,9 @@ def _load_yaml_config(config_path: str) -> dict:
             package_root = Path(__file__).parent.parent.parent.parent
             config_file = package_root / "l2p" / "llm" / "utils" / yaml_filename
             if not config_file.exists():
-                fallback = "openaiSDK.yaml" if yaml_filename == "llm.yaml" else "llm.yaml"
+                fallback = (
+                    "openaiSDK.yaml" if yaml_filename == "llm.yaml" else "llm.yaml"
+                )
                 config_file = package_root / "l2p" / "llm" / "utils" / fallback
             with open(config_file, "r") as f:
                 return yaml.safe_load(f)
@@ -39,7 +42,10 @@ def _load_yaml_config(config_path: str) -> dict:
         if not config_file.exists():
             raise CLIError(
                 f"[ERROR] Config file not found: {config_path}",
-                ["Check config path in your configuration", "Run 'l2p config show' to see current config"],
+                [
+                    "Check config path in your configuration",
+                    "Run 'l2p config show' to see current config",
+                ],
             )
         with open(config_file, "r") as f:
             return yaml.safe_load(f)

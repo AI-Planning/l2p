@@ -390,7 +390,10 @@ class ActionEffect(BaseModel):
         return {
             "add": ["(at ?r ?to)"],
             "delete": ["(at ?r ?from)"],
-            "numeric": ["(decrease (battery-level ?r) 5.0)", "(increase (total-cost) 1.0)"],
+            "numeric": [
+                "(decrease (battery-level ?r) 5.0)",
+                "(increase (total-cost) 1.0)",
+            ],
             "conditional": [
                 {
                     "condition": ["(has-payload ?r)"],
@@ -591,7 +594,12 @@ class DurativeAction(BaseModel):
                 "at_end": ["(at ?r ?to)"],
             },
             "effects": {
-                "at_start": {"add": ["(busy ?r)"], "delete": [], "numeric": [], "conditional": []},
+                "at_start": {
+                    "add": ["(busy ?r)"],
+                    "delete": [],
+                    "numeric": [],
+                    "conditional": [],
+                },
                 "at_end": {
                     "add": ["(at ?r ?to)"],
                     "delete": ["(at ?r ?from)", "(busy ?r)"],

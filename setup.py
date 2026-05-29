@@ -5,21 +5,35 @@ with open("README.md", "r") as fh:
 
 setup(
     name="l2p",
-    version="1.0.0",
+    version="0.4.0",
     packages=find_packages(exclude=["tests"]),
     description="Library to connect LLMs and planning tasks",
     long_description=long_description,
     long_description_content_type="text/markdown",
     author="Marcus Tantakoun, Christian Muise",
     author_email="mtantakoun@gmail.com, christian.muise@gmail.com",
-    install_requires=["retry", "pddl", "typing_extensions", "pyyaml", "pydantic>=2.0", "tiktoken"],
+    install_requires=[
+        "retry",
+        "pddl",
+        "typing_extensions",
+        "pyyaml",
+        "pydantic>=2.0",
+        "tiktoken",
+    ],
     extras_require={
         "cli": ["llm", "rich"],
         "openai": ["openai"],
         "mistral": ["mistralai"],
         "huggingface": ["transformers", "torch"],
         "planner": ["unified-planning"],
-        "all": ["llm", "rich", "openai", "mistralai", "transformers", "unified-planning"],
+        "all": [
+            "llm",
+            "rich",
+            "openai",
+            "mistralai",
+            "transformers",
+            "unified-planning",
+        ],
     },
     entry_points={
         "console_scripts": [

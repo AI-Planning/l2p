@@ -183,7 +183,7 @@ def parse_domain_pddl(domain_str: str) -> DomainDetails:
         derived_predicates=_convert_derived_predicates(
             getattr(domain, "derived_predicates", frozenset())
         ),
-        actions=_convert_actions(domain.actions)
+        actions=_convert_actions(domain.actions),
     )
 
 
@@ -227,6 +227,7 @@ def write_temp_pddl(pddl_str: str, parser_func):
 def _convert_requirements(reqs: frozenset) -> List[Requirement]:
     """Converts pddl requirements class into L2P class."""
     return [Requirement(name=str(r)) for r in reqs]
+
 
 def _convert_types(types: Dict) -> List[PDDLType]:
     result: List[PDDLType] = []

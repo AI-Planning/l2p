@@ -37,7 +37,7 @@ def _resolve_env_var(raw_value: str) -> Optional[str]:
         print(
             f"[WARNING] Could not find environment variable: {var_name}. "
             f"Setting API key to None.\n"
-            f"Set it with: export {var_name}=\"your-key\""
+            f'Set it with: export {var_name}="your-key"'
         )
         return ""
     return resolved

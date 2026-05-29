@@ -47,9 +47,7 @@ class TestFeedbackBuilderLlmDiagnose(unittest.TestCase):
         self.assertIsInstance(parsed, dict)
         self.assertEqual(parsed["summary"], "Missing type declaration")
         self.assertEqual(len(parsed["identified_errors"]), 1)
-        self.assertEqual(
-            parsed["identified_errors"][0]["error_type"], "UndeclaredType"
-        )
+        self.assertEqual(parsed["identified_errors"][0]["error_type"], "UndeclaredType")
         self.assertEqual(len(parsed["repair_plan"]), 2)
         self.assertIn("<diagnosis>", raw)
 
@@ -182,9 +180,7 @@ class TestFeedbackBuilderLlmEvaluate(unittest.TestCase):
             artifact=PDDLType(name="rover", parent="vehicle"),
             description="test",
             predicates=[
-                Predicate(
-                    name="at", params=[Parameter(variable="?r", type="rover")]
-                )
+                Predicate(name="at", params=[Parameter(variable="?r", type="rover")])
             ],
         )
         parsed = json.loads(result)
@@ -299,9 +295,7 @@ class TestFeedbackBuilderLlmRevise(unittest.TestCase):
             component_class=PDDLType,
             description="d",
             diagnosis="p",
-            predicates=[
-                Predicate(name="at", params=[])
-            ],
+            predicates=[Predicate(name="at", params=[])],
         )
         self.assertEqual(corrected[PDDLType], [])
 

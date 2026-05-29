@@ -1,6 +1,6 @@
 """
 This module defines the `PromptBuilder` class for constructing prompt templates for
-PDDL generation and feedback messages. Refer to l2p/templates in: https://github.com/AI-Planning/l2p for how to structurally 
+PDDL generation and feedback messages. Refer to l2p/templates in: https://github.com/AI-Planning/l2p for how to structurally
 prompt LLMs so they are compatible with class function parsing.
 
 This file uses inputted NL descriptions to generate Markdown prompt templates for the LLM.
@@ -90,7 +90,9 @@ class PromptBuilder:
         self.format = format_str
         return self
 
-    def set_format_example(self, component: Type[T], is_list: bool = True) -> "PromptBuilder":
+    def set_format_example(
+        self, component: Type[T], is_list: bool = True
+    ) -> "PromptBuilder":
         """
         Appends a concrete JSON example for *component* (wrapped in the
         model's XML tag) to the ``## OUTPUT FORMAT`` section.

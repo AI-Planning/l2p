@@ -18,7 +18,13 @@ Optional Dependencies:
   extensions (e.g., `pip install 'unified-planning[engines]'`).
 """
 
-__all__ = ["PlanningResult", "Planner", "TimeoutException", "UnifiedPlanning", "FastDownward"]
+__all__ = [
+    "PlanningResult",
+    "Planner",
+    "TimeoutException",
+    "UnifiedPlanning",
+    "FastDownward",
+]
 
 import re
 import subprocess
@@ -54,7 +60,11 @@ class Planner(ABC):
 
     @abstractmethod
     def run_planner(
-        self, domain_path: str, problem_path: Optional[str] = None, timeout: int = 60, **kwargs
+        self,
+        domain_path: str,
+        problem_path: Optional[str] = None,
+        timeout: int = 60,
+        **kwargs,
     ) -> PlanningResult:
         """
         Executes the planner.
