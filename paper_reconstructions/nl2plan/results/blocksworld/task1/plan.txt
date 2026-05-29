@@ -1,4 +1,0 @@
-pick_block_from_block blue red (1)
-place_block_on_table blue table1 (1)
-pick_block_from_block red yellow (1)
-place_block_on_block red green (1)

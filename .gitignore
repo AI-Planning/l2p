@@ -159,27 +159,16 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-# directories to ignore
-tests/main.py
-tests/parse.py
-data/
-tests/tests.py
-templates/temp
-tests/test_llm_dm
 AGENTS.md
 
-# paper reconstructions to ignore
-paper_reconstructions/llm+dp/
-paper_reconstructions/llm+ew/
-paper_reconstructions/llm+consistency/
+# directories to ignore
+l2p/templates/temp
+l2p/temp
+l2p/utils/temp
 
 .DS_Store
 sas_plan
 
 offline_packages
-config.py
 l2p/llm/vllm.py
-run_inference.sh
-test.py
-test.txt
-test.pddl
+testing.py

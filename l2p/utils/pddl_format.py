@@ -1,294 +1,412 @@
 """
-This module contains collection of functions for formatting Python PDDL components into PDDL format strings.
+PDDL String Formatting
+
+Converts L2P's internal Pydantic models into valid PDDL strings suitable for
+downstream planners (FastDownward, Unified Planning, etc.).
+
+Usage
+-----
+    from l2p.utils.pddl_format import format_predicates, format_action
+    preds_str = format_predicates([Predicate(name="on", ...)])
+    action_str = format_action(Action(name="stack", ...))
 """
 
-import json
 import re
-from collections import defaultdict, OrderedDict
-from .pddl_types import Action, Function, Predicate
+from typing import List
+from l2p.utils.pddl_types import *
 
 
-# ---- PDDL DOMAIN FORMATTER ----
+# ---- DOMAIN ----
+def format_requirements(reqs: list[Requirement]) -> str:
+    """Formats requirements into PDDL string."""
+    return " ".join([r.name if r.name.startswith(":") else f":{r.name}" for r in reqs])
 
 
-def format_types(
-    types: dict[str, str] | list[dict[str, str]] | None = None,
-) -> dict[str, str]:
-    """
-    Formats nested Python type hierarchies into flat dictionaries. Flat type dictionaries
-    (no hierarchies) are returned as default.
-    """
-
-    if not types:
-        return None
-
-    result = {}
-
-    def is_nested_format(typ) -> bool:
-        if isinstance(typ, list):
-            return True
-        return any(isinstance(v, list) and k == "children" for k, v in typ.items())
-
-    def process_node(node, parent_type=None):
-        if not isinstance(node, dict):
-            return
-
-        type_name = next((k for k in node if k != "children"), None)
-        if type_name is None:
-            return
-
-        description = node[type_name]
-        parent = parent_type if parent_type else type_name
-
-        name = f"{type_name} - {parent}" if type_name != parent else type_name
-        result[name] = f"; {description}" if description else ""
-
-        for child in node.get("children", []):
-            process_node(child, type_name)
-
-    if is_nested_format(types):
-        if isinstance(types, list):
-            for node in types:
-                process_node(node)
-        else:
-            process_node(types)
-    else:
-        for type_name, description in types.items():
-            result[type_name] = f"; {description}" if description else ""
-
-    return result
+def format_types(types: list[PDDLType]) -> str:
+    """Formats types into PDDL string."""
+    sorted_types = sorted(types, key=lambda t: natural_sort_key(t.name))
+    return "\n".join([f"{t.name} - {t.parent}" for t in sorted_types])
 
 
-def format_types_to_string(types: dict[str, str] | list[dict[str, str]]) -> str:
-    """Formats a type hierarchy (flat or nested) into a PDDL-style string."""
-    formatted = format_types(types)
-
-    # appends `object` to parent type (required for some PDDL parsers)
-    type_groups = {}
-    for type_name, desc in formatted.items():
-
-        # if type has a parent
-        if " - " in type_name:
-            type_part, parent_part = type_name.split(" - ")
-            parent = parent_part.strip()
-            type_part = type_part.strip()
-        # if type does not have a parent
-        else:
-            # requests if object is appended
-            parent = type_name.strip()
-            type_part = None
-
-        # if there is a parent (could be super type or object)
-        if parent:
-            # if unique parent, add it to type groups
-            if parent not in type_groups:
-                type_groups[parent] = []
-            if type_part:
-                type_groups[parent].append(type_part)
-
-    # build the output lines
-    lines = []
-
-    # handle top-level objects first
-    if "object" in type_groups:
-        top_level_types = sorted(t for t in type_groups["object"] if t != "object")
-        if top_level_types:
-            lines.append(f"{' '.join(top_level_types)} - object")
-        del type_groups["object"]
-
-    # handle child groups
-    for parent, child_types in sorted(type_groups.items()):
-
-        if child_types:
-            child_line = " ".join(sorted(child_types))
-            lines.append(f"{child_line} - {parent}")
-        else:
-            lines.append(f"{parent}")
-
-    return "\n".join(lines)
+def format_constants(constants: list[Constant]) -> str:
+    """Formats constants into PDDL string."""
+    sorted_constants = sorted(constants, key=lambda c: natural_sort_key(c.name))
+    return "\n".join([f"{c.name} - {c.type}" for c in sorted_constants])
 
 
-def format_constants(constants: dict[str, str]) -> str:
-    """Formats constant dictionary into PDDL-style string"""
-    lines = []
-    for const_name, const_type in constants.items():
-        lines.append(f"{const_name} - {const_type}")
-
-    return "\n".join(lines)
-
-
-def format_expression(expressions: list[Predicate] | list[Function]) -> str:
-    """Formats predicate/function list into a PDDL-style string, removing exact duplicates."""
-    unique = dict()  # key = (name.lower(), tuple(params)), value = clean string
-    for exp in expressions:
-        key = (exp["name"], tuple(exp["params"]))
-        if key not in unique:
-            unique[key] = exp["clean"].replace(":", " ; ")
-
-    return "\n".join(unique.values())
-
-
-def format_params(parameters: OrderedDict) -> str:
-    """Helper function to format parameters (as its type) into a PDDL-style string."""
-    grouped_params = defaultdict(list)
-    for name, type_ in parameters.items():
-        # ensure name starts with '?'
-        name = name if name.startswith("?") else f"?{name}"
-        clean_type = type_.strip() if type_ else None
-        grouped_params[clean_type].append(name)
-
-    # separate out typed and untyped/object parameters
-    typed_parts = []
-    untyped_parts = []
-    for type_, names in grouped_params.items():
-        if type_ is None or type_ == "object":
-            untyped_parts.append(" ".join(names))  # untyped parameters
-        else:
-            typed_parts.append(f"{' '.join(names)} - {type_}")
-
-    return " ".join(typed_parts + untyped_parts)
-
-
-def format_actions(actions: list[Action]) -> str:
-    """Formats a list of Actions into a PDDL-style string."""
-    desc = ""
-    for action in actions:
-        desc += "\n\n" + indent(format_action_desc(action), level=1)
-    return desc
-
-
-def format_action_desc(action: Action) -> str:
-    """Helper function to format individual action descriptions"""
-    param_str = format_params(action["params"])
-
-    preconditions = "\n".join(
-        line for line in action["preconditions"].splitlines() if line.strip()
+def format_predicates(predicates: list[Predicate]) -> str:
+    """Formats predicates into PDDL string."""
+    sorted_predicates = sorted(predicates, key=lambda p: natural_sort_key(p.name))
+    return "\n".join(
+        [
+            f"({p.name} {' '.join([f'{param.variable} - {param.type}' for param in p.params])})"
+            for p in sorted_predicates
+        ]
     )
 
-    effects = "\n".join(line for line in action["effects"].splitlines() if line.strip())
 
-    desc = f"(:action {action['name']}\n"
-    desc += f"   :parameters (\n{indent(string=param_str, level=2)}\n   )\n"
-    desc += f"   :precondition\n{indent(string=preconditions, level=2)}\n"
-    desc += f"   :effect\n{indent(string=effects, level=2)}\n"
+def format_functions(functions: list[Function]) -> str:
+    """Formats functions into PDDL string."""
+    sorted_functions = sorted(functions, key=lambda f: natural_sort_key(f.name))
+    return "\n".join(
+        [
+            f"({f.name} {' '.join([f'{param.variable} - {param.type}' for param in f.params])})"
+            for f in sorted_functions
+        ]
+    )
+
+
+def format_constraints(constraints: list[Constraint]) -> str:
+    """Formats constraints into PDDL string."""
+    parts = [format_logic(c.condition) for c in constraints]
+    if len(parts) == 1:
+        return parts[0]
+    return f"(and {' '.join(parts)})"
+
+
+def format_params(params: List[Parameter]) -> str:
+    """Formats parameters into PDDL string."""
+    grouped_params = {}
+    for p in params:
+        # normalize empty types to "object"
+        param_type = p.type.lower() if p.type else "object"
+
+        if param_type not in grouped_params:
+            grouped_params[param_type] = []
+        grouped_params[param_type].append(p.variable)
+
+    parts = []
+    regular_types = [t for t in grouped_params.keys() if t != "object"]
+
+    # sort the type names alphanumerically (e.g., 'block' before 'type')
+    regular_types.sort(key=natural_sort_key)
+    for param_type in regular_types:
+        # sort the variables within this type group
+        sorted_vars = sorted(grouped_params[param_type], key=natural_sort_key)
+        var_str = " ".join(sorted_vars)
+        parts.append(f"{var_str} - {param_type}")
+
+    # handle 'object' variables last
+    if "object" in grouped_params:
+        sorted_obj_vars = sorted(grouped_params["object"], key=natural_sort_key)
+        object_vars = " ".join(sorted_obj_vars)
+        parts.append(object_vars)
+
+    return " ".join(parts)
+
+
+def format_logic(cond: LogicalCondition) -> str:
+    """Recursively unpacks a LogicalCondition (str or dict) into a PDDL string."""
+    if isinstance(cond, str):
+        return cond
+
+    if "operator" in cond:
+        op = cond["operator"]
+        if op == "not":
+            return f"(not {format_logic(cond['condition'])})"
+        elif op in ["and", "or"]:
+            return f"({op} {' '.join(format_logic(c) for c in cond['conditions'])})"
+        elif op == "imply":
+            ant = cond["antecedent"]
+            cons = cond["consequent"]
+            ant_str = format_condition_block(ant)
+            cons_str = format_condition_block(cons)
+            return f"(imply {ant_str} {cons_str})"
+        # Support for PDDL 3 constraints
+        elif op in ["always", "sometime", "at-most-once"]:
+            return f"({op} {format_logic(cond['condition'])})"
+        elif op == "within":
+            return f"(within {cond['time']} {format_logic(cond['condition'])})"
+        elif op == "hold-after":
+            return f"(hold-after {cond['time']} {format_logic(cond['condition'])})"
+        elif op == "hold-during":
+            return f"(hold-during [{cond['time_start']} {cond['time_end']}] {format_logic(cond['condition'])})"
+        elif op == "sometime-after":
+            return f"(sometime-after {format_logic(cond['antecedent'])} {format_logic(cond['consequent'])})"
+        elif op == "sometime-before":
+            return f"(sometime-before {format_logic(cond['antecedent'])} {format_logic(cond['consequent'])})"
+        elif op == "always-within":
+            return f"(always-within {cond['time']} {format_logic(cond['antecedent'])} {format_logic(cond['consequent'])})"
+        return ""
+
+    if "quantifier" in cond:
+        q = cond["quantifier"]
+        params = " ".join(
+            [f"{p['variable']} - {p['type']}" for p in cond["parameters"]]
+        )
+        conds_str = format_condition_block(cond["conditions"])
+        return f"({q} ({params}) {conds_str})"
+
+    if "preference" in cond:
+        pref_name = cond["preference"]
+        pref_cond = format_logic(cond.get("condition", ""))
+        return f"(preference {pref_name} {pref_cond})"
+
+    return ""
+
+
+def format_condition_block(conds: list[LogicalCondition]) -> str:
+    """Wraps a list of logical conditions in an (and ...) block securely."""
+    if not conds:
+        return ""
+    if len(conds) == 1:
+        return format_logic(conds[0])
+    return f"(and {' '.join(format_logic(c) for c in conds)})"
+
+
+def format_effect_block(eff: ActionEffect) -> str:
+    """Converts an ActionEffect (or dict from ConditionalEffect) into a PDDL effect string."""
+    add = eff.add if hasattr(eff, "add") else eff.get("add", [])
+    delete = eff.delete if hasattr(eff, "delete") else eff.get("delete", [])
+    numeric = eff.numeric if hasattr(eff, "numeric") else eff.get("numeric", [])
+    conditional = (
+        eff.conditional if hasattr(eff, "conditional") else eff.get("conditional", [])
+    )
+
+    parts = []
+    parts.extend([format_logic(c) for c in add])
+    parts.extend([f"(not {format_logic(c)})" for c in delete])
+    parts.extend([format_logic(c) for c in numeric])
+
+    for c in conditional:
+        cond_list = c.condition if hasattr(c, "condition") else c.get("condition", [])
+        eff_obj = c.effect if hasattr(c, "effect") else c.get("effect", {})
+        cond_str = format_condition_block(cond_list)
+        eff_str = format_effect_block(eff_obj)
+        parts.append(f"(when {cond_str} {eff_str})")
+
+    if not parts:
+        return ""
+    if len(parts) == 1:
+        return parts[0]
+    return f"(and {' '.join(parts)})"
+
+
+def format_action(action: Action) -> str:
+    """Formats a single standard Action into a PDDL string."""
+    param_str = format_params(params=action.params)
+    pre_str = format_condition_block(conds=action.preconditions.conditions)
+    eff_str = format_effect_block(eff=action.effects)
+
+    desc = f"(:action {action.name}\n"
+    desc += f"  :parameters ({param_str})\n"
+    if pre_str:
+        desc += f"  :precondition {pre_str}\n"
+    if eff_str:
+        desc += f"  :effect {eff_str}\n"
     desc += ")"
     return desc
 
 
-# ---- PDDL PROBLEM FORMATTER ----
+def format_actions(actions: list[Action]) -> str:
+    """Formats multiple actions into PDDL string."""
+    return "\n\n".join([format_action(a) for a in actions])
 
 
-def format_objects(objects: dict[str, str]) -> str:
-    """Formats task objects into a PDDL-style string."""
-    objects = "\n".join(
-        [f"{obj} - {type}" if type else f"{obj}" for obj, type in objects.items()]
+def format_durative_action(d_act: DurativeAction) -> str:
+    """Formats a single DurativeAction into a PDDL string."""
+    param_str = format_params(params=d_act.params)
+
+    dur_str = ""
+    if d_act.duration:
+        dur_str = (
+            d_act.duration[0]
+            if len(d_act.duration) == 1
+            else f"(and {' '.join(d_act.duration)})"
+        )
+
+    cond_parts = []
+    if d_act.conditions.at_start:
+        cond_parts.append(
+            f"(at start {format_condition_block(d_act.conditions.at_start)})"
+        )
+    if d_act.conditions.over_all:
+        cond_parts.append(
+            f"(over all {format_condition_block(d_act.conditions.over_all)})"
+        )
+    if d_act.conditions.at_end:
+        cond_parts.append(f"(at end {format_condition_block(d_act.conditions.at_end)})")
+    cond_str = (
+        f"(and {' '.join(cond_parts)})"
+        if len(cond_parts) > 1
+        else (cond_parts[0] if cond_parts else "")
     )
-    return objects
+
+    eff_parts = []
+    if d_act.effects.at_start:
+        if start_eff := format_effect_block(d_act.effects.at_start):
+            eff_parts.append(f"(at start {start_eff})")
+    if d_act.effects.at_end:
+        if end_eff := format_effect_block(d_act.effects.at_end):
+            eff_parts.append(f"(at end {end_eff})")
+    if d_act.effects.continuous:
+        if cont_eff := format_condition_block(d_act.effects.continuous):
+            eff_parts.append(cont_eff)
+    eff_str = (
+        f"(and {' '.join(eff_parts)})"
+        if len(eff_parts) > 1
+        else (eff_parts[0] if eff_parts else "")
+    )
+
+    desc = f"(:durative-action {d_act.name}\n"
+    desc += f"  :parameters ({param_str})\n"
+    if dur_str:
+        desc += f"  :duration {dur_str}\n"
+    if cond_str:
+        desc += f"  :condition {cond_str}\n"
+    if eff_str:
+        desc += f"  :effect {eff_str}\n"
+    desc += ")"
+    return desc
 
 
-def format_initial(initial_states: list[dict[str, str]]) -> str:
-    """Formats task initial states into a PDDL-style string."""
-
-    full_str = []
-
-    for state in initial_states:
-        # if function statement
-        if state.get("func_name"):
-            state_op, state_func, state_params, state_value = (
-                state["op"],
-                state["func_name"],
-                " ".join(state["params"]),
-                state["value"],
-            )
-            full_str.append(f"({state_op} ({state_func} {state_params}) {state_value})")
-        # if predicate statement
-        elif state.get("pred_name"):
-
-            inner_str = f"({state['pred_name']} {' '.join(state['params'])})"
-
-            full_str.append(f"(not {inner_str})" if state["neg"] else inner_str)
-
-    initial_states_str = "\n".join(full_str)  # combine the states into a single string
-
-    return initial_states_str
+def format_durative_actions(d_actions: list[DurativeAction]) -> str:
+    """Formats multiple durative actions into PDDL string."""
+    return "\n\n".join([format_durative_action(d) for d in d_actions])
 
 
-def format_goal(goal_states: list[dict[str, str]]) -> str:
-    """Formats task goal states into a PDDL-style string."""
-    full_str = []
+def format_derived_predicate(dp: DerivedPredicate) -> str:
+    """Formats a single DerivedPredicate into a PDDL string."""
+    param_str = format_params(params=dp.params)
+    cond_str = format_logic(cond=dp.condition)
 
-    for state in goal_states:
-        # if function statement
-        if state.get("func_name"):
-            state_op, state_func, state_params, state_value = (
-                state["op"],
-                state["func_name"],
-                " ".join(state["params"]),
-                state["value"],
-            )
-            full_str.append(f"({state_op} ({state_func} {state_params}) {state_value})")
-        # if predicate statement
-        elif state.get("pred_name"):
-            inner_str = f"({state['pred_name']} {' '.join(state['params'])})"
-            full_str.append(f"(not {inner_str})" if state["neg"] else inner_str)
+    desc = f"(:derived ({dp.name} {param_str})\n"
+    desc += f"  {cond_str}\n"
+    desc += ")"
+    return desc
 
-        goal_states_str = "\n".join(full_str)  # combine the states into a single string
 
-    goal_states_str = f"(and \n{indent(goal_states_str, 1)}\n)"
+def format_derived_predicates(d_preds: list[DerivedPredicate]) -> str:
+    """Formats multiple derived predicates into PDDL string."""
+    return "\n\n".join([format_derived_predicate(dp) for dp in d_preds])
 
-    return goal_states_str
+
+def format_event(event: Event) -> str:
+    """Formats a single PDDL+ Event into a PDDL string."""
+    param_str = format_params(params=event.params)
+    pre_str = format_condition_block(conds=event.preconditions.conditions)
+    eff_str = format_effect_block(eff=event.effects)
+
+    desc = f"(:event {event.name}\n"
+    desc += f"  :parameters ({param_str})\n"
+    if pre_str:
+        desc += f"  :precondition {pre_str}\n"
+    if eff_str:
+        desc += f"  :effect {eff_str}\n"
+    desc += ")"
+    return desc
+
+
+def format_events(events: list[Event]) -> str:
+    """Formats multiple events into PDDL string."""
+    return "\n\n".join([format_event(e) for e in events])
+
+
+def format_process(process: Process) -> str:
+    """Formats a single PDDL+ Process into a PDDL string."""
+    param_str = format_params(params=process.params)
+    pre_str = format_condition_block(conds=process.preconditions.conditions)
+    eff_str = format_effect_block(eff=process.effects)
+
+    desc = f"(:process {process.name}\n"
+    desc += f"  :parameters ({param_str})\n"
+    if pre_str:
+        desc += f"  :precondition {pre_str}\n"
+    if eff_str:
+        desc += f"  :effect {eff_str}\n"
+    desc += ")"
+    return desc
+
+
+def format_processes(processes: list[Process]) -> str:
+    """Formats multiple processes into PDDL string."""
+    return "\n\n".join([format_process(p) for p in processes])
+
+
+# ---- PROBLEM ----
+def format_objects(objects: list[PDDLObject]) -> str:
+    """Format objects into PDDL string."""
+    grouped_objs = {}
+    for obj in objects:
+        obj_type = obj.type.lower() if obj.type else "object"
+        if obj_type not in grouped_objs:
+            grouped_objs[obj_type] = []
+        grouped_objs[obj_type].append(obj.name)
+
+    parts = []
+    regular_types = [t for t in grouped_objs.keys() if t != "object"]
+    regular_types.sort(key=natural_sort_key)
+
+    for obj_type in regular_types:
+        sorted_vars = sorted(grouped_objs[obj_type], key=natural_sort_key)
+        var_str = " ".join(sorted_vars)
+        parts.append(f"{var_str} - {obj_type}")
+
+    if "object" in grouped_objs:
+        sorted_obj_vars = sorted(grouped_objs["object"], key=natural_sort_key)
+        object_vars = " ".join(sorted_obj_vars)
+        parts.append(object_vars)
+
+    return "\n".join(parts)
+
+
+def format_initial_state(init: InitialState) -> str:
+    """Formats standard initial facts and Timed Initial Literals (TILs/TIFs)."""
+    parts = []
+
+    # format standard facts
+    for fact in init.facts:
+        parts.append(format_logic(fact))
+
+    # format timed facts securely
+    for tf in init.timed_facts:
+        fact_str = format_logic(tf.fact)
+        parts.append(f"(at {tf.time} {fact_str})")
+
+    return "\n".join(parts)
+
+
+def format_goal_states(goals: GoalState) -> str:
+    """Formats goal conditions. Implicitly wraps multiple conditions in an (and ...) block."""
+    return format_condition_block(goals.conditions)
+
+
+def format_metric(metric: Metric) -> str:
+    """Formats a PDDL Plan Metric (minimize / maximize)."""
+    return f"(:metric {metric.optimization} {metric.expression})"
+
+
+def format_plan(plan_list: list[str]) -> str:
+    """Formats a list of action strings into a numbered plan."""
+    formatted_steps = []
+    for i, action in enumerate(plan_list):
+        action_str = action if action.startswith("(") else f"({action})"
+        formatted_steps.append(f"{i}: {action_str}")
+
+    return "\n".join(formatted_steps)
 
 
 # ---- HELPER FUNCTIONS ----
-
-
 def indent(string: str, level: int = 2):
     """Indent string helper function to format PDDL domain/task"""
     return "   " * level + string.replace("\n", f"\n{'   ' * level}")
 
 
-def remove_comments(text: str, comment_prefixes=[";", "#", "//"]) -> str:
-    """Remove comments from text using multiple prefix styles."""
-
+def remove_comments(text: str) -> str:
+    """Remove PDDL comments (semicolons). Ignores #, //, and #t which are valid PDDL tokens."""
     lines = text.splitlines()
     cleaned_lines = []
-
     for line in lines:
-        stripped_line = line
-        for prefix in comment_prefixes:
-            if prefix in stripped_line:
-                # only remove comment if prefix is not inside quotes or code
-                stripped_line = stripped_line.split(prefix, 1)[0]
-        cleaned_lines.append(stripped_line.rstrip())
-
-    # remove blank lines and normalize whitespace
-    cleaned = "\n".join(line for line in cleaned_lines if line.strip())
-    cleaned = re.sub(r"\n{2,}", "\n\n", cleaned)  # collapse multiple newlines
-
-    return cleaned
+        stripped = line.strip()
+        if stripped.startswith(";"):
+            continue
+        cleaned_lines.append(line)
+    cleaned = "\n".join(cleaned_lines)
+    return re.sub(r"\n{2,}", "\n\n", cleaned)
 
 
-def format_pddl_expr(expr):
-    """Parses nested list format into bracket."""
-    if isinstance(expr, list):
-        return "(" + " ".join(format_pddl_expr(e) for e in expr) + ")"
-    else:
-        return str(expr)
-
-
-def pretty_print_dict(data):
-    """Formats dictionary or list of dictionaries in JSON format for readability."""
-    if isinstance(data, (dict, list)):
-        return json.dumps(data, indent=4)
-    else:
-        raise TypeError("Input must be a dictionary or a list of dictionaries")
-
-
-def pretty_print_expression(expressions: list[Predicate] | list[Function]) -> str:
-    """Formats list of predicates easier for readability"""
-    if not expressions:
-        return ""
-    return "\n".join(
-        f"{i + 1}. {exp['name']}: {exp.get('desc', 'No description provided') or 'No description provided'}"
-        for i, exp in enumerate(expressions)
-    )
+def natural_sort_key(s: str) -> list:
+    """Splits strings into text and numbers to ensure ?b2 comes before ?b12"""
+    return [
+        int(text) if text.isdigit() else text.lower() for text in re.split(r"(\d+)", s)
+    ]

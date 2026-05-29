@@ -1,918 +1,865 @@
-import unittest, textwrap
-from collections import OrderedDict
-from l2p import *
-from .mock_llm import MockLLM
+import unittest
+import textwrap
+import io
+from contextlib import redirect_stdout
+
+from l2p import DomainBuilder
+from l2p.utils.pddl_types import *
+from tests.mock_llm import MockLLM
 
 
-class TestDomainBuilder(unittest.TestCase):
+class TestDomainBuilderFormalize(unittest.TestCase):
+    """Tests for DomainBuilder.formalize_component()."""
+
     def setUp(self):
-        self.domain_builder = DomainBuilder()
-        self.syntax_validator = SyntaxValidator()
-        self.mock_llm = MockLLM()
+        self.builder = DomainBuilder()
+        self.mock = MockLLM()
+        self.prompt = "Extract PDDL from:\n{domain_desc}\n{context}"
 
-    def normalize(self, string):
-        return "\n".join(
-            line.strip() for line in textwrap.dedent(string).strip().splitlines()
-        )
+    # ---- TYPES ----
 
     def test_formalize_types(self):
-
-        self.syntax_validator.error_types = ["validate_format_types"]
-        self.mock_llm.output = textwrap.dedent(
-            """
-            ### TYPES
-            ```
-            {
-                "arm": "arm for a robot",
-                "block": "block that can be stacked and unstacked",
-                "table": "table that blocks sits on",
-            }
-            ```
-            """
-        )
-
-        expected_types = {
-            "arm": "arm for a robot",
-            "block": "block that can be stacked and unstacked",
-            "table": "table that blocks sits on",
-        }
-
-        types, _, validation_info = self.domain_builder.formalize_types(
-            model=self.mock_llm,
-            domain_desc="",
-            prompt_template="",
-            syntax_validator=self.syntax_validator,
-        )
-
-        self.assertEqual(expected_types, types)
-        self.assertEqual(validation_info[0], True)
-
-    def test_formalize_type_hierarchy(self):
-        self.syntax_validator.error_types = [
-            "validate_format_types",
-            "validate_cyclic_types",
+        self.mock.output = textwrap.dedent("""\
+        <types>
+        [
+            {"name": "arm", "parent": "object", "desc": "robot arm"},
+            {"name": "block", "parent": "object", "desc": "stackable block"},
+            {"name": "table", "parent": "object", "desc": "blocks sit on table"}
         ]
-        self.mock_llm.output = textwrap.dedent(
-            """
-            ### TYPES
-            ```
-            [
-                {
-                    "arm": "'arm for a robot'",
-                    "children": []
-                },
-                {
-                    "block": "block that can be stacked and unstacked",
-                    "children": [
-                        {
-                            "heavy_block": "a heavy block that cannot be picked up",
-                            "children": []
-                        },
-                        {
-                            "light_block": "a light block that can be picked up",
-                            "children": []
-                        }
-                    ]
-                },
-                {
-                    "table": "table that blocks sits on",
-                    "children": []
-                }
-            ]
-            ```
-            """
+        </types>""")
+        results, output = self.builder.formalize_component(
+            model=self.mock,
+            component_class=PDDLType,
+            prompt_template=self.prompt,
+            domain_desc="blocksworld",
         )
+        self.assertIn(PDDLType, results)
+        types = results[PDDLType]
+        self.assertEqual(len(types), 3)
+        self.assertEqual(types[0].name, "arm")
+        self.assertEqual(types[1].name, "block")
+        self.assertEqual(types[2].name, "table")
 
-        expected_types = [
-            {"arm": "'arm for a robot'", "children": []},
-            {
-                "block": "block that can be stacked and unstacked",
-                "children": [
-                    {
-                        "heavy_block": "a heavy block that cannot be picked up",
-                        "children": [],
-                    },
-                    {
-                        "light_block": "a light block that can be picked up",
-                        "children": [],
-                    },
-                ],
-            },
-            {"table": "table that blocks sits on", "children": []},
+    def test_formalize_types_with_hierarchy(self):
+        self.mock.output = textwrap.dedent("""\
+        <types>
+        [
+            {"name": "vehicle", "parent": "object", "desc": null},
+            {"name": "rover", "parent": "vehicle", "desc": "planetary rover"},
+            {"name": "drone", "parent": "vehicle", "desc": "flying drone"}
         ]
-
-        types, _, validation_info = self.domain_builder.formalize_type_hierarchy(
-            model=self.mock_llm,
-            domain_desc="",
-            prompt_template="",
-            syntax_validator=self.syntax_validator,
+        </types>""")
+        results, _ = self.builder.formalize_component(
+            model=self.mock,
+            component_class=PDDLType,
+            prompt_template=self.prompt,
+            domain_desc="rovers",
         )
+        types = results[PDDLType]
+        self.assertEqual(len(types), 3)
+        rover = next(t for t in types if t.name == "rover")
+        self.assertEqual(rover.parent, "vehicle")
 
-        self.assertEqual(expected_types, types)
-        self.assertEqual(validation_info[0], True)
-
-    def test_formalize_functions(self):
-
-        self.syntax_validator.error_types = ["validate_format_functions"]
-
-        self.mock_llm.output = textwrap.dedent(
-            """
-            ## DISTRACTION TEXT
-            ### FUNCTIONS
-            ```
-            (battery-level ?a - arm): battery level of robot arm
-            (weight ?b - block): weight of a block
-            ```
-            ## DISTRACTION TEXT
-            """
+    def test_formalize_empty_types(self):
+        self.mock.output = "<types>\n[]\n</types>"
+        results, _ = self.builder.formalize_component(
+            model=self.mock,
+            component_class=PDDLType,
+            prompt_template=self.prompt,
+            domain_desc="empty",
         )
+        self.assertEqual(results[PDDLType], [])
 
-        types = {
-            "arm": "arm for a robot",
-            "block": "block that can be stacked and unstacked",
-            "table": "table that blocks sits on",
-        }
-
-        functions, _, validation_info = self.domain_builder.formalize_functions(
-            model=self.mock_llm,
-            domain_desc="",
-            prompt_template="",
-            types=types,
-            syntax_validator=self.syntax_validator,
-        )
-
-        exp_functions = [
-            {
-                "name": "battery-level",
-                "desc": "battery level of robot arm",
-                "raw": "(battery-level ?a - arm): battery level of robot arm",
-                "params": OrderedDict([("?a", "arm")]),
-                "clean": "(battery-level ?a - arm)",
-            },
-            {
-                "name": "weight",
-                "desc": "weight of a block",
-                "raw": "(weight ?b - block): weight of a block",
-                "params": OrderedDict([("?b", "block")]),
-                "clean": "(weight ?b - block)",
-            },
-        ]
-
-        self.assertEqual(validation_info[0], True)
-        self.assertEqual(exp_functions, functions)
-
-    def test_formalize_pddl_action(self):
-
-        self.syntax_validator.unsupported_keywords = []
-
-        self.syntax_validator.error_types = [
-            "validate_header",
-            "validate_duplicate_headers",
-            "validate_unsupported_keywords",
-            "validate_params",
-            "validate_duplicate_predicates",
-            "validate_types_predicates",
-            "validate_format_predicates",
-            "validate_usage_action",
-        ]
-        self.mock_llm.output = textwrap.dedent(
-            """
-            ## DISTRACTION TEXT
-            ### Action Parameters
-            ```
-            - ?b1 - block: The block being stacked on top
-            - ?b2 - block: The block being stacked upon
-            - ?a - arm: The arm performing the stacking action
-            ```
-
-            ## DISTRACTION TEXT
-
-            ### Action Preconditions
-            ```
-            (and
-                (holding ?a ?b1) ; The arm is holding the top block
-                (clear ?b2) ; The bottom block is clear
-                (= (weight ?b1) (weight ?b2))
-                (forall (?block1 ?block2 - block ?a1 - arm)
-                    (and
-                    (clear ?block1)
-                    (= (battery-level ?a) 100)
-                    (>= (weight ?block1) 10)
-                    (<= (weight ?b1) -100)
-                    (< (weight ?block2) 20)
-                    (> (battery-level ?a1) 10)
-                    )
-                )
-            )
-            ```
-
-            ## DISTRACTION TEXT
-
-            ### Action Effects
-            ```
-            (and
-                (not (holding ?a ?b1)) ; The arm is no longer holding the top block
-                (on ?b1 ?b2) ; The top block is now on the bottom block
-                (not (clear ?b2)) ; The bottom block is no longer clear
-                (when (clear ?b1)
-                    (and
-                    (clear ?b2)
-                    (clear ?b1)
-                    )
-                )
-                (increase (battery-level ?a) 200)
-                (increase (battery-level ?a) (* (weight ?b1) 100))
-                (decrease (battery-level ?a) (* 0.05 (weight ?b2)))
-                (assign (battery-level ?a) (* (weight ?b1) 2))
-                (scale-up (battery-level ?a) 2)
-                (scale-down (battery-level ?a) (weight ?b1))
-            )
-            ```
-
-            ## DISTRACTION TEXT
-
-            ### New Predicates
-            ```
-            - (on ?b1 - block ?b2 - block): true if the block ?b1 is on top of the block ?b2
-            - (holding ?a - arm ?b - block): true if arm is holding a block
-            - (clear ?b - block): true if a block does not have anything on top of it
-            ```
-
-            ## DISTRACTION TEXT
-            """
-        )
-
-        exp_predicates = [
-            Predicate(
-                {
-                    "name": "on",
-                    "desc": "true if the block ?b1 is on top of the block ?b2",
-                    "raw": "- (on ?b1 - block ?b2 - block): true if the block ?b1 is on top of the block ?b2",
-                    "params": OrderedDict([("?b1", "block"), ("?b2", "block")]),
-                    "clean": "(on ?b1 - block ?b2 - block)",
-                }
-            ),
-            Predicate(
-                {
-                    "name": "holding",
-                    "desc": "true if arm is holding a block",
-                    "raw": "- (holding ?a - arm ?b - block): true if arm is holding a block",
-                    "params": OrderedDict([("?a", "arm"), ("?b", "block")]),
-                    "clean": "(holding ?a - arm ?b - block)",
-                }
-            ),
-            Predicate(
-                {
-                    "name": "clear",
-                    "desc": "true if a block does not have anything on top of it",
-                    "raw": "- (clear ?b - block): true if a block does not have anything on top of it",
-                    "params": OrderedDict([("?b", "block")]),
-                    "clean": "(clear ?b - block)",
-                }
-            ),
-        ]
-
-        exp_action = {
-            "name": "stack",
-            "params": OrderedDict([("?b1", "block"), ("?b2", "block"), ("?a", "arm")]),
-            "preconditions": "(and\n    (holding ?a ?b1) ; The arm is holding the top block\n    (clear ?b2) ; The bottom block is clear\n    (= (weight ?b1) (weight ?b2))\n    (forall (?block1 ?block2 - block ?a1 - arm)\n        (and\n        (clear ?block1)\n        (= (battery-level ?a) 100)\n        (>= (weight ?block1) 10)\n        (<= (weight ?b1) -100)\n        (< (weight ?block2) 20)\n        (> (battery-level ?a1) 10)\n        )\n    )\n)",
-            "effects": "(and\n    (not (holding ?a ?b1)) ; The arm is no longer holding the top block\n    (on ?b1 ?b2) ; The top block is now on the bottom block\n    (not (clear ?b2)) ; The bottom block is no longer clear\n    (when (clear ?b1)\n        (and\n        (clear ?b2)\n        (clear ?b1)\n        )\n    )\n    (increase (battery-level ?a) 200)\n    (increase (battery-level ?a) (* (weight ?b1) 100))\n    (decrease (battery-level ?a) (* 0.05 (weight ?b2)))\n    (assign (battery-level ?a) (* (weight ?b1) 2))\n    (scale-up (battery-level ?a) 2)\n    (scale-down (battery-level ?a) (weight ?b1))\n)",
-        }
-
-        types = {
-            "arm": "arm for a robot",
-            "block": "block that can be stacked and unstacked",
-            "table": "table that blocks sits on",
-        }
-
-        functions = [
-            {
-                "name": "battery-level",
-                "desc": "battery level of robot arm",
-                "raw": "(battery-level ?a - arm): battery level of robot arm",
-                "params": OrderedDict([("?a", "arm")]),
-                "clean": "(battery-level ?a - arm)",
-            },
-            {
-                "name": "weight",
-                "desc": "weight of a block",
-                "raw": "(weight ?b - block): weight of a block",
-                "params": OrderedDict([("?b", "block")]),
-                "clean": "(weight ?b - block)",
-            },
-        ]
-
-        action, new_predicates, _, validation_info = (
-            self.domain_builder.formalize_pddl_action(
-                model=self.mock_llm,
-                domain_desc="",
-                prompt_template="",
-                types=types,
-                functions=functions,
-                syntax_validator=self.syntax_validator,
-                action_name="stack",
-                extract_new_preds=True,
-            )
-        )
-
-        self.assertEqual(exp_action, action)
-        self.assertEqual(exp_predicates, new_predicates)
-        self.assertEqual(validation_info[0], True)
-
-    def test_formalize_parameters(self):
-
-        self.syntax_validator.headers = ["Action Parameters"]
-        self.syntax_validator.error_types = [
-            "validate_header",
-            "validate_duplicate_headers",
-            "validate_unsupported_keywords",
-            "validate_params",
-        ]
-
-        self.mock_llm.output = textwrap.dedent(
-            """
-            ## DISTRACTION TEXT
-
-            ### Action Parameters
-            ```
-            - ?b1 - block: the block that is being stacked on top
-            - ?b2 - block: the block that is being stacked upon
-            - ?a - arm: the arm of the robot performing the action
-            ```
-
-            ## DISTRACTION TEXT
-            """
-        )
-
-        types = {
-            "arm": "arm for a robot",
-            "block": "block that can be stacked and unstacked",
-            "table": "table that blocks sits on",
-        }
-
-        exp_params = OrderedDict({"?b1": "block", "?b2": "block", "?a": "arm"})
-
-        params, _, _, validation_info = self.domain_builder.formalize_parameters(
-            model=self.mock_llm,
-            domain_desc="",
-            prompt_template="",
-            action_name="stack",
-            types=types,
-            syntax_validator=self.syntax_validator,
-        )
-
-        self.assertEqual(exp_params, params)
-        self.assertEqual(validation_info[0], True)
-
-    def test_formalize_preconditions(self):
-        self.syntax_validator.headers = ["Action Preconditions"]
-        self.syntax_validator.error_types = [
-            "validate_header",
-            "validate_duplicate_headers",
-            "validate_unsupported_keywords",
-            "validate_params",
-        ]
-
-        self.mock_llm.output = textwrap.dedent(
-            """
-            ## DISTRACTION TEXT
-
-            ### Action Preconditions
-            ```
-            (and
-                (holding ?a ?b1) ; The arm is holding the top block
-                (clear ?b2) ; The bottom block is clear
-            )
-            ```
-
-            ## DISTRACTION TEXT
-            """
-        )
-
-        types = {
-            "arm": "arm for a robot",
-            "block": "block that can be stacked and unstacked",
-            "table": "table that blocks sits on",
-        }
-
-        params = OrderedDict({"?b1": "block", "?b2": "block", "?a": "arm"})
-
-        exp_preconditions = textwrap.dedent(
-            """
-            (and
-                (holding ?a ?b1) ; The arm is holding the top block
-                (clear ?b2) ; The bottom block is clear
-            )
-            """
-        )
-
-        preconditions, _, _, validation_info = (
-            self.domain_builder.formalize_preconditions(
-                model=self.mock_llm,
-                domain_desc="",
-                prompt_template="",
-                action_name="stack",
-                params=params,
-                types=types,
-                syntax_validator=self.syntax_validator,
-                extract_new_preds=False,
-            )
-        )
-
-        self.assertEqual(exp_preconditions.strip(), preconditions.strip())
-        self.assertEqual(validation_info[0], True)
-
-    def test_formalize_effects(self):
-        self.syntax_validator.headers = ["Action Effects"]
-        self.syntax_validator.error_types = [
-            "validate_header",
-            "validate_duplicate_headers",
-            "validate_unsupported_keywords",
-            "validate_params",
-        ]
-
-        self.mock_llm.output = textwrap.dedent(
-            """
-            ## DISTRACTION TEXT
-
-            ### Action Preconditions
-            ```
-            (and
-                (holding ?a ?b1) ; The arm is holding the top block
-                (clear ?b2) ; The bottom block is clear
-            )
-            ```
-
-            ## DISTRACTION TEXT
-
-            ### Action Effects
-            ```
-            (and
-                (not (holding ?a ?b1)) ; The arm is no longer holding the top block
-                (on ?b1 ?b2) ; The top block is now on the bottom block
-                (not (clear ?b2)) ; The bottom block is no longer clear
-            )
-            ```
-            """
-        )
-
-        types = {
-            "arm": "arm for a robot",
-            "block": "block that can be stacked and unstacked",
-            "table": "table that blocks sits on",
-        }
-
-        params = OrderedDict({"?b1": "block", "?b2": "block", "?a": "arm"})
-
-        exp_effects = textwrap.dedent(
-            """
-            (and
-                (not (holding ?a ?b1)) ; The arm is no longer holding the top block
-                (on ?b1 ?b2) ; The top block is now on the bottom block
-                (not (clear ?b2)) ; The bottom block is no longer clear
-            )
-            """
-        )
-
-        effects, _, _, validation_info = self.domain_builder.formalize_effects(
-            model=self.mock_llm,
-            domain_desc="",
-            prompt_template="",
-            action_name="stack",
-            params=params,
-            types=types,
-            syntax_validator=self.syntax_validator,
-            extract_new_preds=False,
-        )
-
-        self.assertEqual(self.normalize(exp_effects), self.normalize(effects))
-        self.assertEqual(validation_info[0], True)
+    # ---- PREDICATES ----
 
     def test_formalize_predicates(self):
-        self.syntax_validator.headers = ["New Predicates"]
-        self.syntax_validator.error_types = [
-            "validate_types_predicates",
-            "validate_format_predicates",
-            "validate_duplicate_predicates",
+        self.mock.output = textwrap.dedent("""\
+        <predicates>
+        [
+            {"name": "at", "params": [{"variable": "?r", "type": "rover"}, {"variable": "?l", "type": "location"}], "desc": null},
+            {"name": "connected", "params": [{"variable": "?from", "type": "location"}, {"variable": "?to", "type": "location"}], "desc": null},
+            {"name": "empty", "params": [], "desc": "global boolean"}
         ]
-
-        self.mock_llm.output = textwrap.dedent(
-            """
-            ## DISTRACTION TEXT
-
-            ### New Predicates
-            ```
-            - (holding ?a - arm ?b - block): true if arm is holding a block
-            - (clear ?b - block): true if a block does not have anything on top of it
-            ```
-
-            ## DISTRACTION TEXT
-            """
+        </predicates>""")
+        results, _ = self.builder.formalize_component(
+            model=self.mock,
+            component_class=Predicate,
+            prompt_template=self.prompt,
+            domain_desc="test",
         )
+        preds = results[Predicate]
+        self.assertEqual(len(preds), 3)
+        at = next(p for p in preds if p.name == "at")
+        self.assertEqual(len(at.params), 2)
+        self.assertEqual(at.params[0].variable, "?r")
+        empty = next(p for p in preds if p.name == "empty")
+        self.assertEqual(len(empty.params), 0)
 
-        types = {
-            "arm": "arm for a robot",
-            "block": "block that can be stacked and unstacked",
-            "table": "table that blocks sits on",
-        }
-
-        predicates = [
-            {
-                "name": "on",
-                "desc": "true if the block ?b1 is on top of the block ?b2",
-                "raw": "- (on ?b1 - block ?b2 - block): true if the block ?b1 is on top of the block ?b2",
-                "params": OrderedDict({"?b1": "block", "?b2": "block"}),
-                "clean": "(on ?b1 - block ?b2 - block)",
-            }
+    def test_formalize_predicate_with_untyped_params(self):
+        self.mock.output = textwrap.dedent("""\
+        <predicates>
+        [
+            {"name": "pred", "params": [{"variable": "?x", "type": "object"}, {"variable": "?y", "type": "object"}], "desc": null}
         ]
-
-        new_predicates, _, validation_info = self.domain_builder.formalize_predicates(
-            model=self.mock_llm,
-            domain_desc="",
-            prompt_template="",
-            types=types,
-            predicates=predicates,
-            syntax_validator=self.syntax_validator,
+        </predicates>""")
+        results, _ = self.builder.formalize_component(
+            model=self.mock,
+            component_class=Predicate,
+            prompt_template=self.prompt,
+            domain_desc="test",
         )
+        preds = results[Predicate]
+        self.assertEqual(len(preds), 1)
+        self.assertEqual(preds[0].params[0].type, "object")
 
-        predicates.extend(new_predicates)
+    # ---- FUNCTIONS ----
 
-        exp_predicates = [
-            {
-                "name": "holding",
-                "desc": "true if arm is holding a block",
-                "raw": "- (holding ?a - arm ?b - block): true if arm is holding a block",
-                "params": OrderedDict({"?a": "arm", "?b": "block"}),
-                "clean": "(holding ?a - arm ?b - block)",
-            },
-            {
-                "name": "clear",
-                "desc": "true if a block does not have anything on top of it",
-                "raw": "- (clear ?b - block): true if a block does not have anything on top of it",
-                "params": OrderedDict({"?b": "block"}),
-                "clean": "(clear ?b - block)",
-            },
-            {
-                "name": "on",
-                "desc": "true if the block ?b1 is on top of the block ?b2",
-                "raw": "- (on ?b1 - block ?b2 - block): true if the block ?b1 is on top of the block ?b2",
-                "params": OrderedDict({"?b1": "block", "?b2": "block"}),
-                "clean": "(on ?b1 - block ?b2 - block)",
-            },
+    def test_formalize_functions(self):
+        self.mock.output = textwrap.dedent("""\
+        <functions>
+        [
+            {"name": "battery-level", "params": [{"variable": "?r", "type": "rover"}], "desc": "battery level"},
+            {"name": "total-cost", "params": [], "desc": null}
         ]
-
-        self.assertCountEqual(exp_predicates, predicates)
-        self.assertEqual(validation_info[0], True)
-
-    def test_formalize_function(self):
-
-        self.syntax_validator.error_types = ["validate_format_functions"]
-        self.mock_llm.output = textwrap.dedent(
-            """
-            ## DISTRACTION TEXT
-
-            ### FUNCTIONS
-            ```
-            - (battery-level ?r - robot): battery level of robot
-            - (humidity ?loc - location): humidity of location
-            ```
-
-            ## DISTRACTION TEXT
-            """
+        </functions>""")
+        results, _ = self.builder.formalize_component(
+            model=self.mock,
+            component_class=Function,
+            prompt_template=self.prompt,
+            domain_desc="test",
         )
+        funcs = results[Function]
+        self.assertEqual(len(funcs), 2)
+        self.assertEqual(funcs[0].name, "battery-level")
+        self.assertEqual(funcs[1].name, "total-cost")
+        self.assertEqual(len(funcs[1].params), 0)
 
-        types = {"robot": "a robot", "location": "location to be at"}
-
-        functions, _, validation_info = self.domain_builder.formalize_functions(
-            model=self.mock_llm,
-            domain_desc="",
-            prompt_template="",
-            types=types,
-            syntax_validator=self.syntax_validator,
-        )
-
-        exp_functions = [
-            {
-                "name": "battery-level",
-                "desc": "battery level of robot",
-                "raw": "- (battery-level ?r - robot): battery level of robot",
-                "params": OrderedDict([("?r", "robot")]),
-                "clean": "(battery-level ?r - robot)",
-            },
-            {
-                "name": "humidity",
-                "desc": "humidity of location",
-                "raw": "- (humidity ?loc - location): humidity of location",
-                "params": OrderedDict([("?loc", "location")]),
-                "clean": "(humidity ?loc - location)",
-            },
-        ]
-
-        self.assertEqual(validation_info[0], True)
-        self.assertEqual(exp_functions, functions)
+    # ---- CONSTANTS ----
 
     def test_formalize_constants(self):
-        self.syntax_validator.error_types = ["validate_constant_types"]
-
-        self.mock_llm.output = textwrap.dedent(
-            """
-            ### DISTRACTION TEXT
-            ### CONSTANTS
-            ```
-            {
-                'robot1': 'robot',
-                'robot2': 'robot',
-                'charging-station': 'location',
-                'storage-room': 'location',
-                'loading-dock': 'location',
-            }
-            ```
-            ### DISTRACTION TEXT
-            """
+        self.mock.output = textwrap.dedent("""\
+        <constants>
+        [
+            {"name": "robot1", "type": "robot", "desc": null},
+            {"name": "station", "type": "location", "desc": "charging station"}
+        ]
+        </constants>""")
+        results, _ = self.builder.formalize_component(
+            model=self.mock,
+            component_class=Constant,
+            prompt_template=self.prompt,
+            domain_desc="test",
         )
+        consts = results[Constant]
+        self.assertEqual(len(consts), 2)
+        self.assertEqual(consts[0].name, "robot1")
+        self.assertEqual(consts[0].type, "robot")
 
-        types = {"robot": "a robot", "location": "location to be at"}
+    # ---- REQUIREMENTS ----
 
-        exp_constants = {
-            "robot1": "robot",
-            "robot2": "robot",
-            "charging-station": "location",
-            "storage-room": "location",
-            "loading-dock": "location",
-        }
-
-        constants, _, validation_info = self.domain_builder.formalize_constants(
-            model=self.mock_llm,
-            domain_desc="",
-            prompt_template="",
-            types=types,
-            constants=None,
-            syntax_validator=self.syntax_validator,
+    def test_formalize_requirements(self):
+        self.mock.output = textwrap.dedent("""\
+        <requirements>
+        [
+            {"name": ":strips", "desc": null},
+            {"name": ":typing", "desc": null},
+            {"name": ":negative-preconditions", "desc": null}
+        ]
+        </requirements>""")
+        results, _ = self.builder.formalize_component(
+            model=self.mock,
+            component_class=Requirement,
+            prompt_template=self.prompt,
+            domain_desc="test",
         )
+        reqs = results[Requirement]
+        self.assertEqual(len(reqs), 3)
+        self.assertEqual(reqs[0].name, ":strips")
+        self.assertEqual(reqs[2].name, ":negative-preconditions")
 
-        self.assertEqual(exp_constants, constants)
-        self.assertEqual(validation_info[0], True)
+    # ---- ACTIONS ----
 
-    def test_formalize_domain_level_specs(self):
-
-        self.mock_llm.output = textwrap.dedent(
-            """
-            ### TYPES
-            ```
-            [
-                {
-                    "arm": "'arm for a robot'",
-                    "children": []
-                },
-                {
-                    "block": "block that can be stacked and unstacked",
-                    "children": [
-                        {
-                            "heavy_block": "a heavy block that cannot be picked up",
-                            "children": []
-                        },
-                        {
-                            "light_block": "a light block that can be picked up",
-                            "children": []
-                        }
-                    ]
-                },
-                {
-                    "table": "table that blocks sits on",
-                    "children": []
-                }
-            ]
-            ```
-            
-            ### CONSTANTS
-            ```
-            {
-                'robot1': 'robot',
-                'robot2': 'robot',
-                'charging-station': 'location',
-                'storage-room': 'location',
-                'loading-dock': 'location',
-            }
-            ```
-            
-            ### New Predicates
-            ```
-            - (holding ?a - arm ?b - block): true if arm is holding a block
-            - (clear ?b - block): true if a block does not have anything on top of it
-            ```
-            
-            ### FUNCTIONS
-            ```
-            - (battery-level ?r - robot): battery level of robot
-            - (humidity ?loc - location): humidity of location
-            ```
-            
-            """
-        )
-
-        results, _, _ = self.domain_builder.formalize_domain_level_specs(
-            model=self.mock_llm,
-            domain_desc="",
-            prompt_template="",
-            formalize_types=True,
-            formalize_constants=True,
-            formalize_predicates=True,
-            formalize_functions=True,
-        )
-
-        exp_types = [
-            {"arm": "'arm for a robot'", "children": []},
-            {
-                "block": "block that can be stacked and unstacked",
-                "children": [
-                    {
-                        "heavy_block": "a heavy block that cannot be picked up",
-                        "children": [],
-                    },
-                    {
-                        "light_block": "a light block that can be picked up",
-                        "children": [],
-                    },
-                ],
-            },
-            {"table": "table that blocks sits on", "children": []},
-        ]
-
-        exp_constants = {
-            "robot1": "robot",
-            "robot2": "robot",
-            "charging-station": "location",
-            "storage-room": "location",
-            "loading-dock": "location",
-        }
-
-        exp_preds = [
-            {
-                "name": "holding",
-                "desc": "true if arm is holding a block",
-                "raw": "- (holding ?a - arm ?b - block): true if arm is holding a block",
-                "params": OrderedDict([("?a", "arm"), ("?b", "block")]),
-                "clean": "(holding ?a - arm ?b - block)",
-            },
-            {
-                "name": "clear",
-                "desc": "true if a block does not have anything on top of it",
-                "raw": "- (clear ?b - block): true if a block does not have anything on top of it",
-                "params": OrderedDict([("?b", "block")]),
-                "clean": "(clear ?b - block)",
-            },
-        ]
-
-        exp_func = [
-            {
-                "name": "battery-level",
-                "desc": "battery level of robot",
-                "raw": "- (battery-level ?r - robot): battery level of robot",
-                "params": OrderedDict([("?r", "robot")]),
-                "clean": "(battery-level ?r - robot)",
-            },
-            {
-                "name": "humidity",
-                "desc": "humidity of location",
-                "raw": "- (humidity ?loc - location): humidity of location",
-                "params": OrderedDict([("?loc", "location")]),
-                "clean": "(humidity ?loc - location)",
-            },
-        ]
-
-        self.assertEqual(results["types"], exp_types)
-        self.assertEqual(results["constants"], exp_constants)
-        self.assertEqual(results["predicates"], exp_preds)
-        self.assertEqual(results["functions"], exp_func)
-
-    def test_generate_domain(self):
-
-        domain = "test_domain"
-
-        types = {"robot": "a robot", "location": "location to be at"}
-
-        constants = {
-            "robot1": "robot",
-            "robot2": "robot",
-            "charging-station": "location",
-            "storage-room": "location",
-            "loading-dock": "location",
-        }
-
-        predicates = [
-            {
-                "name": "at",
-                "desc": "true if robot is at a location",
-                "raw": "- (at ?r - robot ?l - location): true if robot is at a location",
-                "params": OrderedDict({"?r": "robot", "?l": "location"}),
-                "clean": "(at ?r - robot ?l - location)",
-            },
-            {
-                "name": "connected",
-                "desc": "true if location ?l1 is connected to location ?l2",
-                "raw": "- (connected ?l1 ?l2 - location): true if location ?l1 is connected to location ?l2",
-                "params": OrderedDict({"?l1": "location", "?l2": "location"}),
-                "clean": "(connected ?l1 ?l2 - location)",
-            },
-        ]
-
-        functions = [
-            {
-                "name": "battery-level",
-                "desc": "battery level of robot",
-                "raw": "(battery-level ?r - robot): battery level of robot",
-                "params": OrderedDict([("?r", "robot")]),
-                "clean": "(battery-level ?r - robot)",
-            },
-            {
-                "name": "humidity",
-                "desc": "humidity of location",
-                "raw": "(humidity ?loc - location): humidity of location",
-                "params": OrderedDict([("?loc", "location")]),
-                "clean": "(humidity ?loc - location)",
-            },
-        ]
-
-        actions = [
+    def test_formalize_action_simple(self):
+        self.mock.output = textwrap.dedent("""\
+        <actions>
+        [
             {
                 "name": "move",
-                "params": {"?r": "robot", "?l1": "location", "?l2": "location"},
-                "preconditions": "(and (at ?r ?l1) (connected ?l1 ?l2))",
-                "effects": "(and (not (at ?r ?l1)) (at ?r ?l2))",
-            },
-            {
-                "name": "pick",
-                "params": {"?r": "robot", "?l": "location"},
-                "preconditions": "(and (at ?r ?l) (not (holding ?r)))",
-                "effects": "(holding ?r)",
-            },
+                "params": [{"variable": "?r", "type": "rover"}, {"variable": "?from", "type": "waypoint"}, {"variable": "?to", "type": "waypoint"}],
+                "preconditions": {"conditions": ["(at ?r ?from)"], "desc": null},
+                "effects": {"add": ["(at ?r ?to)"], "delete": ["(at ?r ?from)"], "numeric": [], "conditional": [], "desc": null},
+                "desc": null
+            }
         ]
-
-        requirements = [":strips", ":typing", ":numeric-fluents"]
-
-        expected_output = textwrap.dedent(
-            """
-            (define (domain test_domain)
-                (:requirements
-                    :negative-preconditions :numeric-fluents :strips :typing)
-
-                (:types 
-                    location 
-                    robot
-                )
-                
-                (:constants 
-                    robot1 - robot
-                    robot2 - robot
-                    charging-station - location
-                    storage-room - location
-                    loading-dock - location
-                )
-
-                (:predicates 
-                    (at ?r - robot ?l - location)
-                    (connected ?l1 ?l2 - location)
-                )
-                
-                (:functions 
-                    (battery-level ?r - robot)
-                    (humidity ?loc - location)
-                )
-
-                (:action move
-                    :parameters (
-                        ?r - robot ?l1 ?l2 - location
-                    )
-                    :precondition
-                        (and (at ?r ?l1) (connected ?l1 ?l2))
-                    :effect
-                        (and (not (at ?r ?l1)) (at ?r ?l2))
-                )
-
-                (:action pick
-                    :parameters (
-                        ?r - robot ?l - location
-                    )
-                    :precondition
-                        (and (at ?r ?l) (not (holding ?r)))
-                    :effect
-                        (holding ?r)
-                )
-            )
-            """
+        </actions>""")
+        results, _ = self.builder.formalize_component(
+            model=self.mock,
+            component_class=Action,
+            prompt_template=self.prompt,
+            domain_desc="test",
         )
+        actions = results[Action]
+        self.assertEqual(len(actions), 1)
+        a = actions[0]
+        self.assertEqual(a.name, "move")
+        self.assertEqual(len(a.params), 3)
 
-        result = self.domain_builder.generate_domain(
-            domain_name=domain,
-            types=types,
-            constants=constants,
-            predicates=predicates,
-            functions=functions,
-            actions=actions,
-            # requirements=requirements,
+    def test_formalize_action_with_conditional_and_numeric_effects(self):
+        self.mock.output = textwrap.dedent("""\
+        <actions>
+        [
+            {
+                "name": "drive",
+                "params": [{"variable": "?r", "type": "rover"}],
+                "preconditions": {"conditions": [{"operator": "not", "condition": "(battery-dead ?r)"}], "desc": null},
+                "effects": {
+                    "add": ["(at ?r ?l)"],
+                    "delete": [],
+                    "numeric": ["(decrease (battery ?r) 5.0)"],
+                    "conditional": [
+                        {
+                            "condition": ["(has-camera ?r)"],
+                            "effect": {"add": ["(photo-taken ?r)"], "delete": [], "numeric": []}
+                        }
+                    ],
+                    "desc": null
+                },
+                "desc": null
+            }
+        ]
+        </actions>""")
+        results, _ = self.builder.formalize_component(
+            model=self.mock,
+            component_class=Action,
+            prompt_template=self.prompt,
+            domain_desc="test",
         )
+        a = results[Action][0]
+        self.assertTrue(len(a.preconditions.conditions) > 0)
+        self.assertEqual(len(a.effects.numeric), 1)
+        self.assertEqual(len(a.effects.conditional), 1)
+        ce = a.effects.conditional[0]
+        self.assertIn("(has-camera ?r)", ce.condition)
+        self.assertIn("(photo-taken ?r)", ce.effect["add"])
 
-        self.assertEqual(self.normalize(result), self.normalize(expected_output))
+    def test_formalize_action_empty_preconditions(self):
+        self.mock.output = textwrap.dedent("""\
+        <actions>
+        [
+            {
+                "name": "nop",
+                "params": [],
+                "preconditions": {"conditions": [], "desc": null},
+                "effects": {"add": [], "delete": [], "numeric": [], "conditional": [], "desc": null},
+                "desc": null
+            }
+        ]
+        </actions>""")
+        results, _ = self.builder.formalize_component(
+            model=self.mock,
+            component_class=Action,
+            prompt_template=self.prompt,
+            domain_desc="test",
+        )
+        a = results[Action][0]
+        self.assertEqual(len(a.preconditions.conditions), 0)
+        self.assertEqual(len(a.effects.add), 0)
+
+    # ---- MULTI-CLASS EXTRACTION ----
+
+    def test_formalize_multiple_components(self):
+        self.mock.output = textwrap.dedent("""\
+        <types>
+        [
+            {"name": "robot", "parent": "object", "desc": null}
+        ]
+        </types>
+        <predicates>
+        [
+            {"name": "at", "params": [{"variable": "?r", "type": "robot"}], "desc": null}
+        ]
+        </predicates>""")
+        results, _ = self.builder.formalize_component(
+            model=self.mock,
+            component_class=[PDDLType, Predicate],
+            prompt_template="Extract types and predicates",
+            domain_desc="test",
+        )
+        self.assertIn(PDDLType, results)
+        self.assertIn(Predicate, results)
+        self.assertEqual(len(results[PDDLType]), 1)
+        self.assertEqual(len(results[Predicate]), 1)
+
+    # ---- LLM OUTPUT PRESERVED ----
+
+    def test_llm_output_preserved(self):
+        self.mock.output = (
+            '<types>\n[{"name": "robot", "parent": "object", "desc": null}]\n</types>'
+        )
+        results, llm_output = self.builder.formalize_component(
+            model=self.mock,
+            component_class=PDDLType,
+            prompt_template=self.prompt,
+            domain_desc="test",
+        )
+        self.assertIn("robot", llm_output)
+
+    # ---- RETRY ON FAILURE ----
+
+    def test_retry_eventually_succeeds(self):
+        """Simulates first attempt failing (bad XML), second succeeding."""
+
+        class RetryMock(MockLLM):
+            def __init__(self):
+                super().__init__()
+                self.call_count = 0
+
+            def query(self, prompt):
+                self.call_count += 1
+                if self.call_count == 1:
+                    return "bad output"
+                return '<types>\n[{"name": "robot", "parent": "object", "desc": null}]\n</types>'
+
+        retry_mock = RetryMock()
+        results, _ = self.builder.formalize_component(
+            model=retry_mock,
+            component_class=PDDLType,
+            prompt_template=self.prompt,
+            domain_desc="test",
+            max_retries=3,
+        )
+        self.assertEqual(len(results[PDDLType]), 1)
+        self.assertEqual(results[PDDLType][0].name, "robot")
+
+
+class TestDomainBuilderGenerateDomain(unittest.TestCase):
+    """Tests for DomainBuilder.generate_domain()."""
+
+    def setUp(self):
+        self.builder = DomainBuilder()
+
+    def normalize(self, s):
+        return "\n".join(l.strip() for l in textwrap.dedent(s).strip().splitlines())
+
+    def test_generate_domain_basic(self):
+        domain = DomainDetails(
+            name="test-domain",
+            requirements=[Requirement(name=":strips"), Requirement(name=":typing")],
+            types=[PDDLType(name="robot", parent="object")],
+            predicates=[
+                Predicate(name="at", params=[Parameter(variable="?r", type="robot")])
+            ],
+            actions=[
+                Action(
+                    name="nop",
+                    params=[],
+                    preconditions=ActionPrecondition(),
+                    effects=ActionEffect(),
+                )
+            ],
+        )
+        result = self.builder.generate_domain(domain)
+        self.assertIn("(define (domain test-domain)", result)
+        self.assertIn(":strips", result)
+        self.assertIn(":typing", result)
+        self.assertIn(":types", result)
+        self.assertIn(":predicates", result)
+        self.assertIn("(:action nop", result)
+
+    def test_generate_domain_with_all_sections(self):
+        domain = DomainDetails(
+            name="full-domain",
+            requirements=[Requirement(name=":strips"), Requirement(name=":typing")],
+            types=[
+                PDDLType(name="arm", parent="object"),
+                PDDLType(name="block", parent="object"),
+            ],
+            constants=[Constant(name="table1", type="object")],
+            predicates=[
+                Predicate(
+                    name="on",
+                    params=[
+                        Parameter(variable="?b1", type="block"),
+                        Parameter(variable="?b2", type="block"),
+                    ],
+                ),
+                Predicate(
+                    name="holding",
+                    params=[
+                        Parameter(variable="?a", type="arm"),
+                        Parameter(variable="?b", type="block"),
+                    ],
+                ),
+                Predicate(
+                    name="clear", params=[Parameter(variable="?b", type="block")]
+                ),
+            ],
+            functions=[
+                Function(name="weight", params=[Parameter(variable="?b", type="block")])
+            ],
+            actions=[
+                Action(
+                    name="stack",
+                    params=[
+                        Parameter(variable="?b1", type="block"),
+                        Parameter(variable="?b2", type="block"),
+                        Parameter(variable="?a", type="arm"),
+                    ],
+                    preconditions=ActionPrecondition(
+                        conditions=["(holding ?a ?b1)", "(clear ?b2)"]
+                    ),
+                    effects=ActionEffect(
+                        add=["(on ?b1 ?b2)"],
+                        delete=["(holding ?a ?b1)", "(clear ?b2)"],
+                    ),
+                )
+            ],
+        )
+        result = self.builder.generate_domain(domain)
+        self.assertIn(":constants", result)
+        self.assertIn(":functions", result)
+        self.assertIn("(:action stack", result)
+        self.assertIn("?b1 - block", result)
+
+    def test_generate_domain_no_predicates_warning(self):
+        domain = DomainDetails(name="warn-domain")
+        f = io.StringIO()
+        with redirect_stdout(f):
+            result = self.builder.generate_domain(domain)
+        self.assertIn("WARNING", f.getvalue())
+        self.assertIn("(define (domain warn-domain)", result)
+
+    def test_generate_domain_no_actions_warning(self):
+        domain = DomainDetails(
+            name="no-actions", predicates=[Predicate(name="p", params=[])]
+        )
+        f = io.StringIO()
+        with redirect_stdout(f):
+            result = self.builder.generate_domain(domain)
+        self.assertIn("WARNING", f.getvalue())
+
+    def test_generate_domain_with_derived_predicates(self):
+        domain = DomainDetails(
+            name="derived",
+            requirements=[
+                Requirement(name=":strips"),
+                Requirement(name=":derived-predicates"),
+            ],
+            predicates=[
+                Predicate(
+                    name="battery-low", params=[Parameter(variable="?r", type="object")]
+                )
+            ],
+            derived_predicates=[
+                DerivedPredicate(
+                    name="needs-charge",
+                    params=[Parameter(variable="?r", type="object")],
+                    condition="(battery-low ?r)",
+                )
+            ],
+        )
+        result = self.builder.generate_domain(domain)
+        self.assertIn(":derived", result)
+        self.assertIn("needs-charge", result)
+
+    def test_generate_domain_with_constraint(self):
+        domain = DomainDetails(
+            name="constrained",
+            requirements=[
+                Requirement(name=":strips"),
+                Requirement(name=":constraints"),
+            ],
+            predicates=[
+                Predicate(
+                    name="active", params=[Parameter(variable="?r", type="object")]
+                )
+            ],
+            constraint=[
+                Constraint(condition={"operator": "always", "condition": "(active ?r)"})
+            ],
+        )
+        result = self.builder.generate_domain(domain)
+        self.assertIn(":constraints", result)
+        self.assertIn("always", result)
+
+    def test_generate_domain_no_requirements_auto(self):
+        """If no requirements are set, generate_requirements is called internally."""
+        domain = DomainDetails(
+            name="auto-req",
+            types=[PDDLType(name="robot", parent="object")],
+            predicates=[
+                Predicate(name="at", params=[Parameter(variable="?r", type="robot")])
+            ],
+            actions=[
+                Action(
+                    name="nop",
+                    params=[],
+                    preconditions=ActionPrecondition(),
+                    effects=ActionEffect(),
+                )
+            ],
+        )
+        result = self.builder.generate_domain(domain)
+        self.assertIn(":typing", result)
+        self.assertIn(":strips", result)
+
+    def test_generated_pddl_output_format(self):
+        """Check the structure of the generated PDDL output."""
+        domain = DomainDetails(
+            name="format-check",
+            types=[PDDLType(name="obj", parent="object")],
+            predicates=[
+                Predicate(name="p", params=[Parameter(variable="?x", type="obj")])
+            ],
+            actions=[
+                Action(
+                    name="act",
+                    params=[Parameter(variable="?x", type="obj")],
+                    preconditions=ActionPrecondition(conditions=["(p ?x)"]),
+                    effects=ActionEffect(add=["(p ?x)"], delete=[]),
+                )
+            ],
+        )
+        result = self.builder.generate_domain(domain)
+        # Should start with define
+        self.assertTrue(result.startswith("(define"))
+        # Should end with )
+        self.assertTrue(result.strip().endswith(")"))
+        # Should contain action
+        self.assertIn("(:action act", result)
+
+
+class TestDomainBuilderGenerateRequirements(unittest.TestCase):
+    """Tests for DomainBuilder.generate_requirements()."""
+
+    def setUp(self):
+        self.builder = DomainBuilder()
+
+    def _names(self, reqs):
+        return sorted(r.name for r in reqs)
+
+    def test_baseline_strips(self):
+        d = DomainDetails(name="t")
+        n = self._names(self.builder.generate_requirements(d))
+        self.assertIn(":strips", n)
+
+    def test_typing(self):
+        d = DomainDetails(name="t", types=[PDDLType(name="r", parent="object")])
+        n = self._names(self.builder.generate_requirements(d))
+        self.assertIn(":typing", n)
+
+    def test_numeric_fluents(self):
+        d = DomainDetails(name="t", functions=[Function(name="b", params=[])])
+        n = self._names(self.builder.generate_requirements(d))
+        self.assertIn(":numeric-fluents", n)
+
+    def test_derived_predicates(self):
+        dp = DerivedPredicate(
+            name="can",
+            params=[Parameter(variable="?x", type="o")],
+            condition="(> (b ?x) 0)",
+        )
+        d = DomainDetails(name="t", derived_predicates=[dp])
+        n = self._names(self.builder.generate_requirements(d))
+        self.assertIn(":derived-predicates", n)
+
+    def test_durative_actions(self):
+        da = DurativeAction(
+            name="fly",
+            params=[Parameter(variable="?d", type="d")],
+            duration=[">= ?duration 5.0"],
+            conditions=DurativeActionConditions(),
+            effects=DurativeActionEffect(),
+        )
+        d = DomainDetails(name="t", durative_actions=[da])
+        n = self._names(self.builder.generate_requirements(d))
+        self.assertIn(":durative-actions", n)
+
+    def test_negative_preconditions(self):
+        a = Action(
+            name="go",
+            params=[],
+            preconditions=ActionPrecondition(
+                conditions=[{"operator": "not", "condition": "(blocked)"}]
+            ),
+            effects=ActionEffect(),
+        )
+        d = DomainDetails(name="t", actions=[a])
+        n = self._names(self.builder.generate_requirements(d))
+        self.assertIn(":negative-preconditions", n)
+
+    def test_conditional_effects(self):
+        ce = ConditionalEffect(
+            condition=["(has-item)"], effect={"add": [], "delete": [], "numeric": []}
+        )
+        a = Action(
+            name="proc",
+            params=[],
+            preconditions=ActionPrecondition(),
+            effects=ActionEffect(conditional=[ce]),
+        )
+        d = DomainDetails(name="t", actions=[a])
+        n = self._names(self.builder.generate_requirements(d))
+        self.assertIn(":conditional-effects", n)
+
+    def test_equality(self):
+        a = Action(
+            name="eq",
+            params=[],
+            preconditions=ActionPrecondition(conditions=["(>= ?x ?y)"]),
+            effects=ActionEffect(),
+        )
+        d = DomainDetails(name="t", actions=[a])
+        n = self._names(self.builder.generate_requirements(d))
+        self.assertIn(":equality", n)
+
+    def test_constraints_from_constraint_block(self):
+        c = Constraint(condition={"operator": "always", "condition": "(> (b ?r) 0)"})
+        d = DomainDetails(name="t", constraint=[c])
+        n = self._names(self.builder.generate_requirements(d))
+        self.assertIn(":constraints", n)
+
+    def test_quantified_preconditions(self):
+        a1 = Action(
+            name="all",
+            params=[],
+            preconditions=ActionPrecondition(
+                conditions=[
+                    {
+                        "quantifier": "forall",
+                        "parameters": [{"variable": "?x", "type": "t"}],
+                        "conditions": ["(p ?x)"],
+                    }
+                ]
+            ),
+            effects=ActionEffect(),
+        )
+        a2 = Action(
+            name="some",
+            params=[],
+            preconditions=ActionPrecondition(
+                conditions=[
+                    {
+                        "quantifier": "exists",
+                        "parameters": [{"variable": "?y", "type": "t"}],
+                        "conditions": ["(p ?y)"],
+                    }
+                ]
+            ),
+            effects=ActionEffect(),
+        )
+        d = DomainDetails(name="t", actions=[a1, a2])
+        n = self._names(self.builder.generate_requirements(d))
+        self.assertIn(":quantified-preconditions", n)
+        self.assertNotIn(":existential-preconditions", n)
+        self.assertNotIn(":universal-preconditions", n)
+
+    def test_timed_initial_literals(self):
+        problem = ProblemDetails(
+            name="p",
+            domain_name="d",
+            initial_state=InitialState(
+                timed_facts=[TimedFact(time=5.0, fact="(event)")]
+            ),
+        )
+        d = DomainDetails(name="t")
+        n = self._names(self.builder.generate_requirements(d, problem_details=problem))
+        self.assertIn(":timed-initial-literals", n)
+
+    def test_action_costs(self):
+        f = Function(name="total-cost", params=[])
+        a = Action(
+            name="do",
+            params=[],
+            preconditions=ActionPrecondition(),
+            effects=ActionEffect(numeric=["(increase (total-cost) 1)"]),
+        )
+        d = DomainDetails(name="t", functions=[f], actions=[a])
+        n = self._names(self.builder.generate_requirements(d))
+        self.assertIn(":action-costs", n)
+
+    def test_durative_inequalities(self):
+        da = DurativeAction(
+            name="fly",
+            params=[Parameter(variable="?d", type="d")],
+            duration=["(< ?duration 10.0)"],
+            conditions=DurativeActionConditions(),
+            effects=DurativeActionEffect(),
+        )
+        d = DomainDetails(name="t", durative_actions=[da])
+        n = self._names(self.builder.generate_requirements(d))
+        self.assertIn(":durative-inequalities", n)
+
+    def test_events_and_processes(self):
+        evt = Event(
+            name="e",
+            params=[],
+            preconditions=ActionPrecondition(),
+            effects=ActionEffect(),
+        )
+        d = DomainDetails(name="t", events=[evt])
+        n = self._names(self.builder.generate_requirements(d))
+        self.assertIn(":time", n)
+
+
+class TestDomainBuilderSetters(unittest.TestCase):
+    """Tests for DomainBuilder set_* methods."""
+
+    def setUp(self):
+        self.builder = DomainBuilder()
+
+    def test_set_types(self):
+        t = PDDLType(name="robot", parent="object")
+        self.builder.set_types(t)
+        self.assertEqual(len(self.builder.domain_details.types), 1)
+        self.assertEqual(self.builder.domain_details.types[0].name, "robot")
+
+    def test_set_types_append(self):
+        self.builder.set_types(PDDLType(name="a", parent="object"))
+        self.builder.set_types(PDDLType(name="b", parent="object"), append=True)
+        self.assertEqual(len(self.builder.domain_details.types), 2)
+
+    def test_set_types_overwrite(self):
+        self.builder.set_types(PDDLType(name="a", parent="object"))
+        self.builder.set_types(PDDLType(name="b", parent="object"))
+        self.assertEqual(len(self.builder.domain_details.types), 1)
+        self.assertEqual(self.builder.domain_details.types[0].name, "b")
+
+    def test_set_types_list(self):
+        types = [
+            PDDLType(name="a", parent="object"),
+            PDDLType(name="b", parent="object"),
+        ]
+        self.builder.set_types(types)
+        self.assertEqual(len(self.builder.domain_details.types), 2)
+
+    def test_set_types_none_clears(self):
+        self.builder.set_types(PDDLType(name="a", parent="object"))
+        self.builder.set_types(None)
+        self.assertEqual(len(self.builder.domain_details.types), 0)
+
+    def test_set_predicates(self):
+        p = Predicate(name="at", params=[Parameter(variable="?r", type="robot")])
+        self.builder.set_predicates(p)
+        self.assertEqual(len(self.builder.domain_details.predicates), 1)
+
+    def test_set_actions(self):
+        a = Action(
+            name="move",
+            params=[],
+            preconditions=ActionPrecondition(),
+            effects=ActionEffect(),
+        )
+        self.builder.set_actions(a)
+        self.assertEqual(len(self.builder.domain_details.actions), 1)
+
+    def test_set_domain_name(self):
+        self.builder.set_domain_name("my-domain")
+        self.assertEqual(self.builder.domain_details.name, "my-domain")
+
+    def test_set_domain_name_default(self):
+        self.builder.set_domain_name()
+        self.assertEqual(self.builder.domain_details.name, "domain-placeholder")
+
+    def test_set_constants(self):
+        c = Constant(name="base", type="location")
+        self.builder.set_constants(c)
+        self.assertEqual(len(self.builder.domain_details.constants), 1)
+
+    def test_set_functions(self):
+        f = Function(name="battery", params=[Parameter(variable="?r", type="robot")])
+        self.builder.set_functions(f)
+        self.assertEqual(len(self.builder.domain_details.functions), 1)
+
+    def test_set_derived_predicates(self):
+        dp = DerivedPredicate(
+            name="can",
+            params=[Parameter(variable="?r", type="robot")],
+            condition="(> (b ?r) 0)",
+        )
+        self.builder.set_derived_predicates(dp)
+        self.assertEqual(len(self.builder.domain_details.derived_predicates), 1)
+
+    def test_set_constraints(self):
+        c = Constraint(condition={"operator": "always", "condition": "(p ?r)"})
+        self.builder.set_constraints(c)
+        self.assertEqual(len(self.builder.domain_details.constraint), 1)
+
+    def test_set_requirements(self):
+        r = Requirement(name=":strips")
+        self.builder.set_requirements(r)
+        self.assertEqual(len(self.builder.domain_details.requirements), 1)
+
+    def test_set_append_multiple_types(self):
+        types = [
+            PDDLType(name="a", parent="object"),
+            PDDLType(name="b", parent="object"),
+        ]
+        self.builder.set_types(types)
+        self.builder.set_types(PDDLType(name="c", parent="object"), append=True)
+        self.assertEqual(len(self.builder.domain_details.types), 3)
+
+    def test_set_events(self):
+        e = Event(
+            name="e",
+            params=[],
+            preconditions=ActionPrecondition(),
+            effects=ActionEffect(),
+        )
+        self.builder.set_events(e)
+        self.assertEqual(len(self.builder.domain_details.events), 1)
+
+    def test_set_processes(self):
+        p = Process(
+            name="p",
+            params=[],
+            preconditions=ActionPrecondition(),
+            effects=ActionEffect(),
+        )
+        self.builder.set_processes(p)
+        self.assertEqual(len(self.builder.domain_details.processes), 1)
+
+    def test_set_durative_actions(self):
+        da = DurativeAction(
+            name="fly",
+            params=[Parameter(variable="?d", type="d")],
+            duration=[">= ?duration 5.0"],
+            conditions=DurativeActionConditions(),
+            effects=DurativeActionEffect(),
+        )
+        self.builder.set_durative_actions(da)
+        self.assertEqual(len(self.builder.domain_details.durative_actions), 1)
+
+    def test_set_domain_desc(self):
+        self.builder.set_domain_desc("A robot domain")
+        self.assertEqual(self.builder.domain_details.desc, "A robot domain")
+
+    def test_set_domain_desc_none(self):
+        self.builder.set_domain_desc()
+        self.assertIsNone(self.builder.domain_details.desc)
+
+
+class TestDomainBuilderConstruction(unittest.TestCase):
+    """Tests for DomainBuilder __init__."""
+
+    def test_default_construction(self):
+        b = DomainBuilder()
+        self.assertEqual(b.domain_details.name, "domain-placeholder")
+
+    def test_with_kwargs(self):
+        b = DomainBuilder(name="my-domain")
+        self.assertEqual(b.domain_details.name, "my-domain")
+
+    def test_with_domain_details(self):
+        dd = DomainDetails(name="provided-domain")
+        b = DomainBuilder(domain_details=dd)
+        self.assertIs(b.domain_details, dd)
+
+    def test_with_problem_details(self):
+        pd = ProblemDetails(name="prob", domain_name="dom")
+        b = DomainBuilder(problem_details=pd)
+        self.assertEqual(b.domain_details.name, "domain-placeholder")
+        self.assertIs(b.problem_details, pd)
 
 
 if __name__ == "__main__":

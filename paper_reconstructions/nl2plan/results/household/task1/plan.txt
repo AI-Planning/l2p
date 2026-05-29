@@ -1,1 +1,0 @@
-Search phase was incomplete and did not solve the problem.

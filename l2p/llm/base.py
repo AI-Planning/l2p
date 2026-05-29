@@ -5,14 +5,49 @@ Currently, this builder class contains the generic method to run a wide range of
 
 import logging, functools
 from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import Any
 import yaml
 
 LOG: logging.Logger = logging.getLogger(__name__)
 
+__all__ = ["BaseLLM", "require_llm", "resolve_config_path", "load_yaml"]
+
+
+def resolve_config_path(config_path: str) -> str:
+    if config_path.startswith("l2p/"):
+        parts = config_path.replace("\\", "/").split("/")
+        yaml_filename = parts[-1] if parts else "llm.yaml"
+        try:
+            import importlib.resources
+
+            with importlib.resources.path("l2p.llm.utils", yaml_filename) as p:
+                resolved = p.resolve()
+        except Exception:
+            resolved = _resolve_via_filesystem(yaml_filename, config_path)
+        return str(resolved)
+    else:
+        resolved = Path(config_path).expanduser().resolve()
+        if not resolved.exists():
+            raise FileNotFoundError(f"Config file not found: {config_path}")
+        return str(resolved)
+
+
+def _resolve_via_filesystem(yaml_filename: str, original_path: str) -> Path:
+    package_root = Path(__file__).resolve().parent.parent.parent
+    config_file = package_root / "l2p" / "llm" / "utils" / yaml_filename
+    if config_file.exists():
+        return config_file
+    fallback = "openaiSDK.yaml" if yaml_filename == "llm.yaml" else "llm.yaml"
+    config_file = package_root / "l2p" / "llm" / "utils" / fallback
+    if config_file.exists():
+        return config_file
+    raise FileNotFoundError(f"Config file not found: {original_path}")
+
 
 def load_yaml(config_path: str) -> dict[str, Any]:
-    with open(config_path, "r") as f:
+    resolved = resolve_config_path(config_path)
+    with open(resolved, "r") as f:
         return yaml.safe_load(f)
 
 

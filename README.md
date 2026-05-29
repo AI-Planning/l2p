@@ -1,109 +1,135 @@
 # l2p : LLM-driven Planning Model library kit
 
-This library is a collection of tools for PDDL model generation extracted from natural language driven by large language models. This library is an expansion from the survey paper [**LLMs as Planning Formalizers: A Survey for Leveraging Large Language Models to Construct Automated Planning Specifications**](https://arxiv.org/abs/2503.18971v1).
+[![GitHub repo](https://img.shields.io/badge/github-repo-green)](https://github.com/AI-Planning/l2p)
+[![PyPI](https://img.shields.io/pypi/v/l2p.svg)](https://pypi.org/project/l2p/)
+[![License](https://img.shields.io/badge/license-MIT-blue)](https://github.com/AI-Planning/l2p/blob/main/LICENSE)
+<!-- [![Tests](https://github.com/simonw/llm/workflows/Test/badge.svg)](httpsß://github.com/simonw/llm/actions?query=workflow%3ATest) -->
+<!-- [![Changelog](https://img.shields.io/github/v/release/simonw/llm?include_prereleases&label=changelog)](https://llm.datasette.io/en/stable/changelog.html) -->
+<!-- [![Discord](https://img.shields.io/discord/823971286308356157?label=discord)](https://datasette.io/discord-llm)
+[![Homebrew](https://img.shields.io/homebrew/installs/dy/llm?color=yellow&label=homebrew&logo=homebrew)](https://formulae.brew.sh/formula/llm) -->
 
-L2P is an offline, natural language-to-planning model system that supports domain-agnostic planning. It does this via creating an intermediate [PDDL](https://planning.wiki/guide/whatis/pddl) representation of the domain and task, which can then be solved by a classical planner.
+This library is a collection of tools for PDDL model generation extracted from natural language driven by large language models. This library is an expansion from the survey paper [**LLMs as Planning Formalizers: A Survey for Leveraging Large Language Models to Construct Automated Planning Specifications**](https://aclanthology.org/2025.findings-acl.1291.pdf).
 
-Full library documentation can be found: [**L2P Documention**](https://marcustantakoun.github.io/l2p.github.io/)
+L2P is an offline, natural language-to-planning model system that supports domain-agnostic planning. It does this via creating an intermediate [PDDL](https://planning.wiki/guide/whatis/pddl) representation of the domain and task, which can then be solved by a classical planner. To stay up to date with the most current papers, please visit [**here**](https://ai-planning.github.io/l2p/docs/paper_feed.html).
 
-## Usage
+Full library documentation can be found: [**L2P Documention**](https://ai-planning.github.io/l2p/docs/)
+
+<!-- ## Quickstart
+```python
+l2p init
+    |__
+l2p config
+l2p models
+l2p templates
+l2p generate
+``` -->
+
+## Quickstart
 
 This is the general setup to build domain predicates:
 ```python
 import os
-from l2p.llm.openai import OPENAI
-from l2p.utils import load_file
+from l2p import UnifiedLLM
 from l2p.domain_builder import DomainBuilder
+from l2p.utils.pddl_types import Predicate, PDDLType
+from l2p.utils.pddl_format import format_predicates
 
-domain_builder = DomainBuilder()
+# set up LLM
+api_key = os.getenv("OPENAI_API_KEY")
+llm = UnifiedLLM(provider="openai", model="gpt-5-nano", api_key=api_key)
 
-api_key = os.environ.get('OPENAI_API_KEY')
-llm = OPENAI(model="gpt-4o-mini", api_key=api_key)
+db = DomainBuilder() # instantiate DomainBuilder class
 
-# retrieve prompt information
-base_path='tests/usage/prompts/domain/'
-domain_desc = load_file(f'{base_path}blocksworld_domain.txt')
-predicates_prompt = load_file(f'{base_path}formalize_predicates.txt')
-types = load_file(f'{base_path}types.json')
-action = load_file(f'{base_path}action.json')
+# context
+types = [PDDLType(name="block", parent="object")]
+desc =  "I want you to model predicates from a standard PDDL blocksworld domain."
 
-# extract predicates via LLM
-predicates, llm_output, validation_info = domain_builder.formalize_predicates(
+# generate predicates
+results, raw_output = db.formalize_component(
     model=llm,
-    domain_desc=domain_desc,
-    prompt_template=predicates_prompt,
-    types=types
-    )
+    component_class=Predicate, # component to generate
+    description=desc,
+    types=types                # pass in kwargs context
+)
 
-# format key info into PDDL strings
-predicate_str = "\n".join([pred["raw"].replace(":", " ; ") for pred in predicates])
+# parse out predicates list from dictionary
+predicates = results[Predicate]
+predicates_str = format_predicates(predicates) # format nicely
 
-print(f"PDDL domain predicates:\n{predicate_str}")
+print(predicates_str)
+
+# OUTPUT:
+# (clear ?x - block)
+# (arm-empty )
+# (holding ?x - block)
+# (on ?x - block ?y - block)
+# (on-table ?x - block)
 ```
 
 Here is how you would setup a PDDL problem:
 ```python
-from l2p.utils.pddl_types import Predicate
-from l2p.task_builder import TaskBuilder
+from l2p.problem_builder import ProblemBuilder
+from l2p.utils.pddl_types import ProblemDetails, PDDLType, Predicate
 
-task_builder = TaskBuilder() # initialize task builder class
+pb = ProblemBuilder() # instantiate ProblemBuilder class
 
-api_key = os.environ.get('OPENAI_API_KEY')
-llm = OPENAI(model="gpt-4o-mini", api_key=api_key)
+# context
+types = [PDDLType(name="block", parent="object")]
+predicates = [
+    Predicate(name="on", params=[
+        {"variable": "?x", "type": "block"},
+        {"variable": "?y", "type": "block"}
+        ]),
+    Predicate(name="on-table", params=[{"variable": "?x", "type": "block"}]),
+    Predicate(name="holding", params=[{"variable": "?x", "type": "block"}]),
+    Predicate(name="clear", params=[{"variable": "?x", "type": "block"}]),
+    Predicate(name="arm-empty", params=[])
+]
 
-# load in assumptions
-problem_desc = load_file(r'tests/usage/prompts/problem/blocksworld_problem.txt')
-task_prompt = load_file(r'tests/usage/prompts/problem/formalize_task.txt')
-types = load_file(r'tests/usage/prompts/domain/types.json')
-predicates_json = load_file(r'tests/usage/prompts/domain/predicates.json')
-predicates: list[Predicate] = [Predicate(**item) for item in predicates_json]
+problem_desc = """
+You have 3 blocks. 
+b2 is on top of b3. 
+b3 is on top of b1. 
+b1 is on the table. 
+b2 is clear. 
+Your arm is empty. 
+Your goal is to move the blocks. 
+b2 should be on top of b3. 
+b3 should be on top of b1. 
+"""
 
-# extract PDDL task specifications via LLM
-objects, init, goal, llm_response, validation_info = task_builder.formalize_task(
+# generate problem
+results, llm_output = pb.formalize_component(
     model=llm,
-    problem_desc=problem_desc,
-    prompt_template=task_prompt,
-    types=types,
-    predicates=predicates
-    )
+    component_class=ProblemDetails, # component to generate
+    description=problem_desc,
+    types=types,            # pass in kwargs context
+    predicates=predicates   # pass in kwargs context
+)
 
-# generate task file
-pddl_problem = task_builder.generate_task(
-    domain_name="blocksworld",
-    problem_name="blocksworld_problem",
-    objects=objects,
-    initial=init,
-    goal=goal)
+# parse out problem from dictionary
+problem = results[ProblemDetails]
 
-print(f"### LLM OUTPUT:\n {pddl_problem}")
-```
+# format problem in PDDL format
+problem_str = pb.generate_problem(problem[0])
 
-Here is how you would setup a Feedback Mechanism:
-```python
-from l2p.feedback_builder import FeedbackBuilder
+print(problem_str)
 
-feedback_builder = FeedbackBuilder()
-
-api_key = os.environ.get('OPENAI_API_KEY')
-llm = OPENAI(model="gpt-4o-mini", api_key=api_key)
-
-problem_desc = load_file(r'tests/usage/prompts/problem/blocksworld_problem.txt')
-types = load_file(r'tests/usage/prompts/domain/types.json')
-feedback_template = load_file(r'tests/usage/prompts/problem/feedback.txt')
-predicates_json = load_file(r'tests/usage/prompts/domain/predicates.json')
-predicates: list[Predicate] = [Predicate(**item) for item in predicates_json]
-llm_response = load_file(r'tests/usage/prompts/domain/llm_output_task.txt')
-
-fb_pass, feedback_response = feedback_builder.task_feedback(
-    model=llm,
-    problem_desc=problem_desc,
-    llm_output=llm_response,
-    feedback_template=feedback_template,
-    feedback_type="llm",
-    predicates=predicates,
-    types=types)
-
-print("[FEEDBACK]\n", feedback_response)
+# OUTPUT:
+# (define (problem blocks-problem)
+#    (:domain blocks-world)
+#    (:objects b1 b2 b3 - block)
+#    (:init 
+#       (on b2 b3)
+#       (on b3 b1)
+#       (on-table b1)
+#       (clear b2)
+#       (arm-empty)
+#    )
+#    (:goal 
+#       (and (on b2 b3) (on b3 b1))
+#    )
+# )
 ```
 
 
@@ -130,61 +156,150 @@ These environments can then be exited with `conda deactivate` and `deactivate` r
 
 **API keys**
 
-L2P requires access to an LLM. L2P provides support for OpenAI's models and other providers compatible with OpenAI SDK. To configure these, provide the necessary API-key in an environment variable.
+L2P requires access to an LLM. L2P provides support for models compatible with OpenAI SDK or [LLM](https://github.com/simonw/llm). To configure these, provide the necessary API-key in an environment variable.
 
-**OpenAI**
 ```
 export OPENAI_API_KEY='YOUR-KEY' # e.g. OPENAI_API_KEY='sk-123456'
+export CLAUDE_API_KEY='...'
+export DEEPSEEK_API_KEY='...'
+export OLLAMA_API_KEY='...'
 ```
 
-Refer to [here](https://platform.openai.com/docs/quickstart) for more information.
+We can then use the `OPENAI` class for OpenAI-SDK supported models **OR** `UnifiedLLM` class (recommended). Refer to [here](https://platform.openai.com/docs/quickstart) for more information:
+```python
+import os
+from l2p.llm.openai import OPENAI
+from l2p.llm.unified import UnifiedLLM
 
-**HuggingFace**
+api_key = os.getenv("OPENAI_API_KEY")
 
-Additionally, we have included support for using Huggingface models. One can set up their environment like so:
+# OPENAI SDK BACKEND
+llm = OPENAI(
+    provider="openai",
+    model="gpt-5-nano",
+    config_path="l2p/llm/utils/openaiSDK.yaml", # LLM configs stored here 
+    api_key=api_key
+)
+
+# LLM BACKEND
+llm = UnifiedLLM(
+    provider="openai",
+    model="gpt-5-nano",
+    config_path="l2p/llm/utils/llm.yaml", # LLM configs stored here
+    api_key=api_key
+)
+
+response = llm.query("Hello, world!")
+print(response)
 ```
-parser = argparse.ArgumentParser(description="Testing HF usage")
-parser.add_argument('-test_hf', action='store_true')
-parser.add_argument("--model", type=float, required=True, help = "model name")
-parser.add_argument("--model_path", type=str, required=True, help = "path to llm")
-parser.add_argument("--config_path", type=str, default="l2p/llm/utils/llm.yaml", help = "path to yaml configuration")
-parser.add_argument("--provider", type=str, default="huggingface", help = "backend provider")
-args = parser.parse_args()
 
-huggingface_model = HUGGING_FACE(model=args.model, model_path=args.model_path, config_path=args.config_path, provider=args.provider)
+**Ollama**
+
+Additionally, we have included support for using local [Ollama](https://ollama.com) models under `UnifiedLLM`. One can set up their environment like so:
+```python
+from l2p.llm.unified import UnifiedLLM
+
+llm = UnifiedLLM(
+    provider="ollama",
+    model="llama2:7b",
+    config_path="l2p/llm/utils/llm.yaml" # Ollama model configs stored here 
+)
+
+response = llm.query("Hello, world!")
+print(response)
 ```
 
-Users can refer to l2p/llm/utils/llm.yaml to better understand (and create their own) model configuration options, including tokenizer settings, generation parameters, and provider-specific settings.
+Users can refer to `l2p/llm/utils/llm.yaml` (for `UnifiedLLM`) or `l2p/llm/utils/openaiSDK.yaml` (for `OPENAI`) to better understand (and create their own) model configuration options, including tokenizer settings, generation parameters, and provider-specific settings.
 
-**l2p/llm/base.py** contains an abstract class and method for implementing any model classes in the case of other third-party LLM uses.
+`l2p/llm/base.py` contains an abstract class and method for implementing any model classes in the case of other third-party LLM uses.
 
-## Planner
-For ease of use, our library contains submodule [FastDownward](https://github.com/aibasel/downward/tree/308812cf7315fe896dbcd319493277d82aa36bd2). Fast Downward is a domain-independent classical planning system that users can run their PDDL domain and problem files on. The motivation is that the majority of papers involving PDDL-LLM usage uses this library as their planner.
+## External Planner Support
+L2P contains an abstract class `Planner` found in `l2p/planner_builder.py`. Users can use this class to run planners on top to solve for generated domain and problems. 
 
-**IMPORTANT** FastDownward is a submodule in L2P. To use the planner, you must clone the GitHub repo of [FastDownward](https://github.com/aibasel/downward/tree/308812cf7315fe896dbcd319493277d82aa36bd2) and run the `planner_path` to that directory.
+For ease of use, our library contains submodule [FastDownward](https://github.com/aibasel/downward/tree/308812cf7315fe896dbcd319493277d82aa36bd2). Fast Downward is a domain-independent classical planning system that users can run their PDDL domain and problem files on. The motivation is that the majority of papers involving PDDL-LLM usage uses this library as their planner. 
+
+**IMPORTANT** FastDownward is a submodule in L2P. To use the planner, you must clone the GitHub repo of [FastDownward](https://github.com/aibasel/downward/tree/308812cf7315fe896dbcd319493277d82aa36bd2) and run the `executable_path` to that directory.
 
 Here is a quick test set up:
 ```python
-from l2p.utils.pddl_planner import FastDownward
+from l2p.planner_builder import FastDownward
 
-# retrieve pddl files
-domain_file = "tests/pddl/test_domain.pddl"
-problem_file = "tests/pddl/test_problem.pddl"
+domain_file = "<PATH_TO>/domain.pddl"
+problem_file = "<PATH_TO>/problem.pddl"
 
 # instantiate FastDownward class
-planner = FastDownward(planner_path="<PATH_TO>/downward/fast-downward.py")
+planner = FastDownward(executable_path="<PATH_TO>/downward/fast-downward.py")
 
 # run plan
-success, plan_str = planner.run_fast_downward(
+plan_result = planner.run_planner(
     domain_file=domain_file,
     problem_file=problem_file,
-    search_alg="lama-first"
+    alias="lama-first"
 )
 
-print(plan_str)
+print(plan_result.is_successful)
+print(plan_result.plan)
 ```
 
-To stay up to date with the most current papers, please visit [**here**](https://marcustantakoun.github.io/l2p.github.io/paper_feed.html).
+Additionally, L2P also supports [**Unified Planning**](https://github.com/aiplan4eu/unified-planning) backend. Users must first download: `pip install unified-planning`. After installing unified-planning library, you must install specific planner: `pip install 'unified-planning[engine]'` to pass into the solver function.
+```python
+from l2p.planner_builder import UnifiedPlanning
+
+planner = UnifiedPlanning()
+
+plan_result = planner.run_planner(
+    domain_path="<PATH_TO>/domain.pddl",
+    problem_path="<PATH_TO>/problem.pddl",
+    engine="aries" # specific planning backend
+)
+
+print(plan_result.is_successful)
+print(plan_result.plan)
+```
+
+### Agentic CLI (for LLM agents & automation)
+
+The fastest way to build PDDL models is piping structured JSON between non-interactive commands:
+
+```bash
+# 1. Look up the JSON schema an LLM should follow
+l2p schema domain --examples
+
+# 2. Set individual components (validate + format in one step)
+l2p set types --data '[{"name":"block","parent":"object"}]' --json
+l2p set predicates --data '[
+  {"name":"clear","params":[{"variable":"?x","type":"block"}]},
+  {"name":"on","params":[{"variable":"?x","type":"block"},{"variable":"?y","type":"block"}]}
+]' --pddl
+
+# 3. Assemble and render the full PDDL domain
+l2p build domain --data '{
+  "name":"blocksworld",
+  "types":[{"name":"block","parent":"object"}],
+  "predicates":[
+    {"name":"clear","params":[{"variable":"?x","type":"block"}]},
+    {"name":"on","params":[{"variable":"?x","type":"block"},{"variable":"?y","type":"block"}]}
+  ],
+  "actions":[
+    {"name":"stack","params":[{"variable":"?x","type":"block"},{"variable":"?y","type":"block"}],
+     "preconditions":{"conditions":["(clear ?y)","(holding ?x)"]},
+     "effects":{"add":["(on ?x ?y)"],"delete":["(clear ?y)","(holding ?x)"]}}
+  ]
+}' -o domain.pddl
+
+# 4. Validate the generated file
+l2p validate domain domain.pddl
+
+# 5. Run a planner on it
+l2p plan --domain @domain.pddl --problem @problem.pddl --planner fast-downward --json
+```
+
+Every command is **stateless**: pass full JSON via `--data` or compose from individual flags. LLM agents can chain them naturally:
+
+```bash
+# Pipe validated JSON between commands
+l2p set types --data '[...]' --json | l2p set predicates --stdin --json
+```
 
 ## Contact
 Please contact `20mt1@queensu.ca` for questions, comments, or feedback about the L2P library.
