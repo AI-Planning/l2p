@@ -113,7 +113,8 @@ def templates_list_command(args):
     category = args.category if args.category != "all" else None
     templates = template_manager.list_templates(category)
 
-    print(f"Available Templates:\n{"=" * 60}")
+    sep60 = "=" * 60
+    print(f"Available Templates:\n{sep60}")
 
     for cat, files in templates.items():
         print(f"\n{cat.upper()} Templates ({len(files)}):")
@@ -154,9 +155,10 @@ def templates_show_command(args):
 
     try:
         template_content = template_manager.get_template(args.name, args.category)
+        sep60 = "=" * 60
         print(
             f"Template: {args.category}/{args.name}"
-            f"\n{"=" * 60}\n"
+            f"\n{sep60}\n"
             f"\n{template_content}"
         )
 

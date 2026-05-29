@@ -111,10 +111,11 @@ def init_command(args):
         # 1) Backend
         backend = args.backend
         if not backend:
+            sep50 = "=" * 50
             print(
-                f"\n{"="*50}"
+                f"\n{sep50}"
                 f"\nL2P Configuration Setup"
-                f"\n{"="*50}"
+                f"\n{sep50}"
                 f"\nAvailable LLM backends:"
                 f"\n     > unified - Use simonw/llm (supports all providers via plugins)"
                 f"\n     > openai - Use OpenAI SDK directly (for OpenAI-compatible APIs)"
@@ -134,8 +135,8 @@ def init_command(args):
         provider = args.provider
         if not provider:
             print(
-                f"\n{"="*50}"
-                f"\nL2P Configuration Setup\n{"="*50}"
+                f"\n{sep50}"
+                f"\nL2P Configuration Setup\n{sep50}"
                 f"\nAvailable LLM providers:"
                 f"\n    > openai         - OpenAI models"
                 f"\n    > google         - Google models (Gemini)"

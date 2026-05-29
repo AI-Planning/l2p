@@ -178,7 +178,8 @@ def list_models_command(args):
 
         # return models excluding `base_url` argument
         models = list(provider_config.keys() - {"base_url"})
-        print(f"\nAvailable models for '{provider}' provider:\n{"=" * 60}")
+        sep60 = "=" * 60
+        print(f"\nAvailable models for '{provider}' provider:\n{sep60}")
 
         if not models:
             print("[WARNING] No models found for this provider.")
@@ -273,7 +274,8 @@ def test_model_command(args):
             ],
         )
 
-    print(f"\nTesting connection to: {provider}/{model}\n{"=" * 60}")
+    sep60 = "=" * 60
+    print(f"\nTesting connection to: {provider}/{model}\n{sep60}")
 
     # check API key
     if api_key.endswith("_API_KEY"):  # env variable
@@ -438,7 +440,8 @@ def switch_model_command(args):
 
     current_model = config_manager.get_model_config().get("model", "")
 
-    print(f"\nAvailable models for '{provider}' provider:\n{"=" * 60}")
+    sep60 = "=" * 60
+    print(f"\nAvailable models for '{provider}' provider:\n{sep60}")
     for i, model_name in enumerate(models, 1):
         model_info = provider_config[model_name]
         alias = model_info.get("model_alias", "")

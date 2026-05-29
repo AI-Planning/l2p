@@ -102,7 +102,9 @@ def config_show_command(args):
     )
 
     config_file = config_manager.get_config_path()
-    print(f"Configuration file: {config_file}\n{"=" * 60}")
+    sep60 = "=" * 60
+    sep40 = "-" * 40
+    print(f"Configuration file: {config_file}\n{sep60}")
 
     if args.raw:
         try:
@@ -115,7 +117,7 @@ def config_show_command(args):
         config = config_manager.config
 
         # model configuration
-        print(f"\nModel Configuration:\n{"-" * 40}")
+        print(f"\nModel Configuration:\n{sep40}")
         model_config = config.get("model", {})
         for key, value in model_config.items():
             if key == "api_key" and isinstance(value, str) and len(value) > 8:
@@ -125,19 +127,19 @@ def config_show_command(args):
                 print(f"  {key}: {value}")
 
         # generation configuration
-        print(f"\nGeneration Configuration:\n{"-" * 40}")
+        print(f"\nGeneration Configuration:\n{sep40}")
         gen_config = config.get("generation", {})
         for key, value in gen_config.items():
             print(f"  {key}: {value}")
 
         # templates configuration
-        print(f"\nTemplates Configuration:\n{"-" * 40}")
+        print(f"\nTemplates Configuration:\n{sep40}")
         templates_config = config.get("templates", {})
         for key, value in templates_config.items():
             print(f"  {key}: {value}")
 
         # validation status
-        print(f"\nValidation:\n{"-" * 40}")
+        print(f"\nValidation:\n{sep40}")
         is_valid, message = config_manager.validate_model_config()
         status = "[SUCCESS] Valid" if is_valid else "[FAIL] Invalid"
         print(f"  Status: {status}")
@@ -270,10 +272,12 @@ def config_validate_command(args):
     )
 
     config_file = config_manager.get_config_path()
-    print(f"Validating configuration: {config_file}\n{"=" * 60}")
+    sep60 = "=" * 60
+    sep40 = "-" * 40
+    print(f"Validating configuration: {config_file}\n{sep60}")
 
     # validate model configuration
-    print(f"\n1. Model Configuration:\n{"-" * 40}")
+    print(f"\n1. Model Configuration:\n{sep40}")
     model_config = config_manager.get_model_config()
 
     checks = [
@@ -312,7 +316,7 @@ def config_validate_command(args):
                 all_passed = False
 
     # overall validation
-    print(f"\n2. Overall Validation:\n{"-" * 40}")
+    print(f"\n2. Overall Validation:\n{sep40}")
     is_valid, message = config_manager.validate_model_config()
 
     if is_valid and all_passed:
