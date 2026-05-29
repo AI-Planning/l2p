@@ -47,7 +47,6 @@ All PDDL concepts are represented as **Pydantic v2 BaseModel** classes, giving y
 | `GoalState` | Goal block | `GoalState(conditions=[...])` |
 | `Metric` | Plan optimization | `Metric(optimization="minimize", expression="total-time")` |
 | `ProblemDetails` | Root model for a complete problem | Aggregates all above |
-| `PlanStep` | A single grounded action in a plan | `PlanStep(action="drive", args=[...])` |
 
 ### `LogicalCondition` — Recursive Condition Representation
 
