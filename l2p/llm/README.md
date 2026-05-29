@@ -8,7 +8,6 @@ l2p/llm/
 ├── openai.py        # OpenAI SDK provider (OpenAI, DeepSeek, Anthropic, etc.)
 ├── unified.py       # simonw/llm provider (Ollama, plus all llm plugins)
 ├── huggingface.py   # Local HuggingFace transformers
-├── vllm.py          # vLLM accelerated inference (experimental)
 └── utils/
     ├── llm.yaml         # UnifiedLLM model config
     ├── openaiSDK.yaml   # OPENAI model config
@@ -131,7 +130,7 @@ The `model_alias` field follows the `llm` plugin convention (e.g., `ollama/llama
 
 ## `HUGGING_FACE` — Local Transformers
 
-Run models locally via HuggingFace `transformers` with automatic prompt formatting:
+Run models locally via HuggingFace `transformers` with automatic prompt formatting (*NOTE:* users must pass in their own .yaml config file):
 
 ```python
 from l2p.llm.huggingface import HUGGING_FACE
@@ -150,31 +149,13 @@ response = llm.query("Generate PDDL predicates.")
 
 ---
 
-## `VLLM` — Accelerated Inference (Experimental)
-
-High-throughput local inference using vLLM:
-
-```python
-from l2p.llm.vllm import VLLM
-
-llm = VLLM(
-    model="llama-2-7b",
-    model_path="/path/to/model",
-    provider="huggingface",
-)
-```
-
-Supports `tensor_parallel_size` for multi-GPU and configurable `gpu_memory_utilization`.
-
----
-
 ## Configuration Files
 
 Two YAML files ship with the library:
 
 | File | Used By | Format |
 |------|---------|--------|
-| `l2p/llm/utils/llm.yaml` | `UnifiedLLM`, `HUGGING_FACE`, `VLLM` | Per-provider model lists |
+| `l2p/llm/utils/llm.yaml` | `UnifiedLLM` | Per-provider model lists |
 | `l2p/llm/utils/openaiSDK.yaml` | `OPENAI` | Per-provider model lists + base_url |
 
 Users can define custom providers/models by adding entries to these files or pointing to their own YAML via `config_path`.

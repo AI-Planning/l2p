@@ -16,6 +16,35 @@ from l2p.cli.utils.errors import handle_error
 from l2p.cli.utils.helpers import _input_or_exit, YELLOW, RESET
 
 
+def _load_yaml_config(config_path: str) -> dict:
+    """Load a YAML config from a package path (l2p/...) or filesystem path."""
+    if config_path.startswith("l2p/"):
+        parts = config_path.replace("\\", "/").split("/")
+        yaml_filename = parts[-1] if parts else "llm.yaml"
+        try:
+            import importlib.resources
+            return yaml.safe_load(
+                importlib.resources.read_text("l2p.llm.utils", yaml_filename)
+            )
+        except Exception:
+            package_root = Path(__file__).parent.parent.parent.parent
+            config_file = package_root / "l2p" / "llm" / "utils" / yaml_filename
+            if not config_file.exists():
+                fallback = "openaiSDK.yaml" if yaml_filename == "llm.yaml" else "llm.yaml"
+                config_file = package_root / "l2p" / "llm" / "utils" / fallback
+            with open(config_file, "r") as f:
+                return yaml.safe_load(f)
+    else:
+        config_file = Path(config_path).expanduser().resolve()
+        if not config_file.exists():
+            raise CLIError(
+                f"[ERROR] Config file not found: {config_path}",
+                ["Check config path in your configuration", "Run 'l2p config show' to see current config"],
+            )
+        with open(config_file, "r") as f:
+            return yaml.safe_load(f)
+
+
 def add_subparser(subparsers):
     """Add models command subparser."""
     parser = subparsers.add_parser(
@@ -126,45 +155,7 @@ def list_models_command(args):
     config_path = model_config.get("config_path", "l2p/llm/utils/llm.yaml")
 
     try:
-        if config_path.startswith("l2p/"):
-            # extract the YAML filename from config path
-            # e.g. "l2p/llm/utils/openaiSDK.yaml" -> "openaiSDK.yaml"
-            parts = config_path.replace("\\", "/").split("/")
-            yaml_filename = parts[-1] if parts else "llm.yaml"
-
-            # try to load from package
-            try:
-                import importlib.resources
-
-                config_content = importlib.resources.read_text(
-                    "l2p.llm.utils", yaml_filename
-                )
-                config = yaml.safe_load(config_content)
-            except Exception:
-                # fall back to file system
-                package_root = Path(__file__).parent.parent.parent.parent
-                config_file = package_root / "l2p" / "llm" / "utils" / yaml_filename
-                if not config_file.exists():
-                    # try the other YAML as last resort
-                    fallback = (
-                        "openaiSDK.yaml" if yaml_filename == "llm.yaml" else "llm.yaml"
-                    )
-                    config_file = package_root / "l2p" / "llm" / "utils" / fallback
-                with open(config_file, "r") as f:
-                    config = yaml.safe_load(f)
-        else:
-            # load from custom path
-            config_file = Path(config_path).expanduser().resolve()
-            if not config_file.exists():
-                raise CLIError(
-                    f"[ERROR] Config file not found: {config_path}",
-                    [
-                        "Check config path in your configuration",
-                        "Run 'l2p config show' to see current config",
-                    ],
-                )
-            with open(config_file, "r") as f:
-                config = yaml.safe_load(f)
+        config = _load_yaml_config(config_path)
 
         # get models from provider
         provider_config = config.get(provider, {})
@@ -405,40 +396,7 @@ def _load_models_for_provider(config_manager, provider=None):
             )
 
     config_path = model_config.get("config_path", "l2p/llm/utils/llm.yaml")
-
-    # load config file
-    if config_path.startswith("l2p/"):
-        parts = config_path.replace("\\", "/").split("/")
-        yaml_filename = parts[-1] if parts else "llm.yaml"
-        try:
-            import importlib.resources
-
-            config_content = importlib.resources.read_text(
-                "l2p.llm.utils", yaml_filename
-            )
-            config = yaml.safe_load(config_content)
-        except Exception:
-            package_root = Path(__file__).parent.parent.parent.parent
-            config_file = package_root / "l2p" / "llm" / "utils" / yaml_filename
-            if not config_file.exists():
-                fallback = (
-                    "openaiSDK.yaml" if yaml_filename == "llm.yaml" else "llm.yaml"
-                )
-                config_file = package_root / "l2p" / "llm" / "utils" / fallback
-            with open(config_file, "r") as f:
-                config = yaml.safe_load(f)
-    else:
-        config_file = Path(config_path).expanduser().resolve()
-        if not config_file.exists():
-            raise CLIError(
-                f"[ERROR] Config file not found: {config_path}",
-                [
-                    "Check config path in your configuration",
-                    "Run `l2p config show` to see current config",
-                ],
-            )
-        with open(config_file, "r") as f:
-            config = yaml.safe_load(f)
+    config = _load_yaml_config(config_path)
 
     provider_config = config.get(provider, {})
     if not provider_config:

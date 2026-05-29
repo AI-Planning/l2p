@@ -139,6 +139,15 @@ def _parse_json(data: str, component: dict) -> Any:
         return model.model_validate(raw)
 
 
+def _build_context(items: List[Any]) -> Dict[Type, List[Any]]:
+    """Build a validation context from the parsed items themselves."""
+    context: Dict[Type, List[Any]] = {}
+    for item in items:
+        cls = type(item)
+        context.setdefault(cls, []).append(item)
+    return context
+
+
 def _run_validation(parsed: Any, component: dict) -> Tuple[bool, List[str], List[str]]:
     validator_cls = component.get("validator")
     if not validator_cls:
@@ -146,10 +155,11 @@ def _run_validation(parsed: Any, component: dict) -> Tuple[bool, List[str], List
 
     validator = validator_cls()
     items = parsed if isinstance(parsed, list) else [parsed]
+    context = _build_context(items)
     errors = []
     warnings = []
     for item in items:
-        result = validator.validate_component(item, {})
+        result = validator.validate_component(item, context)
         if not result.valid:
             errors.extend(result.errors)
         warnings.extend(result.warnings)

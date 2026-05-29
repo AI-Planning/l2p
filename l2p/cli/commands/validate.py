@@ -89,6 +89,15 @@ def _load_data(args) -> str:
     raise ValueError("No input provided. Use --data, --file, or <path>.")
 
 
+def _build_context(items: List[BaseModel]) -> Dict[Type, List[Any]]:
+    """Build a validation context from the validated items."""
+    context: Dict[Type, List[Any]] = {}
+    for item in items:
+        cls = type(item)
+        context.setdefault(cls, []).append(item)
+    return context
+
+
 def _validate_component_json(
     raw: str, model_cls: Type[BaseModel], validator_cls
 ) -> dict:
@@ -100,11 +109,12 @@ def _validate_component_json(
         items = [model_cls.model_validate(data)]
 
     validator = validator_cls()
+    context = _build_context(items)
     errors = []
     warnings = []
 
     for item in items:
-        result = validator.validate_component(item, {})
+        result = validator.validate_component(item, context)
         if not result.valid:
             errors.extend(result.errors)
         warnings.extend(result.warnings)

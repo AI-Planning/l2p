@@ -56,7 +56,7 @@ SYSTEM_PROMPT = (
     "Documentation: https://marcustantakoun.github.io/l2p.github.io/\n\n"
     "When users ask about generating PDDL components, guide them on using the appropriate "
     "l2p generate command. When they ask about configuration issues, refer them to l2p init "
-    "or l2p config edit. Keep responses concise and focused on L2P usage."
+    "or l2p config edit. Keep responses concise and focused on L2P usage. "
     "If they ask how to exit, tell them it is `/exit`."
 )
 
@@ -130,7 +130,11 @@ def _handle_validate_command(filepath: str):
 
     match = re.search(r"\(\s*define\s*\(\s*(domain|problem)", content, re.IGNORECASE)
     if not match:
-        return "[ERROR] Unknown PDDL type — could not find (define (domain ...) or (define (problem ...)"
+        print(
+            f"  {YELLOW}[ERROR] Unknown PDDL type — "
+            f"could not find (define (domain ...) or (define (problem ...){RESET}"
+        )
+        return
 
     pddl_type = match.group(1).lower()
 

@@ -10,7 +10,7 @@ __all__ = [
     "Action", "DurativeActionConditions", "DurativeActionEffect", "DurativeAction",
     "Constraint", "Event", "Process", "DomainDetails",
     "PDDLObject", "TimedFact", "InitialState", "GoalState", "Metric",
-    "ProblemDetails", "PlanStep", "LogicalCondition",
+    "ProblemDetails", "LogicalCondition",
     "format_requirements", "format_types", "format_constants",
     "format_predicates", "format_functions", "format_constraints",
     "format_params", "format_logic", "format_condition_block",

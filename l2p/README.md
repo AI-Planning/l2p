@@ -24,8 +24,9 @@ All default prompts (found in `l2p/templates`) used for `formalize_component()` 
 from l2p.prompt_builder import PromptBuilder
 
 pb = (PromptBuilder()
-    .set_role("You are a PDDL generator.")
+    .set_role("You are a PDDL types generator.")
     .set_format("Your final answer must be outputted in the following JSON structure.")
+    .set_format_example(component=PDDLType)
     .add_rule("Use strict PDDL syntax.")
     .add_example("INPUT: ...\nOUTPUT: ...")
     .set_task("Generate types for a rover domain."))

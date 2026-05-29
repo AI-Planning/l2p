@@ -130,17 +130,18 @@ class UnifiedLLM(BaseLLM):
                 details = getattr(usage, "details", None)
 
                 if usage:
-                    self.input_tokens = usage.input
-                    self.output_tokens = usage.output
+                    in_tok = usage.input
+                    out_tok = usage.output
                 else:
-                    self.input_tokens = current_tokens
-                    self.output_tokens = len(self.tok.encode(llm_output))
+                    in_tok = current_tokens
+                    out_tok = len(self.tok.encode(llm_output))
+
+                self.input_tokens = in_tok
+                self.output_tokens = out_tok
 
                 # cost calculation
-                input_cost = (self.input_tokens / 1_000_000) * self.cost_per_input_token
-                output_cost = (
-                    self.output_tokens / 1_000_000
-                ) * self.cost_per_output_token
+                input_cost = (in_tok / 1_000_000) * self.cost_per_input_token
+                output_cost = (out_tok / 1_000_000) * self.cost_per_output_token
                 total_cost = input_cost + output_cost
 
                 self.query_log.append(
@@ -148,8 +149,8 @@ class UnifiedLLM(BaseLLM):
                         "model": self.model_alias,
                         "prompt": prompt,
                         "response": llm_output,
-                        "input_tokens": self.input_tokens,
-                        "output_tokens": self.output_tokens,
+                        "input_tokens": in_tok,
+                        "output_tokens": out_tok,
                         "details": details,
                         "input_cost_usd": input_cost,
                         "output_cost_usd": output_cost,
@@ -157,8 +158,6 @@ class UnifiedLLM(BaseLLM):
                     }
                 )
 
-                # reset temporary token counts
-                self.reset_tokens()
                 conn_success = True
 
             except Exception as e:

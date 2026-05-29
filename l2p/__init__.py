@@ -47,7 +47,6 @@ __all__ = [
     "GoalState",
     "ProblemDetails",
     "Metric",
-    "PlanStep",
     "TimedFact",
     "parse_xml_tags",
     "parse_component",

@@ -298,12 +298,15 @@ def get_example_model(provider: str) -> str:
 
 def get_api_key_env_var(provider: str) -> str:
     """Get environment variable name for provider's API key."""
+    NO_KEY_PROVIDERS = {"ollama"}
+    if provider in NO_KEY_PROVIDERS:
+        return ""
     env_vars = {
         "openai": "OPENAI_API_KEY",
         "google": "GOOGLE_API_KEY",
         "anthropic": "ANTHROPIC_API_KEY",
         "deepseek": "DEEPSEEK_API_KEY",
         "mistral": "MISTRAL_API_KEY",
-        "ollama-cloud": "OLLAMA_API_KEY",  # not needed for local Ollama
+        "ollama-cloud": "OLLAMA_API_KEY",
     }
     return env_vars.get(provider, f"{provider.upper()}_API_KEY")

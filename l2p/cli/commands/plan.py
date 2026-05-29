@@ -145,6 +145,21 @@ def plan_command(args):
             from l2p.planner_builder import FastDownward
 
             executable = args.executable or "downward/fast-downward.py"
+            if not Path(executable).exists():
+                print(
+                    f"[ERROR] FastDownward executable not found: {executable}",
+                    file=sys.stderr,
+                )
+                print(
+                    "  Ensure the submodule is initialized: "
+                    "git submodule update --init --recursive",
+                    file=sys.stderr,
+                )
+                print(
+                    "  Or specify a custom path: --executable /path/to/fast-downward.py",
+                    file=sys.stderr,
+                )
+                sys.exit(1)
             planner = FastDownward(executable_path=executable)
             result = planner.run_planner(
                 domain_path=domain_path,
