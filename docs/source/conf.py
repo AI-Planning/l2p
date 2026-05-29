@@ -12,9 +12,9 @@ import sys
 sys.path.insert(0, os.path.abspath("../../l2p"))
 
 project = "L2P"
-copyright = "2025, Marcus Tantakoun"
+copyright = "2026, Marcus Tantakoun"
 author = "Marcus Tantakoun"
-release = "0.2.2"
+release = "0.4.0"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

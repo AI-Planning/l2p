@@ -195,6 +195,7 @@
 <ul class="current">
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="l2p.html">L2P</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">CLI</a></li>
 <li class="toctree-l1"><a class="reference internal" href="paper_recreations.html">Paper Recreations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="templates.html">Templates</a></li>
 <li class="toctree-l1"><a class="reference internal" href="types.html">Data Types</a></li>
@@ -251,10 +252,15 @@
 <p>First things first, import the whole L2P library, or necessary modules (see <a class="reference internal" href="l2p.html"><span class="doc">L2P</span></a>):</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">l2p</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
 <span class="c1"># OR</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">l2p</span><span class="w"> </span><span class="kn">import</span> <span class="n">DomainBuilder</span><span class="p">,</span> <span class="n">TaskBuilder</span><span class="p">,</span> <span class="n">PromptBuilder</span><span class="p">,</span> <span class="n">FeedbackBuilder</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">l2p</span><span class="w"> </span><span class="kn">import</span> <span class="n">DomainBuilder</span><span class="p">,</span> <span class="n">ProblemBuilder</span><span class="p">,</span> <span class="n">PromptBuilder</span><span class="p">,</span> <span class="n">FeedbackBuilder</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">l2p.validators.domain</span><span class="w"> </span><span class="kn">import</span> <span class="n">DomainValidator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">l2p.validators.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProblemValidator</span>
 
 <span class="c1"># util functions</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">l2p.utils</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">l2p.utils.pddl_types</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">l2p.utils.pddl_format</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">l2p.utils.pddl_parser</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">l2p.utils.pddl_prompt</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
 </pre></div>
 </div>
 <p>L2P requires access to an LLM. Set up your LLM class and methods using the abstract <code class="docutils literal notranslate"><span class="pre">BaseLLM(ABC)</span></code> class. In this case, we have set up OpenAI’s models to our library for quickstart.</p>
@@ -264,284 +270,232 @@
 <span class="n">openai_llm</span> <span class="o">=</span> <span class="n">OPENAI</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">engine</span><span class="p">,</span> <span class="n">api_key</span><span class="o">=</span><span class="n">api_key</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Users can pass any prompt into their LLMs–as long as the structured output prompt follows the respective function (see <a class="reference internal" href="templates.html"><span class="doc">Templates</span></a>). We recommend using the <code class="docutils literal notranslate"><span class="pre">PromptBuilder</span></code> class that help organize prompts. This is a simple example:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="kn">from</span><span class="w"> </span><span class="nn">l2p.prompt_builder</span><span class="w"> </span><span class="kn">import</span> <span class="n">PromptBuilder</span>
-<span class="linenos"> 2</span><span class="n">prompt_builder</span> <span class="o">=</span> <span class="n">PromptBuilder</span><span class="p">()</span>
-<span class="linenos"> 3</span>
-<span class="linenos"> 4</span><span class="n">role_desc</span> <span class="o">=</span> <span class="s2">&quot;Your role is to...&quot;</span>
-<span class="linenos"> 5</span><span class="n">format_desc</span> <span class="o">=</span> <span class="s2">&quot;You must follow this format...&quot;</span>
-<span class="linenos"> 6</span><span class="n">ex_desc</span> <span class="o">=</span> <span class="s2">&quot;Here is an example...&quot;</span>
-<span class="linenos"> 7</span><span class="n">task_desc</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{PLACEHOLDER}</span><span class="s2">&quot;</span>
-<span class="linenos"> 8</span>
-<span class="linenos"> 9</span><span class="n">prompt</span> <span class="o">=</span> <span class="n">PromptBuilder</span><span class="p">(</span>
-<span class="linenos">10</span>    <span class="n">role</span> <span class="o">=</span> <span class="n">role_desc</span><span class="p">,</span>
-<span class="linenos">11</span>    <span class="nb">format</span> <span class="o">=</span> <span class="n">format_desc</span><span class="p">,</span>
-<span class="linenos">12</span>    <span class="n">examples</span> <span class="o">=</span> <span class="p">[</span><span class="n">ex_desc</span><span class="p">],</span>
-<span class="linenos">13</span>    <span class="n">task</span> <span class="o">=</span> <span class="n">task_desc</span>
-<span class="linenos">14</span><span class="p">)</span>
-<span class="linenos">15</span>
-<span class="linenos">16</span><span class="nb">print</span><span class="p">(</span><span class="n">prompt</span><span class="o">.</span><span class="n">generate_prompt</span><span class="p">())</span>
-</pre></div>
-</div>
-<p>Generated prompt:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">ROLE</span><span class="p">]:</span> <span class="n">Your</span> <span class="n">role</span> <span class="ow">is</span> <span class="n">to</span><span class="o">...</span>
-
-<span class="o">------------------------------------------------</span>
-<span class="p">[</span><span class="n">FORMAT</span><span class="p">]:</span> <span class="n">You</span> <span class="n">must</span> <span class="n">follow</span> <span class="n">this</span> <span class="nb">format</span><span class="o">...</span>
-
-<span class="o">------------------------------------------------</span>
-<span class="p">[</span><span class="n">EXAMPLE</span><span class="p">(</span><span class="n">S</span><span class="p">)]:</span>
-<span class="n">Example</span> <span class="mi">1</span><span class="p">:</span>
-<span class="n">Here</span> <span class="ow">is</span> <span class="n">an</span> <span class="n">example</span><span class="o">...</span>
-
-<span class="o">------------------------------------------------</span>
-<span class="p">[</span><span class="n">TASK</span><span class="p">]:</span>
-<span class="n">Here</span> <span class="ow">is</span> <span class="n">the</span> <span class="n">task</span> <span class="n">to</span> <span class="n">solve</span><span class="p">:</span>
-<span class="p">{</span><span class="n">PLACEHOLDER</span><span class="p">}</span>
-</pre></div>
-</div>
-<p>Build PDDL domain components using the <code class="docutils literal notranslate"><span class="pre">DomainBuilder</span></code> class. This is an example of extracting PDDL types using PromptBuilder:</p>
+<p>Build PDDL domain components using the <code class="docutils literal notranslate"><span class="pre">DomainBuilder</span></code> class. This is an example of extracting PDDL types:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
-<span class="linenos"> 2</span><span class="kn">from</span><span class="w"> </span><span class="nn">l2p.domain_builder</span><span class="w"> </span><span class="kn">import</span> <span class="n">DomainBuilder</span>
-<span class="linenos"> 3</span><span class="kn">from</span><span class="w"> </span><span class="nn">l2p.prompt_builder</span><span class="w"> </span><span class="kn">import</span> <span class="n">PromptBuilder</span>
-<span class="linenos"> 4</span><span class="kn">from</span><span class="w"> </span><span class="nn">l2p.llm.openai</span><span class="w"> </span><span class="kn">import</span> <span class="n">OPENAI</span>
-<span class="linenos"> 5</span><span class="kn">from</span><span class="w"> </span><span class="nn">l2p.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">format_types</span><span class="p">,</span> <span class="n">load_file</span>
-<span class="linenos"> 6</span>
-<span class="linenos"> 7</span><span class="n">api_key</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;OPENAI_API_KEY&#39;</span><span class="p">)</span>
-<span class="linenos"> 8</span><span class="n">gpt_4o_mini</span> <span class="o">=</span> <span class="n">OPENAI</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">&quot;gpt-4o-mini&quot;</span><span class="p">,</span> <span class="n">api_key</span><span class="o">=</span><span class="n">api_key</span><span class="p">)</span>
-<span class="linenos"> 9</span>
-<span class="linenos">10</span><span class="n">domain_builder</span> <span class="o">=</span> <span class="n">DomainBuilder</span><span class="p">()</span>
-<span class="linenos">11</span><span class="n">types_prompt</span> <span class="o">=</span> <span class="n">PromptBuilder</span><span class="p">(</span>
-<span class="linenos">12</span>    <span class="n">role</span><span class="o">=</span><span class="s2">&quot;You are a PDDL assistant that is helping me design :types.&quot;</span><span class="p">,</span>
-<span class="linenos">13</span>    <span class="nb">format</span><span class="o">=</span><span class="n">load_file</span><span class="p">(</span><span class="s2">&quot;templates/domain_templates/formalize_type.txt&quot;</span><span class="p">),</span>
-<span class="linenos">14</span>    <span class="n">task</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">{domain_desc}</span><span class="s2">&quot;</span>
-<span class="linenos">15</span><span class="p">)</span>
-<span class="linenos">16</span>
-<span class="linenos">17</span><span class="n">domain_desc</span> <span class="o">=</span> <span class="s2">&quot;The AI agent here is a mechanical robot arm that can pick and &quot;</span> \
-<span class="linenos">18</span>    <span class="s2">&quot;place the blocks. Only one block may be moved at a time: it may either &quot;</span> \
-<span class="linenos">19</span>    <span class="s2">&quot;be placed on the table or placed atop another block. Because of this, &quot;</span> \
-<span class="linenos">20</span>    <span class="s2">&quot;any blocks that are, at a given time, under another block cannot be moved.&quot;</span>
-<span class="linenos">21</span>
-<span class="linenos">22</span><span class="c1"># extract types via LLM</span>
-<span class="linenos">23</span><span class="n">types</span><span class="p">,</span> <span class="n">llm_output</span><span class="p">,</span> <span class="n">validation_info</span> <span class="o">=</span> <span class="n">domain_builder</span><span class="o">.</span><span class="n">formalize_types</span><span class="p">(</span>
-<span class="linenos">24</span>    <span class="n">model</span><span class="o">=</span><span class="n">gpt_4o_mini</span><span class="p">,</span>
-<span class="linenos">25</span>    <span class="n">domain_desc</span><span class="o">=</span><span class="n">domain_desc</span><span class="p">,</span>
-<span class="linenos">26</span>    <span class="n">prompt_template</span><span class="o">=</span><span class="n">types_prompt</span><span class="o">.</span><span class="n">generate_prompt</span><span class="p">()</span>
-<span class="linenos">27</span>    <span class="p">)</span>
-<span class="linenos">28</span>
-<span class="linenos">29</span><span class="c1"># print out types</span>
-<span class="linenos">30</span><span class="nb">print</span><span class="p">(</span><span class="n">format_types</span><span class="p">(</span><span class="n">types</span><span class="o">=</span><span class="n">types</span><span class="p">))</span>
+<span class="linenos"> 2</span><span class="kn">from</span><span class="w"> </span><span class="nn">l2p</span><span class="w"> </span><span class="kn">import</span> <span class="n">UnifiedLLM</span>
+<span class="linenos"> 3</span><span class="kn">from</span><span class="w"> </span><span class="nn">l2p</span><span class="w"> </span><span class="kn">import</span> <span class="n">DomainBuilder</span>
+<span class="linenos"> 4</span><span class="kn">from</span><span class="w"> </span><span class="nn">l2p</span><span class="w"> </span><span class="kn">import</span> <span class="n">PDDLType</span>
+<span class="linenos"> 5</span>
+<span class="linenos"> 6</span><span class="n">llm</span> <span class="o">=</span> <span class="n">UnifiedLLM</span><span class="p">(</span>
+<span class="linenos"> 7</span>    <span class="n">provider</span><span class="o">=</span><span class="s2">&quot;openai&quot;</span><span class="p">,</span>
+<span class="linenos"> 8</span>    <span class="n">model</span><span class="o">=</span><span class="s2">&quot;gpt-5-nano&quot;</span><span class="p">,</span>
+<span class="linenos"> 9</span>    <span class="n">api_key</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;OPENAI_API_KEY&#39;</span><span class="p">))</span>
+<span class="linenos">10</span>
+<span class="linenos">11</span><span class="n">domain_builder</span> <span class="o">=</span> <span class="n">DomainBuilder</span><span class="p">()</span> <span class="c1"># instantiate DomainBuilder</span>
+<span class="linenos">12</span>
+<span class="linenos">13</span><span class="c1"># context description</span>
+<span class="linenos">14</span><span class="n">domain_desc</span> <span class="o">=</span> <span class="s2">&quot;The AI agent here is a mechanical robot arm that can pick and &quot;</span> \
+<span class="linenos">15</span><span class="s2">&quot;place the blocks. Only one block may be moved at a time: it may either &quot;</span> \
+<span class="linenos">16</span><span class="s2">&quot;be placed on the table or placed atop another block. Because of this, &quot;</span> \
+<span class="linenos">17</span><span class="s2">&quot;any blocks that are, at a given time, under another block cannot be moved.&quot;</span>
+<span class="linenos">18</span>
+<span class="linenos">19</span><span class="c1"># extract types via LLM</span>
+<span class="linenos">20</span><span class="n">results</span><span class="p">,</span> <span class="n">llm_output</span> <span class="o">=</span> <span class="n">domain_builder</span><span class="o">.</span><span class="n">formalize_component</span><span class="p">(</span>
+<span class="linenos">21</span>    <span class="n">model</span><span class="o">=</span><span class="n">llm</span><span class="p">,</span>
+<span class="linenos">22</span>    <span class="n">component_class</span><span class="o">=</span><span class="n">PDDLType</span><span class="p">,</span>
+<span class="linenos">23</span>    <span class="n">description</span><span class="o">=</span><span class="n">domain_desc</span>
+<span class="linenos">24</span>    <span class="c1"># prompt_template=[...] by default loads pre-defined prompt template</span>
+<span class="linenos">25</span><span class="p">)</span>
+<span class="linenos">26</span>
+<span class="linenos">27</span><span class="nb">print</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="n">PDDLType</span><span class="p">])</span>
 </pre></div>
 </div>
 <p>Generated types output:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
-    <span class="s1">&#39;block&#39;</span><span class="p">:</span> <span class="s1">&#39;; A physical object that can be picked up and moved by the robot arm.&#39;</span><span class="p">,</span>
-    <span class="s1">&#39;table&#39;</span><span class="p">:</span> <span class="s1">&#39;; A flat surface where blocks can be placed.&#39;</span><span class="p">,</span>
-    <span class="s1">&#39;robot_arm&#39;</span><span class="p">:</span> <span class="s1">&#39;; The mechanical device capable of picking and placing blocks.&#39;</span>
-<span class="p">}</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span>
+    <span class="n">PDDLType</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;block&#39;</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="s1">&#39;object&#39;</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;A block to pickup&#39;</span><span class="p">),</span>
+    <span class="n">PDDLType</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;table&#39;</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="s1">&#39;object&#39;</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Table where blocks are set down&#39;</span><span class="p">),</span>
+    <span class="n">PDDLType</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;robot_arm&#39;</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="s1">&#39;object&#39;</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Robot arm that manipulates blocks&#39;</span><span class="p">)</span>
+<span class="p">]</span>
 </pre></div>
 </div>
-<p>Build PDDL problem components using the <code class="docutils literal notranslate"><span class="pre">TaskBuilder</span></code> class. This is an example of extracting PDDL initial states:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
-<span class="linenos"> 2</span><span class="kn">from</span><span class="w"> </span><span class="nn">l2p.task_builder</span><span class="w"> </span><span class="kn">import</span> <span class="n">TaskBuilder</span>
-<span class="linenos"> 3</span><span class="kn">from</span><span class="w"> </span><span class="nn">l2p.prompt_builder</span><span class="w"> </span><span class="kn">import</span> <span class="n">PromptBuilder</span>
-<span class="linenos"> 4</span><span class="kn">from</span><span class="w"> </span><span class="nn">l2p.llm.openai</span><span class="w"> </span><span class="kn">import</span> <span class="n">OPENAI</span>
-<span class="linenos"> 5</span><span class="kn">from</span><span class="w"> </span><span class="nn">l2p.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">format_initial</span><span class="p">,</span> <span class="n">load_file</span>
+<p>Build PDDL problem components using the <code class="docutils literal notranslate"><span class="pre">ProblemBuilder</span></code> class. This is an example of extracting PDDL initial states:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="kn">from</span><span class="w"> </span><span class="nn">l2p</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProblemBuilder</span>
+<span class="linenos"> 2</span><span class="kn">from</span><span class="w"> </span><span class="nn">l2p</span><span class="w"> </span><span class="kn">import</span> <span class="n">InitialState</span><span class="p">,</span> <span class="n">Predicate</span><span class="p">,</span> <span class="n">PDDLType</span>
+<span class="linenos"> 3</span><span class="kn">from</span><span class="w"> </span><span class="nn">l2p</span><span class="w"> </span><span class="kn">import</span> <span class="n">format_initial_state</span>
+<span class="linenos"> 4</span>
+<span class="linenos"> 5</span><span class="n">problem_builder</span> <span class="o">=</span> <span class="n">ProblemBuilder</span><span class="p">()</span> <span class="c1"># instantiate ProblemBuilder</span>
 <span class="linenos"> 6</span>
-<span class="linenos"> 7</span><span class="n">api_key</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;OPENAI_API_KEY&#39;</span><span class="p">)</span>
-<span class="linenos"> 8</span><span class="n">gpt_4o_mini</span> <span class="o">=</span> <span class="n">OPENAI</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">&quot;gpt-4o-mini&quot;</span><span class="p">,</span> <span class="n">api_key</span><span class="o">=</span><span class="n">api_key</span><span class="p">)</span>
-<span class="linenos"> 9</span>
-<span class="linenos">10</span><span class="n">task_builder</span> <span class="o">=</span> <span class="n">TaskBuilder</span><span class="p">()</span>
-<span class="linenos">11</span><span class="n">init_prompt</span> <span class="o">=</span> <span class="n">PromptBuilder</span><span class="p">(</span>
-<span class="linenos">12</span>    <span class="n">role</span><span class="o">=</span><span class="s2">&quot;You are a PDDL assistant that is helping me design :init problems&quot;</span><span class="p">,</span>
-<span class="linenos">13</span>    <span class="nb">format</span><span class="o">=</span><span class="n">load_file</span><span class="p">(</span><span class="s2">&quot;templates/task_templates/formalize_initial.txt&quot;</span><span class="p">),</span>
-<span class="linenos">14</span>    <span class="n">task</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">{problem_desc}</span><span class="s2">&quot;</span>
-<span class="linenos">15</span><span class="p">)</span>
-<span class="linenos">16</span>
-<span class="linenos">17</span><span class="n">problem_desc</span> <span class="o">=</span> <span class="s2">&quot;There are four blocks currently. The blue block is on the red &quot;</span> \
-<span class="linenos">18</span>    <span class="s2">&quot;which is on the yellow. The yellow and the green are on the table. I want &quot;</span> \
-<span class="linenos">19</span>    <span class="s2">&quot;the red on top of the green.&quot;</span>
-<span class="linenos">20</span>
-<span class="linenos">21</span><span class="n">initial_states</span><span class="p">,</span> <span class="n">llm_output</span><span class="p">,</span> <span class="n">validation_info</span> <span class="o">=</span> <span class="n">task_builder</span><span class="o">.</span><span class="n">formalize_initial_state</span><span class="p">(</span>
-<span class="linenos">22</span>    <span class="n">model</span> <span class="o">=</span> <span class="n">gpt_4o_mini</span><span class="p">,</span>
-<span class="linenos">23</span>    <span class="n">problem_desc</span> <span class="o">=</span> <span class="n">problem_desc</span><span class="p">,</span>
-<span class="linenos">24</span>    <span class="n">prompt_template</span> <span class="o">=</span> <span class="n">init_prompt</span><span class="o">.</span><span class="n">generate_prompt</span><span class="p">()</span>
-<span class="linenos">25</span><span class="p">)</span>
-<span class="linenos">26</span>
-<span class="linenos">27</span><span class="nb">print</span><span class="p">(</span><span class="n">format_initial</span><span class="p">(</span><span class="n">initial_states</span><span class="o">=</span><span class="n">initial_states</span><span class="p">))</span>
+<span class="linenos"> 7</span><span class="c1"># context</span>
+<span class="linenos"> 8</span><span class="n">problem_desc</span> <span class="o">=</span> <span class="s2">&quot;There are four blocks currently. The blue block is on the red &quot;</span> \
+<span class="linenos"> 9</span><span class="s2">&quot;which is on the yellow. The yellow and the green are on the table. I want &quot;</span> \
+<span class="linenos">10</span><span class="s2">&quot;the red on top of the green.&quot;</span>
+<span class="linenos">11</span><span class="n">types</span> <span class="o">=</span> <span class="p">[</span><span class="n">PDDLType</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;block&#39;</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="s1">&#39;object&#39;</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;A block to pickup&#39;</span><span class="p">)]</span>
+<span class="linenos">12</span><span class="n">predicates</span> <span class="o">=</span> <span class="p">[</span>
+<span class="linenos">13</span>    <span class="n">Predicate</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;on&quot;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">[{</span><span class="s2">&quot;variable&quot;</span><span class="p">:</span> <span class="s2">&quot;?b1&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;block&quot;</span><span class="p">},</span> <span class="p">{</span><span class="s2">&quot;variable&quot;</span><span class="p">:</span> <span class="s2">&quot;?b2&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;block&quot;</span><span class="p">}],</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Block ?b1 is on block ?b2.&quot;</span><span class="p">),</span>
+<span class="linenos">14</span>    <span class="n">Predicate</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;on-table&quot;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">[{</span><span class="s2">&quot;variable&quot;</span><span class="p">:</span> <span class="s2">&quot;?b&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;block&quot;</span><span class="p">}],</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Block ?b is on table.&quot;</span><span class="p">),</span>
+<span class="linenos">15</span>    <span class="n">Predicate</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;holding&quot;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">[{</span><span class="s2">&quot;variable&quot;</span><span class="p">:</span> <span class="s2">&quot;?b&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;block&quot;</span><span class="p">}],</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Agent is holding block ?b.&quot;</span><span class="p">),</span>
+<span class="linenos">16</span>    <span class="n">Predicate</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;clear&quot;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">[{</span><span class="s2">&quot;variable&quot;</span><span class="p">:</span> <span class="s2">&quot;?b&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;block&quot;</span><span class="p">}],</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Block ?b is clear.&quot;</span><span class="p">),</span>
+<span class="linenos">17</span>    <span class="n">Predicate</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;arm-empty&quot;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">[],</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Arm is empty.&quot;</span><span class="p">)</span>
+<span class="linenos">18</span><span class="p">]</span>
+<span class="linenos">19</span>
+<span class="linenos">20</span><span class="c1"># extract initial states via LLM</span>
+<span class="linenos">21</span><span class="n">results</span><span class="p">,</span> <span class="n">llm_output</span> <span class="o">=</span> <span class="n">problem_builder</span><span class="o">.</span><span class="n">formalize_component</span><span class="p">(</span>
+<span class="linenos">22</span>    <span class="n">model</span><span class="o">=</span><span class="n">llm</span><span class="p">,</span>
+<span class="linenos">23</span>    <span class="n">component_class</span><span class="o">=</span><span class="n">InitialState</span><span class="p">,</span>
+<span class="linenos">24</span>    <span class="n">description</span><span class="o">=</span><span class="n">problem_desc</span><span class="p">,</span>
+<span class="linenos">25</span>    <span class="c1"># prompt_template=[...] by default loads pre-defined prompt template</span>
+<span class="linenos">26</span>    <span class="n">types</span><span class="o">=</span><span class="n">types</span><span class="p">,</span>            <span class="c1"># context kwargs</span>
+<span class="linenos">27</span>    <span class="n">predicates</span><span class="o">=</span><span class="n">predicates</span>   <span class="c1"># context kwargs</span>
+<span class="linenos">28</span><span class="p">)</span>
+<span class="linenos">29</span>
+<span class="linenos">30</span><span class="n">initial_state</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="n">InitialState</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+<span class="linenos">31</span>
+<span class="linenos">32</span><span class="nb">print</span><span class="p">(</span><span class="n">format_initial_state</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="n">initial_state</span><span class="p">))</span>
 </pre></div>
 </div>
 <p>Generated initial states:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">on</span> <span class="n">blue</span> <span class="n">red</span><span class="p">)</span>
 <span class="p">(</span><span class="n">on</span> <span class="n">red</span> <span class="n">yellow</span><span class="p">)</span>
-<span class="p">(</span><span class="n">on</span> <span class="n">yellow</span> <span class="n">table</span><span class="p">)</span>
-<span class="p">(</span><span class="n">on</span> <span class="n">green</span> <span class="n">table</span><span class="p">)</span>
+<span class="p">(</span><span class="n">on</span><span class="o">-</span><span class="n">table</span> <span class="n">yellow</span><span class="p">)</span>
+<span class="p">(</span><span class="n">on</span><span class="o">-</span><span class="n">table</span> <span class="n">green</span><span class="p">)</span>
+<span class="p">(</span><span class="n">clear</span> <span class="n">blue</span><span class="p">)</span>
+<span class="p">(</span><span class="n">clear</span> <span class="n">green</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Build LLM feedback components using the <code class="docutils literal notranslate"><span class="pre">FeedbackBuilder</span></code> class. This is an example of getting LLM feedback from types:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
-<span class="linenos"> 2</span><span class="kn">from</span><span class="w"> </span><span class="nn">l2p.feedback_builder</span><span class="w"> </span><span class="kn">import</span> <span class="n">FeedbackBuilder</span>
-<span class="linenos"> 3</span><span class="kn">from</span><span class="w"> </span><span class="nn">l2p.prompt_builder</span><span class="w"> </span><span class="kn">import</span> <span class="n">PromptBuilder</span>
-<span class="linenos"> 4</span><span class="kn">from</span><span class="w"> </span><span class="nn">l2p.llm.openai</span><span class="w"> </span><span class="kn">import</span> <span class="n">OPENAI</span>
-<span class="linenos"> 5</span><span class="kn">from</span><span class="w"> </span><span class="nn">l2p.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_file</span>
-<span class="linenos"> 6</span>
-<span class="linenos"> 7</span><span class="n">api_key</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;OPENAI_API_KEY&#39;</span><span class="p">)</span>
-<span class="linenos"> 8</span><span class="n">gpt_4o_mini</span> <span class="o">=</span> <span class="n">OPENAI</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">&quot;gpt-4o-mini&quot;</span><span class="p">,</span> <span class="n">api_key</span><span class="o">=</span><span class="n">api_key</span><span class="p">)</span>
-<span class="linenos"> 9</span>
-<span class="linenos">10</span><span class="n">domain_desc</span> <span class="o">=</span> <span class="s2">&quot;The AI agent here is a mechanical robot arm that can pick and &quot;</span> \
-<span class="linenos">11</span>        <span class="s2">&quot;place the blocks. Only one block may be moved at a time: it may either &quot;</span> \
-<span class="linenos">12</span>        <span class="s2">&quot;be placed on the table or placed atop another block. Because of this, &quot;</span> \
-<span class="linenos">13</span>        <span class="s2">&quot;any blocks that are, at a given time, under another block cannot be moved.&quot;</span>
-<span class="linenos">14</span>
-<span class="linenos">15</span><span class="n">types</span> <span class="o">=</span> <span class="p">{</span>
-<span class="linenos">16</span>    <span class="s1">&#39;block&#39;</span><span class="p">:</span> <span class="s1">&#39;; A physical object that can be picked up and moved by the robot arm.&#39;</span><span class="p">,</span>
-<span class="linenos">17</span>    <span class="s1">&#39;table&#39;</span><span class="p">:</span> <span class="s1">&#39;; A flat surface where blocks can be placed.&#39;</span><span class="p">,</span>
-<span class="linenos">18</span>    <span class="s1">&#39;robot_arm&#39;</span><span class="p">:</span> <span class="s1">&#39;; The mechanical device capable of picking and placing blocks.&#39;</span><span class="p">,</span>
-<span class="linenos">19</span>    <span class="s1">&#39;carpet&#39;</span><span class="p">:</span> <span class="s1">&#39;; a carpet for a room.&#39;</span> <span class="c1"># unnecessary type for domain</span>
-<span class="linenos">20</span>    <span class="p">}</span>
-<span class="linenos">21</span>
-<span class="linenos">22</span><span class="n">feedback_builder</span> <span class="o">=</span> <span class="n">FeedbackBuilder</span><span class="p">()</span>
-<span class="linenos">23</span>
-<span class="linenos">24</span><span class="n">feedback_prompt</span> <span class="o">=</span> <span class="n">PromptBuilder</span><span class="p">(</span>
-<span class="linenos">25</span>    <span class="n">role</span><span class="o">=</span><span class="s2">&quot;You are a PDDL assistant that is providing feedback to :types.&quot;</span><span class="p">,</span>
-<span class="linenos">26</span>    <span class="nb">format</span><span class="o">=</span><span class="n">load_file</span><span class="p">(</span><span class="s2">&quot;templates/feedback_templates/feedback.txt&quot;</span><span class="p">),</span>
-<span class="linenos">27</span>    <span class="n">task</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">{domain_desc}</span><span class="s2"> </span><span class="se">\n\n</span><span class="s2">##Types</span><span class="se">\n</span><span class="si">{types}</span><span class="s2">&quot;</span>
-<span class="linenos">28</span><span class="p">)</span>
-<span class="linenos">29</span>
-<span class="linenos">30</span><span class="n">no_feedback</span><span class="p">,</span> <span class="n">llm_output</span> <span class="o">=</span> <span class="n">feedback_builder</span><span class="o">.</span><span class="n">type_feedback</span><span class="p">(</span>
-<span class="linenos">31</span>    <span class="n">model</span> <span class="o">=</span> <span class="n">gpt_4o_mini</span><span class="p">,</span>
-<span class="linenos">32</span>    <span class="n">domain_desc</span> <span class="o">=</span> <span class="n">domain_desc</span><span class="p">,</span>
-<span class="linenos">33</span>    <span class="n">feedback_template</span> <span class="o">=</span> <span class="n">feedback_prompt</span><span class="o">.</span><span class="n">generate_prompt</span><span class="p">(),</span>
-<span class="linenos">34</span>    <span class="n">feedback_type</span> <span class="o">=</span> <span class="s2">&quot;llm&quot;</span><span class="p">,</span>
-<span class="linenos">35</span>    <span class="n">types</span><span class="o">=</span><span class="n">types</span>
-<span class="linenos">36</span><span class="p">)</span>
-<span class="linenos">37</span>
-<span class="linenos">38</span><span class="nb">print</span><span class="p">(</span><span class="n">no_feedback</span><span class="p">,</span> <span class="n">llm_output</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>Generated feedback:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>[NO FEEDBACK]: False
-
-[LLM OUTPUT]
-### JUDGMENT
-```
-The type &quot;carpet&quot; seems unnecessary in the context of the task, as it does not relate to the actions of picking and placing blocks. Consider removing it to maintain focus on relevant types.
-```
-</pre></div>
-</div>
-<p>Below are actual runnable usage examples. This is the general setup to build domain predicates:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
-<span class="linenos"> 2</span><span class="kn">from</span><span class="w"> </span><span class="nn">l2p.domain_builder</span><span class="w"> </span><span class="kn">import</span> <span class="n">DomainBuilder</span>
-<span class="linenos"> 3</span><span class="kn">from</span><span class="w"> </span><span class="nn">l2p.llm.openai</span><span class="w"> </span><span class="kn">import</span> <span class="n">OPENAI</span>
-<span class="linenos"> 4</span><span class="kn">from</span><span class="w"> </span><span class="nn">l2p.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">format_expression</span><span class="p">,</span> <span class="n">load_file</span>
-<span class="linenos"> 5</span>
-<span class="linenos"> 6</span><span class="n">domain_builder</span> <span class="o">=</span> <span class="n">DomainBuilder</span><span class="p">()</span>
-<span class="linenos"> 7</span>
-<span class="linenos"> 8</span><span class="n">api_key</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;OPENAI_API_KEY&#39;</span><span class="p">)</span>
-<span class="linenos"> 9</span><span class="n">gpt_4o_mini</span> <span class="o">=</span> <span class="n">OPENAI</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">&quot;gpt-4o-mini&quot;</span><span class="p">,</span> <span class="n">api_key</span><span class="o">=</span><span class="n">api_key</span><span class="p">)</span>
+<p>Build LLM feedback components using the <code class="docutils literal notranslate"><span class="pre">FeedbackBuilder</span></code> class. This is an example of
+using LLM-driven diagnosis to validate generated types:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="kn">from</span><span class="w"> </span><span class="nn">l2p</span><span class="w"> </span><span class="kn">import</span> <span class="n">FeedbackBuilder</span>
+<span class="linenos"> 2</span>
+<span class="linenos"> 3</span><span class="n">feedback_builder</span> <span class="o">=</span> <span class="n">FeedbackBuilder</span><span class="p">()</span> <span class="c1"># instantiate FeedbackBuilder</span>
+<span class="linenos"> 4</span>
+<span class="linenos"> 5</span><span class="c1"># context description</span>
+<span class="linenos"> 6</span><span class="n">domain_desc</span> <span class="o">=</span> <span class="s2">&quot;The AI agent here is a mechanical robot arm that can pick and &quot;</span> \
+<span class="linenos"> 7</span><span class="s2">&quot;place the blocks. Only one block may be moved at a time: it may either &quot;</span> \
+<span class="linenos"> 8</span><span class="s2">&quot;be placed on the table or placed atop another block. Because of this, &quot;</span> \
+<span class="linenos"> 9</span><span class="s2">&quot;any blocks that are, at a given time, under another block cannot be moved.&quot;</span>
 <span class="linenos">10</span>
-<span class="linenos">11</span><span class="c1"># retrieve prompt information</span>
-<span class="linenos">12</span><span class="n">base_path</span><span class="o">=</span><span class="s1">&#39;tests/usage/prompts/domain/&#39;</span>
-<span class="linenos">13</span><span class="n">domain_desc</span> <span class="o">=</span> <span class="n">load_file</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">base_path</span><span class="si">}</span><span class="s1">blocksworld_domain.txt&#39;</span><span class="p">)</span>
-<span class="linenos">14</span><span class="n">predicates_prompt</span> <span class="o">=</span> <span class="n">load_file</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">base_path</span><span class="si">}</span><span class="s1">formalize_predicates.txt&#39;</span><span class="p">)</span>
-<span class="linenos">15</span><span class="n">types</span> <span class="o">=</span> <span class="n">load_file</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">base_path</span><span class="si">}</span><span class="s1">types.json&#39;</span><span class="p">)</span>
-<span class="linenos">16</span><span class="n">action</span> <span class="o">=</span> <span class="n">load_file</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">base_path</span><span class="si">}</span><span class="s1">action.json&#39;</span><span class="p">)</span>
-<span class="linenos">17</span>
-<span class="linenos">18</span><span class="c1"># extract predicates via LLM</span>
-<span class="linenos">19</span><span class="n">predicates</span><span class="p">,</span> <span class="n">llm_output</span><span class="p">,</span> <span class="n">validation_info</span> <span class="o">=</span> <span class="n">domain_builder</span><span class="o">.</span><span class="n">formalize_predicates</span><span class="p">(</span>
-<span class="linenos">20</span>    <span class="n">model</span><span class="o">=</span><span class="n">gpt_4o_mini</span><span class="p">,</span>
-<span class="linenos">21</span>    <span class="n">domain_desc</span><span class="o">=</span><span class="n">domain_desc</span><span class="p">,</span>
-<span class="linenos">22</span>    <span class="n">prompt_template</span><span class="o">=</span><span class="n">predicates_prompt</span><span class="p">,</span>
-<span class="linenos">23</span>    <span class="n">types</span><span class="o">=</span><span class="n">types</span>
-<span class="linenos">24</span>    <span class="p">)</span>
-<span class="linenos">25</span>
-<span class="linenos">26</span><span class="c1"># format key info into PDDL strings</span>
-<span class="linenos">27</span><span class="n">predicate_str</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">pred</span><span class="p">[</span><span class="s2">&quot;raw&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">,</span> <span class="s2">&quot; ; &quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">pred</span> <span class="ow">in</span> <span class="n">predicates</span><span class="p">])</span>
-<span class="linenos">28</span>
-<span class="linenos">29</span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;PDDL domain predicates:</span><span class="se">\n</span><span class="si">{</span><span class="n">predicate_str</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">11</span><span class="c1"># failure artifact (simulated generated LLM output)</span>
+<span class="linenos">12</span><span class="n">types</span> <span class="o">=</span> <span class="p">[</span>
+<span class="linenos">13</span>    <span class="n">PDDLType</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;block&#39;</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="s1">&#39;object&#39;</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;A block to pickup.&#39;</span><span class="p">),</span>
+<span class="linenos">14</span>    <span class="n">PDDLType</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;carpet&#39;</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="s1">&#39;object&#39;</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Just some carpet.&#39;</span><span class="p">)</span>
+<span class="linenos">15</span><span class="p">]</span>
+<span class="linenos">16</span>
+<span class="linenos">17</span><span class="c1"># simulate a validation failure for diagnosis</span>
+<span class="linenos">18</span><span class="n">errors</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Unnecessary type &#39;carpet&#39; does not relate to any action.&quot;</span><span class="p">]</span>
+<span class="linenos">19</span>
+<span class="linenos">20</span><span class="c1"># extract diagnosis via LLM</span>
+<span class="linenos">21</span><span class="n">diagnosis</span><span class="p">,</span> <span class="n">llm_output</span> <span class="o">=</span> <span class="n">feedback_builder</span><span class="o">.</span><span class="n">llm_diagnose</span><span class="p">(</span>
+<span class="linenos">22</span>    <span class="n">model</span><span class="o">=</span><span class="n">llm</span><span class="p">,</span>
+<span class="linenos">23</span>    <span class="n">errors</span><span class="o">=</span><span class="n">errors</span><span class="p">,</span>
+<span class="linenos">24</span>    <span class="n">artifact</span><span class="o">=</span><span class="n">types</span><span class="p">,</span>
+<span class="linenos">25</span>    <span class="n">description</span><span class="o">=</span><span class="n">domain_desc</span><span class="p">,</span>
+<span class="linenos">26</span><span class="p">)</span>
+<span class="linenos">27</span>
+<span class="linenos">28</span><span class="nb">print</span><span class="p">(</span><span class="n">diagnosis</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Generated diagnosis:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;summary&quot;</span><span class="p">:</span> <span class="s2">&quot;The validator failed because the domain includes an unused type &#39;carpet&#39; that does not relate to any action, causing the generation to be invalid.&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;identified_errors&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span>
+        <span class="s2">&quot;error_type&quot;</span><span class="p">:</span> <span class="s2">&quot;UnnecessaryType&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;location_in_json&quot;</span><span class="p">:</span> <span class="s2">&quot;types[1].name&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;validator_message&quot;</span><span class="p">:</span> <span class="s2">&quot;Unnecessary type &#39;carpet&#39; does not relate to any action.&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;root_cause_analysis&quot;</span><span class="p">:</span> <span class="s2">&quot;The types section defines &#39;carpet&#39; but no action, predicate, or goal references it; it was likely included by mistake or left over from a template.&quot;</span>
+        <span class="p">}</span>
+    <span class="p">],</span>
+    <span class="s2">&quot;repair_plan&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="s2">&quot;Step 1: Remove the entire type entry for &#39;carpet&#39; from the types array (types[1]).&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Step 2: If &#39;carpet&#39; is intentionally part of the domain, create or reference at least one action or predicate that uses the carpet type so that it is related to an action.&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Step 3: Re-run the validator to ensure the error is resolved and that all remaining types are used by actions or constraints.&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Step 4: Ensure the JSON structure remains valid (proper commas, brackets) after removal or modification.&quot;</span>
+    <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Below are other runnable usage examples. This is the general setup to build domain predicates:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="kn">from</span><span class="w"> </span><span class="nn">l2p.domain_builder</span><span class="w"> </span><span class="kn">import</span> <span class="n">DomainBuilder</span>
+<span class="linenos"> 2</span><span class="kn">from</span><span class="w"> </span><span class="nn">l2p.utils.pddl_types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Predicate</span>
+<span class="linenos"> 3</span>
+<span class="linenos"> 4</span><span class="n">db</span> <span class="o">=</span> <span class="n">DomainBuilder</span><span class="p">()</span>
+<span class="linenos"> 5</span><span class="n">results</span><span class="p">,</span> <span class="n">raw</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">formalize_component</span><span class="p">(</span>
+<span class="linenos"> 6</span>    <span class="n">model</span><span class="o">=</span><span class="n">llm</span><span class="p">,</span>
+<span class="linenos"> 7</span>    <span class="n">component_class</span><span class="o">=</span><span class="n">Predicate</span><span class="p">,</span>
+<span class="linenos"> 8</span>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Model predicates for blocksworld.&quot;</span><span class="p">,</span>
+<span class="linenos"> 9</span>    <span class="n">types</span><span class="o">=</span><span class="p">[</span><span class="n">PDDLType</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;block&quot;</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="s2">&quot;object&quot;</span><span class="p">)]</span>
+<span class="linenos">10</span><span class="p">)</span>
+<span class="linenos">11</span><span class="n">predicates</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="n">Predicate</span><span class="p">]</span>
 </pre></div>
 </div>
 <p>The following output is:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>PDDL domain predicates:
-- (holding ?a - arm ?b - block) ;  true if the arm ?a is currently holding the block ?b
-- (on_table ?b - block) ;  true if the block ?b is on the table
-- (clear ?b - block) ;  true if the block ?b is clear (no block on top of it)
-- (on_top ?b1 - block ?b2 - block) ;  true if the block ?b1 is on top of the block ?b2
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>(clear ?x - block)
+(arm-empty )
+(holding ?x - block)
+(on ?x - block ?y - block)
+(on-table ?x - block)
 </pre></div>
 </div>
 <p>Here is how you would setup a PDDL problem:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
-<span class="linenos"> 2</span><span class="kn">from</span><span class="w"> </span><span class="nn">l2p.llm.openai</span><span class="w"> </span><span class="kn">import</span> <span class="n">OPENAI</span>
-<span class="linenos"> 3</span><span class="kn">from</span><span class="w"> </span><span class="nn">l2p.utils.pddl_types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Predicate</span>
-<span class="linenos"> 4</span><span class="kn">from</span><span class="w"> </span><span class="nn">l2p.task_builder</span><span class="w"> </span><span class="kn">import</span> <span class="n">TaskBuilder</span>
-<span class="linenos"> 5</span><span class="kn">from</span><span class="w"> </span><span class="nn">l2p.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_file</span>
-<span class="linenos"> 6</span>
-<span class="linenos"> 7</span><span class="n">task_builder</span> <span class="o">=</span> <span class="n">TaskBuilder</span><span class="p">()</span> <span class="c1"># initialize task builder class</span>
-<span class="linenos"> 8</span>
-<span class="linenos"> 9</span><span class="n">api_key</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;OPENAI_API_KEY&#39;</span><span class="p">)</span>
-<span class="linenos">10</span><span class="n">llm</span> <span class="o">=</span> <span class="n">OPENAI</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">&quot;gpt-4o-mini&quot;</span><span class="p">,</span> <span class="n">api_key</span><span class="o">=</span><span class="n">api_key</span><span class="p">)</span>
-<span class="linenos">11</span>
-<span class="linenos">12</span><span class="c1"># load in assumptions</span>
-<span class="linenos">13</span><span class="n">problem_desc</span> <span class="o">=</span> <span class="n">load_file</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;tests/usage/prompts/problem/blocksworld_problem.txt&#39;</span><span class="p">)</span>
-<span class="linenos">14</span><span class="n">task_prompt</span> <span class="o">=</span> <span class="n">load_file</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;tests/usage/prompts/problem/formalize_task.txt&#39;</span><span class="p">)</span>
-<span class="linenos">15</span><span class="n">types</span> <span class="o">=</span> <span class="n">load_file</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;tests/usage/prompts/domain/types.json&#39;</span><span class="p">)</span>
-<span class="linenos">16</span><span class="n">predicates_json</span> <span class="o">=</span> <span class="n">load_file</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;tests/usage/prompts/domain/predicates.json&#39;</span><span class="p">)</span>
-<span class="linenos">17</span><span class="n">predicates</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Predicate</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">Predicate</span><span class="p">(</span><span class="o">**</span><span class="n">item</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">predicates_json</span><span class="p">]</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="kn">from</span><span class="w"> </span><span class="nn">l2p.problem_builder</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProblemBuilder</span>
+<span class="linenos"> 2</span><span class="kn">from</span><span class="w"> </span><span class="nn">l2p.utils.pddl_types</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProblemDetails</span><span class="p">,</span> <span class="n">PDDLType</span><span class="p">,</span> <span class="n">Predicate</span>
+<span class="linenos"> 3</span>
+<span class="linenos"> 4</span><span class="n">pb</span> <span class="o">=</span> <span class="n">ProblemBuilder</span><span class="p">()</span> <span class="c1"># instantiate ProblemBuilder class</span>
+<span class="linenos"> 5</span>
+<span class="linenos"> 6</span><span class="c1"># context</span>
+<span class="linenos"> 7</span><span class="n">types</span> <span class="o">=</span> <span class="p">[</span><span class="n">PDDLType</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;block&quot;</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="s2">&quot;object&quot;</span><span class="p">)]</span>
+<span class="linenos"> 8</span><span class="n">predicates</span> <span class="o">=</span> <span class="p">[</span>
+<span class="linenos"> 9</span>    <span class="n">Predicate</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;on&quot;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">[</span>
+<span class="linenos">10</span>        <span class="p">{</span><span class="s2">&quot;variable&quot;</span><span class="p">:</span> <span class="s2">&quot;?x&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;block&quot;</span><span class="p">},</span>
+<span class="linenos">11</span>        <span class="p">{</span><span class="s2">&quot;variable&quot;</span><span class="p">:</span> <span class="s2">&quot;?y&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;block&quot;</span><span class="p">}</span>
+<span class="linenos">12</span>        <span class="p">]),</span>
+<span class="linenos">13</span>    <span class="n">Predicate</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;on-table&quot;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">[{</span><span class="s2">&quot;variable&quot;</span><span class="p">:</span> <span class="s2">&quot;?x&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;block&quot;</span><span class="p">}]),</span>
+<span class="linenos">14</span>    <span class="n">Predicate</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;holding&quot;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">[{</span><span class="s2">&quot;variable&quot;</span><span class="p">:</span> <span class="s2">&quot;?x&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;block&quot;</span><span class="p">}]),</span>
+<span class="linenos">15</span>    <span class="n">Predicate</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;clear&quot;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">[{</span><span class="s2">&quot;variable&quot;</span><span class="p">:</span> <span class="s2">&quot;?x&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;block&quot;</span><span class="p">}]),</span>
+<span class="linenos">16</span>    <span class="n">Predicate</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;arm-empty&quot;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">[])</span>
+<span class="linenos">17</span><span class="p">]</span>
 <span class="linenos">18</span>
-<span class="linenos">19</span><span class="c1"># extract PDDL task specifications via LLM</span>
-<span class="linenos">20</span><span class="n">objects</span><span class="p">,</span> <span class="n">init</span><span class="p">,</span> <span class="n">goal</span><span class="p">,</span> <span class="n">llm_response</span><span class="p">,</span> <span class="n">validation_info</span> <span class="o">=</span> <span class="n">task_builder</span><span class="o">.</span><span class="n">formalize_task</span><span class="p">(</span>
-<span class="linenos">21</span>    <span class="n">model</span><span class="o">=</span><span class="n">llm</span><span class="p">,</span>
-<span class="linenos">22</span>    <span class="n">problem_desc</span><span class="o">=</span><span class="n">problem_desc</span><span class="p">,</span>
-<span class="linenos">23</span>    <span class="n">prompt_template</span><span class="o">=</span><span class="n">task_prompt</span><span class="p">,</span>
-<span class="linenos">24</span>    <span class="n">types</span><span class="o">=</span><span class="n">types</span><span class="p">,</span>
-<span class="linenos">25</span>    <span class="n">predicates</span><span class="o">=</span><span class="n">predicates</span>
-<span class="linenos">26</span>    <span class="p">)</span>
-<span class="linenos">27</span>
-<span class="linenos">28</span><span class="c1"># generate task file</span>
-<span class="linenos">29</span><span class="n">pddl_problem</span> <span class="o">=</span> <span class="n">task_builder</span><span class="o">.</span><span class="n">generate_task</span><span class="p">(</span>
-<span class="linenos">30</span>    <span class="n">domain_name</span><span class="o">=</span><span class="s2">&quot;blocksworld&quot;</span><span class="p">,</span>
-<span class="linenos">31</span>    <span class="n">problem_name</span><span class="o">=</span><span class="s2">&quot;blocksworld_problem&quot;</span><span class="p">,</span>
-<span class="linenos">32</span>    <span class="n">objects</span><span class="o">=</span><span class="n">objects</span><span class="p">,</span>
-<span class="linenos">33</span>    <span class="n">initial</span><span class="o">=</span><span class="n">init</span><span class="p">,</span>
-<span class="linenos">34</span>    <span class="n">goal</span><span class="o">=</span><span class="n">goal</span><span class="p">)</span>
-<span class="linenos">35</span>
-<span class="linenos">36</span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;PDDL problem:</span><span class="se">\n</span><span class="si">{</span><span class="n">pddl_problem</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">19</span><span class="n">problem_desc</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="linenos">20</span><span class="s2">You have 3 blocks.</span>
+<span class="linenos">21</span><span class="s2">b2 is on top of b3.</span>
+<span class="linenos">22</span><span class="s2">b3 is on top of b1.</span>
+<span class="linenos">23</span><span class="s2">b1 is on the table.</span>
+<span class="linenos">24</span><span class="s2">b2 is clear.</span>
+<span class="linenos">25</span><span class="s2">Your arm is empty.</span>
+<span class="linenos">26</span><span class="s2">Your goal is to move the blocks.</span>
+<span class="linenos">27</span><span class="s2">b2 should be on top of b3.</span>
+<span class="linenos">28</span><span class="s2">b3 should be on top of b1.</span>
+<span class="linenos">29</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="linenos">30</span>
+<span class="linenos">31</span><span class="c1"># generate problem</span>
+<span class="linenos">32</span><span class="n">results</span><span class="p">,</span> <span class="n">llm_output</span> <span class="o">=</span> <span class="n">pb</span><span class="o">.</span><span class="n">formalize_component</span><span class="p">(</span>
+<span class="linenos">33</span>    <span class="n">model</span><span class="o">=</span><span class="n">llm</span><span class="p">,</span>
+<span class="linenos">34</span>    <span class="n">component_class</span><span class="o">=</span><span class="n">ProblemDetails</span><span class="p">,</span> <span class="c1"># component to generate</span>
+<span class="linenos">35</span>    <span class="n">description</span><span class="o">=</span><span class="n">problem_desc</span><span class="p">,</span>
+<span class="linenos">36</span>    <span class="n">types</span><span class="o">=</span><span class="n">types</span><span class="p">,</span>            <span class="c1"># pass in kwargs context</span>
+<span class="linenos">37</span>    <span class="n">predicates</span><span class="o">=</span><span class="n">predicates</span>   <span class="c1"># pass in kwargs context</span>
+<span class="linenos">38</span><span class="p">)</span>
+<span class="linenos">39</span>
+<span class="linenos">40</span><span class="c1"># parse out problem from dictionary</span>
+<span class="linenos">41</span><span class="n">problem</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="n">ProblemDetails</span><span class="p">]</span>
+<span class="linenos">42</span>
+<span class="linenos">43</span><span class="c1"># format problem in PDDL format</span>
+<span class="linenos">44</span><span class="n">problem_str</span> <span class="o">=</span> <span class="n">pb</span><span class="o">.</span><span class="n">generate_problem</span><span class="p">(</span><span class="n">problem</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="linenos">45</span>
+<span class="linenos">46</span><span class="nb">print</span><span class="p">(</span><span class="n">problem_str</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The following output is:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">PDDL</span> <span class="n">problem</span><span class="p">:</span>
-<span class="p">(</span><span class="n">define</span>
-    <span class="p">(</span><span class="n">problem</span> <span class="n">blocksworld_problem</span><span class="p">)</span>
-    <span class="p">(:</span><span class="n">domain</span> <span class="n">blocksworld</span><span class="p">)</span>
-
-    <span class="p">(:</span><span class="n">objects</span>
-        <span class="n">blue_block</span> <span class="o">-</span> <span class="n">block</span>
-        <span class="n">red_block</span> <span class="o">-</span> <span class="n">block</span>
-        <span class="n">yellow_block</span> <span class="o">-</span> <span class="n">block</span>
-        <span class="n">green_block</span> <span class="o">-</span> <span class="n">block</span>
-        <span class="n">table1</span> <span class="o">-</span> <span class="n">table</span>
-    <span class="p">)</span>
-
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">define</span> <span class="p">(</span><span class="n">problem</span> <span class="n">blocks</span><span class="o">-</span><span class="n">problem</span><span class="p">)</span>
+    <span class="p">(:</span><span class="n">domain</span> <span class="n">blocks</span><span class="o">-</span><span class="n">world</span><span class="p">)</span>
+    <span class="p">(:</span><span class="n">objects</span> <span class="n">b1</span> <span class="n">b2</span> <span class="n">b3</span> <span class="o">-</span> <span class="n">block</span><span class="p">)</span>
     <span class="p">(:</span><span class="n">init</span>
-        <span class="p">(</span><span class="n">on_top</span> <span class="n">blue_block</span> <span class="n">red_block</span><span class="p">)</span>
-        <span class="p">(</span><span class="n">on_top</span> <span class="n">red_block</span> <span class="n">yellow_block</span><span class="p">)</span>
-        <span class="p">(</span><span class="n">on_table</span> <span class="n">yellow_block</span><span class="p">)</span>
-        <span class="p">(</span><span class="n">on_table</span> <span class="n">green_block</span><span class="p">)</span>
-        <span class="p">(</span><span class="n">clear</span> <span class="n">blue_block</span><span class="p">)</span>
-        <span class="p">(</span><span class="n">clear</span> <span class="n">green_block</span><span class="p">)</span>
+        <span class="p">(</span><span class="n">on</span> <span class="n">b2</span> <span class="n">b3</span><span class="p">)</span>
+        <span class="p">(</span><span class="n">on</span> <span class="n">b3</span> <span class="n">b1</span><span class="p">)</span>
+        <span class="p">(</span><span class="n">on</span><span class="o">-</span><span class="n">table</span> <span class="n">b1</span><span class="p">)</span>
+        <span class="p">(</span><span class="n">clear</span> <span class="n">b2</span><span class="p">)</span>
+        <span class="p">(</span><span class="n">arm</span><span class="o">-</span><span class="n">empty</span><span class="p">)</span>
     <span class="p">)</span>
-
     <span class="p">(:</span><span class="n">goal</span>
-        <span class="p">(</span><span class="ow">and</span>
-            <span class="p">(</span><span class="n">on_top</span> <span class="n">red_block</span> <span class="n">green_block</span><span class="p">)</span>
-            <span class="p">(</span><span class="n">clear</span> <span class="n">green_block</span><span class="p">)</span>
-        <span class="p">)</span>
+        <span class="p">(</span><span class="ow">and</span> <span class="p">(</span><span class="n">on</span> <span class="n">b2</span> <span class="n">b3</span><span class="p">)</span> <span class="p">(</span><span class="n">on</span> <span class="n">b3</span> <span class="n">b1</span><span class="p">))</span>
     <span class="p">)</span>
 <span class="p">)</span>
 </pre></div>
 </div>
 <p><strong>*IMPORTANT*</strong>
 It is <strong>highly</strong> recommended to use the base template found in <a class="reference internal" href="templates.html"><span class="doc">Templates</span></a> in your final prompt to properly extract LLM output into the designated Python formats from these methods.</p>
+<p>For terminal-based workflows, including interactive generation, validation, and
+planning, see the <a class="reference internal" href="cli.html"><span class="doc">CLI</span></a> documentation.</p>
 </section>
 </section>
 
@@ -574,7 +528,7 @@ It is <strong>highly</strong> recommended to use the base template found in <a c
         <div class="bottom-of-page">
           <div class="left-details">
             <div class="copyright">
-                Copyright &#169; 2025, Marcus Tantakoun
+                Copyright &#169; 2026, Marcus Tantakoun
             </div>
             Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
             
@@ -614,7 +568,7 @@ It is <strong>highly</strong> recommended to use the base template found in <a c
       
     </aside>
   </div>
-</div><script src="_static/documentation_options.js?v=000c92bf"></script>
+</div><script src="_static/documentation_options.js?v=6c02275b"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/furo.js?v=46bd48cc"></script>

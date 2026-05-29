@@ -194,6 +194,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../l2p.html">L2P</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cli.html">CLI</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../paper_recreations.html">Paper Recreations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../templates.html">Templates</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../types.html">Data Types</a></li>
@@ -232,948 +233,545 @@
         <article role="main" id="furo-main-content">
           <h1>Source code for l2p.utils.pddl_parser</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">This module contains a collection of helper functions that parses information from LLM output.</span>
+<span class="sd">PDDL Parsing: LLM Output → Pydantic Models</span>
+
+<span class="sd">Two parsing directions:</span>
+
+<span class="sd">1. Structured Output Extraction (LLM → Pydantic)</span>
+<span class="sd">------------------------------------------------</span>
+<span class="sd">Extracts JSON from LLM XML-tagged responses and validates them against L2P&#39;s</span>
+<span class="sd">Pydantic models.</span>
+
+<span class="sd">    blocks = parse_xml_tags(llm_output, &quot;predicates&quot;)</span>
+<span class="sd">    predicates = parse_component(blocks, Predicate, &quot;predicates&quot;)</span>
+<span class="sd">    single = parse_element(blocks, DomainDetails, &quot;domain&quot;)</span>
+
+<span class="sd">- ``parse_xml_tags`` — extracts content between ``&lt;tag&gt;...&lt;/tag&gt;`` blocks</span>
+<span class="sd">- ``parse_component`` — validates a list of model instances from JSON arrays</span>
+<span class="sd">- ``parse_element`` — validates a single model instance from a JSON object</span>
+
+<span class="sd">2. Raw PDDL String Parsing (PDDL → Pydantic)</span>
+<span class="sd">----------------------------------------------</span>
+<span class="sd">Converts standard PDDL syntax into L2P models using the ``pddl`` library:</span>
+
+<span class="sd">    details = parse_domain_pddl(pddl_str)</span>
+<span class="sd">    problem = parse_problem_pddl(pddl_str)</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">ast</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">TypeVar</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">OrderedDict</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">deepcopy</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
-
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeAdapter</span><span class="p">,</span> <span class="n">ValidationError</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pddl</span><span class="w"> </span><span class="kn">import</span> <span class="n">parse_domain</span><span class="p">,</span> <span class="n">parse_problem</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">pddl.formatter</span><span class="w"> </span><span class="kn">import</span> <span class="n">domain_to_string</span><span class="p">,</span> <span class="n">problem_to_string</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pddl.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Action</span> <span class="k">as</span> <span class="n">PddlAction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pddl.logic.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">And</span><span class="p">,</span> <span class="n">Or</span><span class="p">,</span> <span class="n">Not</span><span class="p">,</span> <span class="n">Imply</span><span class="p">,</span> <span class="n">ForallCondition</span><span class="p">,</span> <span class="n">ExistsCondition</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pddl.logic.predicates</span><span class="w"> </span><span class="kn">import</span> <span class="n">Predicate</span> <span class="k">as</span> <span class="n">PddlPredicate</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pddl.logic.effects</span><span class="w"> </span><span class="kn">import</span> <span class="n">When</span><span class="p">,</span> <span class="n">Forall</span> <span class="k">as</span> <span class="n">ForallEffect</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pddl.logic.functions</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Increase</span><span class="p">,</span>
+    <span class="n">Decrease</span><span class="p">,</span>
+    <span class="n">Assign</span><span class="p">,</span>
+    <span class="n">ScaleUp</span><span class="p">,</span>
+    <span class="n">ScaleDown</span><span class="p">,</span>
+    <span class="n">GreaterThan</span><span class="p">,</span>
+    <span class="n">LesserThan</span><span class="p">,</span>
+    <span class="n">GreaterEqualThan</span><span class="p">,</span>
+    <span class="n">LesserEqualThan</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pddl.logic.terms</span><span class="w"> </span><span class="kn">import</span> <span class="n">Constant</span> <span class="k">as</span> <span class="n">Variable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">l2p.utils.pddl_types</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">.pddl_format</span><span class="w"> </span><span class="kn">import</span> <span class="n">remove_comments</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.pddl_types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Action</span><span class="p">,</span> <span class="n">Function</span><span class="p">,</span> <span class="n">Predicate</span>
+<span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;T&quot;</span><span class="p">)</span>
 
 
-<span class="c1"># ---- PDDL DOMAIN PARSERS ----</span>
+<span class="c1"># =============================================================================</span>
+<span class="c1"># LLM OUTPUT EXTRACTION FUNCTIONS</span>
+<span class="c1"># =============================================================================</span>
 
 
-<div class="viewcode-block" id="parse_types">
-<a class="viewcode-back" href="../../../l2p.html#l2p.utils.pddl_parser.parse_types">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">parse_types</span><span class="p">(</span><span class="n">llm_output</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">heading</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;TYPES&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<div class="viewcode-block" id="parse_xml_tags">
+<a class="viewcode-back" href="../../../l2p.html#l2p.utils.pddl_parser.parse_xml_tags">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_xml_tags</span><span class="p">(</span><span class="n">llm_output</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">tag_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Safely extracts and evaluates a dictionary structure from a string (LLM response).</span>
-
+<span class="sd">    Parses out XML tags to extract list of components.</span>
 <span class="sd">    Args:</span>
-<span class="sd">        llm_output (str): raw string from the LLM expected to contain a flat dictionary</span>
-<span class="sd">        heading (str): header string to extract text. Defaults to `TYPES`</span>
-
+<span class="sd">        llm_output (str): String output from LLM</span>
+<span class="sd">        tag_name (str): Specific XML tag to extract blocks from</span>
 <span class="sd">    Returns:</span>
-<span class="sd">        types_parsed (dict[str, str]) | None: parsed dictionary of :types if valid, else None.</span>
+<span class="sd">        Single list of content within XML blocks</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">try</span><span class="p">:</span>
-
-        <span class="n">types_head</span> <span class="o">=</span> <span class="n">parse_heading</span><span class="p">(</span><span class="n">llm_output</span><span class="p">,</span> <span class="n">heading</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">types_head</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;```&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;Could not find exactly one block in the types section enclosed by [```, ```] of the LLM output.&quot;</span>
-            <span class="p">)</span>
-
-        <span class="n">types_raw</span> <span class="o">=</span> <span class="n">combine_blocks</span><span class="p">(</span><span class="n">types_head</span><span class="p">)</span>
-
-        <span class="c1"># Regex to extract the first dictionary-like structure</span>
-        <span class="n">dict_pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;{[^</span><span class="si">{}</span><span class="s2">]*}&quot;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">DOTALL</span><span class="p">)</span>
-        <span class="n">match</span> <span class="o">=</span> <span class="n">dict_pattern</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">types_raw</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No dictionary found in the LLM response.&quot;</span><span class="p">)</span>
-            <span class="k">return</span> <span class="kc">None</span>
-
-        <span class="n">dict_str</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-        <span class="n">types_parsed</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">literal_eval</span><span class="p">(</span><span class="n">dict_str</span><span class="p">)</span>
-
-        <span class="c1"># Validate it is a flat dictionary with string keys and values</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">types_parsed</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span>
-            <span class="nb">isinstance</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">types_parsed</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-        <span class="p">):</span>
-            <span class="k">return</span> <span class="n">types_parsed</span>
-
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Parsed object is not a flat dictionary of string keys and values.&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="kc">None</span>
-
-    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error parsing dictionary: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="kc">None</span></div>
+    <span class="n">pattern</span> <span class="o">=</span> <span class="sa">rf</span><span class="s2">&quot;&lt;</span><span class="si">{</span><span class="n">tag_name</span><span class="si">}</span><span class="s2">&gt;(.*?)&lt;/</span><span class="si">{</span><span class="n">tag_name</span><span class="si">}</span><span class="s2">&gt;&quot;</span>
+    <span class="n">matches</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">llm_output</span><span class="p">,</span> <span class="n">flags</span><span class="o">=</span><span class="n">re</span><span class="o">.</span><span class="n">DOTALL</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">match</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">match</span> <span class="ow">in</span> <span class="n">matches</span><span class="p">]</span></div>
 
 
 
-<div class="viewcode-block" id="parse_type_hierarchy">
-<a class="viewcode-back" href="../../../l2p.html#l2p.utils.pddl_parser.parse_type_hierarchy">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">parse_type_hierarchy</span><span class="p">(</span><span class="n">llm_output</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">heading</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;TYPES&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]:</span>
+<div class="viewcode-block" id="parse_component">
+<a class="viewcode-back" href="../../../l2p.html#l2p.utils.pddl_parser.parse_component">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_component</span><span class="p">(</span>
+    <span class="n">raw_blocks</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">model_class</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">tag_name</span><span class="p">:</span> <span class="nb">str</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Safely parses LLM response into a list of nested dictionaries representing the type hierarchy.</span>
-
+<span class="sd">    Processes list of content blocks containing specific model class. Returns first valid</span>
+<span class="sd">    JSON object pertaining to that specific model class.</span>
 <span class="sd">    Args:</span>
-<span class="sd">        llm_output (str): raw LLM output expected to contain a Python list of dictionaries.</span>
-<span class="sd">        heading (str): header string to extract text. Defaults to `TYPES`</span>
-
+<span class="sd">        raw_blocks (List[str]): Content blocks (likely extracted from `parse_xml_tags`) to filter</span>
+<span class="sd">        model_class (Type[T]): Specific model class to validate content block</span>
+<span class="sd">        tag_name (str): Specific XML tag to extract blocks from</span>
 <span class="sd">    Returns:</span>
-<span class="sd">        types_parsed (list[dict[str,str]]) | None: parsed type hierarchy if valid, else None.</span>
+<span class="sd">        List of JSON object models matching the specific model class</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">try</span><span class="p">:</span>
 
-        <span class="n">types_head</span> <span class="o">=</span> <span class="n">parse_heading</span><span class="p">(</span><span class="n">llm_output</span><span class="p">,</span> <span class="n">heading</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">types_head</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;```&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;Could not find exactly one block in the types section enclosed by [```, ```] of the LLM output.&quot;</span>
-            <span class="p">)</span>
+    <span class="n">list_adapter</span> <span class="o">=</span> <span class="n">TypeAdapter</span><span class="p">(</span><span class="n">List</span><span class="p">[</span><span class="n">model_class</span><span class="p">])</span>
+    <span class="n">collected_errors</span> <span class="o">=</span> <span class="p">[]</span>
 
-        <span class="n">types_raw</span> <span class="o">=</span> <span class="n">combine_blocks</span><span class="p">(</span><span class="n">types_head</span><span class="p">)</span>
-
-        <span class="c1"># catch if types is empty</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">types_raw</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">None</span>
-
-        <span class="n">types_parsed</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">literal_eval</span><span class="p">(</span><span class="n">types_raw</span><span class="p">)</span>
-
-        <span class="c1"># ensure it&#39;s a list of dicts with proper structure</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">types_parsed</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-            <span class="k">return</span> <span class="kc">None</span>
-
-        <span class="k">def</span><span class="w"> </span><span class="nf">validate_type_node</span><span class="p">(</span><span class="n">node</span><span class="p">):</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-                <span class="k">return</span> <span class="kc">False</span>
-            <span class="k">if</span> <span class="s2">&quot;children&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">node</span><span class="p">:</span>
-                <span class="k">return</span> <span class="kc">False</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">[</span><span class="s2">&quot;children&quot;</span><span class="p">],</span> <span class="nb">list</span><span class="p">):</span>
-                <span class="k">return</span> <span class="kc">False</span>
-            <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">node</span><span class="p">[</span><span class="s2">&quot;children&quot;</span><span class="p">]:</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">validate_type_node</span><span class="p">(</span><span class="n">child</span><span class="p">):</span>
-                    <span class="k">return</span> <span class="kc">False</span>
-            <span class="k">return</span> <span class="kc">True</span>
-
-        <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">validate_type_node</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">types_parsed</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">types_parsed</span>
-
-        <span class="k">return</span> <span class="kc">None</span>
-
-    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to convert response to dict: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="kc">None</span></div>
-
-
-
-<div class="viewcode-block" id="parse_constants">
-<a class="viewcode-back" href="../../../l2p.html#l2p.utils.pddl_parser.parse_constants">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">parse_constants</span><span class="p">(</span><span class="n">llm_output</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">heading</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;CONSTANTS&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Safely extracts and evaluates a dictionary structure from a string (LLM response).</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        llm_output (str): Raw string from the LLM expected to contain a flat dictionary.</span>
-<span class="sd">        heading (str): header string to extract text. Defaults to `CONSTANTS`</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        constants_parsed (dict[str, str]) | None: parsed dictionary if valid, else None.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">try</span><span class="p">:</span>
-
-        <span class="n">constant_head</span> <span class="o">=</span> <span class="n">parse_heading</span><span class="p">(</span><span class="n">llm_output</span><span class="p">,</span> <span class="n">heading</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">constant_head</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;```&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;Could not find exactly one block in the constants section enclosed by [```, ```] of the LLM output.&quot;</span>
-            <span class="p">)</span>
-
-        <span class="n">constants_raw</span> <span class="o">=</span> <span class="n">combine_blocks</span><span class="p">(</span><span class="n">constant_head</span><span class="p">)</span>
-
-        <span class="c1"># regex to extract the first dictionary-like structure</span>
-        <span class="n">dict_pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;{[^</span><span class="si">{}</span><span class="s2">]*}&quot;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">DOTALL</span><span class="p">)</span>
-        <span class="n">match</span> <span class="o">=</span> <span class="n">dict_pattern</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">constants_raw</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No dictionary found in the LLM response.&quot;</span><span class="p">)</span>
-            <span class="k">return</span> <span class="kc">None</span>
-
-        <span class="n">dict_str</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-        <span class="n">constants_parsed</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">literal_eval</span><span class="p">(</span><span class="n">dict_str</span><span class="p">)</span>
-
-        <span class="c1"># validate it is a flat dictionary with string keys and values</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">constants_parsed</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span>
-            <span class="nb">isinstance</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">constants_parsed</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-        <span class="p">):</span>
-            <span class="k">return</span> <span class="n">constants_parsed</span>
-
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Parsed object is not a flat dictionary of string keys and values.&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="kc">None</span>
-
-    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error parsing dictionary: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="kc">None</span></div>
-
-
-
-<div class="viewcode-block" id="parse_predicates">
-<a class="viewcode-back" href="../../../l2p.html#l2p.utils.pddl_parser.parse_predicates">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">parse_predicates</span><span class="p">(</span><span class="n">all_predicates</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Predicate</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Predicate</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    This function assumes the predicate definitions adhere to PDDL grammar.</span>
-<span class="sd">    Assigns `params` to the predicate arguments properly. This should be run</span>
-<span class="sd">    after retrieving a predicate list to ensure predicates are set correctly.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">all_predicates</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">all_predicates</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">pred</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">all_predicates</span><span class="p">):</span>
-        <span class="k">if</span> <span class="s2">&quot;params&quot;</span> <span class="ow">in</span> <span class="n">pred</span><span class="p">:</span>
-            <span class="k">continue</span>
-        <span class="n">pred_def</span> <span class="o">=</span> <span class="n">pred</span><span class="p">[</span><span class="s2">&quot;raw&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;: &quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">pred_def</span> <span class="o">=</span> <span class="n">pred_def</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot; ()`&quot;</span><span class="p">)</span>  <span class="c1"># drop any leading/strange formatting</span>
-        <span class="n">split_predicate</span> <span class="o">=</span> <span class="n">pred_def</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">:]</span>  <span class="c1"># discard the predicate name</span>
-        <span class="n">split_predicate</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">split_predicate</span> <span class="k">if</span> <span class="n">e</span> <span class="o">!=</span> <span class="s2">&quot;&quot;</span><span class="p">]</span>
-
-        <span class="n">pred</span><span class="p">[</span><span class="s2">&quot;params&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">split_predicate</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">j</span> <span class="o">%</span> <span class="mi">3</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="k">assert</span> <span class="s2">&quot;?&quot;</span> <span class="ow">in</span> <span class="n">p</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;invalid predicate definition: </span><span class="si">{</span><span class="n">pred_def</span><span class="si">}</span><span class="s2">&quot;</span>
-                <span class="k">assert</span> <span class="p">(</span>
-                    <span class="n">split_predicate</span><span class="p">[</span><span class="n">j</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;-&quot;</span>
-                <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;invalid predicate definition: </span><span class="si">{</span><span class="n">pred_def</span><span class="si">}</span><span class="s2">&quot;</span>
-                <span class="n">param_name</span><span class="p">,</span> <span class="n">param_obj_type</span> <span class="o">=</span> <span class="n">p</span><span class="p">,</span> <span class="n">split_predicate</span><span class="p">[</span><span class="n">j</span> <span class="o">+</span> <span class="mi">2</span><span class="p">]</span>
-                <span class="n">pred</span><span class="p">[</span><span class="s2">&quot;params&quot;</span><span class="p">][</span><span class="n">param_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">param_obj_type</span>
-    <span class="k">return</span> <span class="n">all_predicates</span></div>
-
-
-
-<div class="viewcode-block" id="parse_new_predicates">
-<a class="viewcode-back" href="../../../l2p.html#l2p.utils.pddl_parser.parse_new_predicates">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">parse_new_predicates</span><span class="p">(</span><span class="n">llm_output</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">heading</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;New Predicates&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Predicate</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Parses new predicates from LLM into Python format (refer to example templates to see</span>
-<span class="sd">    how these predicates should be formatted in LLM response).</span>
-
-<span class="sd">    LLM output header should contain &#39;### New Predicates&#39; along with structured content.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">new_predicates</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
-
-    <span class="n">predicates_head</span> <span class="o">=</span> <span class="n">parse_heading</span><span class="p">(</span><span class="n">llm_output</span><span class="p">,</span> <span class="n">heading</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">predicates_head</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;```&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">&quot;Could not find exactly one block in the new predicates section enclosed by [```, ```] of the LLM output.&quot;</span>
-        <span class="p">)</span>
-    <span class="n">predicate_output</span> <span class="o">=</span> <span class="n">combine_blocks</span><span class="p">(</span><span class="n">predicates_head</span><span class="p">)</span>
-
-    <span class="k">for</span> <span class="n">p_line</span> <span class="ow">in</span> <span class="n">predicate_output</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">):</span>
-        <span class="n">p_line</span> <span class="o">=</span> <span class="n">p_line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">p_line</span> <span class="ow">or</span> <span class="n">p_line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;```&quot;</span><span class="p">):</span>
-            <span class="k">continue</span>  <span class="c1"># skip empty lines and code block markers</span>
-
-        <span class="c1"># skip lines that do not look like predicate definitions</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">p_line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">p_line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;(&quot;</span><span class="p">)):</span>
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">p_line</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;[WARNING] unable to parse the line: &quot;</span><span class="si">{</span><span class="n">p_line</span><span class="si">}</span><span class="s1">&quot;&#39;</span><span class="p">)</span>
-            <span class="k">continue</span>
-
-        <span class="c1"># extract predicate signature and description</span>
-        <span class="k">if</span> <span class="s2">&quot;:&quot;</span> <span class="ow">in</span> <span class="n">p_line</span><span class="p">:</span>
-            <span class="n">pred_part</span><span class="p">,</span> <span class="n">desc</span> <span class="o">=</span> <span class="n">p_line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-            <span class="n">predicate_desc</span> <span class="o">=</span> <span class="n">desc</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;&#39;</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="s2">&quot;;&quot;</span> <span class="ow">in</span> <span class="n">p_line</span><span class="p">:</span>
-            <span class="n">pred_part</span><span class="p">,</span> <span class="n">desc</span> <span class="o">=</span> <span class="n">p_line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;;&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-            <span class="n">predicate_desc</span> <span class="o">=</span> <span class="n">desc</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;&#39;</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">pred_part</span> <span class="o">=</span> <span class="n">p_line</span>
-            <span class="n">predicate_desc</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-
-        <span class="c1"># clean the predicate signature</span>
-        <span class="n">pred_part</span> <span class="o">=</span> <span class="n">pred_part</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;- ()&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-
-        <span class="c1"># split into name and parameters</span>
-        <span class="n">parts</span> <span class="o">=</span> <span class="n">pred_part</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">parts</span><span class="p">:</span>
-            <span class="k">continue</span>
-
-        <span class="n">predicate_name</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">param_parts</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
-
-        <span class="n">params</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
-        <span class="n">current_param</span> <span class="o">=</span> <span class="kc">None</span>
-
-        <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">param_parts</span><span class="p">):</span>
-            <span class="n">part</span> <span class="o">=</span> <span class="n">param_parts</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
-            <span class="k">if</span> <span class="n">part</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;?&quot;</span><span class="p">):</span>
-                <span class="c1"># found a parameter</span>
-                <span class="n">current_param</span> <span class="o">=</span> <span class="n">part</span>
-                <span class="n">params</span><span class="p">[</span><span class="n">current_param</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>  <span class="c1"># Default to untyped</span>
-                <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="k">elif</span> <span class="n">part</span> <span class="o">==</span> <span class="s2">&quot;-&quot;</span><span class="p">:</span>
-                <span class="c1"># found type indicator</span>
-                <span class="k">if</span> <span class="n">current_param</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="nb">print</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">&quot;[WARNING] Found type indicator without parameter in: </span><span class="si">{</span><span class="n">p_line</span><span class="si">}</span><span class="s2">&quot;</span>
-                    <span class="p">)</span>
-                    <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
-                    <span class="k">continue</span>
-                <span class="k">if</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">param_parts</span><span class="p">):</span>
-                    <span class="n">params</span><span class="p">[</span><span class="n">current_param</span><span class="p">]</span> <span class="o">=</span> <span class="n">param_parts</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
-                    <span class="n">i</span> <span class="o">+=</span> <span class="mi">2</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[WARNING] Missing type after &#39;-&#39; in: </span><span class="si">{</span><span class="n">p_line</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-                    <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="c1"># might be a typeless parameter (accept it with warning)</span>
-                <span class="nb">print</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;[WARNING] Assuming &#39;</span><span class="si">{</span><span class="n">part</span><span class="si">}</span><span class="s2">&#39; is an untyped parameter in: </span><span class="si">{</span><span class="n">p_line</span><span class="si">}</span><span class="s2">&quot;</span>
-                <span class="p">)</span>
-                <span class="n">current_param</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;?</span><span class="si">{</span><span class="n">part</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s1">&#39;?&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
-                <span class="n">params</span><span class="p">[</span><span class="n">current_param</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-                <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
-
-        <span class="c1"># generate clean PDDL representation</span>
-        <span class="n">clean_params</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">param</span><span class="p">,</span> <span class="n">type_</span> <span class="ow">in</span> <span class="n">params</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">type_</span> <span class="ow">and</span> <span class="n">type_</span> <span class="o">!=</span> <span class="s2">&quot;object&quot;</span><span class="p">:</span>
-                <span class="n">clean_params</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">param</span><span class="si">}</span><span class="s2"> - </span><span class="si">{</span><span class="n">type_</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">clean_params</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">param</span><span class="p">)</span>
-        <span class="n">clean</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="n">predicate_name</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">clean_params</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span>
-
-        <span class="n">new_predicates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="p">{</span>
-                <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">predicate_name</span><span class="p">,</span>
-                <span class="s2">&quot;desc&quot;</span><span class="p">:</span> <span class="n">predicate_desc</span><span class="p">,</span>
-                <span class="s2">&quot;raw&quot;</span><span class="p">:</span> <span class="n">p_line</span><span class="p">,</span>
-                <span class="s2">&quot;params&quot;</span><span class="p">:</span> <span class="n">params</span><span class="p">,</span>
-                <span class="s2">&quot;clean&quot;</span><span class="p">:</span> <span class="n">clean</span><span class="p">,</span>
-            <span class="p">}</span>
-        <span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">new_predicates</span></div>
-
-
-
-<div class="viewcode-block" id="parse_functions">
-<a class="viewcode-back" href="../../../l2p.html#l2p.utils.pddl_parser.parse_functions">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">parse_functions</span><span class="p">(</span><span class="n">llm_output</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">heading</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;FUNCTIONS&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Function</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Parses function from LLM into Python format (refer to example templates to see</span>
-<span class="sd">    how these functions should be formatted in LLM response).</span>
-
-<span class="sd">    LLM output header should contain &#39;### FUNCTIONS&#39; along with structured content.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">functions</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
-    <span class="n">functions_head</span> <span class="o">=</span> <span class="n">parse_heading</span><span class="p">(</span><span class="n">llm_output</span><span class="p">,</span> <span class="n">heading</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">functions_head</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;```&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">&quot;Could not find exactly one block in the functions section enclosed by [```, ```] of the LLM output.&quot;</span>
-        <span class="p">)</span>
-    <span class="n">function_output</span> <span class="o">=</span> <span class="n">combine_blocks</span><span class="p">(</span><span class="n">functions_head</span><span class="p">)</span>
-
-    <span class="k">for</span> <span class="n">f_line</span> <span class="ow">in</span> <span class="n">function_output</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">):</span>
-        <span class="n">f_line</span> <span class="o">=</span> <span class="n">f_line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">f_line</span> <span class="ow">or</span> <span class="n">f_line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;```&quot;</span><span class="p">):</span>
-            <span class="k">continue</span>  <span class="c1"># skip empty lines and code block markers</span>
-
-        <span class="c1"># skip lines that do not look like function definitions</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">f_line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">f_line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;(&quot;</span><span class="p">)):</span>
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">f_line</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;[WARNING] unable to parse the line: &quot;</span><span class="si">{</span><span class="n">f_line</span><span class="si">}</span><span class="s1">&quot;&#39;</span><span class="p">)</span>
-            <span class="k">continue</span>
-
-        <span class="c1"># extract function signature and description</span>
-        <span class="k">if</span> <span class="s2">&quot;:&quot;</span> <span class="ow">in</span> <span class="n">f_line</span><span class="p">:</span>
-            <span class="n">func_part</span><span class="p">,</span> <span class="n">desc</span> <span class="o">=</span> <span class="n">f_line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-            <span class="n">function_desc</span> <span class="o">=</span> <span class="n">desc</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;&#39;</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="s2">&quot;;&quot;</span> <span class="ow">in</span> <span class="n">f_line</span><span class="p">:</span>
-            <span class="n">func_part</span><span class="p">,</span> <span class="n">desc</span> <span class="o">=</span> <span class="n">f_line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;;&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-            <span class="n">function_desc</span> <span class="o">=</span> <span class="n">desc</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;&#39;</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">func_part</span> <span class="o">=</span> <span class="n">f_line</span>
-            <span class="n">function_desc</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-
-        <span class="c1"># clean the function signature</span>
-        <span class="n">is_numeric</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;- number\s*$&quot;</span><span class="p">,</span> <span class="n">func_part</span><span class="p">):</span>
-            <span class="n">is_numeric</span> <span class="o">=</span> <span class="kc">True</span>
-            <span class="n">func_part</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\s+- number\s*$&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">func_part</span><span class="p">)</span>
-        <span class="n">func_part</span> <span class="o">=</span> <span class="n">func_part</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;- ()&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-
-        <span class="c1"># split into name and parameters</span>
-        <span class="n">parts</span> <span class="o">=</span> <span class="n">func_part</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">parts</span><span class="p">:</span>
-            <span class="k">continue</span>
-
-        <span class="n">function_name</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">param_parts</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
-
-        <span class="n">params</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
-        <span class="n">current_param</span> <span class="o">=</span> <span class="kc">None</span>
-
-        <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">param_parts</span><span class="p">):</span>
-            <span class="n">part</span> <span class="o">=</span> <span class="n">param_parts</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
-            <span class="k">if</span> <span class="n">part</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;?&quot;</span><span class="p">):</span>
-                <span class="c1"># found a parameter</span>
-                <span class="n">current_param</span> <span class="o">=</span> <span class="n">part</span>
-                <span class="n">params</span><span class="p">[</span><span class="n">current_param</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>  <span class="c1"># default to untyped</span>
-                <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="k">elif</span> <span class="n">part</span> <span class="o">==</span> <span class="s2">&quot;-&quot;</span><span class="p">:</span>
-                <span class="c1"># found type indicator</span>
-                <span class="k">if</span> <span class="n">current_param</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="nb">print</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">&quot;[WARNING] Found type indicator without parameter in: </span><span class="si">{</span><span class="n">f_line</span><span class="si">}</span><span class="s2">&quot;</span>
-                    <span class="p">)</span>
-                    <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
-                    <span class="k">continue</span>
-                <span class="k">if</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">param_parts</span><span class="p">):</span>
-                    <span class="n">params</span><span class="p">[</span><span class="n">current_param</span><span class="p">]</span> <span class="o">=</span> <span class="n">param_parts</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
-                    <span class="n">i</span> <span class="o">+=</span> <span class="mi">2</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[WARNING] Missing type after &#39;-&#39; in: </span><span class="si">{</span><span class="n">f_line</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-                    <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="c1"># might be a typeless parameter (accept it with warning)</span>
-                <span class="nb">print</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;[WARNING] Assuming &#39;</span><span class="si">{</span><span class="n">part</span><span class="si">}</span><span class="s2">&#39; is an untyped parameter in: </span><span class="si">{</span><span class="n">f_line</span><span class="si">}</span><span class="s2">&quot;</span>
-                <span class="p">)</span>
-                <span class="n">current_param</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;?</span><span class="si">{</span><span class="n">part</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s1">&#39;?&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
-                <span class="n">params</span><span class="p">[</span><span class="n">current_param</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-                <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
-
-        <span class="c1"># generate clean PDDL representation</span>
-        <span class="n">clean_params</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">param</span><span class="p">,</span> <span class="n">type_</span> <span class="ow">in</span> <span class="n">params</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">type_</span><span class="p">:</span>
-                <span class="n">clean_params</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">param</span><span class="si">}</span><span class="s2"> - </span><span class="si">{</span><span class="n">type_</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">clean_params</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">param</span><span class="p">)</span>
-        
-        <span class="n">clean</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="n">function_name</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">clean_params</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span>
-
-        <span class="k">if</span> <span class="n">is_numeric</span><span class="p">:</span>
-            <span class="n">clean</span> <span class="o">+=</span> <span class="s2">&quot; - number&quot;</span>
-
-        <span class="n">functions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="p">{</span>
-                <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">function_name</span><span class="p">,</span>
-                <span class="s2">&quot;desc&quot;</span><span class="p">:</span> <span class="n">function_desc</span><span class="p">,</span>
-                <span class="s2">&quot;raw&quot;</span><span class="p">:</span> <span class="n">f_line</span><span class="p">,</span>
-                <span class="s2">&quot;params&quot;</span><span class="p">:</span> <span class="n">params</span><span class="p">,</span>
-                <span class="s2">&quot;clean&quot;</span><span class="p">:</span> <span class="n">clean</span><span class="p">,</span>
-            <span class="p">}</span>
-        <span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">functions</span></div>
-
-
-
-<div class="viewcode-block" id="parse_action">
-<a class="viewcode-back" href="../../../l2p.html#l2p.utils.pddl_parser.parse_action">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">parse_action</span><span class="p">(</span>
-        <span class="n">llm_output</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> 
-        <span class="n">action_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> 
-        <span class="n">param_head</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;Action Parameters&quot;</span><span class="p">,</span> 
-        <span class="n">precon_head</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;Action Preconditions&quot;</span><span class="p">,</span>
-        <span class="n">effect_head</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;Action Effects&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Action</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Parse an action from a given LLM output.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        llm_output (str): raw LLM output</span>
-<span class="sd">        action_name (str): the name of the action</span>
-<span class="sd">        param_head (str): parameter header for extraction</span>
-<span class="sd">        precon_head (str): precondition header for extraction</span>
-<span class="sd">        effect_head (str): effect header for extraction</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        Action: the parsed PDDL action</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">parameters</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">parse_params</span><span class="p">(</span><span class="n">llm_output</span><span class="p">,</span> <span class="n">param_head</span><span class="p">)</span>
-    <span class="n">preconditions</span> <span class="o">=</span> <span class="n">parse_preconditions</span><span class="p">(</span><span class="n">llm_output</span><span class="p">,</span> <span class="n">precon_head</span><span class="p">)</span>
-    <span class="n">effects</span> <span class="o">=</span> <span class="n">parse_effects</span><span class="p">(</span><span class="n">llm_output</span><span class="p">,</span> <span class="n">effect_head</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">action_name</span><span class="p">,</span>
-        <span class="s2">&quot;params&quot;</span><span class="p">:</span> <span class="n">parameters</span><span class="p">,</span>
-        <span class="s2">&quot;preconditions&quot;</span><span class="p">:</span> <span class="n">preconditions</span><span class="p">,</span>
-        <span class="s2">&quot;effects&quot;</span><span class="p">:</span> <span class="n">effects</span><span class="p">,</span>
-    <span class="p">}</span></div>
-
-
-
-<div class="viewcode-block" id="parse_params">
-<a class="viewcode-back" href="../../../l2p.html#l2p.utils.pddl_parser.parse_params">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">parse_params</span><span class="p">(</span><span class="n">llm_output</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">heading</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;Action Parameters&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">OrderedDict</span><span class="p">,</span> <span class="nb">list</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Parses parameters from LLM into Python format (refer to example templates to see</span>
-<span class="sd">    how these parameters should be formatted in LLM response).</span>
-
-<span class="sd">    LLM output header should contain &#39;Parameters&#39; along with structured content.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">params_info</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
-    <span class="n">params_head</span> <span class="o">=</span> <span class="n">parse_heading</span><span class="p">(</span><span class="n">llm_output</span><span class="p">,</span> <span class="n">heading</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">params_head</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;```&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">&quot;Could not find exactly one block in the parameters section enclosed by [```, ```] of the LLM output.&quot;</span>
-        <span class="p">)</span>
-    <span class="n">params_str</span> <span class="o">=</span> <span class="n">combine_blocks</span><span class="p">(</span><span class="n">params_head</span><span class="p">)</span>
-    <span class="n">params_raw</span> <span class="o">=</span> <span class="p">[]</span>
-
-    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">params_str</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">):</span>
-        <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">line</span><span class="p">:</span>  <span class="c1"># skip empty lines</span>
-            <span class="k">continue</span>
-
-        <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">):</span>
-            <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>  <span class="c1"># remove the dash and clean up</span>
-
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;?&quot;</span><span class="p">):</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[WARNING] Invalid parameter line. Must start with &#39;?&#39;: &#39;</span><span class="si">{</span><span class="n">line</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
-            <span class="k">continue</span>
-
+    <span class="c1"># iterate over each raw content blocks</span>
+    <span class="k">for</span> <span class="n">block</span> <span class="ow">in</span> <span class="n">raw_blocks</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">params_raw</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
-            <span class="c1"># split into param name and type</span>
-            <span class="n">parts</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)</span>
-
-            <span class="n">left_side</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-            <span class="n">param_parts</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">left_side</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; - &quot;</span><span class="p">)]</span>
-            <span class="n">param_name</span> <span class="o">=</span> <span class="n">param_parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot; `&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">param_parts</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">param_parts</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
-                <span class="n">param_type</span> <span class="o">=</span> <span class="n">param_parts</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot; `&quot;</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">param_type</span> <span class="o">=</span> <span class="s2">&quot;object&quot;</span>  <span class="c1"># no type provided</span>
-
-            <span class="n">params_info</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">param_type</span>
-
-        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[WARNING] Failed to parse parameter line: &#39;</span><span class="si">{</span><span class="n">line</span><span class="si">}</span><span class="s2">&#39; - </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-            <span class="k">continue</span>
-
-    <span class="k">return</span> <span class="n">params_info</span><span class="p">,</span> <span class="n">params_raw</span></div>
-
-
-
-<div class="viewcode-block" id="parse_preconditions">
-<a class="viewcode-back" href="../../../l2p.html#l2p.utils.pddl_parser.parse_preconditions">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">parse_preconditions</span><span class="p">(</span><span class="n">llm_output</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">heading</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;Action Preconditions&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parses precondition string from LLM output&quot;&quot;&quot;</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">preconds_head</span> <span class="o">=</span> <span class="n">parse_heading</span><span class="p">(</span><span class="n">llm_output</span><span class="p">,</span> <span class="n">heading</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">preconds_head</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;```&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;Could not find exactly one block in the preconditions section enclosed by [```, ```] of the LLM output.&quot;</span>
-            <span class="p">)</span>
-        <span class="n">preconditions</span> <span class="o">=</span> <span class="n">combine_blocks</span><span class="p">(</span><span class="n">preconds_head</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">preconditions</span>
-    <span class="k">except</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
-            <span class="s2">&quot;Could not find the &#39;Preconditions&#39; section in the output. Provide the entire response, including all headings even if some are unchanged.&quot;</span>
-        <span class="p">)</span></div>
-
-
-
-<div class="viewcode-block" id="parse_effects">
-<a class="viewcode-back" href="../../../l2p.html#l2p.utils.pddl_parser.parse_effects">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">parse_effects</span><span class="p">(</span><span class="n">llm_output</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">heading</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;Action Effects&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parses effect string from LLM output&quot;&quot;&quot;</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">effects_head</span> <span class="o">=</span> <span class="n">parse_heading</span><span class="p">(</span><span class="n">llm_output</span><span class="p">,</span> <span class="n">heading</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">effects_head</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;```&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;Could not find exactly one block in the effects section enclosed by [```, ```] of the LLM output.&quot;</span>
-            <span class="p">)</span>
-        <span class="n">effects</span> <span class="o">=</span> <span class="n">combine_blocks</span><span class="p">(</span><span class="n">effects_head</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">effects</span>
-    <span class="k">except</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
-            <span class="s2">&quot;Could not find the &#39;Preconditions&#39; section in the output. Provide the entire response, including all headings even if some are unchanged.&quot;</span>
-        <span class="p">)</span></div>
-
-
-
-<div class="viewcode-block" id="prune_types">
-<a class="viewcode-back" href="../../../l2p.html#l2p.utils.pddl_parser.prune_types">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">prune_types</span><span class="p">(</span>
-    <span class="n">types</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span>
-    <span class="n">predicates</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Predicate</span><span class="p">],</span>
-    <span class="n">actions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Action</span><span class="p">],</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Prune types that are not used in any predicate or action.</span>
-
-<span class="sd">    Parameters:</span>
-<span class="sd">        types (dict or list): Either a flat dict of {type: description} or a nested list of type hierarchies.</span>
-<span class="sd">        predicates (list[Predicate]): A list of predicates.</span>
-<span class="sd">        actions (list[Action]): A list of actions.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        dict[str, str]: A dictionary of used types.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">used_types</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="n">all_type_names</span> <span class="o">=</span> <span class="p">{}</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">collect_all_types</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Recursively extract all type names and their descriptions from the input.&quot;&quot;&quot;</span>
-
-        <span class="c1"># if setup is normal types dictionary</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-            <span class="k">for</span> <span class="n">type_name</span><span class="p">,</span> <span class="n">desc</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                <span class="n">all_type_names</span><span class="p">[</span><span class="n">type_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">desc</span>
-
-        <span class="c1"># if set up is type hierarchy list dictionary</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-            <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">:</span>
-                <span class="n">type_name</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">node</span> <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="s2">&quot;children&quot;</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">type_name</span><span class="p">:</span>
-                    <span class="n">all_type_names</span><span class="p">[</span><span class="n">type_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">node</span><span class="p">[</span><span class="n">type_name</span><span class="p">]</span>
-                    <span class="n">collect_all_types</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;children&quot;</span><span class="p">,</span> <span class="p">[]))</span>
-
-    <span class="c1"># flatten all types into all_type_names</span>
-    <span class="n">collect_all_types</span><span class="p">(</span><span class="n">types</span><span class="p">)</span>
-
-    <span class="c1"># identify used types</span>
-    <span class="k">for</span> <span class="n">type_name</span> <span class="ow">in</span> <span class="n">all_type_names</span><span class="p">:</span>
-        <span class="n">base_name</span> <span class="o">=</span> <span class="n">type_name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">found</span> <span class="o">=</span> <span class="kc">False</span>
-
-        <span class="k">for</span> <span class="n">pred</span> <span class="ow">in</span> <span class="n">predicates</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">base_name</span> <span class="ow">in</span> <span class="n">pred</span><span class="p">[</span><span class="s2">&quot;params&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-                <span class="n">used_types</span><span class="p">[</span><span class="n">type_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">all_type_names</span><span class="p">[</span><span class="n">type_name</span><span class="p">]</span>
-                <span class="n">found</span> <span class="o">=</span> <span class="kc">True</span>
-                <span class="k">break</span>
-        <span class="k">if</span> <span class="n">found</span><span class="p">:</span>
-            <span class="k">continue</span>
-
-        <span class="k">for</span> <span class="n">action</span> <span class="ow">in</span> <span class="n">actions</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">base_name</span> <span class="ow">in</span> <span class="n">action</span><span class="p">[</span><span class="s2">&quot;params&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-                <span class="n">used_types</span><span class="p">[</span><span class="n">type_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">all_type_names</span><span class="p">[</span><span class="n">type_name</span><span class="p">]</span>
-                <span class="k">break</span>
-            <span class="k">if</span> <span class="n">base_name</span> <span class="ow">in</span> <span class="n">action</span><span class="p">[</span><span class="s2">&quot;preconditions&quot;</span><span class="p">]</span> <span class="ow">or</span> <span class="n">base_name</span> <span class="ow">in</span> <span class="n">action</span><span class="p">[</span><span class="s2">&quot;effects&quot;</span><span class="p">]:</span>
-                <span class="n">used_types</span><span class="p">[</span><span class="n">type_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">all_type_names</span><span class="p">[</span><span class="n">type_name</span><span class="p">]</span>
-                <span class="k">break</span>
-
-    <span class="k">return</span> <span class="n">used_types</span></div>
-
-
-
-<div class="viewcode-block" id="prune_predicates">
-<a class="viewcode-back" href="../../../l2p.html#l2p.utils.pddl_parser.prune_predicates">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">prune_predicates</span><span class="p">(</span>
-    <span class="n">predicates</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Predicate</span><span class="p">],</span> <span class="n">actions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Action</span><span class="p">]</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Predicate</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Remove predicates that are not used in any action.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        predicates (list[Predicate]): a list of predicates</span>
-<span class="sd">        actions (list[Action]): a list of actions</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        list[Predicate]: the pruned list of predicates</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">used_predicates</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">seen_predicate_names</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-
-    <span class="k">for</span> <span class="n">pred</span> <span class="ow">in</span> <span class="n">predicates</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">action</span> <span class="ow">in</span> <span class="n">actions</span><span class="p">:</span>
-            <span class="c1"># Add a space or a &quot;)&quot; to avoid partial matches</span>
-            <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pred</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> &quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pred</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">]</span>
-            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">action</span><span class="p">[</span><span class="s2">&quot;preconditions&quot;</span><span class="p">]</span> <span class="ow">or</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">action</span><span class="p">[</span><span class="s2">&quot;effects&quot;</span><span class="p">]:</span>
-                    <span class="k">if</span> <span class="n">pred</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen_predicate_names</span><span class="p">:</span>
-                        <span class="n">used_predicates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pred</span><span class="p">)</span>
-                        <span class="n">seen_predicate_names</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">pred</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">])</span>
-                    <span class="k">break</span>
-
-    <span class="k">return</span> <span class="n">used_predicates</span></div>
-
-
-
-<span class="c1"># ---- PDDL PROBLEM PARSERS ----</span>
-
-
-<div class="viewcode-block" id="parse_objects">
-<a class="viewcode-back" href="../../../l2p.html#l2p.utils.pddl_parser.parse_objects">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">parse_objects</span><span class="p">(</span><span class="n">llm_output</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">heading</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;OBJECTS&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Extract objects from LLM response and returns dictionary string pairs object(name, type)</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        llm_output (str): raw LLM output</span>
-<span class="sd">        types (dict[str,str]): WILL BE USED FOR CHECK ERROR RAISES</span>
-<span class="sd">        predicates (list[Predicate]): WILL BE USED FOR CHECK ERROR RAISES</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        objects_parsed (dict[str,str]): PDDL task objects</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="n">objects_head</span> <span class="o">=</span> <span class="n">parse_heading</span><span class="p">(</span><span class="n">llm_output</span><span class="p">,</span> <span class="n">heading</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">objects_head</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;```&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">&quot;Could not find exactly one block in the problem objects section enclosed by [```, ```] of the LLM output.&quot;</span>
-        <span class="p">)</span>
-    <span class="n">objects_raw</span> <span class="o">=</span> <span class="n">combine_blocks</span><span class="p">(</span><span class="n">objects_head</span><span class="p">)</span>
-    <span class="n">objects_clean</span> <span class="o">=</span> <span class="n">remove_comments</span><span class="p">(</span><span class="n">objects_raw</span><span class="p">)</span>
-
-    <span class="n">objects_parsed</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="n">obj</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; - &quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot; `&quot;</span><span class="p">):</span> <span class="n">obj</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; - &quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot; `&quot;</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">objects_clean</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-    <span class="p">}</span>
-
-    <span class="k">return</span> <span class="n">objects_parsed</span></div>
-
-
-
-<div class="viewcode-block" id="parse_initial">
-<a class="viewcode-back" href="../../../l2p.html#l2p.utils.pddl_parser.parse_initial">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">parse_initial</span><span class="p">(</span><span class="n">llm_output</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">heading</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;INITIAL&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Extracts state (PDDL-init) from LLM response and returns it as a list of dict strings</span>
-
-<span class="sd">    Parameters:</span>
-<span class="sd">        llm_output (str): raw LLM output</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        states (list[dict[str,str]]): list of initial states in dictionaries</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">initial_head</span> <span class="o">=</span> <span class="n">parse_heading</span><span class="p">(</span><span class="n">llm_output</span><span class="p">,</span> <span class="n">heading</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">initial_head</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;```&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">&quot;Could not find exactly one block in the initial section enclosed by [```, ```] of the LLM output. The initial states have to be specified in a single block Likely this is caused by a too long response and limited context length. If so, try to shorten the message and exclude objects which aren&#39;t needed for the task.&quot;</span>
-        <span class="p">)</span>
-
-    <span class="n">initial_raw</span> <span class="o">=</span> <span class="n">combine_blocks</span><span class="p">(</span><span class="n">initial_head</span><span class="p">)</span>
-    <span class="n">initial_clean</span> <span class="o">=</span> <span class="n">remove_comments</span><span class="p">(</span><span class="n">initial_raw</span><span class="p">)</span>
-    <span class="n">initial_parsed</span> <span class="o">=</span> <span class="n">parse_pddl</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="n">initial_clean</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">parse_task_states</span><span class="p">(</span><span class="n">initial_parsed</span><span class="p">)</span></div>
-
-
-
-<div class="viewcode-block" id="parse_goal">
-<a class="viewcode-back" href="../../../l2p.html#l2p.utils.pddl_parser.parse_goal">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">parse_goal</span><span class="p">(</span><span class="n">llm_output</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">heading</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;GOAL&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Extracts goal (PDDL-goal) from LLM response and returns it as a string</span>
-
-<span class="sd">    Parameters:</span>
-<span class="sd">        llm_output (str): raw LLM output</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        states (list[dict[str,str]]): list of goal states in dictionaries</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">goal_head</span> <span class="o">=</span> <span class="n">parse_heading</span><span class="p">(</span><span class="n">llm_output</span><span class="p">,</span> <span class="n">heading</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">goal_head</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;```&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">&quot;Could not find exactly one block in the goal section enclosed by [```, ```] of the LLM output. The goal states have to be specified in a single block Likely this is caused by a too long response and limited context length. If so, try to shorten the message and exclude objects which aren&#39;t needed for the task.&quot;</span>
-        <span class="p">)</span>
-
-    <span class="n">goal_raw</span> <span class="o">=</span> <span class="n">combine_blocks</span><span class="p">(</span><span class="n">goal_head</span><span class="p">)</span>
-    <span class="n">goal_clean</span> <span class="o">=</span> <span class="n">remove_comments</span><span class="p">(</span><span class="n">goal_raw</span><span class="p">)</span>
-    <span class="n">goal_parsed</span> <span class="o">=</span> <span class="n">parse_pddl</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="n">goal_clean</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">parse_task_states</span><span class="p">(</span><span class="n">goal_parsed</span><span class="p">)</span></div>
-
-
-
-<div class="viewcode-block" id="parse_task_states">
-<a class="viewcode-back" href="../../../l2p.html#l2p.utils.pddl_parser.parse_task_states">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">parse_task_states</span><span class="p">(</span><span class="n">parsed_states</span><span class="p">:</span> <span class="nb">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
-    <span class="n">states</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">parsed_states</span><span class="p">:</span>
-
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="n">line</span> <span class="o">=</span> <span class="p">[</span><span class="n">line</span><span class="p">]</span>
-
-        <span class="c1"># only parse lines</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-            <span class="n">name</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-
-            <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;and&quot;</span><span class="p">:</span>
+            <span class="c1"># returns list of all content blocks containing correct json block</span>
+            <span class="k">return</span> <span class="n">list_adapter</span><span class="o">.</span><span class="n">validate_json</span><span class="p">(</span><span class="n">block</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="n">ValidationError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">list_err</span><span class="p">:</span>
+            <span class="c1"># return single object as fallback</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">single_obj</span> <span class="o">=</span> <span class="n">model_class</span><span class="o">.</span><span class="n">model_validate_json</span><span class="p">(</span><span class="n">block</span><span class="p">)</span>
+                <span class="k">return</span> <span class="p">[</span><span class="n">single_obj</span><span class="p">]</span>
+            <span class="k">except</span> <span class="p">(</span><span class="n">ValidationError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">single_err</span><span class="p">:</span>
+                <span class="n">collected_errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">list_err</span><span class="p">))</span>
                 <span class="k">continue</span>
-            <span class="c1"># if comparsion operator</span>
-            <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;=&quot;</span><span class="p">,</span> <span class="s2">&quot;&gt;&quot;</span><span class="p">,</span> <span class="s2">&quot;&lt;&quot;</span><span class="p">,</span> <span class="s2">&quot;&gt;=&quot;</span><span class="p">,</span> <span class="s2">&quot;&lt;=&quot;</span><span class="p">]:</span>
-                <span class="n">op</span> <span class="o">=</span> <span class="n">name</span>
-                <span class="n">name</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># retrieve function name</span>
-                <span class="n">params</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">:]</span>
-                <span class="n">value</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
-                <span class="n">states</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                    <span class="p">{</span><span class="s2">&quot;func_name&quot;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span> <span class="s2">&quot;params&quot;</span><span class="p">:</span> <span class="n">params</span><span class="p">,</span> <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="n">value</span><span class="p">,</span> <span class="s2">&quot;op&quot;</span><span class="p">:</span> <span class="n">op</span><span class="p">}</span>
+
+    <span class="c1"># return diagnostic message if no classes match</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">_inspect</span>
+
+    <span class="n">class_source</span> <span class="o">=</span> <span class="n">_inspect</span><span class="o">.</span><span class="n">getsource</span><span class="p">(</span><span class="n">model_class</span><span class="p">)</span>
+    <span class="n">error_message</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;Error: The JSON provided inside &lt;</span><span class="si">{</span><span class="n">tag_name</span><span class="si">}</span><span class="s2">&gt; failed validation.</span><span class="se">\n\n</span><span class="s2">&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;--- YOUR ERRORS ---</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">collected_errors</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">collected_errors</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;No parsable blocks found.&#39;</span><span class="si">}</span><span class="se">\n\n</span><span class="s2">&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;--- EXPECTED CLASS DEFINITION FOR THE LIST ---</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;Please ensure your output is a JSON array `[...]` containing objects &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;that match this exact structure:</span><span class="se">\n\n</span><span class="s2">&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;```python</span><span class="se">\n</span><span class="si">{</span><span class="n">class_source</span><span class="si">}</span><span class="s2">```&quot;</span>
+    <span class="p">)</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">error_message</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="parse_element">
+<a class="viewcode-back" href="../../../l2p.html#l2p.utils.pddl_parser.parse_element">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_element</span><span class="p">(</span><span class="n">raw_blocks</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">model_class</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">tag_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Processes list of content blocks containing specific model class that returns a single</span>
+<span class="sd">    JSON object pertaining to that specific model class.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        raw_blocks (List[str]): Content blocks (likely extracted from `parse_xml_tags`) to filter</span>
+<span class="sd">        model_class (Type[T]): Specific model class to validate content block</span>
+<span class="sd">        tag_name (str): Specific XML tag to extract blocks from</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        A single JSON object model matching the specific model class</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">collected_errors</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">block</span> <span class="ow">in</span> <span class="n">raw_blocks</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">model_class</span><span class="o">.</span><span class="n">model_validate_json</span><span class="p">(</span><span class="n">block</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="n">ValidationError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">collected_errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+            <span class="k">continue</span>
+
+    <span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">_inspect</span>
+
+    <span class="n">class_source</span> <span class="o">=</span> <span class="n">_inspect</span><span class="o">.</span><span class="n">getsource</span><span class="p">(</span><span class="n">model_class</span><span class="p">)</span>
+    <span class="n">error_message</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;Error: The JSON provided inside &lt;</span><span class="si">{</span><span class="n">tag_name</span><span class="si">}</span><span class="s2">&gt; failed validation.</span><span class="se">\n\n</span><span class="s2">&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;--- YOUR ERRORS ---</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">collected_errors</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="se">\n\n</span><span class="s2">&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;--- EXPECTED CLASS DEFINITION ---</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;Please ensure your output is a single JSON object `</span><span class="se">{{</span><span class="s2">...</span><span class="se">}}</span><span class="s2">` matching &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;this exact Pydantic model structure:</span><span class="se">\n\n</span><span class="s2">&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;```python</span><span class="se">\n</span><span class="si">{</span><span class="n">class_source</span><span class="si">}</span><span class="s2">```&quot;</span>
+    <span class="p">)</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">error_message</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># =============================================================================</span>
+<span class="c1"># PDDL STRING PARSING - convert raw PDDL into L2P Pydantic models</span>
+<span class="c1"># **Side Note** - These functions leverage PDDL parser: https://github.com/AI-Planning/pddl</span>
+<span class="c1"># CURRENTLY DOES NOT SUPPORT THE FOLLOWING</span>
+<span class="c1">#   - Durative Actions</span>
+<span class="c1">#   - Processes and Events</span>
+<span class="c1">#   - Constraints</span>
+<span class="c1"># =============================================================================</span>
+
+
+<div class="viewcode-block" id="parse_domain_pddl">
+<a class="viewcode-back" href="../../../l2p.html#l2p.utils.pddl_parser.parse_domain_pddl">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_domain_pddl</span><span class="p">(</span><span class="n">domain_str</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DomainDetails</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Parse a raw PDDL domain string into a :class:`DomainDetails` model.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        domain_str (str): PDDL domain as a string</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        DomainDetails: Pydantic L2P BaseModel</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">domain</span> <span class="o">=</span> <span class="n">write_temp_pddl</span><span class="p">(</span><span class="n">domain_str</span><span class="p">,</span> <span class="n">parse_domain</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">DomainDetails</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="n">domain</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+        <span class="n">requirements</span><span class="o">=</span><span class="n">_convert_requirements</span><span class="p">(</span><span class="n">domain</span><span class="o">.</span><span class="n">requirements</span><span class="p">),</span>
+        <span class="n">types</span><span class="o">=</span><span class="n">_convert_types</span><span class="p">(</span><span class="n">domain</span><span class="o">.</span><span class="n">types</span><span class="p">),</span>
+        <span class="n">constants</span><span class="o">=</span><span class="n">_convert_constants</span><span class="p">(</span><span class="n">domain</span><span class="o">.</span><span class="n">constants</span><span class="p">),</span>
+        <span class="n">predicates</span><span class="o">=</span><span class="n">_convert_predicates</span><span class="p">(</span><span class="n">domain</span><span class="o">.</span><span class="n">predicates</span><span class="p">),</span>
+        <span class="n">functions</span><span class="o">=</span><span class="n">_convert_functions</span><span class="p">(</span><span class="n">domain</span><span class="o">.</span><span class="n">functions</span><span class="p">),</span>
+        <span class="n">derived_predicates</span><span class="o">=</span><span class="n">_convert_derived_predicates</span><span class="p">(</span>
+            <span class="nb">getattr</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="s2">&quot;derived_predicates&quot;</span><span class="p">,</span> <span class="nb">frozenset</span><span class="p">())</span>
+        <span class="p">),</span>
+        <span class="n">actions</span><span class="o">=</span><span class="n">_convert_actions</span><span class="p">(</span><span class="n">domain</span><span class="o">.</span><span class="n">actions</span><span class="p">),</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="parse_problem_pddl">
+<a class="viewcode-back" href="../../../l2p.html#l2p.utils.pddl_parser.parse_problem_pddl">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_problem_pddl</span><span class="p">(</span><span class="n">problem_str</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ProblemDetails</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Parse a raw PDDL problem string into a :class:`ProblemDetails` model.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        pddl_str (str): PDDL domain as a string</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        ProblemDetails: Pydantic L2P BaseModel</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">problem</span> <span class="o">=</span> <span class="n">write_temp_pddl</span><span class="p">(</span><span class="n">problem_str</span><span class="p">,</span> <span class="n">parse_problem</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">ProblemDetails</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+        <span class="n">domain_name</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">domain_name</span><span class="p">,</span>
+        <span class="n">objects</span><span class="o">=</span><span class="n">_convert_objects</span><span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">objects</span><span class="p">),</span>
+        <span class="n">initial_state</span><span class="o">=</span><span class="n">_convert_initial_state</span><span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">init</span><span class="p">),</span>
+        <span class="n">goal_state</span><span class="o">=</span><span class="n">_convert_goal_state</span><span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">goal</span><span class="p">),</span>
+        <span class="n">metric</span><span class="o">=</span><span class="n">_convert_metric</span><span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">metric</span><span class="p">)</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="s2">&quot;metric&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="write_temp_pddl">
+<a class="viewcode-back" href="../../../l2p.html#l2p.utils.pddl_parser.write_temp_pddl">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_temp_pddl</span><span class="p">(</span><span class="n">pddl_str</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">parser_func</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write *pddl_str* to a temp file, parse it with *parser_func*, clean up.&quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s2">&quot;.pddl&quot;</span><span class="p">,</span> <span class="n">delete</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">pddl_str</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+        <span class="n">fname</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">name</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">parser_func</span><span class="p">(</span><span class="n">fname</span><span class="p">)</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">fname</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Domain component converters (from PDDL parser to L2P models)</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_convert_requirements</span><span class="p">(</span><span class="n">reqs</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Requirement</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Converts pddl requirements class into L2P class.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">Requirement</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">r</span><span class="p">))</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">reqs</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_convert_types</span><span class="p">(</span><span class="n">types</span><span class="p">:</span> <span class="n">Dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">PDDLType</span><span class="p">]:</span>
+    <span class="n">result</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">PDDLType</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">parent</span> <span class="ow">in</span> <span class="n">types</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">PDDLType</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+                <span class="n">parent</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">parent</span><span class="p">)</span> <span class="k">if</span> <span class="n">parent</span> <span class="k">else</span> <span class="s2">&quot;object&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_convert_constants</span><span class="p">(</span><span class="n">constants</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Constant</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Converts pddl constants class into L2P class.&quot;&quot;&quot;</span>
+    <span class="n">result</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Constant</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">constants</span><span class="p">:</span>
+        <span class="n">type_str</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">type_tags</span><span class="p">))</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">type_tags</span> <span class="k">else</span> <span class="s2">&quot;object&quot;</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Constant</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">type_str</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">result</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_convert_predicates</span><span class="p">(</span><span class="n">predicates</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Predicate</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Converts pddl predicates class into L2P class.&quot;&quot;&quot;</span>
+    <span class="n">result</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Predicate</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">predicates</span><span class="p">:</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">Predicate</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                <span class="n">params</span><span class="o">=</span><span class="n">_make_params</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">terms</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_convert_functions</span><span class="p">(</span><span class="n">functions</span><span class="p">:</span> <span class="n">Dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Function</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Converts pddl functions class into L2P class.&quot;&quot;&quot;</span>
+    <span class="n">result</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Function</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">func</span><span class="p">,</span> <span class="n">_return_type</span> <span class="ow">in</span> <span class="n">functions</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">Function</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="n">func</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                <span class="n">params</span><span class="o">=</span><span class="n">_make_params</span><span class="p">(</span><span class="n">func</span><span class="o">.</span><span class="n">terms</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_convert_derived_predicates</span><span class="p">(</span><span class="n">derived</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">DerivedPredicate</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Converts pddl derived predicates class into L2P class.&quot;&quot;&quot;</span>
+    <span class="n">result</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">DerivedPredicate</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">dp</span> <span class="ow">in</span> <span class="n">derived</span><span class="p">:</span>
+        <span class="n">pred</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">predicate</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">DerivedPredicate</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="n">pred</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                <span class="n">params</span><span class="o">=</span><span class="n">_make_params</span><span class="p">(</span><span class="n">pred</span><span class="o">.</span><span class="n">terms</span><span class="p">),</span>
+                <span class="n">condition</span><span class="o">=</span><span class="n">_convert_condition</span><span class="p">(</span><span class="n">dp</span><span class="o">.</span><span class="n">condition</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_convert_actions</span><span class="p">(</span><span class="n">actions</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Action</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Converts pddl actions class into L2P class.&quot;&quot;&quot;</span>
+    <span class="n">result</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Action</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">actions</span><span class="p">:</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_convert_single_action</span><span class="p">(</span><span class="n">a</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">result</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_convert_single_action</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">PddlAction</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Action</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Converts pddl action class into L2P class.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">Action</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+        <span class="n">params</span><span class="o">=</span><span class="n">_make_params</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">parameters</span><span class="p">),</span>
+        <span class="n">preconditions</span><span class="o">=</span><span class="n">_convert_precondition</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">precondition</span><span class="p">),</span>
+        <span class="n">effects</span><span class="o">=</span><span class="n">_parse_effects</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">effect</span><span class="p">),</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_convert_precondition</span><span class="p">(</span><span class="n">formula</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ActionPrecondition</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert a pddl precondition formula into an ActionPrecondition.</span>
+
+<span class="sd">    ``And`` at the top level is flattened — each operand becomes a separate</span>
+<span class="sd">    entry in ``conditions``.  All other formulae produce a single entry.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">formula</span><span class="p">,</span> <span class="n">And</span><span class="p">):</span>
+        <span class="n">conditions</span> <span class="o">=</span> <span class="p">[</span><span class="n">_convert_condition</span><span class="p">(</span><span class="n">op</span><span class="p">)</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">formula</span><span class="o">.</span><span class="n">operands</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">conditions</span> <span class="o">=</span> <span class="p">[</span><span class="n">_convert_condition</span><span class="p">(</span><span class="n">formula</span><span class="p">)]</span>
+    <span class="k">return</span> <span class="n">ActionPrecondition</span><span class="p">(</span><span class="n">conditions</span><span class="o">=</span><span class="n">conditions</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_convert_condition</span><span class="p">(</span><span class="n">formula</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LogicalCondition</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Recursively convert a pddl formula object to a ``LogicalCondition``</span>
+<span class="sd">    (``str`` or ``dict``).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># --- logical connectives ---</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">formula</span><span class="p">,</span> <span class="n">And</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;operator&quot;</span><span class="p">:</span> <span class="s2">&quot;and&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;conditions&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">_convert_condition</span><span class="p">(</span><span class="n">op</span><span class="p">)</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">formula</span><span class="o">.</span><span class="n">operands</span><span class="p">],</span>
+        <span class="p">}</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">formula</span><span class="p">,</span> <span class="n">Or</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;operator&quot;</span><span class="p">:</span> <span class="s2">&quot;or&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;conditions&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">_convert_condition</span><span class="p">(</span><span class="n">op</span><span class="p">)</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">formula</span><span class="o">.</span><span class="n">operands</span><span class="p">],</span>
+        <span class="p">}</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">formula</span><span class="p">,</span> <span class="n">Not</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;operator&quot;</span><span class="p">:</span> <span class="s2">&quot;not&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;condition&quot;</span><span class="p">:</span> <span class="n">_convert_condition</span><span class="p">(</span><span class="n">formula</span><span class="o">.</span><span class="n">argument</span><span class="p">),</span>
+        <span class="p">}</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">formula</span><span class="p">,</span> <span class="n">Imply</span><span class="p">):</span>
+        <span class="c1"># Imply stores antecedent + consequent as operands[0] / operands[1]</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;operator&quot;</span><span class="p">:</span> <span class="s2">&quot;imply&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;antecedent&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">_convert_condition</span><span class="p">(</span><span class="n">formula</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">])],</span>
+            <span class="s2">&quot;consequent&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">_convert_condition</span><span class="p">(</span><span class="n">formula</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">1</span><span class="p">])],</span>
+        <span class="p">}</span>
+
+    <span class="c1"># --- quantifiers ---</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">formula</span><span class="p">,</span> <span class="n">ForallCondition</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;quantifier&quot;</span><span class="p">:</span> <span class="s2">&quot;forall&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;parameters&quot;</span><span class="p">:</span> <span class="n">_make_params_from_variables</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">formula</span><span class="o">.</span><span class="n">variables</span><span class="p">)),</span>
+            <span class="s2">&quot;conditions&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">_convert_condition</span><span class="p">(</span><span class="n">formula</span><span class="o">.</span><span class="n">condition</span><span class="p">)],</span>
+        <span class="p">}</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">formula</span><span class="p">,</span> <span class="n">ExistsCondition</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;quantifier&quot;</span><span class="p">:</span> <span class="s2">&quot;exists&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;parameters&quot;</span><span class="p">:</span> <span class="n">_make_params_from_variables</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">formula</span><span class="o">.</span><span class="n">variables</span><span class="p">)),</span>
+            <span class="s2">&quot;conditions&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">_convert_condition</span><span class="p">(</span><span class="n">formula</span><span class="o">.</span><span class="n">condition</span><span class="p">)],</span>
+        <span class="p">}</span>
+
+    <span class="c1"># --- everything else: flat string ---</span>
+    <span class="c1"># Predicate, EqualTo, numeric comparisons, FunctionExpression, etc.</span>
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">formula</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_parse_effects</span><span class="p">(</span><span class="n">formula</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ActionEffect</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Walk the effect formula tree and categorise each leaf into</span>
+<span class="sd">    *add*, *delete*, *numeric*, or *conditional* lists.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">add</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">delete</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">numeric</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">conditional</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">ConditionalEffect</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_walk</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">And</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">operands</span><span class="p">:</span>
+                <span class="n">_walk</span><span class="p">(</span><span class="n">op</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">PddlPredicate</span><span class="p">):</span>
+            <span class="n">add</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">f</span><span class="p">))</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">Not</span><span class="p">):</span>
+            <span class="c1"># ``Not`` wrapping a Predicate → delete, otherwise treat nested</span>
+            <span class="n">arg</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">argument</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">PddlPredicate</span><span class="p">):</span>
+                <span class="n">delete</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">arg</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">And</span><span class="p">):</span>
+                <span class="c1"># (not (and ...)) is unusual — flatten into delete list</span>
+                <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">arg</span><span class="o">.</span><span class="n">operands</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">PddlPredicate</span><span class="p">):</span>
+                        <span class="n">delete</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">op</span><span class="p">))</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">numeric</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">f</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">numeric</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">f</span><span class="p">))</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">When</span><span class="p">):</span>
+            <span class="n">cond</span> <span class="o">=</span> <span class="n">_convert_condition</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">condition</span><span class="p">)</span>
+            <span class="n">inner_eff</span> <span class="o">=</span> <span class="n">_parse_effects</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">effect</span><span class="p">)</span>
+            <span class="n">conditional</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">ConditionalEffect</span><span class="p">(</span>
+                    <span class="n">condition</span><span class="o">=</span><span class="p">[</span><span class="n">cond</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cond</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="p">[</span><span class="n">cond</span><span class="p">],</span>
+                    <span class="n">effect</span><span class="o">=</span><span class="p">{</span>
+                        <span class="s2">&quot;add&quot;</span><span class="p">:</span> <span class="n">inner_eff</span><span class="o">.</span><span class="n">add</span><span class="p">,</span>
+                        <span class="s2">&quot;delete&quot;</span><span class="p">:</span> <span class="n">inner_eff</span><span class="o">.</span><span class="n">delete</span><span class="p">,</span>
+                        <span class="s2">&quot;numeric&quot;</span><span class="p">:</span> <span class="n">inner_eff</span><span class="o">.</span><span class="n">numeric</span><span class="p">,</span>
+                    <span class="p">},</span>
                 <span class="p">)</span>
-                <span class="k">continue</span>
-            <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;not&quot;</span><span class="p">:</span>
-                <span class="n">name</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># retrieve function name</span>
-                <span class="n">params</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">:]</span>
-                <span class="n">neg</span> <span class="o">=</span> <span class="kc">True</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">neg</span> <span class="o">=</span> <span class="kc">False</span>
-                <span class="n">params</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">:]</span>
-            <span class="n">states</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;pred_name&quot;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span> <span class="s2">&quot;params&quot;</span><span class="p">:</span> <span class="n">params</span><span class="p">,</span> <span class="s2">&quot;neg&quot;</span><span class="p">:</span> <span class="n">neg</span><span class="p">})</span>
+            <span class="p">)</span>
+            <span class="k">return</span>
 
-    <span class="k">return</span> <span class="n">states</span></div>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">ForallEffect</span><span class="p">):</span>
+            <span class="n">add</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">f</span><span class="p">))</span>
+            <span class="k">return</span>
 
+        <span class="c1"># numeric assignments / comparisons</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="n">f</span><span class="p">,</span>
+            <span class="p">(</span>
+                <span class="n">Increase</span><span class="p">,</span>
+                <span class="n">Decrease</span><span class="p">,</span>
+                <span class="n">Assign</span><span class="p">,</span>
+                <span class="n">ScaleUp</span><span class="p">,</span>
+                <span class="n">ScaleDown</span><span class="p">,</span>
+                <span class="n">GreaterThan</span><span class="p">,</span>
+                <span class="n">LesserThan</span><span class="p">,</span>
+                <span class="n">GreaterEqualThan</span><span class="p">,</span>
+                <span class="n">LesserEqualThan</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">):</span>
+            <span class="n">numeric</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">f</span><span class="p">))</span>
+            <span class="k">return</span>
 
+        <span class="c1"># anything else goes to numeric as a flat string</span>
+        <span class="n">numeric</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">f</span><span class="p">))</span>
 
-<span class="c1"># ---- SUPPLEMENTARY PARSING FUNCTIONS ----</span>
+    <span class="n">_walk</span><span class="p">(</span><span class="n">formula</span><span class="p">)</span>
 
-
-<div class="viewcode-block" id="parse_heading">
-<a class="viewcode-back" href="../../../l2p.html#l2p.utils.pddl_parser.parse_heading">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">parse_heading</span><span class="p">(</span><span class="n">llm_output</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">heading</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract the text between the heading and the next second level heading in the LLM output.&quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">heading</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">llm_output</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;Could not find heading </span><span class="si">{</span><span class="n">heading</span><span class="si">}</span><span class="s2"> in the LLM output:</span><span class="se">\n</span><span class="si">{</span><span class="n">llm_output</span><span class="si">}</span><span class="se">\n</span><span class="s2">. Likely this is caused by a too long response and limited context length. If so, try to shorten the message and exclude objects which aren&#39;t needed for the task&quot;</span>
-        <span class="p">)</span>
-    <span class="n">heading_str</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">llm_output</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">heading</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">### &quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-    <span class="p">)</span>  <span class="c1"># Get the text between the heading and the next heading</span>
-    <span class="k">return</span> <span class="n">heading_str</span></div>
-
-
-
-<div class="viewcode-block" id="parse_pddl">
-<a class="viewcode-back" href="../../../l2p.html#l2p.utils.pddl_parser.parse_pddl">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">parse_pddl</span><span class="p">(</span><span class="n">pddl_str</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Simplified PDDL parser that converts the string into a nested list structure.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="c1"># tokenize string</span>
-    <span class="n">tokens</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;([()])&quot;</span><span class="p">,</span> <span class="sa">r</span><span class="s2">&quot; \1 &quot;</span><span class="p">,</span> <span class="n">pddl_str</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
-    <span class="n">stack</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">current</span> <span class="o">=</span> <span class="p">[]</span>
-
-    <span class="c1"># iterate each token, if it is a bracket, we append to new list</span>
-    <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">tokens</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">token</span> <span class="o">==</span> <span class="s2">&quot;(&quot;</span><span class="p">:</span>
-            <span class="n">stack</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">current</span><span class="p">)</span>
-            <span class="n">current</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">elif</span> <span class="n">token</span> <span class="o">==</span> <span class="s2">&quot;)&quot;</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">stack</span><span class="p">:</span>
-                <span class="n">parent</span> <span class="o">=</span> <span class="n">stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
-                <span class="n">parent</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">current</span><span class="p">)</span>
-                <span class="n">current</span> <span class="o">=</span> <span class="n">parent</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">current</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">current</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Malformed PDDL expression&quot;</span><span class="p">)</span>
-
-    <span class="n">nested_pddl</span> <span class="o">=</span> <span class="n">concatenate_strings</span><span class="p">(</span><span class="n">current</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-    <span class="k">return</span> <span class="n">nested_pddl</span></div>
+    <span class="k">return</span> <span class="n">ActionEffect</span><span class="p">(</span>
+        <span class="n">add</span><span class="o">=</span><span class="n">add</span><span class="p">,</span>
+        <span class="n">delete</span><span class="o">=</span><span class="n">delete</span><span class="p">,</span>
+        <span class="n">numeric</span><span class="o">=</span><span class="n">numeric</span><span class="p">,</span>
+        <span class="n">conditional</span><span class="o">=</span><span class="n">conditional</span><span class="p">,</span>
+    <span class="p">)</span>
 
 
-
-<div class="viewcode-block" id="combine_blocks">
-<a class="viewcode-back" href="../../../l2p.html#l2p.utils.pddl_parser.combine_blocks">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">combine_blocks</span><span class="p">(</span><span class="n">heading_str</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Combine the inside of blocks from the heading string into a single string.&quot;&quot;&quot;</span>
-
-    <span class="n">possible_blocks</span> <span class="o">=</span> <span class="n">heading_str</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;```&quot;</span><span class="p">)</span>
-    <span class="n">blocks</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="n">possible_blocks</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">possible_blocks</span><span class="p">),</span> <span class="mi">2</span><span class="p">)</span>
-    <span class="p">]</span>  <span class="c1"># obtain string between ```</span>
-
-    <span class="n">combined</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">blocks</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">combined</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span>
-        <span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
-    <span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>  <span class="c1"># remove leading/trailing whitespace and internal empty lines</span></div>
+<span class="k">def</span><span class="w"> </span><span class="nf">_make_params</span><span class="p">(</span><span class="n">terms</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Parameter</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert a tuple of pddl ``Term`` objects (from Predicate / Function).&quot;&quot;&quot;</span>
+    <span class="n">result</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Parameter</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">terms</span><span class="p">:</span>
+        <span class="n">type_str</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">type_tags</span><span class="p">))</span> <span class="k">if</span> <span class="n">t</span><span class="o">.</span><span class="n">type_tags</span> <span class="k">else</span> <span class="s2">&quot;object&quot;</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Parameter</span><span class="p">(</span><span class="n">variable</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;?</span><span class="si">{</span><span class="n">t</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">type_str</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">result</span>
 
 
-
-<div class="viewcode-block" id="concatenate_strings">
-<a class="viewcode-back" href="../../../l2p.html#l2p.utils.pddl_parser.concatenate_strings">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">concatenate_strings</span><span class="p">(</span><span class="n">nested_list</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper function that concatenates strings within a list together.&quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">nested_list</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">nested_list</span>
-
-    <span class="n">new_list</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">nested_list</span><span class="p">):</span>
-        <span class="n">current</span> <span class="o">=</span> <span class="n">nested_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">current</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="c1"># start collecting consecutive strings</span>
-            <span class="n">concatenated</span> <span class="o">=</span> <span class="n">current</span>
-            <span class="n">j</span> <span class="o">=</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span>
-            <span class="k">while</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">nested_list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">nested_list</span><span class="p">[</span><span class="n">j</span><span class="p">],</span> <span class="nb">str</span><span class="p">):</span>
-                <span class="n">concatenated</span> <span class="o">+=</span> <span class="s2">&quot; &quot;</span> <span class="o">+</span> <span class="n">nested_list</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
-                <span class="n">j</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="n">new_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">concatenated</span><span class="p">)</span>
-            <span class="n">i</span> <span class="o">=</span> <span class="n">j</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># recurse for sublists</span>
-            <span class="n">new_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">concatenate_strings</span><span class="p">(</span><span class="n">current</span><span class="p">))</span>
-            <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
-    <span class="k">return</span> <span class="n">new_list</span></div>
+<span class="k">def</span><span class="w"> </span><span class="nf">_make_params_from_variables</span><span class="p">(</span><span class="n">variables</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Variable</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert a list of pddl ``Variable`` objects (from quantifiers).&quot;&quot;&quot;</span>
+    <span class="n">result</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">variables</span><span class="p">:</span>
+        <span class="n">type_str</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">type_tags</span><span class="p">))</span> <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">type_tags</span> <span class="k">else</span> <span class="s2">&quot;object&quot;</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;variable&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;?</span><span class="si">{</span><span class="n">v</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">type_str</span><span class="p">})</span>
+    <span class="k">return</span> <span class="n">result</span>
 
 
-    <span class="c1"># ---- SUPPLEMENTARY FUNCTIONS ----</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Problem component converters (from PDDL parser to L2P models)</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
 
 
-<span class="c1"># ---- HELPER FUNCTIONS ----</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_convert_objects</span><span class="p">(</span><span class="n">objects</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">PDDLObject</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Converts pddl objects class into L2P class.&quot;&quot;&quot;</span>
+    <span class="n">result</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">PDDLObject</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">objects</span><span class="p">:</span>
+        <span class="n">type_str</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">o</span><span class="o">.</span><span class="n">type_tags</span><span class="p">))</span> <span class="k">if</span> <span class="n">o</span><span class="o">.</span><span class="n">type_tags</span> <span class="k">else</span> <span class="s2">&quot;object&quot;</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">PDDLObject</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">o</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">type_str</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">result</span>
 
 
-<div class="viewcode-block" id="load_file">
-<a class="viewcode-back" href="../../../l2p.html#l2p.utils.pddl_parser.load_file">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">load_file</span><span class="p">(</span><span class="n">file_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper function that loads a single file into a string&quot;&quot;&quot;</span>
-    <span class="n">_</span><span class="p">,</span> <span class="n">ext</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">ext</span> <span class="o">==</span> <span class="s2">&quot;.json&quot;</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">file</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span></div>
+<span class="k">def</span><span class="w"> </span><span class="nf">_convert_initial_state</span><span class="p">(</span><span class="n">init</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">InitialState</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Converts pddl initial state class into L2P class.&quot;&quot;&quot;</span>
+    <span class="n">facts</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">init</span><span class="p">:</span>
+        <span class="n">facts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">item</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">InitialState</span><span class="p">(</span><span class="n">facts</span><span class="o">=</span><span class="n">facts</span><span class="p">,</span> <span class="n">timed_facts</span><span class="o">=</span><span class="p">[])</span>
 
 
-
-<div class="viewcode-block" id="load_files">
-<a class="viewcode-back" href="../../../l2p.html#l2p.utils.pddl_parser.load_files">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">load_files</span><span class="p">(</span><span class="n">folder_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper function that loads multiple files into a string list&quot;&quot;&quot;</span>
-    <span class="n">file_contents</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">filename</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">folder_path</span><span class="p">)):</span>
-        <span class="n">file_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">folder_path</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">file_path</span><span class="p">):</span>
-            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
-                <span class="n">file_contents</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">file</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
-    <span class="k">return</span> <span class="n">file_contents</span></div>
+<span class="k">def</span><span class="w"> </span><span class="nf">_convert_goal_state</span><span class="p">(</span><span class="n">goal</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GoalState</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Converts pddl goal state class into L2P class.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">goal</span><span class="p">,</span> <span class="n">And</span><span class="p">):</span>
+        <span class="n">conditions</span> <span class="o">=</span> <span class="p">[</span><span class="n">_convert_condition</span><span class="p">(</span><span class="n">op</span><span class="p">)</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">goal</span><span class="o">.</span><span class="n">operands</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">conditions</span> <span class="o">=</span> <span class="p">[</span><span class="n">_convert_condition</span><span class="p">(</span><span class="n">goal</span><span class="p">)]</span>
+    <span class="k">return</span> <span class="n">GoalState</span><span class="p">(</span><span class="n">conditions</span><span class="o">=</span><span class="n">conditions</span><span class="p">)</span>
 
 
-
-<div class="viewcode-block" id="check_parse_domain">
-<a class="viewcode-back" href="../../../l2p.html#l2p.utils.pddl_parser.check_parse_domain">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">check_parse_domain</span><span class="p">(</span><span class="n">file_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run PDDL library to check if file is syntactically correct&quot;&quot;&quot;</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">domain</span> <span class="o">=</span> <span class="n">parse_domain</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
-        <span class="n">pddl_domain</span> <span class="o">=</span> <span class="n">domain_to_string</span><span class="p">(</span><span class="n">domain</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">pddl_domain</span>
-    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;------------------&quot;</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error parsing domain: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;------------------&quot;</span><span class="p">)</span>
-        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span></div>
-
-
-
-<div class="viewcode-block" id="check_parse_problem">
-<a class="viewcode-back" href="../../../l2p.html#l2p.utils.pddl_parser.check_parse_problem">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">check_parse_problem</span><span class="p">(</span><span class="n">file_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run PDDL library to check if file is syntactically correct&quot;&quot;&quot;</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">problem</span> <span class="o">=</span> <span class="n">parse_problem</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
-        <span class="n">pddl_problem</span> <span class="o">=</span> <span class="n">problem_to_string</span><span class="p">(</span><span class="n">problem</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">pddl_problem</span>
-    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;------------------&quot;</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error parsing domain: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;------------------&quot;</span><span class="p">)</span>
-        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span></div>
-
+<span class="k">def</span><span class="w"> </span><span class="nf">_convert_metric</span><span class="p">(</span><span class="n">metric</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Metric</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Converts pddl metric class into L2P class.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">metric</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">Metric</span><span class="p">(</span>
+        <span class="n">optimization</span><span class="o">=</span><span class="n">metric</span><span class="o">.</span><span class="n">optimization</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">metric</span><span class="o">.</span><span class="n">expression</span><span class="p">),</span>
+    <span class="p">)</span>
 </pre></div>
         </article>
       </div>
@@ -1186,7 +784,7 @@
         <div class="bottom-of-page">
           <div class="left-details">
             <div class="copyright">
-                Copyright &#169; 2025, Marcus Tantakoun
+                Copyright &#169; 2026, Marcus Tantakoun
             </div>
             Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
             
@@ -1206,7 +804,7 @@
       
     </aside>
   </div>
-</div><script src="../../../_static/documentation_options.js?v=000c92bf"></script>
+</div><script src="../../../_static/documentation_options.js?v=6c02275b"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../_static/scripts/furo.js?v=46bd48cc"></script>

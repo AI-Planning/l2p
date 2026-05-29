@@ -1,0 +1,727 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="./">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="next" title="Paper Recreations" href="paper_recreations.html"><link rel="prev" title="L2P" href="l2p.html">
+
+    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>CLI - l2p</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="index.html"><div class="brand">l2p</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
+  
+  <span class="sidebar-brand-text">l2p</span>
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="l2p.html">L2P</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">CLI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="paper_recreations.html">Paper Recreations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="templates.html">Templates</a></li>
+<li class="toctree-l1"><a class="reference internal" href="types.html">Data Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="paper_feed.html">Paper Feed</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="_sources/cli.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="cli">
+<h1>CLI<a class="headerlink" href="#cli" title="Link to this heading">¶</a></h1>
+<p>The <code class="docutils literal notranslate"><span class="pre">l2p</span></code> CLI provides terminal-based access to PDDL generation, validation,
+planning, and LLM agent tooling. It supports both <strong>interactive</strong> workflows for
+human users and <strong>stateless</strong> command pipelines for automation and LLM agents.</p>
+<p>Configuration is stored at <code class="docutils literal notranslate"><span class="pre">~/.l2p/config.yaml</span></code> and managed via the
+<a class="reference internal" href="#cli-init"><span class="std std-ref">l2p init - Initial Setup</span></a> and <a class="reference internal" href="#cli-config"><span class="std std-ref">l2p config - Configuration Management</span></a> commands.</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>Non-interactive commands (<code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">set</span></code>, <code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">build</span></code>, <code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">validate</span></code>,
+<code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">plan</span></code>, <code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">schema</span></code>) accept structured JSON input and produce
+machine-readable output - ideal for LLM tool-calling agents. See
+<a class="reference internal" href="#cli-agentic"><span class="std std-ref">Agentic Workflow (for automation &amp; LLM agents)</span></a> below.</p>
+</div>
+<section id="quick-reference">
+<span id="cli-quickref"></span><h2>Quick Reference<a class="headerlink" href="#quick-reference" title="Link to this heading">¶</a></h2>
+<div class="table-wrapper docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Command</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Audience</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><a class="reference internal" href="#cli-init"><span class="std std-ref">l2p init - Initial Setup</span></a></p></td>
+<td><p>Configure LLM provider &amp; model</p></td>
+<td><p>Human + Agent</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#cli-set"><span class="std std-ref">l2p set - Inject &amp; Validate a Component</span></a></p></td>
+<td><p>Inject a PDDL component from JSON</p></td>
+<td><p>Agent</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#cli-build"><span class="std std-ref">l2p build - Assemble &amp; Render PDDL</span></a></p></td>
+<td><p>Assemble &amp; render full PDDL domain or problem</p></td>
+<td><p>Agent</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#cli-validate"><span class="std std-ref">l2p validate - Semantic &amp; Syntax Checking</span></a></p></td>
+<td><p>Validate JSON components or <code class="docutils literal notranslate"><span class="pre">.pddl</span></code> files</p></td>
+<td><p>Agent</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#cli-plan"><span class="std std-ref">l2p plan - Run a Planner</span></a></p></td>
+<td><p>Run a planner on domain/problem strings</p></td>
+<td><p>Agent</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#cli-schema"><span class="std std-ref">l2p schema - JSON Schema Reference for LLMs</span></a></p></td>
+<td><p>Output Pydantic JSON Schema for LLM reference</p></td>
+<td><p>Agent</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#cli-generate"><span class="std std-ref">l2p generate - Interactive PDDL Generation</span></a></p></td>
+<td><p>Interactive domain &amp; problem generation</p></td>
+<td><p>Human</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#cli-models"><span class="std std-ref">l2p models - Model Management</span></a></p></td>
+<td><p>List, switch, and test configured models</p></td>
+<td><p>Human + Agent</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#cli-config"><span class="std std-ref">l2p config - Configuration Management</span></a></p></td>
+<td><p>Show, edit, validate, or reset configuration</p></td>
+<td><p>Human + Agent</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#cli-templates"><span class="std std-ref">l2p templates - Prompt Template Management</span></a></p></td>
+<td><p>List, show, and find prompt templates</p></td>
+<td><p>Human + Agent</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#cli-new"><span class="std std-ref">l2p new - Blank PDDL Files</span></a></p></td>
+<td><p>Create blank PDDL domain or problem file</p></td>
+<td><p>Human + Agent</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#cli-chat"><span class="std std-ref">l2p chat - Interactive LLM Session</span></a></p></td>
+<td><p>Interactive LLM chat with PDDL editing</p></td>
+<td><p>Human</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="interactive-commands-for-humans">
+<span id="cli-interactive"></span><h2>Interactive Commands (for humans)<a class="headerlink" href="#interactive-commands-for-humans" title="Link to this heading">¶</a></h2>
+<p>These commands provide step-by-step prompts and are designed for direct
+terminal use.</p>
+<section id="l2p-init-initial-setup">
+<span id="cli-init"></span><h3><code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">init</span></code> - Initial Setup<a class="headerlink" href="#l2p-init-initial-setup" title="Link to this heading">¶</a></h3>
+<p>Walks through LLM backend selection, provider, model name, and API key
+configuration. The resulting config is saved to <code class="docutils literal notranslate"><span class="pre">~/.l2p/config.yaml</span></code>.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Interactive setup</span>
+l2p<span class="w"> </span>init
+
+<span class="c1"># Non-interactive (for scripts)</span>
+l2p<span class="w"> </span>init<span class="w"> </span>--backend<span class="w"> </span>openai<span class="w"> </span>--provider<span class="w"> </span>openai<span class="w"> </span>--model<span class="w"> </span>gpt-4o-mini
+</pre></div>
+</div>
+<p>Supports two backends:</p>
+<ul class="simple">
+<li><p><strong>unified</strong> - uses the <a class="reference external" href="https://github.com/simonw/llm">simonw/llm</a> library</p></li>
+<li><p><strong>openai</strong> - uses the OpenAI SDK directly</p></li>
+</ul>
+<p>Providers include <code class="docutils literal notranslate"><span class="pre">openai</span></code>, <code class="docutils literal notranslate"><span class="pre">google</span></code>, <code class="docutils literal notranslate"><span class="pre">anthropic</span></code>, <code class="docutils literal notranslate"><span class="pre">deepseek</span></code>,
+<code class="docutils literal notranslate"><span class="pre">mistral</span></code>, <code class="docutils literal notranslate"><span class="pre">ollama</span></code>, and <code class="docutils literal notranslate"><span class="pre">ollama-cloud</span></code>.</p>
+</section>
+<section id="l2p-generate-interactive-pddl-generation">
+<span id="cli-generate"></span><h3><code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">generate</span></code> - Interactive PDDL Generation<a class="headerlink" href="#l2p-generate-interactive-pddl-generation" title="Link to this heading">¶</a></h3>
+<p>Step-by-step pipelines for building PDDL domains and problems with LLM
+assistance.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Interactive domain generation</span>
+l2p<span class="w"> </span>generate<span class="w"> </span>domain
+
+<span class="c1"># Interactive problem generation</span>
+l2p<span class="w"> </span>generate<span class="w"> </span>problem
+
+<span class="c1"># Increase LLM retries on parse failure</span>
+l2p<span class="w"> </span>generate<span class="w"> </span>domain<span class="w"> </span>--max-retries<span class="w"> </span><span class="m">5</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">generate</span> <span class="pre">domain</span></code> guides you through: domain name, description, types,
+constants, predicates, functions, and actions - each generated by the LLM,
+entered manually, or reviewed before proceeding.</p>
+<p><code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">generate</span> <span class="pre">problem</span></code> prompts for: domain source (NL description or existing
+<code class="docutils literal notranslate"><span class="pre">.pddl</span></code> file), problem name, description, objects, initial state, and goal
+state.</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>At each generation step you can accept the LLM output, provide fix feedback
+for a regeneration, or enter the data manually.</p>
+</div>
+</section>
+<section id="l2p-chat-interactive-llm-session">
+<span id="cli-chat"></span><h3><code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">chat</span></code> - Interactive LLM Session<a class="headerlink" href="#l2p-chat-interactive-llm-session" title="Link to this heading">¶</a></h3>
+<p>A REPL-style chat session with the configured LLM, featuring PDDL-specific
+commands:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>l2p<span class="w"> </span>chat
+
+<span class="c1"># Inside the session:</span>
+<span class="c1">#   /exit              - quit</span>
+<span class="c1">#   /edit &lt;file.pddl&gt;  - load &amp; edit a PDDL file</span>
+<span class="c1">#   /validate &lt;file&gt;   - validate a PDDL file</span>
+<span class="c1">#   &lt;any message&gt;      - send to LLM with L2P context</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">/edit</span></code> command loads a PDDL file, takes an edit description, sends it to
+the LLM with editing instructions, shows a diff, and prompts to overwrite.</p>
+</section>
+<section id="l2p-models-model-management">
+<span id="cli-models"></span><h3><code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">models</span></code> - Model Management<a class="headerlink" href="#l2p-models-model-management" title="Link to this heading">¶</a></h3>
+<p>List available models, switch between them, and test LLM connections.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># List configured models</span>
+l2p<span class="w"> </span>models<span class="w"> </span>list
+l2p<span class="w"> </span>models<span class="w"> </span>list<span class="w"> </span>--details<span class="w">              </span><span class="c1"># show context length, cost, params</span>
+l2p<span class="w"> </span>models<span class="w"> </span>list<span class="w"> </span>--provider<span class="w"> </span>openai<span class="w">      </span><span class="c1"># filter by provider</span>
+
+<span class="c1"># Switch model interactively</span>
+l2p<span class="w"> </span>models<span class="w"> </span>switch
+
+<span class="c1"># Test connection</span>
+l2p<span class="w"> </span>models<span class="w"> </span><span class="nb">test</span>
+l2p<span class="w"> </span>models<span class="w"> </span><span class="nb">test</span><span class="w"> </span>--simple<span class="w">               </span><span class="c1"># config validation only</span>
+</pre></div>
+</div>
+</section>
+<section id="l2p-config-configuration-management">
+<span id="cli-config"></span><h3><code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">config</span></code> - Configuration Management<a class="headerlink" href="#l2p-config-configuration-management" title="Link to this heading">¶</a></h3>
+<p>View, edit, validate, and reset the L2P configuration.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Show configuration</span>
+l2p<span class="w"> </span>config<span class="w"> </span>show
+l2p<span class="w"> </span>config<span class="w"> </span>show<span class="w"> </span>--raw<span class="w">                  </span><span class="c1"># raw YAML output</span>
+
+<span class="c1"># Edit in $EDITOR</span>
+l2p<span class="w"> </span>config<span class="w"> </span>edit
+
+<span class="c1"># Validate settings</span>
+l2p<span class="w"> </span>config<span class="w"> </span>validate
+
+<span class="c1"># Reset to defaults</span>
+l2p<span class="w"> </span>config<span class="w"> </span>reset<span class="w"> </span>--force
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">edit</span></code> subcommand auto-detects your editor from the <code class="docutils literal notranslate"><span class="pre">$EDITOR</span></code>
+environment variable and re-validates the config after saving.</p>
+</section>
+<section id="l2p-new-blank-pddl-files">
+<span id="cli-new"></span><h3><code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">new</span></code> - Blank PDDL Files<a class="headerlink" href="#l2p-new-blank-pddl-files" title="Link to this heading">¶</a></h3>
+<p>Create minimal PDDL domain or problem skeleton files.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create a domain file</span>
+l2p<span class="w"> </span>new<span class="w"> </span>blocksworld.pddl
+
+<span class="c1"># Create a problem file</span>
+l2p<span class="w"> </span>new<span class="w"> </span>pb1.pddl<span class="w"> </span>--type<span class="w"> </span>problem<span class="w"> </span>--domain-name<span class="w"> </span>blocksworld
+</pre></div>
+</div>
+</section>
+<section id="l2p-templates-prompt-template-management">
+<span id="cli-templates"></span><h3><code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">templates</span></code> - Prompt Template Management<a class="headerlink" href="#l2p-templates-prompt-template-management" title="Link to this heading">¶</a></h3>
+<p>List, show, and find built-in prompt templates used by the generation
+commands.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># List all templates</span>
+l2p<span class="w"> </span>templates<span class="w"> </span>list
+l2p<span class="w"> </span>templates<span class="w"> </span>list<span class="w"> </span>--category<span class="w"> </span>domain<span class="w">   </span><span class="c1"># filter by category</span>
+l2p<span class="w"> </span>templates<span class="w"> </span>list<span class="w"> </span>--details<span class="w">           </span><span class="c1"># show source &amp; path</span>
+
+<span class="c1"># Show template content</span>
+l2p<span class="w"> </span>templates<span class="w"> </span>show<span class="w"> </span>--name<span class="w"> </span>types
+
+<span class="c1"># Find template file path</span>
+l2p<span class="w"> </span>templates<span class="w"> </span>find<span class="w"> </span>--name<span class="w"> </span>actions
+</pre></div>
+</div>
+<p>Three categories are available: <code class="docutils literal notranslate"><span class="pre">domain</span></code>, <code class="docutils literal notranslate"><span class="pre">task</span></code>, and <code class="docutils literal notranslate"><span class="pre">feedback</span></code>.</p>
+</section>
+</section>
+<section id="agentic-workflow-for-automation-llm-agents">
+<span id="cli-agentic"></span><h2>Agentic Workflow (for automation &amp; LLM agents)<a class="headerlink" href="#agentic-workflow-for-automation-llm-agents" title="Link to this heading">¶</a></h2>
+<p>These commands accept structured JSON input, perform a single operation, and
+produce machine-readable output. They are designed for non-interactive use by
+LLM tool-calling agents and shell scripts.</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>Every agentic command is <strong>stateless</strong> - pass full JSON via <code class="docutils literal notranslate"><span class="pre">--data</span></code> or
+compose from individual flags. Pipe validated JSON between commands:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">l2p</span> <span class="nb">set</span> <span class="n">types</span> <span class="o">--</span><span class="n">data</span> <span class="s1">&#39;[...]&#39;</span> <span class="o">--</span><span class="n">json</span> <span class="o">|</span> <span class="n">l2p</span> <span class="nb">set</span> <span class="n">predicates</span> <span class="o">--</span><span class="n">stdin</span> <span class="o">--</span><span class="n">json</span>
+</pre></div>
+</div>
+</div>
+<section id="l2p-set-inject-validate-a-component">
+<span id="cli-set"></span><h3><code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">set</span></code> - Inject &amp; Validate a Component<a class="headerlink" href="#l2p-set-inject-validate-a-component" title="Link to this heading">¶</a></h3>
+<p>Inject individual PDDL components from JSON. Each call validates the data
+against L2P’s semantic rules and optionally outputs the formatted result.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Inject types</span>
+l2p<span class="w"> </span><span class="nb">set</span><span class="w"> </span>types<span class="w"> </span>--data<span class="w"> </span><span class="s1">&#39;[{&quot;name&quot;:&quot;block&quot;,&quot;parent&quot;:&quot;object&quot;}]&#39;</span>
+
+<span class="c1"># Inject predicates, output PDDL</span>
+l2p<span class="w"> </span><span class="nb">set</span><span class="w"> </span>predicates<span class="w"> </span>--data<span class="w"> </span><span class="s1">&#39;[</span>
+<span class="s1">  {&quot;name&quot;:&quot;clear&quot;,&quot;params&quot;:[{&quot;variable&quot;:&quot;?x&quot;,&quot;type&quot;:&quot;block&quot;}]}</span>
+<span class="s1">]&#39;</span><span class="w"> </span>--pddl
+
+<span class="c1"># Inject from file</span>
+l2p<span class="w"> </span><span class="nb">set</span><span class="w"> </span>actions<span class="w"> </span>--file<span class="w"> </span>actions.json<span class="w"> </span>--json
+
+<span class="c1"># Pipe between commands</span>
+l2p<span class="w"> </span><span class="nb">set</span><span class="w"> </span>types<span class="w"> </span>--data<span class="w"> </span><span class="s1">&#39;[...]&#39;</span><span class="w"> </span>--json<span class="w"> </span><span class="p">|</span><span class="w"> </span>l2p<span class="w"> </span><span class="nb">set</span><span class="w"> </span>predicates<span class="w"> </span>--stdin
+
+<span class="c1"># Show JSON Schema for LLM</span>
+l2p<span class="w"> </span><span class="nb">set</span><span class="w"> </span>types<span class="w"> </span>--schema
+</pre></div>
+</div>
+<p>Available components:</p>
+<ul class="simple">
+<li><p>Domain: <code class="docutils literal notranslate"><span class="pre">requirements</span></code>, <code class="docutils literal notranslate"><span class="pre">types</span></code>, <code class="docutils literal notranslate"><span class="pre">constants</span></code>, <code class="docutils literal notranslate"><span class="pre">predicates</span></code>,
+<code class="docutils literal notranslate"><span class="pre">functions</span></code>, <code class="docutils literal notranslate"><span class="pre">derived-predicates</span></code>, <code class="docutils literal notranslate"><span class="pre">actions</span></code>, <code class="docutils literal notranslate"><span class="pre">durative-actions</span></code>,
+<code class="docutils literal notranslate"><span class="pre">events</span></code>, <code class="docutils literal notranslate"><span class="pre">processes</span></code>, <code class="docutils literal notranslate"><span class="pre">constraints</span></code></p></li>
+<li><p>Problem: <code class="docutils literal notranslate"><span class="pre">objects</span></code>, <code class="docutils literal notranslate"><span class="pre">initial-state</span></code>, <code class="docutils literal notranslate"><span class="pre">goal-state</span></code>, <code class="docutils literal notranslate"><span class="pre">metric</span></code></p></li>
+</ul>
+</section>
+<section id="l2p-build-assemble-render-pddl">
+<span id="cli-build"></span><h3><code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">build</span></code> - Assemble &amp; Render PDDL<a class="headerlink" href="#l2p-build-assemble-render-pddl" title="Link to this heading">¶</a></h3>
+<p>Build the final PDDL string from a complete <code class="docutils literal notranslate"><span class="pre">DomainDetails</span></code> or
+<code class="docutils literal notranslate"><span class="pre">ProblemDetails</span></code> JSON, or from individual component files.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Full JSON - one-shot domain (recommended for agents)</span>
+l2p<span class="w"> </span>build<span class="w"> </span>domain<span class="w"> </span>--data<span class="w"> </span><span class="s1">&#39;{</span>
+<span class="s1">  &quot;name&quot;:&quot;blocksworld&quot;,</span>
+<span class="s1">  &quot;types&quot;:[{&quot;name&quot;:&quot;block&quot;,&quot;parent&quot;:&quot;object&quot;}],</span>
+<span class="s1">  &quot;predicates&quot;:[...],</span>
+<span class="s1">  &quot;actions&quot;:[...]</span>
+<span class="s1">}&#39;</span><span class="w"> </span>-o<span class="w"> </span>domain.pddl
+
+<span class="c1"># Full JSON - one-shot problem</span>
+l2p<span class="w"> </span>build<span class="w"> </span>problem<span class="w"> </span>--data<span class="w"> </span><span class="s1">&#39;{</span>
+<span class="s1">  &quot;name&quot;:&quot;pb1&quot;,&quot;domain_name&quot;:&quot;blocksworld&quot;,</span>
+<span class="s1">  &quot;objects&quot;:[...],</span>
+<span class="s1">  &quot;initial_state&quot;:{...},</span>
+<span class="s1">  &quot;goal_state&quot;:{...}</span>
+<span class="s1">}&#39;</span><span class="w"> </span>-o<span class="w"> </span>problem.pddl
+
+<span class="c1"># Individual component files</span>
+l2p<span class="w"> </span>build<span class="w"> </span>domain<span class="w"> </span>--name<span class="w"> </span>blocksworld<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--types<span class="w"> </span>types.json<span class="w"> </span>--predicates<span class="w"> </span>preds.json<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--actions<span class="w"> </span>actions.json<span class="w"> </span>-o<span class="w"> </span>domain.pddl
+
+<span class="c1"># Output JSON instead of PDDL</span>
+l2p<span class="w"> </span>build<span class="w"> </span>domain<span class="w"> </span>--data<span class="w"> </span><span class="s1">&#39;{...}&#39;</span><span class="w"> </span>--json
+</pre></div>
+</div>
+<p>File references use the <code class="docutils literal notranslate"><span class="pre">&#64;</span></code> prefix (e.g. <code class="docutils literal notranslate"><span class="pre">--types</span> <span class="pre">&#64;types.json</span></code>).</p>
+</section>
+<section id="l2p-validate-semantic-syntax-checking">
+<span id="cli-validate"></span><h3><code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">validate</span></code> - Semantic &amp; Syntax Checking<a class="headerlink" href="#l2p-validate-semantic-syntax-checking" title="Link to this heading">¶</a></h3>
+<p>Validate individual JSON components or entire <code class="docutils literal notranslate"><span class="pre">.pddl</span></code> files against L2P’s
+rule engine. Rules cover naming conventions, type inheritance, variable scope,
+arity matching, undeclared symbols, and uppercase warnings.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Validate a component JSON snippet</span>
+l2p<span class="w"> </span>validate<span class="w"> </span>types<span class="w"> </span>--data<span class="w"> </span><span class="s1">&#39;[{&quot;name&quot;:&quot;block&quot;,&quot;parent&quot;:&quot;object&quot;}]&#39;</span>
+
+<span class="c1"># Validate a .pddl domain file</span>
+l2p<span class="w"> </span>validate<span class="w"> </span>domain<span class="w"> </span>domain.pddl
+
+<span class="c1"># Validate a .pddl problem file (cross-checked against domain)</span>
+l2p<span class="w"> </span>validate<span class="w"> </span>problem<span class="w"> </span>problem.pddl<span class="w"> </span>--domain<span class="w"> </span>domain.pddl
+
+<span class="c1"># Validate full DomainDetails JSON</span>
+l2p<span class="w"> </span>validate<span class="w"> </span>domain<span class="w"> </span>--data<span class="w"> </span><span class="s1">&#39;{&quot;name&quot;:&quot;bw&quot;,&quot;types&quot;:[],&quot;predicates&quot;:[],&quot;actions&quot;:[]}&#39;</span>
+</pre></div>
+</div>
+<p>Three input modes: raw JSON string, JSON file, or <code class="docutils literal notranslate"><span class="pre">.pddl</span></code> file. Exits with
+code 1 on validation failure.</p>
+</section>
+<section id="l2p-plan-run-a-planner">
+<span id="cli-plan"></span><h3><code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">plan</span></code> - Run a Planner<a class="headerlink" href="#l2p-plan-run-a-planner" title="Link to this heading">¶</a></h3>
+<p>Execute a classical planner on PDDL domain and problem strings directly - no
+temporary files needed (they are managed automatically).</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Run Fast Downward with raw PDDL strings</span>
+l2p<span class="w"> </span>plan<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--domain<span class="w"> </span><span class="s1">&#39;(define (domain test) ...)&#39;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--problem<span class="w"> </span><span class="s1">&#39;(define (problem p) ...)&#39;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--planner<span class="w"> </span>fast-downward<span class="w"> </span>--alias<span class="w"> </span>lama-first
+
+<span class="c1"># Read from files</span>
+l2p<span class="w"> </span>plan<span class="w"> </span>--domain<span class="w"> </span>@domain.pddl<span class="w"> </span>--problem<span class="w"> </span>@problem.pddl<span class="w"> </span>--json
+
+<span class="c1"># Use Unified Planning backend</span>
+l2p<span class="w"> </span>plan<span class="w"> </span>--domain<span class="w"> </span>@d.pddl<span class="w"> </span>--problem<span class="w"> </span>@p.pddl<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--planner<span class="w"> </span>unified<span class="w"> </span>--engine<span class="w"> </span>aries<span class="w"> </span>--json
+</pre></div>
+</div>
+<p>Output with <code class="docutils literal notranslate"><span class="pre">--json</span></code> returns a structured <a class="reference internal" href="l2p.html#l2p.planner_builder.PlanningResult" title="l2p.planner_builder.PlanningResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">PlanningResult</span></code></a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;is_successful&quot;</span><span class="p">:</span> <span class="n">true</span><span class="p">,</span>
+  <span class="s2">&quot;plan&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;(pickup b1)&quot;</span><span class="p">,</span> <span class="s2">&quot;(stack b1 b2)&quot;</span><span class="p">],</span>
+  <span class="s2">&quot;error_message&quot;</span><span class="p">:</span> <span class="n">null</span><span class="p">,</span>
+  <span class="s2">&quot;raw_output&quot;</span><span class="p">:</span> <span class="s2">&quot;...&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;metrics&quot;</span><span class="p">:</span> <span class="p">{}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Two planner backends:</p>
+<ul class="simple">
+<li><p><strong>Fast Downward</strong> - submodule-based, requires the executable path</p></li>
+<li><p><strong>Unified Planning</strong> - Python API, requires <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">unified-planning[engine]</span></code></p></li>
+</ul>
+</section>
+<section id="l2p-schema-json-schema-reference-for-llms">
+<span id="cli-schema"></span><h3><code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">schema</span></code> - JSON Schema Reference for LLMs<a class="headerlink" href="#l2p-schema-json-schema-reference-for-llms" title="Link to this heading">¶</a></h3>
+<p>Output the Pydantic JSON Schema for any PDDL component. LLMs can read this to
+know the exact JSON structure expected by <code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">set</span></code> and <code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">build</span></code>.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Schema for a single component</span>
+l2p<span class="w"> </span>schema<span class="w"> </span>types
+l2p<span class="w"> </span>schema<span class="w"> </span>predicates
+l2p<span class="w"> </span>schema<span class="w"> </span>actions
+
+<span class="c1"># Include example JSON</span>
+l2p<span class="w"> </span>schema<span class="w"> </span>domain<span class="w"> </span>--examples
+
+<span class="c1"># List all available schemas</span>
+l2p<span class="w"> </span>schema<span class="w"> </span>list
+</pre></div>
+</div>
+<p>Available schemas: <code class="docutils literal notranslate"><span class="pre">types</span></code>, <code class="docutils literal notranslate"><span class="pre">constants</span></code>, <code class="docutils literal notranslate"><span class="pre">predicates</span></code>, <code class="docutils literal notranslate"><span class="pre">functions</span></code>,
+<code class="docutils literal notranslate"><span class="pre">derived-predicates</span></code>, <code class="docutils literal notranslate"><span class="pre">actions</span></code>, <code class="docutils literal notranslate"><span class="pre">durative-actions</span></code>, <code class="docutils literal notranslate"><span class="pre">events</span></code>,
+<code class="docutils literal notranslate"><span class="pre">processes</span></code>, <code class="docutils literal notranslate"><span class="pre">constraints</span></code>, <code class="docutils literal notranslate"><span class="pre">parameters</span></code>, <code class="docutils literal notranslate"><span class="pre">objects</span></code>,
+<code class="docutils literal notranslate"><span class="pre">initial-state</span></code>, <code class="docutils literal notranslate"><span class="pre">goal-state</span></code>, <code class="docutils literal notranslate"><span class="pre">metric</span></code>, <code class="docutils literal notranslate"><span class="pre">domain</span></code>, <code class="docutils literal notranslate"><span class="pre">problem</span></code>,
+<code class="docutils literal notranslate"><span class="pre">requirements</span></code>.</p>
+</section>
+<section id="end-to-end-agent-workflow">
+<h3>End-to-End Agent Workflow<a class="headerlink" href="#end-to-end-agent-workflow" title="Link to this heading">¶</a></h3>
+<p>Here is how an LLM agent can chain CLI commands to produce a validated PDDL
+domain and plan:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># 1. Get the JSON schema the LLM should follow</span>
+l2p<span class="w"> </span>schema<span class="w"> </span>domain<span class="w"> </span>--examples
+
+<span class="c1"># 2. Build domain from JSON</span>
+l2p<span class="w"> </span>build<span class="w"> </span>domain<span class="w"> </span>--data<span class="w"> </span><span class="s1">&#39;{</span>
+<span class="s1">  &quot;name&quot;:&quot;blocksworld&quot;,&quot;types&quot;:[{&quot;name&quot;:&quot;block&quot;,&quot;parent&quot;:&quot;object&quot;}],</span>
+<span class="s1">  &quot;predicates&quot;:[...],&quot;actions&quot;:[...]</span>
+<span class="s1">}&#39;</span><span class="w"> </span>-o<span class="w"> </span>domain.pddl
+
+<span class="c1"># 3. Validate</span>
+l2p<span class="w"> </span>validate<span class="w"> </span>domain<span class="w"> </span>domain.pddl
+
+<span class="c1"># 4. Build problem</span>
+l2p<span class="w"> </span>build<span class="w"> </span>problem<span class="w"> </span>--data<span class="w"> </span><span class="s1">&#39;{</span>
+<span class="s1">  &quot;name&quot;:&quot;pb1&quot;,&quot;domain_name&quot;:&quot;blocksworld&quot;,</span>
+<span class="s1">  &quot;objects&quot;:[{&quot;name&quot;:&quot;b1&quot;,&quot;type&quot;:&quot;block&quot;}],</span>
+<span class="s1">  &quot;initial_state&quot;:{&quot;facts&quot;:[&quot;(on-table b1)&quot;]},</span>
+<span class="s1">  &quot;goal_state&quot;:{&quot;conditions&quot;:[&quot;(holding b1)&quot;]}</span>
+<span class="s1">}&#39;</span><span class="w"> </span>-o<span class="w"> </span>problem.pddl
+
+<span class="c1"># 5. Plan</span>
+l2p<span class="w"> </span>plan<span class="w"> </span>--domain<span class="w"> </span>@domain.pddl<span class="w"> </span>--problem<span class="w"> </span>@problem.pddl<span class="w"> </span>--json
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="paper_recreations.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">Paper Recreations</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="l2p.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">L2P</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2026, Marcus Tantakoun
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">CLI</a><ul>
+<li><a class="reference internal" href="#quick-reference">Quick Reference</a></li>
+<li><a class="reference internal" href="#interactive-commands-for-humans">Interactive Commands (for humans)</a><ul>
+<li><a class="reference internal" href="#l2p-init-initial-setup"><code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">init</span></code> - Initial Setup</a></li>
+<li><a class="reference internal" href="#l2p-generate-interactive-pddl-generation"><code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">generate</span></code> - Interactive PDDL Generation</a></li>
+<li><a class="reference internal" href="#l2p-chat-interactive-llm-session"><code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">chat</span></code> - Interactive LLM Session</a></li>
+<li><a class="reference internal" href="#l2p-models-model-management"><code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">models</span></code> - Model Management</a></li>
+<li><a class="reference internal" href="#l2p-config-configuration-management"><code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">config</span></code> - Configuration Management</a></li>
+<li><a class="reference internal" href="#l2p-new-blank-pddl-files"><code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">new</span></code> - Blank PDDL Files</a></li>
+<li><a class="reference internal" href="#l2p-templates-prompt-template-management"><code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">templates</span></code> - Prompt Template Management</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#agentic-workflow-for-automation-llm-agents">Agentic Workflow (for automation &amp; LLM agents)</a><ul>
+<li><a class="reference internal" href="#l2p-set-inject-validate-a-component"><code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">set</span></code> - Inject &amp; Validate a Component</a></li>
+<li><a class="reference internal" href="#l2p-build-assemble-render-pddl"><code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">build</span></code> - Assemble &amp; Render PDDL</a></li>
+<li><a class="reference internal" href="#l2p-validate-semantic-syntax-checking"><code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">validate</span></code> - Semantic &amp; Syntax Checking</a></li>
+<li><a class="reference internal" href="#l2p-plan-run-a-planner"><code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">plan</span></code> - Run a Planner</a></li>
+<li><a class="reference internal" href="#l2p-schema-json-schema-reference-for-llms"><code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">schema</span></code> - JSON Schema Reference for LLMs</a></li>
+<li><a class="reference internal" href="#end-to-end-agent-workflow">End-to-End Agent Workflow</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="_static/documentation_options.js?v=6c02275b"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/scripts/furo.js?v=46bd48cc"></script>
+    <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="_static/copybutton.js?v=f281be69"></script>
+    </body>
+</html>

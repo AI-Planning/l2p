@@ -12,11 +12,11 @@ The following are papers that have been reconstructed so far. This list will be 
     + [x] `TEXT2WORLD` `[paper] <https://arxiv.org/abs/2502.13092>`__
     + [x] `JS-PDDL` `[paper] <https://openreview.net/forum?id=VyTxXSPmbE&referrer=%5Bthe%20profile%20of%20Kelsey%20Sikes%5D(%2Fprofile%3Fid%3D~Kelsey_Sikes1)>`__
 
-Papers that have been reconstructed so far and can be found in the `Github <https://github.com/AI-Planning/l2p>`_ repo. To see full list of current up-to-date papers in literature, please visit (see :doc:`paper_feed`). This list will be continuously updated.
+Papers that have been reconstructed so far and can be found in a separate repo. To see full list of current up-to-date papers in literature, please visit (see :doc:`paper_feed`). This list will be continuously updated.
 
 ----
 
-Below is L2P code reconstruction of "action-by-action algorithm" from `"Leveraging Pre-trained Large Language Models to Construct and Utilize World Models for Model-based Task Planning" <https://arxiv.org/abs/2305.14909>`_:
+Below is L2P code reconstruction of "action-by-action algorithm" from `"Leveraging Pre-trained Large Language Models to Construct and Utilize World Models for Model-based Task Planning" <https://arxiv.org/abs/2305.14909>`_ (**Note:** This code was from V0.3.3. V0.4.0 contains new builder classes and types, therefore, it does not work on newer versions):
 
 .. code-block:: python
     :linenos:

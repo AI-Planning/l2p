@@ -193,6 +193,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="l2p.html">L2P</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">CLI</a></li>
 <li class="toctree-l1"><a class="reference internal" href="paper_recreations.html">Paper Recreations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="templates.html">Templates</a></li>
 <li class="toctree-l1"><a class="reference internal" href="types.html">Data Types</a></li>
@@ -232,7 +233,7 @@
           
 <section class="genindex-section">
   <h1 id="index">Index</h1>
-  <div class="genindex-jumpbox"><a href="#_"><strong>_</strong></a> | <a href="#A"><strong>A</strong></a> | <a href="#C"><strong>C</strong></a> | <a href="#D"><strong>D</strong></a> | <a href="#E"><strong>E</strong></a> | <a href="#F"><strong>F</strong></a> | <a href="#G"><strong>G</strong></a> | <a href="#H"><strong>H</strong></a> | <a href="#I"><strong>I</strong></a> | <a href="#K"><strong>K</strong></a> | <a href="#L"><strong>L</strong></a> | <a href="#M"><strong>M</strong></a> | <a href="#N"><strong>N</strong></a> | <a href="#O"><strong>O</strong></a> | <a href="#P"><strong>P</strong></a> | <a href="#R"><strong>R</strong></a> | <a href="#S"><strong>S</strong></a> | <a href="#T"><strong>T</strong></a> | <a href="#U"><strong>U</strong></a> | <a href="#V"><strong>V</strong></a></div>
+  <div class="genindex-jumpbox"><a href="#_"><strong>_</strong></a> | <a href="#A"><strong>A</strong></a> | <a href="#B"><strong>B</strong></a> | <a href="#C"><strong>C</strong></a> | <a href="#D"><strong>D</strong></a> | <a href="#E"><strong>E</strong></a> | <a href="#F"><strong>F</strong></a> | <a href="#G"><strong>G</strong></a> | <a href="#H"><strong>H</strong></a> | <a href="#I"><strong>I</strong></a> | <a href="#J"><strong>J</strong></a> | <a href="#L"><strong>L</strong></a> | <a href="#M"><strong>M</strong></a> | <a href="#N"><strong>N</strong></a> | <a href="#O"><strong>O</strong></a> | <a href="#P"><strong>P</strong></a> | <a href="#Q"><strong>Q</strong></a> | <a href="#R"><strong>R</strong></a> | <a href="#S"><strong>S</strong></a> | <a href="#T"><strong>T</strong></a> | <a href="#U"><strong>U</strong></a> | <a href="#V"><strong>V</strong></a> | <a href="#W"><strong>W</strong></a></div>
 </section>
 <section id="_" class="genindex-section">
   <h2>_</h2>
@@ -241,9 +242,61 @@
         <li><a href="l2p.html#l2p.DomainBuilder.__init__">__init__() (l2p.DomainBuilder method)</a>
 
         <ul>
-          <li><a href="l2p.html#l2p.TaskBuilder.__init__">(l2p.TaskBuilder method)</a>
+          <li><a href="l2p.html#l2p.planner_builder.Planner.__init__">(l2p.planner_builder.Planner method)</a>
 </li>
-          <li><a href="l2p.html#l2p.utils.pddl_validator.SyntaxValidator.__init__">(l2p.utils.pddl_validator.SyntaxValidator method)</a>
+          <li><a href="l2p.html#l2p.ProblemBuilder.__init__">(l2p.ProblemBuilder method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Action.__init__">(l2p.utils.pddl_types.Action method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionEffect.__init__">(l2p.utils.pddl_types.ActionEffect method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionPrecondition.__init__">(l2p.utils.pddl_types.ActionPrecondition method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ConditionalEffect.__init__">(l2p.utils.pddl_types.ConditionalEffect method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constant.__init__">(l2p.utils.pddl_types.Constant method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constraint.__init__">(l2p.utils.pddl_types.Constraint method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DerivedPredicate.__init__">(l2p.utils.pddl_types.DerivedPredicate method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DomainDetails.__init__">(l2p.utils.pddl_types.DomainDetails method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeAction.__init__">(l2p.utils.pddl_types.DurativeAction method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionConditions.__init__">(l2p.utils.pddl_types.DurativeActionConditions method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionEffect.__init__">(l2p.utils.pddl_types.DurativeActionEffect method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Event.__init__">(l2p.utils.pddl_types.Event method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Function.__init__">(l2p.utils.pddl_types.Function method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.GoalState.__init__">(l2p.utils.pddl_types.GoalState method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.InitialState.__init__">(l2p.utils.pddl_types.InitialState method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Metric.__init__">(l2p.utils.pddl_types.Metric method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Parameter.__init__">(l2p.utils.pddl_types.Parameter method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLObject.__init__">(l2p.utils.pddl_types.PDDLObject method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLType.__init__">(l2p.utils.pddl_types.PDDLType method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Predicate.__init__">(l2p.utils.pddl_types.Predicate method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ProblemDetails.__init__">(l2p.utils.pddl_types.ProblemDetails method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Process.__init__">(l2p.utils.pddl_types.Process method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Requirement.__init__">(l2p.utils.pddl_types.Requirement method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.TimedFact.__init__">(l2p.utils.pddl_types.TimedFact method)</a>
+</li>
+          <li><a href="l2p.html#l2p.validators.domain.DomainValidator.__init__">(l2p.validators.domain.DomainValidator method)</a>
+</li>
+          <li><a href="l2p.html#l2p.validators.problem.ProblemValidator.__init__">(l2p.validators.problem.ProblemValidator method)</a>
 </li>
         </ul></li>
     </ul></td>
@@ -256,9 +309,53 @@
     <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="l2p.html#l2p.utils.pddl_types.Action">Action (class in l2p.utils.pddl_types)</a>
 </li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.ActionEffect">ActionEffect (class in l2p.utils.pddl_types)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.ActionPrecondition">ActionPrecondition (class in l2p.utils.pddl_types)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.DomainDetails.actions">actions (l2p.utils.pddl_types.DomainDetails attribute)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.ActionEffect.add">add (l2p.utils.pddl_types.ActionEffect attribute)</a>
+</li>
+        <li><a href="l2p.html#l2p.validators.base.ValidationResult.add_error">add_error() (l2p.validators.base.ValidationResult method)</a>
+</li>
+        <li><a href="l2p.html#l2p.PromptBuilder.add_example">add_example() (l2p.PromptBuilder method)</a>
+</li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
-        <li><a href="l2p.html#l2p.utils.pddl_types.DomainDetails.actions">actions (l2p.utils.pddl_types.DomainDetails attribute)</a>
+        <li><a href="l2p.html#l2p.planner_builder.TimeoutException.add_note">add_note() (l2p.planner_builder.TimeoutException method)</a>
+</li>
+        <li><a href="l2p.html#l2p.PromptBuilder.add_rule">add_rule() (l2p.PromptBuilder method)</a>
+</li>
+        <li><a href="l2p.html#l2p.validators.base.ValidationResult.add_warning">add_warning() (l2p.validators.base.ValidationResult method)</a>
+</li>
+        <li><a href="l2p.html#l2p.planner_builder.TimeoutException.args">args (l2p.planner_builder.TimeoutException attribute)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionConditions.at_end">at_end (l2p.utils.pddl_types.DurativeActionConditions attribute)</a>
+
+        <ul>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionEffect.at_end">(l2p.utils.pddl_types.DurativeActionEffect attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionConditions.at_start">at_start (l2p.utils.pddl_types.DurativeActionConditions attribute)</a>
+
+        <ul>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionEffect.at_start">(l2p.utils.pddl_types.DurativeActionEffect attribute)</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="B" class="genindex-section">
+  <h2>B</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="l2p.html#l2p.BaseLLM">BaseLLM (class in l2p)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="l2p.html#l2p.utils.pddl_prompt.build_ctx">build_ctx() (in module l2p.utils.pddl_prompt)</a>
 </li>
     </ul></td>
   </tr></table>
@@ -268,48 +365,194 @@
   <h2>C</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
     <td style="width: 33%; vertical-align: top;"><ul>
-        <li><a href="l2p.html#l2p.utils.pddl_parser.check_parse_domain">check_parse_domain() (in module l2p.utils.pddl_parser)</a>
+        <li><a href="l2p.html#l2p.validators.domain.check_action_effect">check_action_effect() (in module l2p.validators.domain)</a>
 </li>
-        <li><a href="l2p.html#l2p.utils.pddl_parser.check_parse_problem">check_parse_problem() (in module l2p.utils.pddl_parser)</a>
+        <li><a href="l2p.html#l2p.validators.domain.check_action_has_effect">check_action_has_effect() (in module l2p.validators.domain)</a>
 </li>
-        <li><a href="l2p.html#l2p.utils.pddl_types.Function.clean">clean (l2p.utils.pddl_types.Function attribute)</a>
+        <li><a href="l2p.html#l2p.validators.domain.check_action_name_uniqueness">check_action_name_uniqueness() (in module l2p.validators.domain)</a>
+</li>
+        <li><a href="l2p.html#l2p.validators.domain.check_action_precondition">check_action_precondition() (in module l2p.validators.domain)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.Requirement.check_colon">check_colon() (l2p.utils.pddl_types.Requirement class method)</a>
+</li>
+        <li><a href="l2p.html#l2p.validators.domain.check_component_variables">check_component_variables() (in module l2p.validators.domain)</a>
+</li>
+        <li><a href="l2p.html#l2p.validators.domain.check_constant_inheritance">check_constant_inheritance() (in module l2p.validators.domain)</a>
+</li>
+        <li><a href="l2p.html#l2p.validators.domain.check_constraint">check_constraint() (in module l2p.validators.domain)</a>
+</li>
+        <li><a href="l2p.html#l2p.validators.domain.check_derived_predicate">check_derived_predicate() (in module l2p.validators.domain)</a>
+</li>
+        <li><a href="l2p.html#l2p.validators.problem.check_duplicate_objects">check_duplicate_objects() (in module l2p.validators.problem)</a>
+</li>
+        <li><a href="l2p.html#l2p.validators.domain.check_dur_action_conditions">check_dur_action_conditions() (in module l2p.validators.domain)</a>
+</li>
+        <li><a href="l2p.html#l2p.validators.domain.check_dur_action_effect">check_dur_action_effect() (in module l2p.validators.domain)</a>
+</li>
+        <li><a href="l2p.html#l2p.validators.problem.check_goal_not_trivially_satisfied">check_goal_not_trivially_satisfied() (in module l2p.validators.problem)</a>
+</li>
+        <li><a href="l2p.html#l2p.validators.problem.check_goal_state">check_goal_state() (in module l2p.validators.problem)</a>
+</li>
+        <li><a href="l2p.html#l2p.validators.problem.check_initial_state">check_initial_state() (in module l2p.validators.problem)</a>
+</li>
+        <li><a href="l2p.html#l2p.validators.problem.check_metric_syntax">check_metric_syntax() (in module l2p.validators.problem)</a>
+</li>
+        <li><a href="l2p.html#l2p.validators.problem.check_obj_type_inheritance">check_obj_type_inheritance() (in module l2p.validators.problem)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.Metric.check_optimization_type">check_optimization_type() (l2p.utils.pddl_types.Metric class method)</a>
+</li>
+        <li><a href="l2p.html#l2p.validators.domain.check_orphaned_predicate">check_orphaned_predicate() (in module l2p.validators.domain)</a>
+</li>
+        <li><a href="l2p.html#l2p.validators.domain.check_parameter_name_uniqueness">check_parameter_name_uniqueness() (in module l2p.validators.domain)</a>
+</li>
+        <li><a href="l2p.html#l2p.validators.domain.check_parameter_types">check_parameter_types() (in module l2p.validators.domain)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.Parameter.check_question_mark">check_question_mark() (l2p.utils.pddl_types.Parameter class method)</a>
+</li>
+        <li><a href="l2p.html#l2p.validators.domain.check_requirements_consistency">check_requirements_consistency() (in module l2p.validators.domain)</a>
+</li>
+        <li><a href="l2p.html#l2p.validators.domain.check_type_cycle">check_type_cycle() (in module l2p.validators.domain)</a>
+</li>
+        <li><a href="l2p.html#l2p.validators.domain.check_type_inheritance">check_type_inheritance() (in module l2p.validators.domain)</a>
+</li>
+        <li><a href="l2p.html#l2p.validators.problem.check_unused_objects">check_unused_objects() (in module l2p.validators.problem)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.ConditionalEffect.condition">condition (l2p.utils.pddl_types.ConditionalEffect attribute)</a>
 
         <ul>
-          <li><a href="l2p.html#l2p.utils.pddl_types.Predicate.clean">(l2p.utils.pddl_types.Predicate attribute)</a>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constraint.condition">(l2p.utils.pddl_types.Constraint attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DerivedPredicate.condition">(l2p.utils.pddl_types.DerivedPredicate attribute)</a>
 </li>
         </ul></li>
-        <li><a href="l2p.html#l2p.utils.pddl_types.Action.clear">clear() (l2p.utils.pddl_types.Action method)</a>
+        <li><a href="l2p.html#l2p.utils.pddl_types.ActionEffect.conditional">conditional (l2p.utils.pddl_types.ActionEffect attribute)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.ConditionalEffect">ConditionalEffect (class in l2p.utils.pddl_types)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.ActionPrecondition.conditions">conditions (l2p.utils.pddl_types.ActionPrecondition attribute)</a>
 
         <ul>
-          <li><a href="l2p.html#l2p.utils.pddl_types.Constant.clear">(l2p.utils.pddl_types.Constant method)</a>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeAction.conditions">(l2p.utils.pddl_types.DurativeAction attribute)</a>
 </li>
-          <li><a href="l2p.html#l2p.utils.pddl_types.Function.clear">(l2p.utils.pddl_types.Function method)</a>
-</li>
-          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLType.clear">(l2p.utils.pddl_types.PDDLType method)</a>
-</li>
-          <li><a href="l2p.html#l2p.utils.pddl_types.Predicate.clear">(l2p.utils.pddl_types.Predicate method)</a>
+          <li><a href="l2p.html#l2p.utils.pddl_types.GoalState.conditions">(l2p.utils.pddl_types.GoalState attribute)</a>
 </li>
         </ul></li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
-        <li><a href="l2p.html#l2p.utils.pddl_parser.combine_blocks">combine_blocks() (in module l2p.utils.pddl_parser)</a>
-</li>
-        <li><a href="l2p.html#l2p.utils.pddl_parser.concatenate_strings">concatenate_strings() (in module l2p.utils.pddl_parser)</a>
+        <li><a href="l2p.html#l2p.OPENAI.connect_openai">connect_openai() (l2p.OPENAI method)</a>
 </li>
         <li><a href="l2p.html#l2p.utils.pddl_types.Constant">Constant (class in l2p.utils.pddl_types)</a>
 </li>
         <li><a href="l2p.html#l2p.utils.pddl_types.DomainDetails.constants">constants (l2p.utils.pddl_types.DomainDetails attribute)</a>
 </li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.Constraint">Constraint (class in l2p.utils.pddl_types)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.DomainDetails.constraint">constraint (l2p.utils.pddl_types.DomainDetails attribute)</a>
+
+        <ul>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ProblemDetails.constraint">(l2p.utils.pddl_types.ProblemDetails attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.Action.construct">construct() (l2p.utils.pddl_types.Action class method)</a>
+
+        <ul>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionEffect.construct">(l2p.utils.pddl_types.ActionEffect class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionPrecondition.construct">(l2p.utils.pddl_types.ActionPrecondition class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ConditionalEffect.construct">(l2p.utils.pddl_types.ConditionalEffect class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constant.construct">(l2p.utils.pddl_types.Constant class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constraint.construct">(l2p.utils.pddl_types.Constraint class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DerivedPredicate.construct">(l2p.utils.pddl_types.DerivedPredicate class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DomainDetails.construct">(l2p.utils.pddl_types.DomainDetails class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeAction.construct">(l2p.utils.pddl_types.DurativeAction class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionConditions.construct">(l2p.utils.pddl_types.DurativeActionConditions class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionEffect.construct">(l2p.utils.pddl_types.DurativeActionEffect class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Event.construct">(l2p.utils.pddl_types.Event class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Function.construct">(l2p.utils.pddl_types.Function class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.GoalState.construct">(l2p.utils.pddl_types.GoalState class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.InitialState.construct">(l2p.utils.pddl_types.InitialState class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Metric.construct">(l2p.utils.pddl_types.Metric class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Parameter.construct">(l2p.utils.pddl_types.Parameter class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLObject.construct">(l2p.utils.pddl_types.PDDLObject class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLType.construct">(l2p.utils.pddl_types.PDDLType class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Predicate.construct">(l2p.utils.pddl_types.Predicate class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ProblemDetails.construct">(l2p.utils.pddl_types.ProblemDetails class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Process.construct">(l2p.utils.pddl_types.Process class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Requirement.construct">(l2p.utils.pddl_types.Requirement class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.TimedFact.construct">(l2p.utils.pddl_types.TimedFact class method)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionEffect.continuous">continuous (l2p.utils.pddl_types.DurativeActionEffect attribute)</a>
+</li>
         <li><a href="l2p.html#l2p.utils.pddl_types.Action.copy">copy() (l2p.utils.pddl_types.Action method)</a>
 
         <ul>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionEffect.copy">(l2p.utils.pddl_types.ActionEffect method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionPrecondition.copy">(l2p.utils.pddl_types.ActionPrecondition method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ConditionalEffect.copy">(l2p.utils.pddl_types.ConditionalEffect method)</a>
+</li>
           <li><a href="l2p.html#l2p.utils.pddl_types.Constant.copy">(l2p.utils.pddl_types.Constant method)</a>
 </li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constraint.copy">(l2p.utils.pddl_types.Constraint method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DerivedPredicate.copy">(l2p.utils.pddl_types.DerivedPredicate method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DomainDetails.copy">(l2p.utils.pddl_types.DomainDetails method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeAction.copy">(l2p.utils.pddl_types.DurativeAction method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionConditions.copy">(l2p.utils.pddl_types.DurativeActionConditions method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionEffect.copy">(l2p.utils.pddl_types.DurativeActionEffect method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Event.copy">(l2p.utils.pddl_types.Event method)</a>
+</li>
           <li><a href="l2p.html#l2p.utils.pddl_types.Function.copy">(l2p.utils.pddl_types.Function method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.GoalState.copy">(l2p.utils.pddl_types.GoalState method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.InitialState.copy">(l2p.utils.pddl_types.InitialState method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Metric.copy">(l2p.utils.pddl_types.Metric method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Parameter.copy">(l2p.utils.pddl_types.Parameter method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLObject.copy">(l2p.utils.pddl_types.PDDLObject method)</a>
 </li>
           <li><a href="l2p.html#l2p.utils.pddl_types.PDDLType.copy">(l2p.utils.pddl_types.PDDLType method)</a>
 </li>
           <li><a href="l2p.html#l2p.utils.pddl_types.Predicate.copy">(l2p.utils.pddl_types.Predicate method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ProblemDetails.copy">(l2p.utils.pddl_types.ProblemDetails method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Process.copy">(l2p.utils.pddl_types.Process method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Requirement.copy">(l2p.utils.pddl_types.Requirement method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.TimedFact.copy">(l2p.utils.pddl_types.TimedFact method)</a>
 </li>
         </ul></li>
     </ul></td>
@@ -320,45 +563,137 @@
   <h2>D</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
     <td style="width: 33%; vertical-align: top;"><ul>
-        <li><a href="l2p.html#l2p.DomainBuilder.delete_constants">delete_constants() (l2p.DomainBuilder method)</a>
+        <li><a href="l2p.html#l2p.utils.pddl_types.ActionEffect.delete">delete (l2p.utils.pddl_types.ActionEffect attribute)</a>
 </li>
-        <li><a href="l2p.html#l2p.DomainBuilder.delete_function">delete_function() (l2p.DomainBuilder method)</a>
+        <li><a href="l2p.html#l2p.utils.pddl_types.DomainDetails.derived_predicates">derived_predicates (l2p.utils.pddl_types.DomainDetails attribute)</a>
 </li>
-        <li><a href="l2p.html#l2p.TaskBuilder.delete_goal_state">delete_goal_state() (l2p.TaskBuilder method)</a>
+        <li><a href="l2p.html#l2p.utils.pddl_types.DerivedPredicate">DerivedPredicate (class in l2p.utils.pddl_types)</a>
 </li>
-        <li><a href="l2p.html#l2p.TaskBuilder.delete_initial_state">delete_initial_state() (l2p.TaskBuilder method)</a>
-</li>
-        <li><a href="l2p.html#l2p.TaskBuilder.delete_objects">delete_objects() (l2p.TaskBuilder method)</a>
-</li>
-        <li><a href="l2p.html#l2p.DomainBuilder.delete_pddl_action">delete_pddl_action() (l2p.DomainBuilder method)</a>
-</li>
-        <li><a href="l2p.html#l2p.DomainBuilder.delete_predicate">delete_predicate() (l2p.DomainBuilder method)</a>
-</li>
-        <li><a href="l2p.html#l2p.DomainBuilder.delete_type">delete_type() (l2p.DomainBuilder method)</a>
-</li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="l2p.html#l2p.utils.pddl_types.Action.desc">desc (l2p.utils.pddl_types.Action attribute)</a>
 
         <ul>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionEffect.desc">(l2p.utils.pddl_types.ActionEffect attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionPrecondition.desc">(l2p.utils.pddl_types.ActionPrecondition attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ConditionalEffect.desc">(l2p.utils.pddl_types.ConditionalEffect attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constant.desc">(l2p.utils.pddl_types.Constant attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constraint.desc">(l2p.utils.pddl_types.Constraint attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DerivedPredicate.desc">(l2p.utils.pddl_types.DerivedPredicate attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DomainDetails.desc">(l2p.utils.pddl_types.DomainDetails attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeAction.desc">(l2p.utils.pddl_types.DurativeAction attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionConditions.desc">(l2p.utils.pddl_types.DurativeActionConditions attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionEffect.desc">(l2p.utils.pddl_types.DurativeActionEffect attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Event.desc">(l2p.utils.pddl_types.Event attribute)</a>
+</li>
           <li><a href="l2p.html#l2p.utils.pddl_types.Function.desc">(l2p.utils.pddl_types.Function attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.GoalState.desc">(l2p.utils.pddl_types.GoalState attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.InitialState.desc">(l2p.utils.pddl_types.InitialState attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Metric.desc">(l2p.utils.pddl_types.Metric attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Parameter.desc">(l2p.utils.pddl_types.Parameter attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLObject.desc">(l2p.utils.pddl_types.PDDLObject attribute)</a>
 </li>
           <li><a href="l2p.html#l2p.utils.pddl_types.PDDLType.desc">(l2p.utils.pddl_types.PDDLType attribute)</a>
 </li>
           <li><a href="l2p.html#l2p.utils.pddl_types.Predicate.desc">(l2p.utils.pddl_types.Predicate attribute)</a>
 </li>
-        </ul></li>
-        <li><a href="l2p.html#l2p.utils.pddl_types.DomainDetails.domain_desc">domain_desc (l2p.utils.pddl_types.DomainDetails attribute)</a>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ProblemDetails.desc">(l2p.utils.pddl_types.ProblemDetails attribute)</a>
 </li>
-        <li><a href="l2p.html#l2p.utils.pddl_types.DomainDetails.domain_pddl">domain_pddl (l2p.utils.pddl_types.DomainDetails attribute)</a>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Process.desc">(l2p.utils.pddl_types.Process attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Requirement.desc">(l2p.utils.pddl_types.Requirement attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.TimedFact.desc">(l2p.utils.pddl_types.TimedFact attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.Action.dict">dict() (l2p.utils.pddl_types.Action method)</a>
 
         <ul>
-          <li><a href="l2p.html#l2p.utils.pddl_types.PlanDetails.domain_pddl">(l2p.utils.pddl_types.PlanDetails attribute)</a>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionEffect.dict">(l2p.utils.pddl_types.ActionEffect method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionPrecondition.dict">(l2p.utils.pddl_types.ActionPrecondition method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ConditionalEffect.dict">(l2p.utils.pddl_types.ConditionalEffect method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constant.dict">(l2p.utils.pddl_types.Constant method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constraint.dict">(l2p.utils.pddl_types.Constraint method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DerivedPredicate.dict">(l2p.utils.pddl_types.DerivedPredicate method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DomainDetails.dict">(l2p.utils.pddl_types.DomainDetails method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeAction.dict">(l2p.utils.pddl_types.DurativeAction method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionConditions.dict">(l2p.utils.pddl_types.DurativeActionConditions method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionEffect.dict">(l2p.utils.pddl_types.DurativeActionEffect method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Event.dict">(l2p.utils.pddl_types.Event method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Function.dict">(l2p.utils.pddl_types.Function method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.GoalState.dict">(l2p.utils.pddl_types.GoalState method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.InitialState.dict">(l2p.utils.pddl_types.InitialState method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Metric.dict">(l2p.utils.pddl_types.Metric method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Parameter.dict">(l2p.utils.pddl_types.Parameter method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLObject.dict">(l2p.utils.pddl_types.PDDLObject method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLType.dict">(l2p.utils.pddl_types.PDDLType method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Predicate.dict">(l2p.utils.pddl_types.Predicate method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ProblemDetails.dict">(l2p.utils.pddl_types.ProblemDetails method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Process.dict">(l2p.utils.pddl_types.Process method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Requirement.dict">(l2p.utils.pddl_types.Requirement method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.TimedFact.dict">(l2p.utils.pddl_types.TimedFact method)</a>
 </li>
         </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="l2p.html#l2p.utils.pddl_types.ProblemDetails.domain_name">domain_name (l2p.utils.pddl_types.ProblemDetails attribute)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.DomainDetails.domain_pddl">domain_pddl (l2p.utils.pddl_types.DomainDetails attribute)</a>
+</li>
+        <li><a href="l2p.html#l2p.validators.domain.domain_rule">domain_rule() (in module l2p.validators.domain)</a>
+</li>
         <li><a href="l2p.html#l2p.DomainBuilder">DomainBuilder (class in l2p)</a>
 </li>
         <li><a href="l2p.html#l2p.utils.pddl_types.DomainDetails">DomainDetails (class in l2p.utils.pddl_types)</a>
+</li>
+        <li><a href="l2p.html#l2p.validators.domain.DomainSemantics">DomainSemantics (class in l2p.validators.domain)</a>
+</li>
+        <li><a href="l2p.html#l2p.validators.domain.DomainValidator">DomainValidator (class in l2p.validators.domain)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.DurativeAction.duration">duration (l2p.utils.pddl_types.DurativeAction attribute)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.DomainDetails.durative_actions">durative_actions (l2p.utils.pddl_types.DomainDetails attribute)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.DurativeAction">DurativeAction (class in l2p.utils.pddl_types)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionConditions">DurativeActionConditions (class in l2p.utils.pddl_types)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionEffect">DurativeActionEffect (class in l2p.utils.pddl_types)</a>
 </li>
     </ul></td>
   </tr></table>
@@ -368,15 +703,29 @@
   <h2>E</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
     <td style="width: 33%; vertical-align: top;"><ul>
-        <li><a href="l2p.html#l2p.FeedbackBuilder.effect_feedback">effect_feedback() (l2p.FeedbackBuilder method)</a>
+        <li><a href="l2p.html#l2p.utils.pddl_types.ConditionalEffect.effect">effect (l2p.utils.pddl_types.ConditionalEffect attribute)</a>
 </li>
         <li><a href="l2p.html#l2p.utils.pddl_types.Action.effects">effects (l2p.utils.pddl_types.Action attribute)</a>
+
+        <ul>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeAction.effects">(l2p.utils.pddl_types.DurativeAction attribute)</a>
 </li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Event.effects">(l2p.utils.pddl_types.Event attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Process.effects">(l2p.utils.pddl_types.Process attribute)</a>
+</li>
+        </ul></li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
-        <li><a href="l2p.html#l2p.DomainBuilder.extract_nl_actions">extract_nl_actions() (l2p.DomainBuilder method)</a>
+        <li><a href="l2p.html#l2p.planner_builder.PlanningResult.error_message">error_message (l2p.planner_builder.PlanningResult attribute)</a>
 </li>
-        <li><a href="l2p.html#l2p.utils.pddl_planner.FastDownward.extract_plan_steps">extract_plan_steps() (l2p.utils.pddl_planner.FastDownward method)</a>
+        <li><a href="l2p.html#l2p.utils.pddl_types.Event">Event (class in l2p.utils.pddl_types)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.DomainDetails.events">events (l2p.utils.pddl_types.DomainDetails attribute)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.Metric.expression">expression (l2p.utils.pddl_types.Metric attribute)</a>
+</li>
+        <li><a href="l2p.html#l2p.DomainBuilder.extract_nl">extract_nl() (l2p.DomainBuilder method)</a>
 </li>
     </ul></td>
   </tr></table>
@@ -386,57 +735,125 @@
   <h2>F</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
     <td style="width: 33%; vertical-align: top;"><ul>
-        <li><a href="l2p.html#l2p.utils.pddl_planner.FastDownward">FastDownward (class in l2p.utils.pddl_planner)</a>
+        <li><a href="l2p.html#l2p.utils.pddl_types.TimedFact.fact">fact (l2p.utils.pddl_types.TimedFact attribute)</a>
 </li>
-        <li><a href="l2p.html#l2p.FeedbackBuilder.feedback_state">feedback_state() (l2p.FeedbackBuilder method)</a>
+        <li><a href="l2p.html#l2p.utils.pddl_types.InitialState.facts">facts (l2p.utils.pddl_types.InitialState attribute)</a>
+</li>
+        <li><a href="l2p.html#l2p.planner_builder.FastDownward">FastDownward (class in l2p.planner_builder)</a>
 </li>
         <li><a href="l2p.html#l2p.FeedbackBuilder">FeedbackBuilder (class in l2p)</a>
 </li>
-        <li><a href="l2p.html#l2p.DomainBuilder.formalize_constants">formalize_constants() (l2p.DomainBuilder method)</a>
+        <li><a href="l2p.html#l2p.DomainBuilder.formalize_component">formalize_component() (l2p.DomainBuilder method)</a>
+
+        <ul>
+          <li><a href="l2p.html#l2p.ProblemBuilder.formalize_component">(l2p.ProblemBuilder method)</a>
 </li>
-        <li><a href="l2p.html#l2p.DomainBuilder.formalize_domain_level_specs">formalize_domain_level_specs() (l2p.DomainBuilder method)</a>
+        </ul></li>
+        <li><a href="l2p.html#l2p.utils.pddl_format.format_action">format_action() (in module l2p.utils.pddl_format)</a>
 </li>
-        <li><a href="l2p.html#l2p.DomainBuilder.formalize_effects">formalize_effects() (l2p.DomainBuilder method)</a>
+        <li><a href="l2p.html#l2p.utils.pddl_format.format_actions">format_actions() (in module l2p.utils.pddl_format)</a>
 </li>
-        <li><a href="l2p.html#l2p.DomainBuilder.formalize_functions">formalize_functions() (l2p.DomainBuilder method)</a>
+        <li><a href="l2p.html#l2p.utils.pddl_format.format_condition_block">format_condition_block() (in module l2p.utils.pddl_format)</a>
 </li>
-        <li><a href="l2p.html#l2p.TaskBuilder.formalize_goal_state">formalize_goal_state() (l2p.TaskBuilder method)</a>
+        <li><a href="l2p.html#l2p.utils.pddl_format.format_constants">format_constants() (in module l2p.utils.pddl_format)</a>
 </li>
-        <li><a href="l2p.html#l2p.TaskBuilder.formalize_initial_state">formalize_initial_state() (l2p.TaskBuilder method)</a>
+        <li><a href="l2p.html#l2p.utils.pddl_format.format_constraints">format_constraints() (in module l2p.utils.pddl_format)</a>
 </li>
-        <li><a href="l2p.html#l2p.TaskBuilder.formalize_objects">formalize_objects() (l2p.TaskBuilder method)</a>
+        <li><a href="l2p.html#l2p.utils.pddl_format.format_derived_predicate">format_derived_predicate() (in module l2p.utils.pddl_format)</a>
 </li>
-        <li><a href="l2p.html#l2p.DomainBuilder.formalize_parameters">formalize_parameters() (l2p.DomainBuilder method)</a>
+        <li><a href="l2p.html#l2p.utils.pddl_format.format_derived_predicates">format_derived_predicates() (in module l2p.utils.pddl_format)</a>
 </li>
-        <li><a href="l2p.html#l2p.DomainBuilder.formalize_pddl_action">formalize_pddl_action() (l2p.DomainBuilder method)</a>
+        <li><a href="l2p.html#l2p.utils.pddl_format.format_durative_action">format_durative_action() (in module l2p.utils.pddl_format)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_format.format_durative_actions">format_durative_actions() (in module l2p.utils.pddl_format)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_format.format_effect_block">format_effect_block() (in module l2p.utils.pddl_format)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_format.format_event">format_event() (in module l2p.utils.pddl_format)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_format.format_events">format_events() (in module l2p.utils.pddl_format)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_format.format_functions">format_functions() (in module l2p.utils.pddl_format)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_format.format_goal_states">format_goal_states() (in module l2p.utils.pddl_format)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_format.format_initial_state">format_initial_state() (in module l2p.utils.pddl_format)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_format.format_logic">format_logic() (in module l2p.utils.pddl_format)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_format.format_metric">format_metric() (in module l2p.utils.pddl_format)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_format.format_objects">format_objects() (in module l2p.utils.pddl_format)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_format.format_params">format_params() (in module l2p.utils.pddl_format)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_format.format_plan">format_plan() (in module l2p.utils.pddl_format)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_format.format_predicates">format_predicates() (in module l2p.utils.pddl_format)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_format.format_process">format_process() (in module l2p.utils.pddl_format)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_format.format_processes">format_processes() (in module l2p.utils.pddl_format)</a>
 </li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
-        <li><a href="l2p.html#l2p.DomainBuilder.formalize_pddl_actions">formalize_pddl_actions() (l2p.DomainBuilder method)</a>
+        <li><a href="l2p.html#l2p.utils.pddl_format.format_requirements">format_requirements() (in module l2p.utils.pddl_format)</a>
 </li>
-        <li><a href="l2p.html#l2p.DomainBuilder.formalize_preconditions">formalize_preconditions() (l2p.DomainBuilder method)</a>
+        <li><a href="l2p.html#l2p.utils.pddl_format.format_types">format_types() (in module l2p.utils.pddl_format)</a>
 </li>
-        <li><a href="l2p.html#l2p.DomainBuilder.formalize_predicates">formalize_predicates() (l2p.DomainBuilder method)</a>
-</li>
-        <li><a href="l2p.html#l2p.TaskBuilder.formalize_task">formalize_task() (l2p.TaskBuilder method)</a>
-</li>
-        <li><a href="l2p.html#l2p.DomainBuilder.formalize_type_hierarchy">formalize_type_hierarchy() (l2p.DomainBuilder method)</a>
-</li>
-        <li><a href="l2p.html#l2p.DomainBuilder.formalize_types">formalize_types() (l2p.DomainBuilder method)</a>
-</li>
-        <li><a href="l2p.html#l2p.utils.pddl_types.Action.fromkeys">fromkeys() (l2p.utils.pddl_types.Action class method)</a>
+        <li><a href="l2p.html#l2p.utils.pddl_types.Action.from_orm">from_orm() (l2p.utils.pddl_types.Action class method)</a>
 
         <ul>
-          <li><a href="l2p.html#l2p.utils.pddl_types.Constant.fromkeys">(l2p.utils.pddl_types.Constant class method)</a>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionEffect.from_orm">(l2p.utils.pddl_types.ActionEffect class method)</a>
 </li>
-          <li><a href="l2p.html#l2p.utils.pddl_types.Function.fromkeys">(l2p.utils.pddl_types.Function class method)</a>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionPrecondition.from_orm">(l2p.utils.pddl_types.ActionPrecondition class method)</a>
 </li>
-          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLType.fromkeys">(l2p.utils.pddl_types.PDDLType class method)</a>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ConditionalEffect.from_orm">(l2p.utils.pddl_types.ConditionalEffect class method)</a>
 </li>
-          <li><a href="l2p.html#l2p.utils.pddl_types.Predicate.fromkeys">(l2p.utils.pddl_types.Predicate class method)</a>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constant.from_orm">(l2p.utils.pddl_types.Constant class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constraint.from_orm">(l2p.utils.pddl_types.Constraint class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DerivedPredicate.from_orm">(l2p.utils.pddl_types.DerivedPredicate class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DomainDetails.from_orm">(l2p.utils.pddl_types.DomainDetails class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeAction.from_orm">(l2p.utils.pddl_types.DurativeAction class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionConditions.from_orm">(l2p.utils.pddl_types.DurativeActionConditions class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionEffect.from_orm">(l2p.utils.pddl_types.DurativeActionEffect class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Event.from_orm">(l2p.utils.pddl_types.Event class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Function.from_orm">(l2p.utils.pddl_types.Function class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.GoalState.from_orm">(l2p.utils.pddl_types.GoalState class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.InitialState.from_orm">(l2p.utils.pddl_types.InitialState class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Metric.from_orm">(l2p.utils.pddl_types.Metric class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Parameter.from_orm">(l2p.utils.pddl_types.Parameter class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLObject.from_orm">(l2p.utils.pddl_types.PDDLObject class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLType.from_orm">(l2p.utils.pddl_types.PDDLType class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Predicate.from_orm">(l2p.utils.pddl_types.Predicate class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ProblemDetails.from_orm">(l2p.utils.pddl_types.ProblemDetails class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Process.from_orm">(l2p.utils.pddl_types.Process class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Requirement.from_orm">(l2p.utils.pddl_types.Requirement class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.TimedFact.from_orm">(l2p.utils.pddl_types.TimedFact class method)</a>
 </li>
         </ul></li>
         <li><a href="l2p.html#l2p.utils.pddl_types.Function">Function (class in l2p.utils.pddl_types)</a>
+</li>
+        <li><a href="l2p.html#l2p.validators.base.FunctionalRule">FunctionalRule (class in l2p.validators.base)</a>
 </li>
         <li><a href="l2p.html#l2p.utils.pddl_types.DomainDetails.functions">functions (l2p.utils.pddl_types.DomainDetails attribute)</a>
 </li>
@@ -450,59 +867,39 @@
     <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="l2p.html#l2p.DomainBuilder.generate_domain">generate_domain() (l2p.DomainBuilder method)</a>
 </li>
-        <li><a href="l2p.html#l2p.utils.pddl_planner.FastDownward.generate_portfolio_exitcode">generate_portfolio_exitcode() (l2p.utils.pddl_planner.FastDownward method)</a>
+        <li><a href="l2p.html#l2p.ProblemBuilder.generate_problem">generate_problem() (l2p.ProblemBuilder method)</a>
 </li>
-        <li><a href="l2p.html#l2p.PromptBuilder.generate_prompt">generate_prompt() (l2p.PromptBuilder method)</a>
-</li>
-        <li><a href="l2p.html#l2p.DomainBuilder.generate_requirements">generate_requirements() (l2p.DomainBuilder method)</a>
-</li>
-        <li><a href="l2p.html#l2p.TaskBuilder.generate_task">generate_task() (l2p.TaskBuilder method)</a>
-</li>
-        <li><a href="l2p.html#l2p.utils.pddl_types.Action.get">get() (l2p.utils.pddl_types.Action method)</a>
+        <li><a href="l2p.html#l2p.HUGGING_FACE.generate_prompt">generate_prompt() (l2p.HUGGING_FACE method)</a>
 
         <ul>
-          <li><a href="l2p.html#l2p.utils.pddl_types.Constant.get">(l2p.utils.pddl_types.Constant method)</a>
-</li>
-          <li><a href="l2p.html#l2p.utils.pddl_types.Function.get">(l2p.utils.pddl_types.Function method)</a>
-</li>
-          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLType.get">(l2p.utils.pddl_types.PDDLType method)</a>
-</li>
-          <li><a href="l2p.html#l2p.utils.pddl_types.Predicate.get">(l2p.utils.pddl_types.Predicate method)</a>
+          <li><a href="l2p.html#l2p.PromptBuilder.generate_prompt">(l2p.PromptBuilder method)</a>
 </li>
         </ul></li>
-        <li><a href="l2p.html#l2p.DomainBuilder.get_constants">get_constants() (l2p.DomainBuilder method)</a>
+        <li><a href="l2p.html#l2p.DomainBuilder.generate_requirements">generate_requirements() (l2p.DomainBuilder method)</a>
 </li>
-        <li><a href="l2p.html#l2p.PromptBuilder.get_examples">get_examples() (l2p.PromptBuilder method)</a>
+        <li><a href="l2p.html#l2p.validators.base.get_ordinal">get_ordinal() (in module l2p.validators.base)</a>
 </li>
-        <li><a href="l2p.html#l2p.FeedbackBuilder.get_feedback">get_feedback() (l2p.FeedbackBuilder method)</a>
+        <li><a href="l2p.html#l2p.HUGGING_FACE.get_query_log">get_query_log() (l2p.HUGGING_FACE method)</a>
+
+        <ul>
+          <li><a href="l2p.html#l2p.OPENAI.get_query_log">(l2p.OPENAI method)</a>
 </li>
+          <li><a href="l2p.html#l2p.UnifiedLLM.get_query_log">(l2p.UnifiedLLM method)</a>
+</li>
+        </ul></li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
-        <li><a href="l2p.html#l2p.PromptBuilder.get_format">get_format() (l2p.PromptBuilder method)</a>
+        <li><a href="l2p.html#l2p.HUGGING_FACE.get_tokens">get_tokens() (l2p.HUGGING_FACE method)</a>
+
+        <ul>
+          <li><a href="l2p.html#l2p.OPENAI.get_tokens">(l2p.OPENAI method)</a>
 </li>
-        <li><a href="l2p.html#l2p.DomainBuilder.get_functions">get_functions() (l2p.DomainBuilder method)</a>
+          <li><a href="l2p.html#l2p.UnifiedLLM.get_tokens">(l2p.UnifiedLLM method)</a>
 </li>
-        <li><a href="l2p.html#l2p.TaskBuilder.get_goal">get_goal() (l2p.TaskBuilder method)</a>
+        </ul></li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.ProblemDetails.goal_state">goal_state (l2p.utils.pddl_types.ProblemDetails attribute)</a>
 </li>
-        <li><a href="l2p.html#l2p.TaskBuilder.get_initial">get_initial() (l2p.TaskBuilder method)</a>
-</li>
-        <li><a href="l2p.html#l2p.TaskBuilder.get_objects">get_objects() (l2p.TaskBuilder method)</a>
-</li>
-        <li><a href="l2p.html#l2p.DomainBuilder.get_pddl_actions">get_pddl_actions() (l2p.DomainBuilder method)</a>
-</li>
-        <li><a href="l2p.html#l2p.DomainBuilder.get_predicates">get_predicates() (l2p.DomainBuilder method)</a>
-</li>
-        <li><a href="l2p.html#l2p.PromptBuilder.get_role">get_role() (l2p.PromptBuilder method)</a>
-</li>
-        <li><a href="l2p.html#l2p.PromptBuilder.get_task">get_task() (l2p.PromptBuilder method)</a>
-</li>
-        <li><a href="l2p.html#l2p.DomainBuilder.get_type_hierarchy">get_type_hierarchy() (l2p.DomainBuilder method)</a>
-</li>
-        <li><a href="l2p.html#l2p.DomainBuilder.get_types">get_types() (l2p.DomainBuilder method)</a>
-</li>
-        <li><a href="l2p.html#l2p.utils.pddl_types.ProblemDetails.goal">goal (l2p.utils.pddl_types.ProblemDetails attribute)</a>
-</li>
-        <li><a href="l2p.html#l2p.FeedbackBuilder.goal_state_feedback">goal_state_feedback() (l2p.FeedbackBuilder method)</a>
+        <li><a href="l2p.html#l2p.utils.pddl_types.GoalState">GoalState (class in l2p.utils.pddl_types)</a>
 </li>
     </ul></td>
   </tr></table>
@@ -512,11 +909,17 @@
   <h2>H</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
     <td style="width: 33%; vertical-align: top;"><ul>
-        <li><a href="l2p.html#l2p.utils.pddl_planner.FastDownward.handle_error">handle_error() (l2p.utils.pddl_planner.FastDownward method)</a>
+        <li><a href="l2p.html#l2p.planner_builder.FastDownward.handle_error">handle_error() (l2p.planner_builder.FastDownward method)</a>
+
+        <ul>
+          <li><a href="l2p.html#l2p.planner_builder.Planner.handle_error">(l2p.planner_builder.Planner method)</a>
 </li>
+          <li><a href="l2p.html#l2p.planner_builder.UnifiedPlanning.handle_error">(l2p.planner_builder.UnifiedPlanning method)</a>
+</li>
+        </ul></li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
-        <li><a href="l2p.html#l2p.FeedbackBuilder.human_feedback">human_feedback() (l2p.FeedbackBuilder method)</a>
+        <li><a href="l2p.html#l2p.HUGGING_FACE">HUGGING_FACE (class in l2p)</a>
 </li>
     </ul></td>
   </tr></table>
@@ -526,44 +929,84 @@
   <h2>I</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
     <td style="width: 33%; vertical-align: top;"><ul>
-        <li><a href="l2p.html#l2p.utils.pddl_types.ProblemDetails.initial">initial (l2p.utils.pddl_types.ProblemDetails attribute)</a>
+        <li><a href="l2p.html#l2p.utils.pddl_format.indent">indent() (in module l2p.utils.pddl_format)</a>
 </li>
-        <li><a href="l2p.html#l2p.FeedbackBuilder.initial_state_feedback">initial_state_feedback() (l2p.FeedbackBuilder method)</a>
+        <li><a href="l2p.html#l2p.utils.pddl_types.ProblemDetails.initial_state">initial_state (l2p.utils.pddl_types.ProblemDetails attribute)</a>
 </li>
-        <li><a href="l2p.html#l2p.utils.pddl_planner.FastDownward.is_unrecoverable">is_unrecoverable() (l2p.utils.pddl_planner.FastDownward method)</a>
+        <li><a href="l2p.html#l2p.utils.pddl_types.InitialState">InitialState (class in l2p.utils.pddl_types)</a>
 </li>
-        <li><a href="l2p.html#l2p.utils.pddl_types.Action.items">items() (l2p.utils.pddl_types.Action method)</a>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="l2p.html#l2p.validators.domain.DomainSemantics.is_subtype">is_subtype() (l2p.validators.domain.DomainSemantics method)</a>
 
         <ul>
-          <li><a href="l2p.html#l2p.utils.pddl_types.Constant.items">(l2p.utils.pddl_types.Constant method)</a>
-</li>
-          <li><a href="l2p.html#l2p.utils.pddl_types.Function.items">(l2p.utils.pddl_types.Function method)</a>
-</li>
-          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLType.items">(l2p.utils.pddl_types.PDDLType method)</a>
-</li>
-          <li><a href="l2p.html#l2p.utils.pddl_types.Predicate.items">(l2p.utils.pddl_types.Predicate method)</a>
+          <li><a href="l2p.html#l2p.validators.problem.ProblemSemantics.is_subtype">(l2p.validators.problem.ProblemSemantics method)</a>
 </li>
         </ul></li>
+        <li><a href="l2p.html#l2p.planner_builder.PlanningResult.is_successful">is_successful (l2p.planner_builder.PlanningResult attribute)</a>
+</li>
     </ul></td>
   </tr></table>
 </section>
 
-<section id="K" class="genindex-section">
-  <h2>K</h2>
+<section id="J" class="genindex-section">
+  <h2>J</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
     <td style="width: 33%; vertical-align: top;"><ul>
-        <li><a href="l2p.html#l2p.utils.pddl_types.Action.keys">keys() (l2p.utils.pddl_types.Action method)</a>
+        <li><a href="l2p.html#l2p.utils.pddl_types.Action.json">json() (l2p.utils.pddl_types.Action method)</a>
 
         <ul>
-          <li><a href="l2p.html#l2p.utils.pddl_types.Constant.keys">(l2p.utils.pddl_types.Constant method)</a>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionEffect.json">(l2p.utils.pddl_types.ActionEffect method)</a>
 </li>
-          <li><a href="l2p.html#l2p.utils.pddl_types.Function.keys">(l2p.utils.pddl_types.Function method)</a>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionPrecondition.json">(l2p.utils.pddl_types.ActionPrecondition method)</a>
 </li>
-          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLType.keys">(l2p.utils.pddl_types.PDDLType method)</a>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ConditionalEffect.json">(l2p.utils.pddl_types.ConditionalEffect method)</a>
 </li>
-          <li><a href="l2p.html#l2p.utils.pddl_types.Predicate.keys">(l2p.utils.pddl_types.Predicate method)</a>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constant.json">(l2p.utils.pddl_types.Constant method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constraint.json">(l2p.utils.pddl_types.Constraint method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DerivedPredicate.json">(l2p.utils.pddl_types.DerivedPredicate method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DomainDetails.json">(l2p.utils.pddl_types.DomainDetails method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeAction.json">(l2p.utils.pddl_types.DurativeAction method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionConditions.json">(l2p.utils.pddl_types.DurativeActionConditions method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionEffect.json">(l2p.utils.pddl_types.DurativeActionEffect method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Event.json">(l2p.utils.pddl_types.Event method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Function.json">(l2p.utils.pddl_types.Function method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.GoalState.json">(l2p.utils.pddl_types.GoalState method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.InitialState.json">(l2p.utils.pddl_types.InitialState method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Metric.json">(l2p.utils.pddl_types.Metric method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Parameter.json">(l2p.utils.pddl_types.Parameter method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLObject.json">(l2p.utils.pddl_types.PDDLObject method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLType.json">(l2p.utils.pddl_types.PDDLType method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Predicate.json">(l2p.utils.pddl_types.Predicate method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ProblemDetails.json">(l2p.utils.pddl_types.ProblemDetails method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Process.json">(l2p.utils.pddl_types.Process method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Requirement.json">(l2p.utils.pddl_types.Requirement method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.TimedFact.json">(l2p.utils.pddl_types.TimedFact method)</a>
 </li>
         </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="l2p.html#l2p.utils.pddl_prompt.jsonify_components">jsonify_components() (in module l2p.utils.pddl_prompt)</a>
+</li>
     </ul></td>
   </tr></table>
 </section>
@@ -573,6 +1016,20 @@
   <table style="width: 100%" class="indextable genindextable"><tr>
     <td style="width: 33%; vertical-align: top;"><ul>
         <li>
+    l2p.planner_builder
+
+        <ul>
+          <li><a href="l2p.html#module-l2p.planner_builder">module</a>
+</li>
+        </ul></li>
+        <li>
+    l2p.utils.pddl_format
+
+        <ul>
+          <li><a href="l2p.html#module-l2p.utils.pddl_format">module</a>
+</li>
+        </ul></li>
+        <li>
     l2p.utils.pddl_parser
 
         <ul>
@@ -580,10 +1037,10 @@
 </li>
         </ul></li>
         <li>
-    l2p.utils.pddl_planner
+    l2p.utils.pddl_prompt
 
         <ul>
-          <li><a href="l2p.html#module-l2p.utils.pddl_planner">module</a>
+          <li><a href="l2p.html#module-l2p.utils.pddl_prompt">module</a>
 </li>
         </ul></li>
         <li>
@@ -593,18 +1050,46 @@
           <li><a href="l2p.html#module-l2p.utils.pddl_types">module</a>
 </li>
         </ul></li>
+        <li>
+    l2p.validators.base
+
+        <ul>
+          <li><a href="l2p.html#module-l2p.validators.base">module</a>
+</li>
+        </ul></li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
         <li>
-    l2p.utils.pddl_validator
+    l2p.validators.domain
 
         <ul>
-          <li><a href="l2p.html#module-l2p.utils.pddl_validator">module</a>
+          <li><a href="l2p.html#module-l2p.validators.domain">module</a>
 </li>
         </ul></li>
-        <li><a href="l2p.html#l2p.utils.pddl_parser.load_file">load_file() (in module l2p.utils.pddl_parser)</a>
+        <li>
+    l2p.validators.problem
+
+        <ul>
+          <li><a href="l2p.html#module-l2p.validators.problem">module</a>
 </li>
-        <li><a href="l2p.html#l2p.utils.pddl_parser.load_files">load_files() (in module l2p.utils.pddl_parser)</a>
+        </ul></li>
+        <li><a href="l2p.html#l2p.FeedbackBuilder.llm_diagnose">llm_diagnose() (l2p.FeedbackBuilder method)</a>
+</li>
+        <li><a href="l2p.html#l2p.FeedbackBuilder.llm_diagnose_plan">llm_diagnose_plan() (l2p.FeedbackBuilder method)</a>
+</li>
+        <li><a href="l2p.html#l2p.FeedbackBuilder.llm_evaluate">llm_evaluate() (l2p.FeedbackBuilder method)</a>
+</li>
+        <li><a href="l2p.html#l2p.FeedbackBuilder.llm_evaluate_plan">llm_evaluate_plan() (l2p.FeedbackBuilder method)</a>
+</li>
+        <li><a href="l2p.html#l2p.FeedbackBuilder.llm_reflect">llm_reflect() (l2p.FeedbackBuilder method)</a>
+</li>
+        <li><a href="l2p.html#l2p.FeedbackBuilder.llm_revise">llm_revise() (l2p.FeedbackBuilder method)</a>
+</li>
+        <li><a href="l2p.html#l2p.FeedbackBuilder.llm_select">llm_select() (l2p.FeedbackBuilder method)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_prompt.load_custom_template">load_custom_template() (in module l2p.utils.pddl_prompt)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_prompt.load_default_template">load_default_template() (in module l2p.utils.pddl_prompt)</a>
 </li>
     </ul></td>
   </tr></table>
@@ -614,17 +1099,833 @@
   <h2>M</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="l2p.html#l2p.utils.pddl_types.Metric">Metric (class in l2p.utils.pddl_types)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.ProblemDetails.metric">metric (l2p.utils.pddl_types.ProblemDetails attribute)</a>
+</li>
+        <li><a href="l2p.html#l2p.planner_builder.PlanningResult.metrics">metrics (l2p.planner_builder.PlanningResult attribute)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.Action.model_computed_fields">model_computed_fields (l2p.utils.pddl_types.Action attribute)</a>
+
+        <ul>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionEffect.model_computed_fields">(l2p.utils.pddl_types.ActionEffect attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionPrecondition.model_computed_fields">(l2p.utils.pddl_types.ActionPrecondition attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ConditionalEffect.model_computed_fields">(l2p.utils.pddl_types.ConditionalEffect attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constant.model_computed_fields">(l2p.utils.pddl_types.Constant attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constraint.model_computed_fields">(l2p.utils.pddl_types.Constraint attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DerivedPredicate.model_computed_fields">(l2p.utils.pddl_types.DerivedPredicate attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DomainDetails.model_computed_fields">(l2p.utils.pddl_types.DomainDetails attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeAction.model_computed_fields">(l2p.utils.pddl_types.DurativeAction attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionConditions.model_computed_fields">(l2p.utils.pddl_types.DurativeActionConditions attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionEffect.model_computed_fields">(l2p.utils.pddl_types.DurativeActionEffect attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Event.model_computed_fields">(l2p.utils.pddl_types.Event attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Function.model_computed_fields">(l2p.utils.pddl_types.Function attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.GoalState.model_computed_fields">(l2p.utils.pddl_types.GoalState attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.InitialState.model_computed_fields">(l2p.utils.pddl_types.InitialState attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Metric.model_computed_fields">(l2p.utils.pddl_types.Metric attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Parameter.model_computed_fields">(l2p.utils.pddl_types.Parameter attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLObject.model_computed_fields">(l2p.utils.pddl_types.PDDLObject attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLType.model_computed_fields">(l2p.utils.pddl_types.PDDLType attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Predicate.model_computed_fields">(l2p.utils.pddl_types.Predicate attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ProblemDetails.model_computed_fields">(l2p.utils.pddl_types.ProblemDetails attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Process.model_computed_fields">(l2p.utils.pddl_types.Process attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Requirement.model_computed_fields">(l2p.utils.pddl_types.Requirement attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.TimedFact.model_computed_fields">(l2p.utils.pddl_types.TimedFact attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.Action.model_config">model_config (l2p.utils.pddl_types.Action attribute)</a>
+
+        <ul>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionEffect.model_config">(l2p.utils.pddl_types.ActionEffect attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionPrecondition.model_config">(l2p.utils.pddl_types.ActionPrecondition attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ConditionalEffect.model_config">(l2p.utils.pddl_types.ConditionalEffect attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constant.model_config">(l2p.utils.pddl_types.Constant attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constraint.model_config">(l2p.utils.pddl_types.Constraint attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DerivedPredicate.model_config">(l2p.utils.pddl_types.DerivedPredicate attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DomainDetails.model_config">(l2p.utils.pddl_types.DomainDetails attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeAction.model_config">(l2p.utils.pddl_types.DurativeAction attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionConditions.model_config">(l2p.utils.pddl_types.DurativeActionConditions attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionEffect.model_config">(l2p.utils.pddl_types.DurativeActionEffect attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Event.model_config">(l2p.utils.pddl_types.Event attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Function.model_config">(l2p.utils.pddl_types.Function attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.GoalState.model_config">(l2p.utils.pddl_types.GoalState attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.InitialState.model_config">(l2p.utils.pddl_types.InitialState attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Metric.model_config">(l2p.utils.pddl_types.Metric attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Parameter.model_config">(l2p.utils.pddl_types.Parameter attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLObject.model_config">(l2p.utils.pddl_types.PDDLObject attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLType.model_config">(l2p.utils.pddl_types.PDDLType attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Predicate.model_config">(l2p.utils.pddl_types.Predicate attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ProblemDetails.model_config">(l2p.utils.pddl_types.ProblemDetails attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Process.model_config">(l2p.utils.pddl_types.Process attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Requirement.model_config">(l2p.utils.pddl_types.Requirement attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.TimedFact.model_config">(l2p.utils.pddl_types.TimedFact attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.Action.model_construct">model_construct() (l2p.utils.pddl_types.Action class method)</a>
+
+        <ul>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionEffect.model_construct">(l2p.utils.pddl_types.ActionEffect class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionPrecondition.model_construct">(l2p.utils.pddl_types.ActionPrecondition class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ConditionalEffect.model_construct">(l2p.utils.pddl_types.ConditionalEffect class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constant.model_construct">(l2p.utils.pddl_types.Constant class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constraint.model_construct">(l2p.utils.pddl_types.Constraint class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DerivedPredicate.model_construct">(l2p.utils.pddl_types.DerivedPredicate class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DomainDetails.model_construct">(l2p.utils.pddl_types.DomainDetails class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeAction.model_construct">(l2p.utils.pddl_types.DurativeAction class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionConditions.model_construct">(l2p.utils.pddl_types.DurativeActionConditions class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionEffect.model_construct">(l2p.utils.pddl_types.DurativeActionEffect class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Event.model_construct">(l2p.utils.pddl_types.Event class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Function.model_construct">(l2p.utils.pddl_types.Function class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.GoalState.model_construct">(l2p.utils.pddl_types.GoalState class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.InitialState.model_construct">(l2p.utils.pddl_types.InitialState class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Metric.model_construct">(l2p.utils.pddl_types.Metric class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Parameter.model_construct">(l2p.utils.pddl_types.Parameter class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLObject.model_construct">(l2p.utils.pddl_types.PDDLObject class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLType.model_construct">(l2p.utils.pddl_types.PDDLType class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Predicate.model_construct">(l2p.utils.pddl_types.Predicate class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ProblemDetails.model_construct">(l2p.utils.pddl_types.ProblemDetails class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Process.model_construct">(l2p.utils.pddl_types.Process class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Requirement.model_construct">(l2p.utils.pddl_types.Requirement class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.TimedFact.model_construct">(l2p.utils.pddl_types.TimedFact class method)</a>
+</li>
+        </ul></li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.Action.model_copy">model_copy() (l2p.utils.pddl_types.Action method)</a>
+
+        <ul>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionEffect.model_copy">(l2p.utils.pddl_types.ActionEffect method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionPrecondition.model_copy">(l2p.utils.pddl_types.ActionPrecondition method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ConditionalEffect.model_copy">(l2p.utils.pddl_types.ConditionalEffect method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constant.model_copy">(l2p.utils.pddl_types.Constant method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constraint.model_copy">(l2p.utils.pddl_types.Constraint method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DerivedPredicate.model_copy">(l2p.utils.pddl_types.DerivedPredicate method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DomainDetails.model_copy">(l2p.utils.pddl_types.DomainDetails method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeAction.model_copy">(l2p.utils.pddl_types.DurativeAction method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionConditions.model_copy">(l2p.utils.pddl_types.DurativeActionConditions method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionEffect.model_copy">(l2p.utils.pddl_types.DurativeActionEffect method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Event.model_copy">(l2p.utils.pddl_types.Event method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Function.model_copy">(l2p.utils.pddl_types.Function method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.GoalState.model_copy">(l2p.utils.pddl_types.GoalState method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.InitialState.model_copy">(l2p.utils.pddl_types.InitialState method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Metric.model_copy">(l2p.utils.pddl_types.Metric method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Parameter.model_copy">(l2p.utils.pddl_types.Parameter method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLObject.model_copy">(l2p.utils.pddl_types.PDDLObject method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLType.model_copy">(l2p.utils.pddl_types.PDDLType method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Predicate.model_copy">(l2p.utils.pddl_types.Predicate method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ProblemDetails.model_copy">(l2p.utils.pddl_types.ProblemDetails method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Process.model_copy">(l2p.utils.pddl_types.Process method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Requirement.model_copy">(l2p.utils.pddl_types.Requirement method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.TimedFact.model_copy">(l2p.utils.pddl_types.TimedFact method)</a>
+</li>
+        </ul></li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.Action.model_dump">model_dump() (l2p.utils.pddl_types.Action method)</a>
+
+        <ul>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionEffect.model_dump">(l2p.utils.pddl_types.ActionEffect method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionPrecondition.model_dump">(l2p.utils.pddl_types.ActionPrecondition method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ConditionalEffect.model_dump">(l2p.utils.pddl_types.ConditionalEffect method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constant.model_dump">(l2p.utils.pddl_types.Constant method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constraint.model_dump">(l2p.utils.pddl_types.Constraint method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DerivedPredicate.model_dump">(l2p.utils.pddl_types.DerivedPredicate method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DomainDetails.model_dump">(l2p.utils.pddl_types.DomainDetails method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeAction.model_dump">(l2p.utils.pddl_types.DurativeAction method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionConditions.model_dump">(l2p.utils.pddl_types.DurativeActionConditions method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionEffect.model_dump">(l2p.utils.pddl_types.DurativeActionEffect method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Event.model_dump">(l2p.utils.pddl_types.Event method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Function.model_dump">(l2p.utils.pddl_types.Function method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.GoalState.model_dump">(l2p.utils.pddl_types.GoalState method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.InitialState.model_dump">(l2p.utils.pddl_types.InitialState method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Metric.model_dump">(l2p.utils.pddl_types.Metric method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Parameter.model_dump">(l2p.utils.pddl_types.Parameter method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLObject.model_dump">(l2p.utils.pddl_types.PDDLObject method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLType.model_dump">(l2p.utils.pddl_types.PDDLType method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Predicate.model_dump">(l2p.utils.pddl_types.Predicate method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ProblemDetails.model_dump">(l2p.utils.pddl_types.ProblemDetails method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Process.model_dump">(l2p.utils.pddl_types.Process method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Requirement.model_dump">(l2p.utils.pddl_types.Requirement method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.TimedFact.model_dump">(l2p.utils.pddl_types.TimedFact method)</a>
+</li>
+        </ul></li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.Action.model_dump_json">model_dump_json() (l2p.utils.pddl_types.Action method)</a>
+
+        <ul>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionEffect.model_dump_json">(l2p.utils.pddl_types.ActionEffect method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionPrecondition.model_dump_json">(l2p.utils.pddl_types.ActionPrecondition method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ConditionalEffect.model_dump_json">(l2p.utils.pddl_types.ConditionalEffect method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constant.model_dump_json">(l2p.utils.pddl_types.Constant method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constraint.model_dump_json">(l2p.utils.pddl_types.Constraint method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DerivedPredicate.model_dump_json">(l2p.utils.pddl_types.DerivedPredicate method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DomainDetails.model_dump_json">(l2p.utils.pddl_types.DomainDetails method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeAction.model_dump_json">(l2p.utils.pddl_types.DurativeAction method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionConditions.model_dump_json">(l2p.utils.pddl_types.DurativeActionConditions method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionEffect.model_dump_json">(l2p.utils.pddl_types.DurativeActionEffect method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Event.model_dump_json">(l2p.utils.pddl_types.Event method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Function.model_dump_json">(l2p.utils.pddl_types.Function method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.GoalState.model_dump_json">(l2p.utils.pddl_types.GoalState method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.InitialState.model_dump_json">(l2p.utils.pddl_types.InitialState method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Metric.model_dump_json">(l2p.utils.pddl_types.Metric method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Parameter.model_dump_json">(l2p.utils.pddl_types.Parameter method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLObject.model_dump_json">(l2p.utils.pddl_types.PDDLObject method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLType.model_dump_json">(l2p.utils.pddl_types.PDDLType method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Predicate.model_dump_json">(l2p.utils.pddl_types.Predicate method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ProblemDetails.model_dump_json">(l2p.utils.pddl_types.ProblemDetails method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Process.model_dump_json">(l2p.utils.pddl_types.Process method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Requirement.model_dump_json">(l2p.utils.pddl_types.Requirement method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.TimedFact.model_dump_json">(l2p.utils.pddl_types.TimedFact method)</a>
+</li>
+        </ul></li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.Action.model_extra">model_extra (l2p.utils.pddl_types.Action property)</a>
+
+        <ul>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionEffect.model_extra">(l2p.utils.pddl_types.ActionEffect property)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionPrecondition.model_extra">(l2p.utils.pddl_types.ActionPrecondition property)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ConditionalEffect.model_extra">(l2p.utils.pddl_types.ConditionalEffect property)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constant.model_extra">(l2p.utils.pddl_types.Constant property)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constraint.model_extra">(l2p.utils.pddl_types.Constraint property)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DerivedPredicate.model_extra">(l2p.utils.pddl_types.DerivedPredicate property)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DomainDetails.model_extra">(l2p.utils.pddl_types.DomainDetails property)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeAction.model_extra">(l2p.utils.pddl_types.DurativeAction property)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionConditions.model_extra">(l2p.utils.pddl_types.DurativeActionConditions property)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionEffect.model_extra">(l2p.utils.pddl_types.DurativeActionEffect property)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Event.model_extra">(l2p.utils.pddl_types.Event property)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Function.model_extra">(l2p.utils.pddl_types.Function property)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.GoalState.model_extra">(l2p.utils.pddl_types.GoalState property)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.InitialState.model_extra">(l2p.utils.pddl_types.InitialState property)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Metric.model_extra">(l2p.utils.pddl_types.Metric property)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Parameter.model_extra">(l2p.utils.pddl_types.Parameter property)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLObject.model_extra">(l2p.utils.pddl_types.PDDLObject property)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLType.model_extra">(l2p.utils.pddl_types.PDDLType property)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Predicate.model_extra">(l2p.utils.pddl_types.Predicate property)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ProblemDetails.model_extra">(l2p.utils.pddl_types.ProblemDetails property)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Process.model_extra">(l2p.utils.pddl_types.Process property)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Requirement.model_extra">(l2p.utils.pddl_types.Requirement property)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.TimedFact.model_extra">(l2p.utils.pddl_types.TimedFact property)</a>
+</li>
+        </ul></li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.Action.model_fields">model_fields (l2p.utils.pddl_types.Action attribute)</a>
+
+        <ul>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionEffect.model_fields">(l2p.utils.pddl_types.ActionEffect attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionPrecondition.model_fields">(l2p.utils.pddl_types.ActionPrecondition attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ConditionalEffect.model_fields">(l2p.utils.pddl_types.ConditionalEffect attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constant.model_fields">(l2p.utils.pddl_types.Constant attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constraint.model_fields">(l2p.utils.pddl_types.Constraint attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DerivedPredicate.model_fields">(l2p.utils.pddl_types.DerivedPredicate attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DomainDetails.model_fields">(l2p.utils.pddl_types.DomainDetails attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeAction.model_fields">(l2p.utils.pddl_types.DurativeAction attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionConditions.model_fields">(l2p.utils.pddl_types.DurativeActionConditions attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionEffect.model_fields">(l2p.utils.pddl_types.DurativeActionEffect attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Event.model_fields">(l2p.utils.pddl_types.Event attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Function.model_fields">(l2p.utils.pddl_types.Function attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.GoalState.model_fields">(l2p.utils.pddl_types.GoalState attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.InitialState.model_fields">(l2p.utils.pddl_types.InitialState attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Metric.model_fields">(l2p.utils.pddl_types.Metric attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Parameter.model_fields">(l2p.utils.pddl_types.Parameter attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLObject.model_fields">(l2p.utils.pddl_types.PDDLObject attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLType.model_fields">(l2p.utils.pddl_types.PDDLType attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Predicate.model_fields">(l2p.utils.pddl_types.Predicate attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ProblemDetails.model_fields">(l2p.utils.pddl_types.ProblemDetails attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Process.model_fields">(l2p.utils.pddl_types.Process attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Requirement.model_fields">(l2p.utils.pddl_types.Requirement attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.TimedFact.model_fields">(l2p.utils.pddl_types.TimedFact attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.Action.model_fields_set">model_fields_set (l2p.utils.pddl_types.Action property)</a>
+
+        <ul>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionEffect.model_fields_set">(l2p.utils.pddl_types.ActionEffect property)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionPrecondition.model_fields_set">(l2p.utils.pddl_types.ActionPrecondition property)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ConditionalEffect.model_fields_set">(l2p.utils.pddl_types.ConditionalEffect property)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constant.model_fields_set">(l2p.utils.pddl_types.Constant property)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constraint.model_fields_set">(l2p.utils.pddl_types.Constraint property)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DerivedPredicate.model_fields_set">(l2p.utils.pddl_types.DerivedPredicate property)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DomainDetails.model_fields_set">(l2p.utils.pddl_types.DomainDetails property)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeAction.model_fields_set">(l2p.utils.pddl_types.DurativeAction property)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionConditions.model_fields_set">(l2p.utils.pddl_types.DurativeActionConditions property)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionEffect.model_fields_set">(l2p.utils.pddl_types.DurativeActionEffect property)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Event.model_fields_set">(l2p.utils.pddl_types.Event property)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Function.model_fields_set">(l2p.utils.pddl_types.Function property)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.GoalState.model_fields_set">(l2p.utils.pddl_types.GoalState property)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.InitialState.model_fields_set">(l2p.utils.pddl_types.InitialState property)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Metric.model_fields_set">(l2p.utils.pddl_types.Metric property)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Parameter.model_fields_set">(l2p.utils.pddl_types.Parameter property)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLObject.model_fields_set">(l2p.utils.pddl_types.PDDLObject property)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLType.model_fields_set">(l2p.utils.pddl_types.PDDLType property)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Predicate.model_fields_set">(l2p.utils.pddl_types.Predicate property)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ProblemDetails.model_fields_set">(l2p.utils.pddl_types.ProblemDetails property)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Process.model_fields_set">(l2p.utils.pddl_types.Process property)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Requirement.model_fields_set">(l2p.utils.pddl_types.Requirement property)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.TimedFact.model_fields_set">(l2p.utils.pddl_types.TimedFact property)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="l2p.html#l2p.utils.pddl_types.Action.model_json_schema">model_json_schema() (l2p.utils.pddl_types.Action class method)</a>
+
+        <ul>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionEffect.model_json_schema">(l2p.utils.pddl_types.ActionEffect class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionPrecondition.model_json_schema">(l2p.utils.pddl_types.ActionPrecondition class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ConditionalEffect.model_json_schema">(l2p.utils.pddl_types.ConditionalEffect class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constant.model_json_schema">(l2p.utils.pddl_types.Constant class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constraint.model_json_schema">(l2p.utils.pddl_types.Constraint class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DerivedPredicate.model_json_schema">(l2p.utils.pddl_types.DerivedPredicate class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DomainDetails.model_json_schema">(l2p.utils.pddl_types.DomainDetails class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeAction.model_json_schema">(l2p.utils.pddl_types.DurativeAction class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionConditions.model_json_schema">(l2p.utils.pddl_types.DurativeActionConditions class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionEffect.model_json_schema">(l2p.utils.pddl_types.DurativeActionEffect class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Event.model_json_schema">(l2p.utils.pddl_types.Event class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Function.model_json_schema">(l2p.utils.pddl_types.Function class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.GoalState.model_json_schema">(l2p.utils.pddl_types.GoalState class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.InitialState.model_json_schema">(l2p.utils.pddl_types.InitialState class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Metric.model_json_schema">(l2p.utils.pddl_types.Metric class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Parameter.model_json_schema">(l2p.utils.pddl_types.Parameter class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLObject.model_json_schema">(l2p.utils.pddl_types.PDDLObject class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLType.model_json_schema">(l2p.utils.pddl_types.PDDLType class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Predicate.model_json_schema">(l2p.utils.pddl_types.Predicate class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ProblemDetails.model_json_schema">(l2p.utils.pddl_types.ProblemDetails class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Process.model_json_schema">(l2p.utils.pddl_types.Process class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Requirement.model_json_schema">(l2p.utils.pddl_types.Requirement class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.TimedFact.model_json_schema">(l2p.utils.pddl_types.TimedFact class method)</a>
+</li>
+        </ul></li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.Action.model_parametrized_name">model_parametrized_name() (l2p.utils.pddl_types.Action class method)</a>
+
+        <ul>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionEffect.model_parametrized_name">(l2p.utils.pddl_types.ActionEffect class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionPrecondition.model_parametrized_name">(l2p.utils.pddl_types.ActionPrecondition class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ConditionalEffect.model_parametrized_name">(l2p.utils.pddl_types.ConditionalEffect class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constant.model_parametrized_name">(l2p.utils.pddl_types.Constant class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constraint.model_parametrized_name">(l2p.utils.pddl_types.Constraint class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DerivedPredicate.model_parametrized_name">(l2p.utils.pddl_types.DerivedPredicate class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DomainDetails.model_parametrized_name">(l2p.utils.pddl_types.DomainDetails class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeAction.model_parametrized_name">(l2p.utils.pddl_types.DurativeAction class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionConditions.model_parametrized_name">(l2p.utils.pddl_types.DurativeActionConditions class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionEffect.model_parametrized_name">(l2p.utils.pddl_types.DurativeActionEffect class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Event.model_parametrized_name">(l2p.utils.pddl_types.Event class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Function.model_parametrized_name">(l2p.utils.pddl_types.Function class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.GoalState.model_parametrized_name">(l2p.utils.pddl_types.GoalState class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.InitialState.model_parametrized_name">(l2p.utils.pddl_types.InitialState class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Metric.model_parametrized_name">(l2p.utils.pddl_types.Metric class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Parameter.model_parametrized_name">(l2p.utils.pddl_types.Parameter class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLObject.model_parametrized_name">(l2p.utils.pddl_types.PDDLObject class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLType.model_parametrized_name">(l2p.utils.pddl_types.PDDLType class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Predicate.model_parametrized_name">(l2p.utils.pddl_types.Predicate class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ProblemDetails.model_parametrized_name">(l2p.utils.pddl_types.ProblemDetails class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Process.model_parametrized_name">(l2p.utils.pddl_types.Process class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Requirement.model_parametrized_name">(l2p.utils.pddl_types.Requirement class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.TimedFact.model_parametrized_name">(l2p.utils.pddl_types.TimedFact class method)</a>
+</li>
+        </ul></li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.Action.model_post_init">model_post_init() (l2p.utils.pddl_types.Action method)</a>
+
+        <ul>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionEffect.model_post_init">(l2p.utils.pddl_types.ActionEffect method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionPrecondition.model_post_init">(l2p.utils.pddl_types.ActionPrecondition method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ConditionalEffect.model_post_init">(l2p.utils.pddl_types.ConditionalEffect method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constant.model_post_init">(l2p.utils.pddl_types.Constant method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constraint.model_post_init">(l2p.utils.pddl_types.Constraint method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DerivedPredicate.model_post_init">(l2p.utils.pddl_types.DerivedPredicate method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DomainDetails.model_post_init">(l2p.utils.pddl_types.DomainDetails method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeAction.model_post_init">(l2p.utils.pddl_types.DurativeAction method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionConditions.model_post_init">(l2p.utils.pddl_types.DurativeActionConditions method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionEffect.model_post_init">(l2p.utils.pddl_types.DurativeActionEffect method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Event.model_post_init">(l2p.utils.pddl_types.Event method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Function.model_post_init">(l2p.utils.pddl_types.Function method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.GoalState.model_post_init">(l2p.utils.pddl_types.GoalState method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.InitialState.model_post_init">(l2p.utils.pddl_types.InitialState method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Metric.model_post_init">(l2p.utils.pddl_types.Metric method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Parameter.model_post_init">(l2p.utils.pddl_types.Parameter method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLObject.model_post_init">(l2p.utils.pddl_types.PDDLObject method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLType.model_post_init">(l2p.utils.pddl_types.PDDLType method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Predicate.model_post_init">(l2p.utils.pddl_types.Predicate method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ProblemDetails.model_post_init">(l2p.utils.pddl_types.ProblemDetails method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Process.model_post_init">(l2p.utils.pddl_types.Process method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Requirement.model_post_init">(l2p.utils.pddl_types.Requirement method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.TimedFact.model_post_init">(l2p.utils.pddl_types.TimedFact method)</a>
+</li>
+        </ul></li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.Action.model_rebuild">model_rebuild() (l2p.utils.pddl_types.Action class method)</a>
+
+        <ul>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionEffect.model_rebuild">(l2p.utils.pddl_types.ActionEffect class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionPrecondition.model_rebuild">(l2p.utils.pddl_types.ActionPrecondition class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ConditionalEffect.model_rebuild">(l2p.utils.pddl_types.ConditionalEffect class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constant.model_rebuild">(l2p.utils.pddl_types.Constant class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constraint.model_rebuild">(l2p.utils.pddl_types.Constraint class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DerivedPredicate.model_rebuild">(l2p.utils.pddl_types.DerivedPredicate class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DomainDetails.model_rebuild">(l2p.utils.pddl_types.DomainDetails class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeAction.model_rebuild">(l2p.utils.pddl_types.DurativeAction class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionConditions.model_rebuild">(l2p.utils.pddl_types.DurativeActionConditions class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionEffect.model_rebuild">(l2p.utils.pddl_types.DurativeActionEffect class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Event.model_rebuild">(l2p.utils.pddl_types.Event class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Function.model_rebuild">(l2p.utils.pddl_types.Function class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.GoalState.model_rebuild">(l2p.utils.pddl_types.GoalState class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.InitialState.model_rebuild">(l2p.utils.pddl_types.InitialState class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Metric.model_rebuild">(l2p.utils.pddl_types.Metric class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Parameter.model_rebuild">(l2p.utils.pddl_types.Parameter class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLObject.model_rebuild">(l2p.utils.pddl_types.PDDLObject class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLType.model_rebuild">(l2p.utils.pddl_types.PDDLType class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Predicate.model_rebuild">(l2p.utils.pddl_types.Predicate class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ProblemDetails.model_rebuild">(l2p.utils.pddl_types.ProblemDetails class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Process.model_rebuild">(l2p.utils.pddl_types.Process class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Requirement.model_rebuild">(l2p.utils.pddl_types.Requirement class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.TimedFact.model_rebuild">(l2p.utils.pddl_types.TimedFact class method)</a>
+</li>
+        </ul></li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.Action.model_validate">model_validate() (l2p.utils.pddl_types.Action class method)</a>
+
+        <ul>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionEffect.model_validate">(l2p.utils.pddl_types.ActionEffect class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionPrecondition.model_validate">(l2p.utils.pddl_types.ActionPrecondition class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ConditionalEffect.model_validate">(l2p.utils.pddl_types.ConditionalEffect class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constant.model_validate">(l2p.utils.pddl_types.Constant class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constraint.model_validate">(l2p.utils.pddl_types.Constraint class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DerivedPredicate.model_validate">(l2p.utils.pddl_types.DerivedPredicate class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DomainDetails.model_validate">(l2p.utils.pddl_types.DomainDetails class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeAction.model_validate">(l2p.utils.pddl_types.DurativeAction class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionConditions.model_validate">(l2p.utils.pddl_types.DurativeActionConditions class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionEffect.model_validate">(l2p.utils.pddl_types.DurativeActionEffect class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Event.model_validate">(l2p.utils.pddl_types.Event class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Function.model_validate">(l2p.utils.pddl_types.Function class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.GoalState.model_validate">(l2p.utils.pddl_types.GoalState class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.InitialState.model_validate">(l2p.utils.pddl_types.InitialState class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Metric.model_validate">(l2p.utils.pddl_types.Metric class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Parameter.model_validate">(l2p.utils.pddl_types.Parameter class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLObject.model_validate">(l2p.utils.pddl_types.PDDLObject class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLType.model_validate">(l2p.utils.pddl_types.PDDLType class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Predicate.model_validate">(l2p.utils.pddl_types.Predicate class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ProblemDetails.model_validate">(l2p.utils.pddl_types.ProblemDetails class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Process.model_validate">(l2p.utils.pddl_types.Process class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Requirement.model_validate">(l2p.utils.pddl_types.Requirement class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.TimedFact.model_validate">(l2p.utils.pddl_types.TimedFact class method)</a>
+</li>
+        </ul></li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.Action.model_validate_json">model_validate_json() (l2p.utils.pddl_types.Action class method)</a>
+
+        <ul>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionEffect.model_validate_json">(l2p.utils.pddl_types.ActionEffect class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionPrecondition.model_validate_json">(l2p.utils.pddl_types.ActionPrecondition class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ConditionalEffect.model_validate_json">(l2p.utils.pddl_types.ConditionalEffect class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constant.model_validate_json">(l2p.utils.pddl_types.Constant class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constraint.model_validate_json">(l2p.utils.pddl_types.Constraint class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DerivedPredicate.model_validate_json">(l2p.utils.pddl_types.DerivedPredicate class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DomainDetails.model_validate_json">(l2p.utils.pddl_types.DomainDetails class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeAction.model_validate_json">(l2p.utils.pddl_types.DurativeAction class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionConditions.model_validate_json">(l2p.utils.pddl_types.DurativeActionConditions class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionEffect.model_validate_json">(l2p.utils.pddl_types.DurativeActionEffect class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Event.model_validate_json">(l2p.utils.pddl_types.Event class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Function.model_validate_json">(l2p.utils.pddl_types.Function class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.GoalState.model_validate_json">(l2p.utils.pddl_types.GoalState class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.InitialState.model_validate_json">(l2p.utils.pddl_types.InitialState class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Metric.model_validate_json">(l2p.utils.pddl_types.Metric class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Parameter.model_validate_json">(l2p.utils.pddl_types.Parameter class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLObject.model_validate_json">(l2p.utils.pddl_types.PDDLObject class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLType.model_validate_json">(l2p.utils.pddl_types.PDDLType class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Predicate.model_validate_json">(l2p.utils.pddl_types.Predicate class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ProblemDetails.model_validate_json">(l2p.utils.pddl_types.ProblemDetails class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Process.model_validate_json">(l2p.utils.pddl_types.Process class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Requirement.model_validate_json">(l2p.utils.pddl_types.Requirement class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.TimedFact.model_validate_json">(l2p.utils.pddl_types.TimedFact class method)</a>
+</li>
+        </ul></li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.Action.model_validate_strings">model_validate_strings() (l2p.utils.pddl_types.Action class method)</a>
+
+        <ul>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionEffect.model_validate_strings">(l2p.utils.pddl_types.ActionEffect class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionPrecondition.model_validate_strings">(l2p.utils.pddl_types.ActionPrecondition class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ConditionalEffect.model_validate_strings">(l2p.utils.pddl_types.ConditionalEffect class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constant.model_validate_strings">(l2p.utils.pddl_types.Constant class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constraint.model_validate_strings">(l2p.utils.pddl_types.Constraint class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DerivedPredicate.model_validate_strings">(l2p.utils.pddl_types.DerivedPredicate class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DomainDetails.model_validate_strings">(l2p.utils.pddl_types.DomainDetails class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeAction.model_validate_strings">(l2p.utils.pddl_types.DurativeAction class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionConditions.model_validate_strings">(l2p.utils.pddl_types.DurativeActionConditions class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionEffect.model_validate_strings">(l2p.utils.pddl_types.DurativeActionEffect class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Event.model_validate_strings">(l2p.utils.pddl_types.Event class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Function.model_validate_strings">(l2p.utils.pddl_types.Function class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.GoalState.model_validate_strings">(l2p.utils.pddl_types.GoalState class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.InitialState.model_validate_strings">(l2p.utils.pddl_types.InitialState class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Metric.model_validate_strings">(l2p.utils.pddl_types.Metric class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Parameter.model_validate_strings">(l2p.utils.pddl_types.Parameter class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLObject.model_validate_strings">(l2p.utils.pddl_types.PDDLObject class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLType.model_validate_strings">(l2p.utils.pddl_types.PDDLType class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Predicate.model_validate_strings">(l2p.utils.pddl_types.Predicate class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ProblemDetails.model_validate_strings">(l2p.utils.pddl_types.ProblemDetails class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Process.model_validate_strings">(l2p.utils.pddl_types.Process class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Requirement.model_validate_strings">(l2p.utils.pddl_types.Requirement class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.TimedFact.model_validate_strings">(l2p.utils.pddl_types.TimedFact class method)</a>
+</li>
+        </ul></li>
         <li>
     module
 
         <ul>
+          <li><a href="l2p.html#module-l2p.planner_builder">l2p.planner_builder</a>
+</li>
+          <li><a href="l2p.html#module-l2p.utils.pddl_format">l2p.utils.pddl_format</a>
+</li>
           <li><a href="l2p.html#module-l2p.utils.pddl_parser">l2p.utils.pddl_parser</a>
 </li>
-          <li><a href="l2p.html#module-l2p.utils.pddl_planner">l2p.utils.pddl_planner</a>
+          <li><a href="l2p.html#module-l2p.utils.pddl_prompt">l2p.utils.pddl_prompt</a>
 </li>
           <li><a href="l2p.html#module-l2p.utils.pddl_types">l2p.utils.pddl_types</a>
 </li>
-          <li><a href="l2p.html#module-l2p.utils.pddl_validator">l2p.utils.pddl_validator</a>
+          <li><a href="l2p.html#module-l2p.validators.base">l2p.validators.base</a>
+</li>
+          <li><a href="l2p.html#module-l2p.validators.domain">l2p.validators.domain</a>
+</li>
+          <li><a href="l2p.html#module-l2p.validators.problem">l2p.validators.problem</a>
 </li>
         </ul></li>
     </ul></td>
@@ -640,9 +1941,17 @@
         <ul>
           <li><a href="l2p.html#l2p.utils.pddl_types.Constant.name">(l2p.utils.pddl_types.Constant attribute)</a>
 </li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DerivedPredicate.name">(l2p.utils.pddl_types.DerivedPredicate attribute)</a>
+</li>
           <li><a href="l2p.html#l2p.utils.pddl_types.DomainDetails.name">(l2p.utils.pddl_types.DomainDetails attribute)</a>
 </li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeAction.name">(l2p.utils.pddl_types.DurativeAction attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Event.name">(l2p.utils.pddl_types.Event attribute)</a>
+</li>
           <li><a href="l2p.html#l2p.utils.pddl_types.Function.name">(l2p.utils.pddl_types.Function attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLObject.name">(l2p.utils.pddl_types.PDDLObject attribute)</a>
 </li>
           <li><a href="l2p.html#l2p.utils.pddl_types.PDDLType.name">(l2p.utils.pddl_types.PDDLType attribute)</a>
 </li>
@@ -650,10 +1959,22 @@
 </li>
           <li><a href="l2p.html#l2p.utils.pddl_types.ProblemDetails.name">(l2p.utils.pddl_types.ProblemDetails attribute)</a>
 </li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Process.name">(l2p.utils.pddl_types.Process attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Requirement.name">(l2p.utils.pddl_types.Requirement attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.validators.base.FunctionalRule.name">(l2p.validators.base.FunctionalRule property)</a>
+</li>
+          <li><a href="l2p.html#l2p.validators.base.ValidationRule.name">(l2p.validators.base.ValidationRule property)</a>
+</li>
         </ul></li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
-        <li><a href="l2p.html#l2p.FeedbackBuilder.nl_action_feedback">nl_action_feedback() (l2p.FeedbackBuilder method)</a>
+        <li><a href="l2p.html#l2p.utils.pddl_format.natural_sort_key">natural_sort_key() (in module l2p.utils.pddl_format)</a>
+</li>
+        <li><a href="l2p.html#l2p.FeedbackBuilder.normalize_artifacts">normalize_artifacts() (l2p.FeedbackBuilder method)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.ActionEffect.numeric">numeric (l2p.utils.pddl_types.ActionEffect attribute)</a>
 </li>
     </ul></td>
   </tr></table>
@@ -665,9 +1986,13 @@
     <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="l2p.html#l2p.utils.pddl_types.ProblemDetails.objects">objects (l2p.utils.pddl_types.ProblemDetails attribute)</a>
 </li>
+        <li><a href="l2p.html#l2p.OPENAI">OPENAI (class in l2p)</a>
+</li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
-        <li><a href="l2p.html#l2p.FeedbackBuilder.objects_feedback">objects_feedback() (l2p.FeedbackBuilder method)</a>
+        <li><a href="l2p.html#l2p.utils.pddl_types.Metric.optimization">optimization (l2p.utils.pddl_types.Metric attribute)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionConditions.over_all">over_all (l2p.utils.pddl_types.DurativeActionConditions attribute)</a>
 </li>
     </ul></td>
   </tr></table>
@@ -677,112 +2002,266 @@
   <h2>P</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
     <td style="width: 33%; vertical-align: top;"><ul>
-        <li><a href="l2p.html#l2p.FeedbackBuilder.parameter_feedback">parameter_feedback() (l2p.FeedbackBuilder method)</a>
+        <li><a href="l2p.html#l2p.utils.pddl_types.Parameter">Parameter (class in l2p.utils.pddl_types)</a>
 </li>
         <li><a href="l2p.html#l2p.utils.pddl_types.Action.params">params (l2p.utils.pddl_types.Action attribute)</a>
 
         <ul>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DerivedPredicate.params">(l2p.utils.pddl_types.DerivedPredicate attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeAction.params">(l2p.utils.pddl_types.DurativeAction attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Event.params">(l2p.utils.pddl_types.Event attribute)</a>
+</li>
           <li><a href="l2p.html#l2p.utils.pddl_types.Function.params">(l2p.utils.pddl_types.Function attribute)</a>
 </li>
           <li><a href="l2p.html#l2p.utils.pddl_types.Predicate.params">(l2p.utils.pddl_types.Predicate attribute)</a>
 </li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Process.params">(l2p.utils.pddl_types.Process attribute)</a>
+</li>
         </ul></li>
         <li><a href="l2p.html#l2p.utils.pddl_types.PDDLType.parent">parent (l2p.utils.pddl_types.PDDLType attribute)</a>
 </li>
-        <li><a href="l2p.html#l2p.utils.pddl_parser.parse_action">parse_action() (in module l2p.utils.pddl_parser)</a>
+        <li><a href="l2p.html#l2p.utils.pddl_parser.parse_component">parse_component() (in module l2p.utils.pddl_parser)</a>
 </li>
-        <li><a href="l2p.html#l2p.utils.pddl_parser.parse_constants">parse_constants() (in module l2p.utils.pddl_parser)</a>
+        <li><a href="l2p.html#l2p.utils.pddl_parser.parse_domain_pddl">parse_domain_pddl() (in module l2p.utils.pddl_parser)</a>
 </li>
-        <li><a href="l2p.html#l2p.utils.pddl_parser.parse_effects">parse_effects() (in module l2p.utils.pddl_parser)</a>
+        <li><a href="l2p.html#l2p.utils.pddl_parser.parse_element">parse_element() (in module l2p.utils.pddl_parser)</a>
 </li>
-        <li><a href="l2p.html#l2p.utils.pddl_parser.parse_functions">parse_functions() (in module l2p.utils.pddl_parser)</a>
+        <li><a href="l2p.html#l2p.utils.pddl_types.Action.parse_file">parse_file() (l2p.utils.pddl_types.Action class method)</a>
+
+        <ul>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionEffect.parse_file">(l2p.utils.pddl_types.ActionEffect class method)</a>
 </li>
-        <li><a href="l2p.html#l2p.utils.pddl_parser.parse_goal">parse_goal() (in module l2p.utils.pddl_parser)</a>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionPrecondition.parse_file">(l2p.utils.pddl_types.ActionPrecondition class method)</a>
 </li>
-        <li><a href="l2p.html#l2p.utils.pddl_parser.parse_heading">parse_heading() (in module l2p.utils.pddl_parser)</a>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ConditionalEffect.parse_file">(l2p.utils.pddl_types.ConditionalEffect class method)</a>
 </li>
-        <li><a href="l2p.html#l2p.utils.pddl_parser.parse_initial">parse_initial() (in module l2p.utils.pddl_parser)</a>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constant.parse_file">(l2p.utils.pddl_types.Constant class method)</a>
 </li>
-        <li><a href="l2p.html#l2p.utils.pddl_parser.parse_new_predicates">parse_new_predicates() (in module l2p.utils.pddl_parser)</a>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constraint.parse_file">(l2p.utils.pddl_types.Constraint class method)</a>
 </li>
-        <li><a href="l2p.html#l2p.utils.pddl_parser.parse_objects">parse_objects() (in module l2p.utils.pddl_parser)</a>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DerivedPredicate.parse_file">(l2p.utils.pddl_types.DerivedPredicate class method)</a>
 </li>
-        <li><a href="l2p.html#l2p.utils.pddl_parser.parse_params">parse_params() (in module l2p.utils.pddl_parser)</a>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DomainDetails.parse_file">(l2p.utils.pddl_types.DomainDetails class method)</a>
 </li>
-        <li><a href="l2p.html#l2p.utils.pddl_parser.parse_pddl">parse_pddl() (in module l2p.utils.pddl_parser)</a>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeAction.parse_file">(l2p.utils.pddl_types.DurativeAction class method)</a>
 </li>
-        <li><a href="l2p.html#l2p.utils.pddl_parser.parse_preconditions">parse_preconditions() (in module l2p.utils.pddl_parser)</a>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionConditions.parse_file">(l2p.utils.pddl_types.DurativeActionConditions class method)</a>
 </li>
-        <li><a href="l2p.html#l2p.utils.pddl_parser.parse_predicates">parse_predicates() (in module l2p.utils.pddl_parser)</a>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionEffect.parse_file">(l2p.utils.pddl_types.DurativeActionEffect class method)</a>
 </li>
-        <li><a href="l2p.html#l2p.utils.pddl_parser.parse_task_states">parse_task_states() (in module l2p.utils.pddl_parser)</a>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Event.parse_file">(l2p.utils.pddl_types.Event class method)</a>
 </li>
-        <li><a href="l2p.html#l2p.utils.pddl_parser.parse_type_hierarchy">parse_type_hierarchy() (in module l2p.utils.pddl_parser)</a>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Function.parse_file">(l2p.utils.pddl_types.Function class method)</a>
 </li>
-        <li><a href="l2p.html#l2p.utils.pddl_parser.parse_types">parse_types() (in module l2p.utils.pddl_parser)</a>
+          <li><a href="l2p.html#l2p.utils.pddl_types.GoalState.parse_file">(l2p.utils.pddl_types.GoalState class method)</a>
 </li>
-        <li><a href="l2p.html#l2p.FeedbackBuilder.pddl_action_feedback">pddl_action_feedback() (l2p.FeedbackBuilder method)</a>
+          <li><a href="l2p.html#l2p.utils.pddl_types.InitialState.parse_file">(l2p.utils.pddl_types.InitialState class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Metric.parse_file">(l2p.utils.pddl_types.Metric class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Parameter.parse_file">(l2p.utils.pddl_types.Parameter class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLObject.parse_file">(l2p.utils.pddl_types.PDDLObject class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLType.parse_file">(l2p.utils.pddl_types.PDDLType class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Predicate.parse_file">(l2p.utils.pddl_types.Predicate class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ProblemDetails.parse_file">(l2p.utils.pddl_types.ProblemDetails class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Process.parse_file">(l2p.utils.pddl_types.Process class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Requirement.parse_file">(l2p.utils.pddl_types.Requirement class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.TimedFact.parse_file">(l2p.utils.pddl_types.TimedFact class method)</a>
+</li>
+        </ul></li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.Action.parse_obj">parse_obj() (l2p.utils.pddl_types.Action class method)</a>
+
+        <ul>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionEffect.parse_obj">(l2p.utils.pddl_types.ActionEffect class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionPrecondition.parse_obj">(l2p.utils.pddl_types.ActionPrecondition class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ConditionalEffect.parse_obj">(l2p.utils.pddl_types.ConditionalEffect class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constant.parse_obj">(l2p.utils.pddl_types.Constant class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constraint.parse_obj">(l2p.utils.pddl_types.Constraint class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DerivedPredicate.parse_obj">(l2p.utils.pddl_types.DerivedPredicate class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DomainDetails.parse_obj">(l2p.utils.pddl_types.DomainDetails class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeAction.parse_obj">(l2p.utils.pddl_types.DurativeAction class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionConditions.parse_obj">(l2p.utils.pddl_types.DurativeActionConditions class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionEffect.parse_obj">(l2p.utils.pddl_types.DurativeActionEffect class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Event.parse_obj">(l2p.utils.pddl_types.Event class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Function.parse_obj">(l2p.utils.pddl_types.Function class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.GoalState.parse_obj">(l2p.utils.pddl_types.GoalState class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.InitialState.parse_obj">(l2p.utils.pddl_types.InitialState class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Metric.parse_obj">(l2p.utils.pddl_types.Metric class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Parameter.parse_obj">(l2p.utils.pddl_types.Parameter class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLObject.parse_obj">(l2p.utils.pddl_types.PDDLObject class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLType.parse_obj">(l2p.utils.pddl_types.PDDLType class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Predicate.parse_obj">(l2p.utils.pddl_types.Predicate class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ProblemDetails.parse_obj">(l2p.utils.pddl_types.ProblemDetails class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Process.parse_obj">(l2p.utils.pddl_types.Process class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Requirement.parse_obj">(l2p.utils.pddl_types.Requirement class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.TimedFact.parse_obj">(l2p.utils.pddl_types.TimedFact class method)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="l2p.html#l2p.planner_builder.FastDownward.parse_plan">parse_plan() (l2p.planner_builder.FastDownward method)</a>
+
+        <ul>
+          <li><a href="l2p.html#l2p.planner_builder.Planner.parse_plan">(l2p.planner_builder.Planner method)</a>
+</li>
+          <li><a href="l2p.html#l2p.planner_builder.UnifiedPlanning.parse_plan">(l2p.planner_builder.UnifiedPlanning method)</a>
+</li>
+        </ul></li>
+        <li><a href="l2p.html#l2p.utils.pddl_parser.parse_problem_pddl">parse_problem_pddl() (in module l2p.utils.pddl_parser)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.Action.parse_raw">parse_raw() (l2p.utils.pddl_types.Action class method)</a>
+
+        <ul>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionEffect.parse_raw">(l2p.utils.pddl_types.ActionEffect class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionPrecondition.parse_raw">(l2p.utils.pddl_types.ActionPrecondition class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ConditionalEffect.parse_raw">(l2p.utils.pddl_types.ConditionalEffect class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constant.parse_raw">(l2p.utils.pddl_types.Constant class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constraint.parse_raw">(l2p.utils.pddl_types.Constraint class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DerivedPredicate.parse_raw">(l2p.utils.pddl_types.DerivedPredicate class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DomainDetails.parse_raw">(l2p.utils.pddl_types.DomainDetails class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeAction.parse_raw">(l2p.utils.pddl_types.DurativeAction class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionConditions.parse_raw">(l2p.utils.pddl_types.DurativeActionConditions class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionEffect.parse_raw">(l2p.utils.pddl_types.DurativeActionEffect class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Event.parse_raw">(l2p.utils.pddl_types.Event class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Function.parse_raw">(l2p.utils.pddl_types.Function class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.GoalState.parse_raw">(l2p.utils.pddl_types.GoalState class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.InitialState.parse_raw">(l2p.utils.pddl_types.InitialState class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Metric.parse_raw">(l2p.utils.pddl_types.Metric class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Parameter.parse_raw">(l2p.utils.pddl_types.Parameter class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLObject.parse_raw">(l2p.utils.pddl_types.PDDLObject class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLType.parse_raw">(l2p.utils.pddl_types.PDDLType class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Predicate.parse_raw">(l2p.utils.pddl_types.Predicate class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ProblemDetails.parse_raw">(l2p.utils.pddl_types.ProblemDetails class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Process.parse_raw">(l2p.utils.pddl_types.Process class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Requirement.parse_raw">(l2p.utils.pddl_types.Requirement class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.TimedFact.parse_raw">(l2p.utils.pddl_types.TimedFact class method)</a>
+</li>
+        </ul></li>
+        <li><a href="l2p.html#l2p.utils.pddl_parser.parse_xml_tags">parse_xml_tags() (in module l2p.utils.pddl_parser)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.PDDLObject">PDDLObject (class in l2p.utils.pddl_types)</a>
 </li>
         <li><a href="l2p.html#l2p.utils.pddl_types.PDDLType">PDDLType (class in l2p.utils.pddl_types)</a>
 </li>
-        <li><a href="l2p.html#l2p.utils.pddl_types.PlanDetails.plan_nl">plan_nl (l2p.utils.pddl_types.PlanDetails attribute)</a>
+        <li><a href="l2p.html#l2p.planner_builder.PlanningResult.plan">plan (l2p.planner_builder.PlanningResult attribute)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
-        <li><a href="l2p.html#l2p.utils.pddl_types.PlanDetails.plan_pddl">plan_pddl (l2p.utils.pddl_types.PlanDetails attribute)</a>
+        <li><a href="l2p.html#l2p.planner_builder.Planner">Planner (class in l2p.planner_builder)</a>
 </li>
-        <li><a href="l2p.html#l2p.utils.pddl_types.PlanDetails">PlanDetails (class in l2p.utils.pddl_types)</a>
-</li>
-        <li><a href="l2p.html#l2p.utils.pddl_types.Action.pop">pop() (l2p.utils.pddl_types.Action method)</a>
-
-        <ul>
-          <li><a href="l2p.html#l2p.utils.pddl_types.Constant.pop">(l2p.utils.pddl_types.Constant method)</a>
-</li>
-          <li><a href="l2p.html#l2p.utils.pddl_types.Function.pop">(l2p.utils.pddl_types.Function method)</a>
-</li>
-          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLType.pop">(l2p.utils.pddl_types.PDDLType method)</a>
-</li>
-          <li><a href="l2p.html#l2p.utils.pddl_types.Predicate.pop">(l2p.utils.pddl_types.Predicate method)</a>
-</li>
-        </ul></li>
-        <li><a href="l2p.html#l2p.utils.pddl_types.Action.popitem">popitem() (l2p.utils.pddl_types.Action method)</a>
-
-        <ul>
-          <li><a href="l2p.html#l2p.utils.pddl_types.Constant.popitem">(l2p.utils.pddl_types.Constant method)</a>
-</li>
-          <li><a href="l2p.html#l2p.utils.pddl_types.Function.popitem">(l2p.utils.pddl_types.Function method)</a>
-</li>
-          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLType.popitem">(l2p.utils.pddl_types.PDDLType method)</a>
-</li>
-          <li><a href="l2p.html#l2p.utils.pddl_types.Predicate.popitem">(l2p.utils.pddl_types.Predicate method)</a>
-</li>
-        </ul></li>
-        <li><a href="l2p.html#l2p.FeedbackBuilder.precondition_feedback">precondition_feedback() (l2p.FeedbackBuilder method)</a>
+        <li><a href="l2p.html#l2p.planner_builder.PlanningResult">PlanningResult (class in l2p.planner_builder)</a>
 </li>
         <li><a href="l2p.html#l2p.utils.pddl_types.Action.preconditions">preconditions (l2p.utils.pddl_types.Action attribute)</a>
+
+        <ul>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Event.preconditions">(l2p.utils.pddl_types.Event attribute)</a>
 </li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Process.preconditions">(l2p.utils.pddl_types.Process attribute)</a>
+</li>
+        </ul></li>
         <li><a href="l2p.html#l2p.utils.pddl_types.Predicate">Predicate (class in l2p.utils.pddl_types)</a>
-</li>
-        <li><a href="l2p.html#l2p.FeedbackBuilder.predicate_feedback">predicate_feedback() (l2p.FeedbackBuilder method)</a>
 </li>
         <li><a href="l2p.html#l2p.utils.pddl_types.DomainDetails.predicates">predicates (l2p.utils.pddl_types.DomainDetails attribute)</a>
 </li>
-        <li><a href="l2p.html#l2p.utils.pddl_types.ProblemDetails.problem_desc">problem_desc (l2p.utils.pddl_types.ProblemDetails attribute)</a>
+        <li><a href="l2p.html#l2p.utils.pddl_types.ProblemDetails.problem_pddl">problem_pddl (l2p.utils.pddl_types.ProblemDetails attribute)</a>
 </li>
-        <li><a href="l2p.html#l2p.utils.pddl_types.PlanDetails.problem_pddl">problem_pddl (l2p.utils.pddl_types.PlanDetails attribute)</a>
-
-        <ul>
-          <li><a href="l2p.html#l2p.utils.pddl_types.ProblemDetails.problem_pddl">(l2p.utils.pddl_types.ProblemDetails attribute)</a>
+        <li><a href="l2p.html#l2p.validators.problem.problem_rule">problem_rule() (in module l2p.validators.problem)</a>
 </li>
-        </ul></li>
+        <li><a href="l2p.html#l2p.ProblemBuilder">ProblemBuilder (class in l2p)</a>
+</li>
         <li><a href="l2p.html#l2p.utils.pddl_types.ProblemDetails">ProblemDetails (class in l2p.utils.pddl_types)</a>
+</li>
+        <li><a href="l2p.html#l2p.validators.problem.ProblemSemantics">ProblemSemantics (class in l2p.validators.problem)</a>
+</li>
+        <li><a href="l2p.html#l2p.validators.problem.ProblemValidator">ProblemValidator (class in l2p.validators.problem)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.Process">Process (class in l2p.utils.pddl_types)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.DomainDetails.processes">processes (l2p.utils.pddl_types.DomainDetails attribute)</a>
 </li>
         <li><a href="l2p.html#l2p.PromptBuilder">PromptBuilder (class in l2p)</a>
 </li>
-        <li><a href="l2p.html#l2p.utils.pddl_parser.prune_predicates">prune_predicates() (in module l2p.utils.pddl_parser)</a>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="Q" class="genindex-section">
+  <h2>Q</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="l2p.html#l2p.BaseLLM.query">query() (l2p.BaseLLM method)</a>
+
+        <ul>
+          <li><a href="l2p.html#l2p.HUGGING_FACE.query">(l2p.HUGGING_FACE method)</a>
 </li>
-        <li><a href="l2p.html#l2p.utils.pddl_parser.prune_types">prune_types() (in module l2p.utils.pddl_parser)</a>
+          <li><a href="l2p.html#l2p.OPENAI.query">(l2p.OPENAI method)</a>
 </li>
+          <li><a href="l2p.html#l2p.UnifiedLLM.query">(l2p.UnifiedLLM method)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="l2p.html#l2p.BaseLLM.query_with_system_prompt">query_with_system_prompt() (l2p.BaseLLM method)</a>
+
+        <ul>
+          <li><a href="l2p.html#l2p.HUGGING_FACE.query_with_system_prompt">(l2p.HUGGING_FACE method)</a>
+</li>
+          <li><a href="l2p.html#l2p.OPENAI.query_with_system_prompt">(l2p.OPENAI method)</a>
+</li>
+          <li><a href="l2p.html#l2p.UnifiedLLM.query_with_system_prompt">(l2p.UnifiedLLM method)</a>
+</li>
+        </ul></li>
     </ul></td>
   </tr></table>
 </section>
@@ -791,28 +2270,48 @@
   <h2>R</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
     <td style="width: 33%; vertical-align: top;"><ul>
-        <li><a href="l2p.html#l2p.utils.pddl_types.Action.raw">raw (l2p.utils.pddl_types.Action attribute)</a>
+        <li><a href="l2p.html#l2p.planner_builder.PlanningResult.raw_output">raw_output (l2p.planner_builder.PlanningResult attribute)</a>
+</li>
+        <li><a href="l2p.html#l2p.validators.base.SyntaxValidator.register_rule">register_rule() (l2p.validators.base.SyntaxValidator method)</a>
 
         <ul>
-          <li><a href="l2p.html#l2p.utils.pddl_types.Function.raw">(l2p.utils.pddl_types.Function attribute)</a>
+          <li><a href="l2p.html#l2p.validators.domain.DomainValidator.register_rule">(l2p.validators.domain.DomainValidator method)</a>
 </li>
-          <li><a href="l2p.html#l2p.utils.pddl_types.Predicate.raw">(l2p.utils.pddl_types.Predicate attribute)</a>
+          <li><a href="l2p.html#l2p.validators.problem.ProblemValidator.register_rule">(l2p.validators.problem.ProblemValidator method)</a>
 </li>
         </ul></li>
-        <li><a href="l2p.html#l2p.PromptBuilder.remove_examples">remove_examples() (l2p.PromptBuilder method)</a>
+        <li><a href="l2p.html#l2p.utils.pddl_format.remove_comments">remove_comments() (in module l2p.utils.pddl_format)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
-        <li><a href="l2p.html#l2p.PromptBuilder.remove_format">remove_format() (l2p.PromptBuilder method)</a>
-</li>
-        <li><a href="l2p.html#l2p.PromptBuilder.remove_role">remove_role() (l2p.PromptBuilder method)</a>
-</li>
-        <li><a href="l2p.html#l2p.PromptBuilder.remove_task">remove_task() (l2p.PromptBuilder method)</a>
+        <li><a href="l2p.html#l2p.utils.pddl_types.Requirement">Requirement (class in l2p.utils.pddl_types)</a>
 </li>
         <li><a href="l2p.html#l2p.utils.pddl_types.DomainDetails.requirements">requirements (l2p.utils.pddl_types.DomainDetails attribute)</a>
 </li>
-        <li><a href="l2p.html#l2p.utils.pddl_planner.FastDownward.run_fast_downward">run_fast_downward() (l2p.utils.pddl_planner.FastDownward method)</a>
+        <li><a href="l2p.html#l2p.HUGGING_FACE.reset_query_log">reset_query_log() (l2p.HUGGING_FACE method)</a>
+
+        <ul>
+          <li><a href="l2p.html#l2p.OPENAI.reset_query_log">(l2p.OPENAI method)</a>
 </li>
+          <li><a href="l2p.html#l2p.UnifiedLLM.reset_query_log">(l2p.UnifiedLLM method)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="l2p.html#l2p.HUGGING_FACE.reset_tokens">reset_tokens() (l2p.HUGGING_FACE method)</a>
+
+        <ul>
+          <li><a href="l2p.html#l2p.OPENAI.reset_tokens">(l2p.OPENAI method)</a>
+</li>
+          <li><a href="l2p.html#l2p.UnifiedLLM.reset_tokens">(l2p.UnifiedLLM method)</a>
+</li>
+        </ul></li>
+        <li><a href="l2p.html#l2p.planner_builder.FastDownward.run_planner">run_planner() (l2p.planner_builder.FastDownward method)</a>
+
+        <ul>
+          <li><a href="l2p.html#l2p.planner_builder.Planner.run_planner">(l2p.planner_builder.Planner method)</a>
+</li>
+          <li><a href="l2p.html#l2p.planner_builder.UnifiedPlanning.run_planner">(l2p.planner_builder.UnifiedPlanning method)</a>
+</li>
+        </ul></li>
     </ul></td>
   </tr></table>
 </section>
@@ -821,47 +2320,165 @@
   <h2>S</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="l2p.html#l2p.utils.pddl_prompt.safe_format">safe_format() (in module l2p.utils.pddl_prompt)</a>
+</li>
+        <li><a href="l2p.html#l2p.PromptBuilder.save_prompt">save_prompt() (l2p.PromptBuilder method)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.Action.schema">schema() (l2p.utils.pddl_types.Action class method)</a>
+
+        <ul>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionEffect.schema">(l2p.utils.pddl_types.ActionEffect class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionPrecondition.schema">(l2p.utils.pddl_types.ActionPrecondition class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ConditionalEffect.schema">(l2p.utils.pddl_types.ConditionalEffect class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constant.schema">(l2p.utils.pddl_types.Constant class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constraint.schema">(l2p.utils.pddl_types.Constraint class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DerivedPredicate.schema">(l2p.utils.pddl_types.DerivedPredicate class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DomainDetails.schema">(l2p.utils.pddl_types.DomainDetails class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeAction.schema">(l2p.utils.pddl_types.DurativeAction class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionConditions.schema">(l2p.utils.pddl_types.DurativeActionConditions class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionEffect.schema">(l2p.utils.pddl_types.DurativeActionEffect class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Event.schema">(l2p.utils.pddl_types.Event class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Function.schema">(l2p.utils.pddl_types.Function class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.GoalState.schema">(l2p.utils.pddl_types.GoalState class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.InitialState.schema">(l2p.utils.pddl_types.InitialState class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Metric.schema">(l2p.utils.pddl_types.Metric class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Parameter.schema">(l2p.utils.pddl_types.Parameter class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLObject.schema">(l2p.utils.pddl_types.PDDLObject class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLType.schema">(l2p.utils.pddl_types.PDDLType class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Predicate.schema">(l2p.utils.pddl_types.Predicate class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ProblemDetails.schema">(l2p.utils.pddl_types.ProblemDetails class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Process.schema">(l2p.utils.pddl_types.Process class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Requirement.schema">(l2p.utils.pddl_types.Requirement class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.TimedFact.schema">(l2p.utils.pddl_types.TimedFact class method)</a>
+</li>
+        </ul></li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.Action.schema_json">schema_json() (l2p.utils.pddl_types.Action class method)</a>
+
+        <ul>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionEffect.schema_json">(l2p.utils.pddl_types.ActionEffect class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionPrecondition.schema_json">(l2p.utils.pddl_types.ActionPrecondition class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ConditionalEffect.schema_json">(l2p.utils.pddl_types.ConditionalEffect class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constant.schema_json">(l2p.utils.pddl_types.Constant class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constraint.schema_json">(l2p.utils.pddl_types.Constraint class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DerivedPredicate.schema_json">(l2p.utils.pddl_types.DerivedPredicate class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DomainDetails.schema_json">(l2p.utils.pddl_types.DomainDetails class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeAction.schema_json">(l2p.utils.pddl_types.DurativeAction class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionConditions.schema_json">(l2p.utils.pddl_types.DurativeActionConditions class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionEffect.schema_json">(l2p.utils.pddl_types.DurativeActionEffect class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Event.schema_json">(l2p.utils.pddl_types.Event class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Function.schema_json">(l2p.utils.pddl_types.Function class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.GoalState.schema_json">(l2p.utils.pddl_types.GoalState class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.InitialState.schema_json">(l2p.utils.pddl_types.InitialState class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Metric.schema_json">(l2p.utils.pddl_types.Metric class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Parameter.schema_json">(l2p.utils.pddl_types.Parameter class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLObject.schema_json">(l2p.utils.pddl_types.PDDLObject class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLType.schema_json">(l2p.utils.pddl_types.PDDLType class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Predicate.schema_json">(l2p.utils.pddl_types.Predicate class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ProblemDetails.schema_json">(l2p.utils.pddl_types.ProblemDetails class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Process.schema_json">(l2p.utils.pddl_types.Process class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Requirement.schema_json">(l2p.utils.pddl_types.Requirement class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.TimedFact.schema_json">(l2p.utils.pddl_types.TimedFact class method)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="l2p.html#l2p.DomainBuilder.set_actions">set_actions() (l2p.DomainBuilder method)</a>
+</li>
         <li><a href="l2p.html#l2p.DomainBuilder.set_constants">set_constants() (l2p.DomainBuilder method)</a>
 </li>
-        <li><a href="l2p.html#l2p.PromptBuilder.set_examples">set_examples() (l2p.PromptBuilder method)</a>
+        <li><a href="l2p.html#l2p.DomainBuilder.set_constraints">set_constraints() (l2p.DomainBuilder method)</a>
+
+        <ul>
+          <li><a href="l2p.html#l2p.ProblemBuilder.set_constraints">(l2p.ProblemBuilder method)</a>
+</li>
+        </ul></li>
+        <li><a href="l2p.html#l2p.DomainBuilder.set_derived_predicates">set_derived_predicates() (l2p.DomainBuilder method)</a>
+</li>
+        <li><a href="l2p.html#l2p.DomainBuilder.set_domain_desc">set_domain_desc() (l2p.DomainBuilder method)</a>
+</li>
+        <li><a href="l2p.html#l2p.DomainBuilder.set_domain_name">set_domain_name() (l2p.DomainBuilder method)</a>
+</li>
+        <li><a href="l2p.html#l2p.DomainBuilder.set_durative_actions">set_durative_actions() (l2p.DomainBuilder method)</a>
+</li>
+        <li><a href="l2p.html#l2p.DomainBuilder.set_events">set_events() (l2p.DomainBuilder method)</a>
 </li>
         <li><a href="l2p.html#l2p.PromptBuilder.set_format">set_format() (l2p.PromptBuilder method)</a>
 </li>
-        <li><a href="l2p.html#l2p.DomainBuilder.set_function">set_function() (l2p.DomainBuilder method)</a>
+        <li><a href="l2p.html#l2p.PromptBuilder.set_format_example">set_format_example() (l2p.PromptBuilder method)</a>
 </li>
-        <li><a href="l2p.html#l2p.TaskBuilder.set_goal">set_goal() (l2p.TaskBuilder method)</a>
+        <li><a href="l2p.html#l2p.DomainBuilder.set_functions">set_functions() (l2p.DomainBuilder method)</a>
 </li>
-        <li><a href="l2p.html#l2p.TaskBuilder.set_initial">set_initial() (l2p.TaskBuilder method)</a>
+        <li><a href="l2p.html#l2p.ProblemBuilder.set_goal_states">set_goal_states() (l2p.ProblemBuilder method)</a>
 </li>
-        <li><a href="l2p.html#l2p.TaskBuilder.set_objects">set_objects() (l2p.TaskBuilder method)</a>
+        <li><a href="l2p.html#l2p.ProblemBuilder.set_initial_states">set_initial_states() (l2p.ProblemBuilder method)</a>
 </li>
-        <li><a href="l2p.html#l2p.DomainBuilder.set_pddl_action">set_pddl_action() (l2p.DomainBuilder method)</a>
+        <li><a href="l2p.html#l2p.ProblemBuilder.set_metric">set_metric() (l2p.ProblemBuilder method)</a>
 </li>
-        <li><a href="l2p.html#l2p.DomainBuilder.set_predicate">set_predicate() (l2p.DomainBuilder method)</a>
+        <li><a href="l2p.html#l2p.ProblemBuilder.set_objects">set_objects() (l2p.ProblemBuilder method)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="l2p.html#l2p.DomainBuilder.set_predicates">set_predicates() (l2p.DomainBuilder method)</a>
+</li>
+        <li><a href="l2p.html#l2p.ProblemBuilder.set_problem_desc">set_problem_desc() (l2p.ProblemBuilder method)</a>
+</li>
+        <li><a href="l2p.html#l2p.ProblemBuilder.set_problem_name">set_problem_name() (l2p.ProblemBuilder method)</a>
+</li>
+        <li><a href="l2p.html#l2p.DomainBuilder.set_processes">set_processes() (l2p.DomainBuilder method)</a>
+</li>
+        <li><a href="l2p.html#l2p.DomainBuilder.set_requirements">set_requirements() (l2p.DomainBuilder method)</a>
+</li>
         <li><a href="l2p.html#l2p.PromptBuilder.set_role">set_role() (l2p.PromptBuilder method)</a>
 </li>
         <li><a href="l2p.html#l2p.PromptBuilder.set_task">set_task() (l2p.PromptBuilder method)</a>
 </li>
-        <li><a href="l2p.html#l2p.DomainBuilder.set_type_hierarchy">set_type_hierarchy() (l2p.DomainBuilder method)</a>
-</li>
         <li><a href="l2p.html#l2p.DomainBuilder.set_types">set_types() (l2p.DomainBuilder method)</a>
 </li>
-        <li><a href="l2p.html#l2p.utils.pddl_types.Action.setdefault">setdefault() (l2p.utils.pddl_types.Action method)</a>
-
-        <ul>
-          <li><a href="l2p.html#l2p.utils.pddl_types.Constant.setdefault">(l2p.utils.pddl_types.Constant method)</a>
+        <li><a href="l2p.html#l2p.ProblemBuilder.SINGULAR_FIELDS">SINGULAR_FIELDS (l2p.ProblemBuilder attribute)</a>
 </li>
-          <li><a href="l2p.html#l2p.utils.pddl_types.Function.setdefault">(l2p.utils.pddl_types.Function method)</a>
-</li>
-          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLType.setdefault">(l2p.utils.pddl_types.PDDLType method)</a>
-</li>
-          <li><a href="l2p.html#l2p.utils.pddl_types.Predicate.setdefault">(l2p.utils.pddl_types.Predicate method)</a>
-</li>
-        </ul></li>
-        <li><a href="l2p.html#l2p.utils.pddl_validator.SyntaxValidator">SyntaxValidator (class in l2p.utils.pddl_validator)</a>
+        <li><a href="l2p.html#l2p.validators.base.SyntaxValidator">SyntaxValidator (class in l2p.validators.base)</a>
 </li>
     </ul></td>
   </tr></table>
@@ -871,16 +2488,80 @@
   <h2>T</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
     <td style="width: 33%; vertical-align: top;"><ul>
-        <li><a href="l2p.html#l2p.FeedbackBuilder.task_feedback">task_feedback() (l2p.FeedbackBuilder method)</a>
+        <li><a href="l2p.html#l2p.utils.pddl_types.Action.tag">tag (l2p.utils.pddl_types.Action attribute)</a>
+
+        <ul>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionEffect.tag">(l2p.utils.pddl_types.ActionEffect attribute)</a>
 </li>
-        <li><a href="l2p.html#l2p.TaskBuilder">TaskBuilder (class in l2p)</a>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionPrecondition.tag">(l2p.utils.pddl_types.ActionPrecondition attribute)</a>
 </li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ConditionalEffect.tag">(l2p.utils.pddl_types.ConditionalEffect attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constant.tag">(l2p.utils.pddl_types.Constant attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constraint.tag">(l2p.utils.pddl_types.Constraint attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DerivedPredicate.tag">(l2p.utils.pddl_types.DerivedPredicate attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DomainDetails.tag">(l2p.utils.pddl_types.DomainDetails attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeAction.tag">(l2p.utils.pddl_types.DurativeAction attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionConditions.tag">(l2p.utils.pddl_types.DurativeActionConditions attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionEffect.tag">(l2p.utils.pddl_types.DurativeActionEffect attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Event.tag">(l2p.utils.pddl_types.Event attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Function.tag">(l2p.utils.pddl_types.Function attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.GoalState.tag">(l2p.utils.pddl_types.GoalState attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.InitialState.tag">(l2p.utils.pddl_types.InitialState attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Metric.tag">(l2p.utils.pddl_types.Metric attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Parameter.tag">(l2p.utils.pddl_types.Parameter attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLObject.tag">(l2p.utils.pddl_types.PDDLObject attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLType.tag">(l2p.utils.pddl_types.PDDLType attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Predicate.tag">(l2p.utils.pddl_types.Predicate attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ProblemDetails.tag">(l2p.utils.pddl_types.ProblemDetails attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Process.tag">(l2p.utils.pddl_types.Process attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Requirement.tag">(l2p.utils.pddl_types.Requirement attribute)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.TimedFact.tag">(l2p.utils.pddl_types.TimedFact attribute)</a>
+</li>
+        </ul></li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="l2p.html#l2p.validators.base.FunctionalRule.target_models">target_models (l2p.validators.base.FunctionalRule property)</a>
+
+        <ul>
+          <li><a href="l2p.html#l2p.validators.base.ValidationRule.target_models">(l2p.validators.base.ValidationRule property)</a>
+</li>
+        </ul></li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.TimedFact.time">time (l2p.utils.pddl_types.TimedFact attribute)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.InitialState.timed_facts">timed_facts (l2p.utils.pddl_types.InitialState attribute)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.TimedFact">TimedFact (class in l2p.utils.pddl_types)</a>
+</li>
+        <li><a href="l2p.html#l2p.planner_builder.TimeoutException">TimeoutException</a>
+</li>
         <li><a href="l2p.html#l2p.utils.pddl_types.Constant.type">type (l2p.utils.pddl_types.Constant attribute)</a>
+
+        <ul>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Parameter.type">(l2p.utils.pddl_types.Parameter attribute)</a>
 </li>
-        <li><a href="l2p.html#l2p.FeedbackBuilder.type_feedback">type_feedback() (l2p.FeedbackBuilder method)</a>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLObject.type">(l2p.utils.pddl_types.PDDLObject attribute)</a>
 </li>
+        </ul></li>
         <li><a href="l2p.html#l2p.utils.pddl_types.DomainDetails.types">types (l2p.utils.pddl_types.DomainDetails attribute)</a>
 </li>
     </ul></td>
@@ -891,16 +2572,58 @@
   <h2>U</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
     <td style="width: 33%; vertical-align: top;"><ul>
-        <li><a href="l2p.html#l2p.utils.pddl_types.Action.update">update() (l2p.utils.pddl_types.Action method)</a>
+        <li><a href="l2p.html#l2p.UnifiedLLM">UnifiedLLM (class in l2p)</a>
+</li>
+        <li><a href="l2p.html#l2p.planner_builder.UnifiedPlanning">UnifiedPlanning (class in l2p.planner_builder)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.Action.update_forward_refs">update_forward_refs() (l2p.utils.pddl_types.Action class method)</a>
 
         <ul>
-          <li><a href="l2p.html#l2p.utils.pddl_types.Constant.update">(l2p.utils.pddl_types.Constant method)</a>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionEffect.update_forward_refs">(l2p.utils.pddl_types.ActionEffect class method)</a>
 </li>
-          <li><a href="l2p.html#l2p.utils.pddl_types.Function.update">(l2p.utils.pddl_types.Function method)</a>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionPrecondition.update_forward_refs">(l2p.utils.pddl_types.ActionPrecondition class method)</a>
 </li>
-          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLType.update">(l2p.utils.pddl_types.PDDLType method)</a>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ConditionalEffect.update_forward_refs">(l2p.utils.pddl_types.ConditionalEffect class method)</a>
 </li>
-          <li><a href="l2p.html#l2p.utils.pddl_types.Predicate.update">(l2p.utils.pddl_types.Predicate method)</a>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constant.update_forward_refs">(l2p.utils.pddl_types.Constant class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constraint.update_forward_refs">(l2p.utils.pddl_types.Constraint class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DerivedPredicate.update_forward_refs">(l2p.utils.pddl_types.DerivedPredicate class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DomainDetails.update_forward_refs">(l2p.utils.pddl_types.DomainDetails class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeAction.update_forward_refs">(l2p.utils.pddl_types.DurativeAction class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionConditions.update_forward_refs">(l2p.utils.pddl_types.DurativeActionConditions class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionEffect.update_forward_refs">(l2p.utils.pddl_types.DurativeActionEffect class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Event.update_forward_refs">(l2p.utils.pddl_types.Event class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Function.update_forward_refs">(l2p.utils.pddl_types.Function class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.GoalState.update_forward_refs">(l2p.utils.pddl_types.GoalState class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.InitialState.update_forward_refs">(l2p.utils.pddl_types.InitialState class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Metric.update_forward_refs">(l2p.utils.pddl_types.Metric class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Parameter.update_forward_refs">(l2p.utils.pddl_types.Parameter class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLObject.update_forward_refs">(l2p.utils.pddl_types.PDDLObject class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLType.update_forward_refs">(l2p.utils.pddl_types.PDDLType class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Predicate.update_forward_refs">(l2p.utils.pddl_types.Predicate class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ProblemDetails.update_forward_refs">(l2p.utils.pddl_types.ProblemDetails class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Process.update_forward_refs">(l2p.utils.pddl_types.Process class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Requirement.update_forward_refs">(l2p.utils.pddl_types.Requirement class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.TimedFact.update_forward_refs">(l2p.utils.pddl_types.TimedFact class method)</a>
 </li>
         </ul></li>
     </ul></td>
@@ -911,54 +2634,110 @@
   <h2>V</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
     <td style="width: 33%; vertical-align: top;"><ul>
-        <li><a href="l2p.html#l2p.utils.pddl_validator.SyntaxValidator.validate_constant_types">validate_constant_types() (l2p.utils.pddl_validator.SyntaxValidator method)</a>
+        <li><a href="l2p.html#l2p.BaseLLM.valid_models">valid_models() (l2p.BaseLLM method)</a>
+
+        <ul>
+          <li><a href="l2p.html#l2p.HUGGING_FACE.valid_models">(l2p.HUGGING_FACE method)</a>
 </li>
-        <li><a href="l2p.html#l2p.utils.pddl_validator.SyntaxValidator.validate_cyclic_types">validate_cyclic_types() (l2p.utils.pddl_validator.SyntaxValidator method)</a>
+          <li><a href="l2p.html#l2p.OPENAI.valid_models">(l2p.OPENAI method)</a>
 </li>
-        <li><a href="l2p.html#l2p.utils.pddl_validator.SyntaxValidator.validate_duplicate_headers">validate_duplicate_headers() (l2p.utils.pddl_validator.SyntaxValidator method)</a>
+          <li><a href="l2p.html#l2p.UnifiedLLM.valid_models">(l2p.UnifiedLLM method)</a>
 </li>
-        <li><a href="l2p.html#l2p.utils.pddl_validator.SyntaxValidator.validate_duplicate_predicates">validate_duplicate_predicates() (l2p.utils.pddl_validator.SyntaxValidator method)</a>
+        </ul></li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.Action.validate">validate() (l2p.utils.pddl_types.Action class method)</a>
+
+        <ul>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionEffect.validate">(l2p.utils.pddl_types.ActionEffect class method)</a>
 </li>
-        <li><a href="l2p.html#l2p.utils.pddl_validator.SyntaxValidator.validate_format_functions">validate_format_functions() (l2p.utils.pddl_validator.SyntaxValidator method)</a>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ActionPrecondition.validate">(l2p.utils.pddl_types.ActionPrecondition class method)</a>
 </li>
-        <li><a href="l2p.html#l2p.utils.pddl_validator.SyntaxValidator.validate_format_predicates">validate_format_predicates() (l2p.utils.pddl_validator.SyntaxValidator method)</a>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ConditionalEffect.validate">(l2p.utils.pddl_types.ConditionalEffect class method)</a>
 </li>
-        <li><a href="l2p.html#l2p.utils.pddl_validator.SyntaxValidator.validate_format_types">validate_format_types() (l2p.utils.pddl_validator.SyntaxValidator method)</a>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constant.validate">(l2p.utils.pddl_types.Constant class method)</a>
 </li>
-        <li><a href="l2p.html#l2p.utils.pddl_validator.SyntaxValidator.validate_header">validate_header() (l2p.utils.pddl_validator.SyntaxValidator method)</a>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Constraint.validate">(l2p.utils.pddl_types.Constraint class method)</a>
 </li>
-        <li><a href="l2p.html#l2p.utils.pddl_validator.SyntaxValidator.validate_overflow_predicates">validate_overflow_predicates() (l2p.utils.pddl_validator.SyntaxValidator method)</a>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DerivedPredicate.validate">(l2p.utils.pddl_types.DerivedPredicate class method)</a>
 </li>
-        <li><a href="l2p.html#l2p.utils.pddl_validator.SyntaxValidator.validate_params">validate_params() (l2p.utils.pddl_validator.SyntaxValidator method)</a>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DomainDetails.validate">(l2p.utils.pddl_types.DomainDetails class method)</a>
 </li>
-        <li><a href="l2p.html#l2p.utils.pddl_validator.SyntaxValidator.validate_pddl_action">validate_pddl_action() (l2p.utils.pddl_validator.SyntaxValidator method)</a>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeAction.validate">(l2p.utils.pddl_types.DurativeAction class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionConditions.validate">(l2p.utils.pddl_types.DurativeActionConditions class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.DurativeActionEffect.validate">(l2p.utils.pddl_types.DurativeActionEffect class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Event.validate">(l2p.utils.pddl_types.Event class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Function.validate">(l2p.utils.pddl_types.Function class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.GoalState.validate">(l2p.utils.pddl_types.GoalState class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.InitialState.validate">(l2p.utils.pddl_types.InitialState class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Metric.validate">(l2p.utils.pddl_types.Metric class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Parameter.validate">(l2p.utils.pddl_types.Parameter class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLObject.validate">(l2p.utils.pddl_types.PDDLObject class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLType.validate">(l2p.utils.pddl_types.PDDLType class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Predicate.validate">(l2p.utils.pddl_types.Predicate class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.ProblemDetails.validate">(l2p.utils.pddl_types.ProblemDetails class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Process.validate">(l2p.utils.pddl_types.Process class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.Requirement.validate">(l2p.utils.pddl_types.Requirement class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.utils.pddl_types.TimedFact.validate">(l2p.utils.pddl_types.TimedFact class method)</a>
+</li>
+          <li><a href="l2p.html#l2p.validators.base.FunctionalRule.validate">(l2p.validators.base.FunctionalRule method)</a>
+</li>
+          <li><a href="l2p.html#l2p.validators.base.ValidationRule.validate">(l2p.validators.base.ValidationRule method)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="l2p.html#l2p.validators.base.SyntaxValidator.validate_component">validate_component() (l2p.validators.base.SyntaxValidator method)</a>
+
+        <ul>
+          <li><a href="l2p.html#l2p.validators.domain.DomainValidator.validate_component">(l2p.validators.domain.DomainValidator method)</a>
+</li>
+          <li><a href="l2p.html#l2p.validators.problem.ProblemValidator.validate_component">(l2p.validators.problem.ProblemValidator method)</a>
+</li>
+        </ul></li>
+        <li><a href="l2p.html#l2p.validators.domain.DomainValidator.validate_domain">validate_domain() (l2p.validators.domain.DomainValidator method)</a>
+</li>
+        <li><a href="l2p.html#l2p.validators.domain.validate_pddl_naming">validate_pddl_naming() (in module l2p.validators.domain)</a>
+
+        <ul>
+          <li><a href="l2p.html#l2p.validators.problem.validate_pddl_naming">(in module l2p.validators.problem)</a>
+</li>
+        </ul></li>
+        <li><a href="l2p.html#l2p.validators.problem.ProblemValidator.validate_problem">validate_problem() (l2p.validators.problem.ProblemValidator method)</a>
+</li>
+        <li><a href="l2p.html#l2p.validators.base.ValidationResult">ValidationResult (class in l2p.validators.base)</a>
+</li>
+        <li><a href="l2p.html#l2p.validators.base.ValidationRule">ValidationRule (class in l2p.validators.base)</a>
+</li>
+        <li><a href="l2p.html#l2p.utils.pddl_types.Parameter.variable">variable (l2p.utils.pddl_types.Parameter attribute)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="W" class="genindex-section">
+  <h2>W</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="l2p.html#l2p.planner_builder.TimeoutException.with_traceback">with_traceback() (l2p.planner_builder.TimeoutException method)</a>
 </li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
-        <li><a href="l2p.html#l2p.utils.pddl_validator.SyntaxValidator.validate_task_objects">validate_task_objects() (l2p.utils.pddl_validator.SyntaxValidator method)</a>
+        <li><a href="l2p.html#l2p.utils.pddl_parser.write_temp_pddl">write_temp_pddl() (in module l2p.utils.pddl_parser)</a>
 </li>
-        <li><a href="l2p.html#l2p.utils.pddl_validator.SyntaxValidator.validate_task_states">validate_task_states() (l2p.utils.pddl_validator.SyntaxValidator method)</a>
-</li>
-        <li><a href="l2p.html#l2p.utils.pddl_validator.SyntaxValidator.validate_type">validate_type() (l2p.utils.pddl_validator.SyntaxValidator method)</a>
-</li>
-        <li><a href="l2p.html#l2p.utils.pddl_validator.SyntaxValidator.validate_types_predicates">validate_types_predicates() (l2p.utils.pddl_validator.SyntaxValidator method)</a>
-</li>
-        <li><a href="l2p.html#l2p.utils.pddl_validator.SyntaxValidator.validate_unsupported_keywords">validate_unsupported_keywords() (l2p.utils.pddl_validator.SyntaxValidator method)</a>
-</li>
-        <li><a href="l2p.html#l2p.utils.pddl_validator.SyntaxValidator.validate_usage_action">validate_usage_action() (l2p.utils.pddl_validator.SyntaxValidator method)</a>
-</li>
-        <li><a href="l2p.html#l2p.utils.pddl_types.Action.values">values() (l2p.utils.pddl_types.Action method)</a>
-
-        <ul>
-          <li><a href="l2p.html#l2p.utils.pddl_types.Constant.values">(l2p.utils.pddl_types.Constant method)</a>
-</li>
-          <li><a href="l2p.html#l2p.utils.pddl_types.Function.values">(l2p.utils.pddl_types.Function method)</a>
-</li>
-          <li><a href="l2p.html#l2p.utils.pddl_types.PDDLType.values">(l2p.utils.pddl_types.PDDLType method)</a>
-</li>
-          <li><a href="l2p.html#l2p.utils.pddl_types.Predicate.values">(l2p.utils.pddl_types.Predicate method)</a>
-</li>
-        </ul></li>
     </ul></td>
   </tr></table>
 </section>
@@ -975,7 +2754,7 @@
         <div class="bottom-of-page">
           <div class="left-details">
             <div class="copyright">
-                Copyright &#169; 2025, Marcus Tantakoun
+                Copyright &#169; 2026, Marcus Tantakoun
             </div>
             Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
             
@@ -995,7 +2774,7 @@
       
     </aside>
   </div>
-</div><script src="_static/documentation_options.js?v=000c92bf"></script>
+</div><script src="_static/documentation_options.js?v=6c02275b"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/furo.js?v=46bd48cc"></script>

@@ -1,0 +1,423 @@
+CLI
+====
+
+The ``l2p`` CLI provides terminal-based access to PDDL generation, validation,
+planning, and LLM agent tooling. It supports both **interactive** workflows for
+human users and **stateless** command pipelines for automation and LLM agents.
+
+Configuration is stored at ``~/.l2p/config.yaml`` and managed via the
+:ref:`cli_init` and :ref:`cli_config` commands.
+
+.. tip::
+   Non-interactive commands (``l2p set``, ``l2p build``, ``l2p validate``,
+   ``l2p plan``, ``l2p schema``) accept structured JSON input and produce
+   machine-readable output - ideal for LLM tool-calling agents. See
+   :ref:`cli_agentic` below.
+
+.. _cli_quickref:
+
+Quick Reference
+---------------
+
++----------------------------------+----------------------------------------------------+-----------------+
+| Command                          | Description                                        | Audience        |
++==================================+====================================================+=================+
+| :ref:`cli_init`                  | Configure LLM provider & model                     | Human + Agent   |
++----------------------------------+----------------------------------------------------+-----------------+
+| :ref:`cli_set`                   | Inject a PDDL component from JSON                  | Agent           |
++----------------------------------+----------------------------------------------------+-----------------+
+| :ref:`cli_build`                 | Assemble & render full PDDL domain or problem      | Agent           |
++----------------------------------+----------------------------------------------------+-----------------+
+| :ref:`cli_validate`              | Validate JSON components or ``.pddl`` files        | Agent           |
++----------------------------------+----------------------------------------------------+-----------------+
+| :ref:`cli_plan`                  | Run a planner on domain/problem strings            | Agent           |
++----------------------------------+----------------------------------------------------+-----------------+
+| :ref:`cli_schema`                | Output Pydantic JSON Schema for LLM reference      | Agent           |
++----------------------------------+----------------------------------------------------+-----------------+
+| :ref:`cli_generate`              | Interactive domain & problem generation            | Human           |
++----------------------------------+----------------------------------------------------+-----------------+
+| :ref:`cli_models`                | List, switch, and test configured models           | Human + Agent   |
++----------------------------------+----------------------------------------------------+-----------------+
+| :ref:`cli_config`                | Show, edit, validate, or reset configuration       | Human + Agent   |
++----------------------------------+----------------------------------------------------+-----------------+
+| :ref:`cli_templates`             | List, show, and find prompt templates              | Human + Agent   |
++----------------------------------+----------------------------------------------------+-----------------+
+| :ref:`cli_new`                   | Create blank PDDL domain or problem file           | Human + Agent   |
++----------------------------------+----------------------------------------------------+-----------------+
+| :ref:`cli_chat`                  | Interactive LLM chat with PDDL editing             | Human           |
++----------------------------------+----------------------------------------------------+-----------------+
+
+.. _cli_interactive:
+
+Interactive Commands (for humans)
+---------------------------------
+
+These commands provide step-by-step prompts and are designed for direct
+terminal use.
+
+.. _cli_init:
+
+``l2p init`` - Initial Setup
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Walks through LLM backend selection, provider, model name, and API key
+configuration. The resulting config is saved to ``~/.l2p/config.yaml``.
+
+.. code-block:: bash
+
+   # Interactive setup
+   l2p init
+
+   # Non-interactive (for scripts)
+   l2p init --backend openai --provider openai --model gpt-4o-mini
+
+Supports two backends:
+
+* **unified** - uses the `simonw/llm <https://github.com/simonw/llm>`_ library
+* **openai** - uses the OpenAI SDK directly
+
+Providers include ``openai``, ``google``, ``anthropic``, ``deepseek``,
+``mistral``, ``ollama``, and ``ollama-cloud``.
+
+.. _cli_generate:
+
+``l2p generate`` - Interactive PDDL Generation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Step-by-step pipelines for building PDDL domains and problems with LLM
+assistance.
+
+.. code-block:: bash
+
+   # Interactive domain generation
+   l2p generate domain
+
+   # Interactive problem generation
+   l2p generate problem
+
+   # Increase LLM retries on parse failure
+   l2p generate domain --max-retries 5
+
+``l2p generate domain`` guides you through: domain name, description, types,
+constants, predicates, functions, and actions - each generated by the LLM,
+entered manually, or reviewed before proceeding.
+
+``l2p generate problem`` prompts for: domain source (NL description or existing
+``.pddl`` file), problem name, description, objects, initial state, and goal
+state.
+
+.. tip::
+   At each generation step you can accept the LLM output, provide fix feedback
+   for a regeneration, or enter the data manually.
+
+.. _cli_chat:
+
+``l2p chat`` - Interactive LLM Session
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A REPL-style chat session with the configured LLM, featuring PDDL-specific
+commands:
+
+.. code-block:: bash
+
+   l2p chat
+
+   # Inside the session:
+   #   /exit              - quit
+   #   /edit <file.pddl>  - load & edit a PDDL file
+   #   /validate <file>   - validate a PDDL file
+   #   <any message>      - send to LLM with L2P context
+
+The ``/edit`` command loads a PDDL file, takes an edit description, sends it to
+the LLM with editing instructions, shows a diff, and prompts to overwrite.
+
+.. _cli_models:
+
+``l2p models`` - Model Management
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+List available models, switch between them, and test LLM connections.
+
+.. code-block:: bash
+
+   # List configured models
+   l2p models list
+   l2p models list --details              # show context length, cost, params
+   l2p models list --provider openai      # filter by provider
+
+   # Switch model interactively
+   l2p models switch
+
+   # Test connection
+   l2p models test
+   l2p models test --simple               # config validation only
+
+.. _cli_config:
+
+``l2p config`` - Configuration Management
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+View, edit, validate, and reset the L2P configuration.
+
+.. code-block:: bash
+
+   # Show configuration
+   l2p config show
+   l2p config show --raw                  # raw YAML output
+
+   # Edit in $EDITOR
+   l2p config edit
+
+   # Validate settings
+   l2p config validate
+
+   # Reset to defaults
+   l2p config reset --force
+
+The ``edit`` subcommand auto-detects your editor from the ``$EDITOR``
+environment variable and re-validates the config after saving.
+
+.. _cli_new:
+
+``l2p new`` - Blank PDDL Files
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Create minimal PDDL domain or problem skeleton files.
+
+.. code-block:: bash
+
+   # Create a domain file
+   l2p new blocksworld.pddl
+
+   # Create a problem file
+   l2p new pb1.pddl --type problem --domain-name blocksworld
+
+.. _cli_templates:
+
+``l2p templates`` - Prompt Template Management
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+List, show, and find built-in prompt templates used by the generation
+commands.
+
+.. code-block:: bash
+
+   # List all templates
+   l2p templates list
+   l2p templates list --category domain   # filter by category
+   l2p templates list --details           # show source & path
+
+   # Show template content
+   l2p templates show --name types
+
+   # Find template file path
+   l2p templates find --name actions
+
+Three categories are available: ``domain``, ``task``, and ``feedback``.
+
+.. _cli_agentic:
+
+Agentic Workflow (for automation & LLM agents)
+----------------------------------------------
+
+These commands accept structured JSON input, perform a single operation, and
+produce machine-readable output. They are designed for non-interactive use by
+LLM tool-calling agents and shell scripts.
+
+.. tip::
+   Every agentic command is **stateless** - pass full JSON via ``--data`` or
+   compose from individual flags. Pipe validated JSON between commands::
+
+      l2p set types --data '[...]' --json | l2p set predicates --stdin --json
+
+.. _cli_set:
+
+``l2p set`` - Inject & Validate a Component
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Inject individual PDDL components from JSON. Each call validates the data
+against L2P's semantic rules and optionally outputs the formatted result.
+
+.. code-block:: bash
+
+   # Inject types
+   l2p set types --data '[{"name":"block","parent":"object"}]'
+
+   # Inject predicates, output PDDL
+   l2p set predicates --data '[
+     {"name":"clear","params":[{"variable":"?x","type":"block"}]}
+   ]' --pddl
+
+   # Inject from file
+   l2p set actions --file actions.json --json
+
+   # Pipe between commands
+   l2p set types --data '[...]' --json | l2p set predicates --stdin
+
+   # Show JSON Schema for LLM
+   l2p set types --schema
+
+Available components:
+
+* Domain: ``requirements``, ``types``, ``constants``, ``predicates``,
+  ``functions``, ``derived-predicates``, ``actions``, ``durative-actions``,
+  ``events``, ``processes``, ``constraints``
+* Problem: ``objects``, ``initial-state``, ``goal-state``, ``metric``
+
+.. _cli_build:
+
+``l2p build`` - Assemble & Render PDDL
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Build the final PDDL string from a complete ``DomainDetails`` or
+``ProblemDetails`` JSON, or from individual component files.
+
+.. code-block:: bash
+
+   # Full JSON - one-shot domain (recommended for agents)
+   l2p build domain --data '{
+     "name":"blocksworld",
+     "types":[{"name":"block","parent":"object"}],
+     "predicates":[...],
+     "actions":[...]
+   }' -o domain.pddl
+
+   # Full JSON - one-shot problem
+   l2p build problem --data '{
+     "name":"pb1","domain_name":"blocksworld",
+     "objects":[...],
+     "initial_state":{...},
+     "goal_state":{...}
+   }' -o problem.pddl
+
+   # Individual component files
+   l2p build domain --name blocksworld \
+     --types types.json --predicates preds.json \
+     --actions actions.json -o domain.pddl
+
+   # Output JSON instead of PDDL
+   l2p build domain --data '{...}' --json
+
+File references use the ``@`` prefix (e.g. ``--types @types.json``).
+
+.. _cli_validate:
+
+``l2p validate`` - Semantic & Syntax Checking
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Validate individual JSON components or entire ``.pddl`` files against L2P's
+rule engine. Rules cover naming conventions, type inheritance, variable scope,
+arity matching, undeclared symbols, and uppercase warnings.
+
+.. code-block:: bash
+
+   # Validate a component JSON snippet
+   l2p validate types --data '[{"name":"block","parent":"object"}]'
+
+   # Validate a .pddl domain file
+   l2p validate domain domain.pddl
+
+   # Validate a .pddl problem file (cross-checked against domain)
+   l2p validate problem problem.pddl --domain domain.pddl
+
+   # Validate full DomainDetails JSON
+   l2p validate domain --data '{"name":"bw","types":[],"predicates":[],"actions":[]}'
+
+Three input modes: raw JSON string, JSON file, or ``.pddl`` file. Exits with
+code 1 on validation failure.
+
+.. _cli_plan:
+
+``l2p plan`` - Run a Planner
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Execute a classical planner on PDDL domain and problem strings directly - no
+temporary files needed (they are managed automatically).
+
+.. code-block:: bash
+
+   # Run Fast Downward with raw PDDL strings
+   l2p plan \
+     --domain '(define (domain test) ...)' \
+     --problem '(define (problem p) ...)' \
+     --planner fast-downward --alias lama-first
+
+   # Read from files
+   l2p plan --domain @domain.pddl --problem @problem.pddl --json
+
+   # Use Unified Planning backend
+   l2p plan --domain @d.pddl --problem @p.pddl \
+     --planner unified --engine aries --json
+
+Output with ``--json`` returns a structured :class:`~l2p.planner_builder.PlanningResult`::
+
+   {
+     "is_successful": true,
+     "plan": ["(pickup b1)", "(stack b1 b2)"],
+     "error_message": null,
+     "raw_output": "...",
+     "metrics": {}
+   }
+
+Two planner backends:
+
+* **Fast Downward** - submodule-based, requires the executable path
+* **Unified Planning** - Python API, requires ``pip install unified-planning[engine]``
+
+.. _cli_schema:
+
+``l2p schema`` - JSON Schema Reference for LLMs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Output the Pydantic JSON Schema for any PDDL component. LLMs can read this to
+know the exact JSON structure expected by ``l2p set`` and ``l2p build``.
+
+.. code-block:: bash
+
+   # Schema for a single component
+   l2p schema types
+   l2p schema predicates
+   l2p schema actions
+
+   # Include example JSON
+   l2p schema domain --examples
+
+   # List all available schemas
+   l2p schema list
+
+Available schemas: ``types``, ``constants``, ``predicates``, ``functions``,
+``derived-predicates``, ``actions``, ``durative-actions``, ``events``,
+``processes``, ``constraints``, ``parameters``, ``objects``,
+``initial-state``, ``goal-state``, ``metric``, ``domain``, ``problem``,
+``requirements``.
+
+End-to-End Agent Workflow
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Here is how an LLM agent can chain CLI commands to produce a validated PDDL
+domain and plan:
+
+.. code-block:: bash
+
+   # 1. Get the JSON schema the LLM should follow
+   l2p schema domain --examples
+
+   # 2. Build domain from JSON
+   l2p build domain --data '{
+     "name":"blocksworld","types":[{"name":"block","parent":"object"}],
+     "predicates":[...],"actions":[...]
+   }' -o domain.pddl
+
+   # 3. Validate
+   l2p validate domain domain.pddl
+
+   # 4. Build problem
+   l2p build problem --data '{
+     "name":"pb1","domain_name":"blocksworld",
+     "objects":[{"name":"b1","type":"block"}],
+     "initial_state":{"facts":["(on-table b1)"]},
+     "goal_state":{"conditions":["(holding b1)"]}
+   }' -o problem.pddl
+
+   # 5. Plan
+   l2p plan --domain @domain.pddl --problem @problem.pddl --json

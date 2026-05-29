@@ -195,6 +195,7 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="l2p.html">L2P</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">CLI</a></li>
 <li class="toctree-l1"><a class="reference internal" href="paper_recreations.html">Paper Recreations</a></li>
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Templates</a></li>
 <li class="toctree-l1"><a class="reference internal" href="types.html">Data Types</a></li>
@@ -241,132 +242,183 @@
 <h1>Templates<a class="headerlink" href="#templates" title="Link to this heading">¶</a></h1>
 <p>It is <strong>highly</strong> recommended to use the base templates to properly extract LLM output into the designated Python formats from these methods.</p>
 <p>Below are some examples of the base prompt structure that should be used in this library with your customized prompt using the <cite>PromptBuilder</cite> class. More details of each methods’ prompt structure is found in <strong>l2p/templates</strong>.</p>
-<p>There are three main folders found in <cite>/templates</cite>:</p>
+<p>There are four main folders found in <code class="docutils literal notranslate"><span class="pre">/templates</span></code>:</p>
 <details>
-<summary><strong>templates/domain_templates</strong></summary>
+<summary><strong>templates/domain</strong></summary>
 <ul style="margin-left: 30px; margin-top: 2px;">
- <li><i>/extract_nl_actions.txt</i>: for `DomainBuilder.extract_nl_actions()`</li>
- <li><i>/formalize_domain_spec.txt</i>: for `DomainBuilder.formalize_domain_specs()`</li>
- <li><i>/formalize_types.txt</i>: for `DomainBuilder.formalize_types()</li>
- <li><i>/formalize_type_hierarchy.txt</i>: for `DomainBuilder.formalize_type_hierarchy()</li>
- <li><i>/formalize_constants.txt</i>: for `DomainBuilder.formalize_constants()</li>
- <li><i>/formalize_predicates.txt</i>: for `DomainBuilder.formalize_predicates()</li>
- <li><i>/formalize_functions.txt</i>: for `DomainBuilder.formalize_functions()</li>
- <li><i>/formalize_pddl_action.txt</i>: for `DomainBuilder.formalize_pddl_action()</li>
- <li><i>/formalize_pddl_actions.txt</i>: for `DomainBuilder.formalize_pddl_actions()</li>
- <li><i>/formalize_parameters.txt</i>: for `DomainBuilder.formalize_parameters()</li>
- <li><i>/formalize_preconditions.txt</i>: for `DomainBuilder.formalize_preconditions()</li>
- <li><i>/formalize_effects.txt</i>: for `DomainBuilder.formalize_effects()</li>
+ <li><i>/prompt_types.md</i>: for ``DomainBuilder.formalize_component(model, PDDLType, ...)``</li>
+ <li><i>/prompt_constants.md</i>: for ``DomainBuilder.formalize_component(model, Constant, ...)``</li>
+ <li><i>/prompt_predicates.md</i>: for ``DomainBuilder.formalize_component(model, Predicate, ...)``</li>
+ <li><i>/prompt_functions.md</i>: for ``DomainBuilder.formalize_component(model, Function, ...)``</li>
+ <li><i>/prompt_derived_predicates.md</i>: for ``DomainBuilder.formalize_component(model, DerivedPredicate, ...)``</li>
+ <li><i>/prompt_requirements.md</i>: for ``DomainBuilder.formalize_component(model, Requirement, ...)``</li>
+ <li><i>/prompt_parameters.md</i>: for ``DomainBuilder.formalize_component(model, Parameter, ...)``</li>
+ <li><i>/prompt_preconditions.md</i>: for ``DomainBuilder.formalize_component(model, ActionPrecondition, ...)``</li>
+ <li><i>/prompt_effects.md</i>: for ``DomainBuilder.formalize_component(model, ActionEffect, ...)``</li>
+ <li><i>/prompt_actions.md</i>: for ``DomainBuilder.formalize_component(model, Action, ...)``</li>
+ <li><i>/prompt_nl_actions.md</i>: for ``DomainBuilder.extract_nl(model, "nl_actions", ...)``</li>
+ <li><i>/prompt_durative_actions.md</i>: for ``DomainBuilder.formalize_component(model, DurativeAction, ...)``</li>
+ <li><i>/prompt_durative_conditions.md</i>: for ``DomainBuilder.formalize_component(model, DurativeActionConditions, ...)``</li>
+ <li><i>/prompt_durative_effects.md</i>: for ``DomainBuilder.formalize_component(model, DurativeActionEffect, ...)``</li>
+ <li><i>/prompt_nl_durative_actions.md</i>: for ``DomainBuilder.extract_nl(model, "nl_durative_actions", ...)``</li>
+ <li><i>/prompt_events.md</i>: for ``DomainBuilder.formalize_component(model, Event, ...)``</li>
+ <li><i>/prompt_processes.md</i>: for ``DomainBuilder.formalize_component(model, Process, ...)``</li>
+ <li><i>/prompt_constraints.md</i>: for ``DomainBuilder.formalize_component(model, Constraint, ...)``</li>
 </ul>
 </details><details>
-<summary><strong>templates/task_templates</strong></summary>
+<summary><strong>templates/problem</strong></summary>
 <ul style="margin-left: 30px; margin-top: 2px;">
-  <li><i>/formalize_task.txt</i>: for `TaskBuilder.formalize_task()</li>
-  <li><i>/formalize_objects.txt</i>: for `TaskBuilder.formalize_objects()</li>
-  <li><i>/formalize_initial.txt</i>: for `TaskBuilder.formalize_initial_state()</li>
-  <li><i>/formalize_goal.txt</i>: for `TaskBuilder.formalize_goal_state()</li>
+  <li><i>/prompt_problem.md</i>: for ``ProblemBuilder.formalize_component(model, ProblemDetails, ...)``</li>
+  <li><i>/prompt_objects.md</i>: for ``ProblemBuilder.formalize_component(model, PDDLObject, ...)``</li>
+  <li><i>/prompt_initial_states.md</i>: for ``ProblemBuilder.formalize_component(model, InitialState, ...)``</li>
+  <li><i>/prompt_goal_states.md</i>: for ``ProblemBuilder.formalize_component(model, GoalState, ...)``</li>
+  <li><i>/prompt_metric.md</i>: for ``ProblemBuilder.formalize_component(model, Metric, ...)``</li>
+  <li><i>/prompt_constraints.md</i>: for ``ProblemBuilder.formalize_component(model, Constraint, ...)``</li>
 </ul>
 </details><details>
-<summary><strong>templates/feedback_templates</strong></summary>
+<summary><strong>templates/feedback</strong></summary>
 <ul style="margin-left: 30px; margin-top: 2px;">
-  <li><i>/feedback.txt</i>: base template needed for LLM to provide feedback in any functions in `FeedbackBuilder`</li>
+  <li><i>/prompt_diagnosis.md</i>: for ``FeedbackBuilder.llm_diagnose()``</li>
+  <li><i>/prompt_evaluate.md</i>: for ``FeedbackBuilder.llm_evaluate()``</li>
+  <li><i>/prompt_reflection.md</i>: for ``FeedbackBuilder.llm_reflect()``</li>
+  <li><i>/prompt_revise.md</i>: for ``FeedbackBuilder.llm_revise()``</li>
+  <li><i>/prompt_select.md</i>: for ``FeedbackBuilder.llm_select()``</li>
+  <li><i>/prompt_plan_evaluate.md</i>: for ``FeedbackBuilder.llm_evaluate_plan()``</li>
+  <li><i>/prompt_plan_diagnosis.md</i>: for ``FeedbackBuilder.llm_diagnose_plan()``</li>
+</ul>
+</details><details>
+<summary><strong>templates/custom</strong> (Multi-Component)</summary>
+<p style="margin-left: 30px; margin-top: 8px;">
+These templates extract <strong>multiple PDDL components in a single LLM call</strong>,
+improving cross-component consistency.
+Use them with <code>formalize_component(model, cls_list=[...], ...)</code>.
+</p>
+<ul style="margin-left: 30px; margin-top: 2px;">
+  <li><i>/prompt_types_predicates.md</i>: Types + Predicates</li>
+  <li><i>/prompt_types_constants_predicates.md</i>: Types + Constants + Predicates</li>
+  <li><i>/prompt_types_predicates_functions.md</i>: Types + Predicates + Functions</li>
+  <li><i>/prompt_types_predicates_functions_actions.md</i>: Types + Preds + Functions + Actions</li>
+  <li><i>/prompt_predicates_actions.md</i>: Predicates + Actions</li>
+  <li><i>/prompt_actions_constraints.md</i>: Actions + Constraints</li>
+  <li><i>/prompt_actions_durative_actions.md</i>: Actions + DurativeActions</li>
+  <li><i>/prompt_events_processes.md</i>: Events + Processes</li>
+  <li><i>/prompt_derived_predicates_predicates.md</i>: DerivedPredicates + Predicates</li>
+  <li><i>/prompt_objects_initial_state.md</i>: Objects + InitialState</li>
+  <li><i>/prompt_objects_initial_goal.md</i>: Objects + Init + Goal</li>
+  <li><i>/prompt_initial_goal_metric.md</i>: Init + Goal + Metric</li>
 </ul>
 </details><section id="domain-extraction-prompts-example">
 <h2>Domain Extraction Prompts Example<a class="headerlink" href="#domain-extraction-prompts-example" title="Link to this heading">¶</a></h2>
-<p>This is an example using <cite>l2p/templates/domain_templates/extract_pddl_action.txt</cite></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="kn">from</span><span class="w"> </span><span class="nn">l2p.prompt_builder</span><span class="w"> </span><span class="kn">import</span> <span class="n">PromptBuilder</span>
-<span class="linenos"> 2</span><span class="kn">from</span><span class="w"> </span><span class="nn">l2p.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_file</span>
+<p>This is an example using the <code class="docutils literal notranslate"><span class="pre">PromptBuilder</span></code> class:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="kn">from</span><span class="w"> </span><span class="nn">l2p</span><span class="w"> </span><span class="kn">import</span> <span class="n">Action</span>
+<span class="linenos"> 2</span><span class="kn">from</span><span class="w"> </span><span class="nn">l2p</span><span class="w"> </span><span class="kn">import</span> <span class="n">PromptBuilder</span>
 <span class="linenos"> 3</span>
-<span class="linenos"> 4</span><span class="c1"># LOAD BASE FORMAT TEMPLATE</span>
-<span class="linenos"> 5</span><span class="n">template_path</span> <span class="o">=</span> <span class="s2">&quot;templates/domain_templates/formalize_pddl_action.txt&quot;</span>
-<span class="linenos"> 6</span><span class="n">format_template</span> <span class="o">=</span> <span class="n">load_file</span><span class="p">(</span><span class="n">template_path</span><span class="p">)</span>
-<span class="linenos"> 7</span>
-<span class="linenos"> 8</span><span class="n">role_desc</span> <span class="o">=</span> <span class="s2">&quot;You are a PDDL action constructor. Your job is to take &quot;</span> \
-<span class="linenos"> 9</span>    <span class="s2">&quot;the task given in natural language and convert it into PDDL.&quot;</span>
-<span class="linenos">10</span>
-<span class="linenos">11</span><span class="n">task_desc</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
-<span class="linenos">12</span><span class="s2">## Domain</span>
-<span class="linenos">13</span><span class="si">{domain_desc}</span>
-<span class="linenos">14</span>
-<span class="linenos">15</span><span class="s2">## Available types</span>
-<span class="linenos">16</span><span class="si">{types}</span>
-<span class="linenos">17</span>
-<span class="linenos">18</span><span class="s2">## Future actions to be implemented later</span>
-<span class="linenos">19</span><span class="si">{action_list}</span>
-<span class="linenos">20</span>
-<span class="linenos">21</span><span class="s2">## Action name (to implement now)</span>
-<span class="linenos">22</span><span class="si">{action_name}</span>
-<span class="linenos">23</span>
-<span class="linenos">24</span><span class="s2">## Action description (corresponding action description)</span>
-<span class="linenos">25</span><span class="si">{action_desc}</span>
-<span class="linenos">26</span>
-<span class="linenos">27</span><span class="s2">## Available predicates</span>
-<span class="linenos">28</span><span class="si">{predicates}</span>
-<span class="linenos">29</span><span class="s2">&quot;&quot;&quot;</span>
-<span class="linenos">30</span>
-<span class="linenos">31</span><span class="c1"># assemble prompt</span>
-<span class="linenos">32</span><span class="n">action_construction_prompt</span> <span class="o">=</span> <span class="n">PromptBuilder</span><span class="p">(</span>
-<span class="linenos">33</span>    <span class="n">role</span><span class="o">=</span><span class="n">role_desc</span><span class="p">,</span>
-<span class="linenos">34</span>    <span class="nb">format</span><span class="o">=</span><span class="n">format_template</span><span class="p">,</span>
-<span class="linenos">35</span>    <span class="n">task</span><span class="o">=</span><span class="n">task_desc</span>
-<span class="linenos">36</span>    <span class="p">)</span>
-<span class="linenos">37</span>
-<span class="linenos">38</span><span class="nb">print</span><span class="p">(</span><span class="n">action_construction_prompt</span><span class="o">.</span><span class="n">generate_prompt</span><span class="p">())</span>
+<span class="linenos"> 4</span><span class="n">role_desc</span> <span class="o">=</span> <span class="s2">&quot;You are a PDDL action constructor. Your job is to take &quot;</span> \
+<span class="linenos"> 5</span><span class="s2">&quot;the task given in natural language and convert it into PDDL actions.&quot;</span>
+<span class="linenos"> 6</span>
+<span class="linenos"> 7</span><span class="n">format_desc</span> <span class="o">=</span> <span class="s2">&quot;You must follow the strict JSON object defined below. &quot;</span> \
+<span class="linenos"> 8</span><span class="s2">&quot;Enclose your final answer in &lt;actions&gt; ... &lt;/actions&gt; tags.&quot;</span>
+<span class="linenos"> 9</span>
+<span class="linenos">10</span><span class="n">pb</span> <span class="o">=</span> <span class="p">(</span><span class="n">PromptBuilder</span><span class="p">()</span>
+<span class="linenos">11</span>    <span class="o">.</span><span class="n">set_role</span><span class="p">(</span><span class="n">role_str</span><span class="o">=</span><span class="n">role_desc</span><span class="p">)</span>
+<span class="linenos">12</span>    <span class="o">.</span><span class="n">set_format</span><span class="p">(</span><span class="n">format_str</span><span class="o">=</span><span class="n">format_desc</span><span class="p">)</span>
+<span class="linenos">13</span>    <span class="o">.</span><span class="n">set_format_example</span><span class="p">(</span><span class="n">component</span><span class="o">=</span><span class="n">Action</span><span class="p">)</span> <span class="c1"># set extraction example block for component</span>
+<span class="linenos">14</span>    <span class="o">.</span><span class="n">add_rule</span><span class="p">(</span><span class="n">rule_str</span><span class="o">=</span><span class="s2">&quot;Every action parameter must reference a defined type.&quot;</span><span class="p">)</span>
+<span class="linenos">15</span>    <span class="o">.</span><span class="n">add_rule</span><span class="p">(</span><span class="n">rule_str</span><span class="o">=</span><span class="s2">&quot;Preconditions and effects must only use defined predicates.&quot;</span><span class="p">)</span>
+<span class="linenos">16</span>    <span class="o">.</span><span class="n">add_example</span><span class="p">(</span><span class="s2">&quot;INPUT: ...</span><span class="se">\n</span><span class="s2">OUTPUT: ...&quot;</span><span class="p">)</span>
+<span class="linenos">17</span>    <span class="o">.</span><span class="n">add_example</span><span class="p">(</span><span class="s2">&quot;INPUT: ...</span><span class="se">\n</span><span class="s2">OUTPUT: ...&quot;</span><span class="p">)</span>
+<span class="linenos">18</span>    <span class="o">.</span><span class="n">set_task</span><span class="p">(</span><span class="s2">&quot;Generate actions for a logistics domain.&quot;</span><span class="p">))</span>
+<span class="linenos">19</span>
+<span class="linenos">20</span><span class="nb">print</span><span class="p">(</span><span class="n">pb</span><span class="o">.</span><span class="n">generate_prompt</span><span class="p">())</span>
+<span class="linenos">21</span><span class="c1"># alternatively - pb.save_prompt(filename=&quot;my_prompt.md&quot;)</span>
 </pre></div>
 </div>
 <p>The following is the output:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>[ROLE]: You are a PDDL action constructor. Your job is to take the task given in natural language and convert it into PDDL.
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">## ROLE</span>
+<span class="n">You</span> <span class="n">are</span> <span class="n">a</span> <span class="n">PDDL</span> <span class="n">action</span> <span class="n">constructor</span><span class="o">.</span> <span class="n">Your</span> <span class="n">job</span> <span class="ow">is</span> <span class="n">to</span> <span class="n">take</span> <span class="n">the</span> <span class="n">task</span> <span class="n">given</span> <span class="ow">in</span> <span class="n">natural</span> <span class="n">language</span> <span class="ow">and</span> <span class="n">convert</span> <span class="n">it</span> <span class="n">into</span> <span class="n">PDDL</span> <span class="n">actions</span><span class="o">.</span>
 
-------------------------------------------------
-[FORMAT]: End your final answers underneath the headers: &#39;### Action Parameters,&#39; &#39;### Action Preconditions,&#39; &#39;### Action Effects,&#39; and &#39;### New Predicates&#39; with ``` ``` comment blocks in PDDL as so:
+<span class="c1">## OUTPUT FORMAT</span>
+<span class="n">You</span> <span class="n">must</span> <span class="n">follow</span> <span class="n">the</span> <span class="n">strict</span> <span class="n">JSON</span> <span class="nb">object</span> <span class="n">defined</span> <span class="n">below</span><span class="o">.</span> <span class="n">Enclose</span> <span class="n">your</span> <span class="n">final</span> <span class="n">answer</span> <span class="ow">in</span> <span class="o">&lt;</span><span class="n">actions</span><span class="o">&gt;</span> <span class="o">...</span> <span class="o">&lt;/</span><span class="n">actions</span><span class="o">&gt;</span> <span class="n">tags</span><span class="o">.</span>
 
-### Action Parameters
-```
-- ?t - type: &#39;parameter_description&#39;
-```
+<span class="o">&lt;</span><span class="n">actions</span><span class="o">&gt;</span>
+<span class="p">[</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;move-rover&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;params&quot;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;variable&quot;</span><span class="p">:</span> <span class="s2">&quot;?r&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;rover&quot;</span>
+            <span class="p">},</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;variable&quot;</span><span class="p">:</span> <span class="s2">&quot;?from&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;waypoint&quot;</span>
+            <span class="p">},</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;variable&quot;</span><span class="p">:</span> <span class="s2">&quot;?to&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;waypoint&quot;</span>
+            <span class="p">}</span>
+        <span class="p">],</span>
+        <span class="s2">&quot;preconditions&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;conditions&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="s2">&quot;(at ?r ?from)&quot;</span><span class="p">,</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;operator&quot;</span><span class="p">:</span> <span class="s2">&quot;not&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;condition&quot;</span><span class="p">:</span> <span class="s2">&quot;(= ?from ?to)&quot;</span>
+                <span class="p">}</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;desc&quot;</span><span class="p">:</span> <span class="s2">&quot;Optional (str)&quot;</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;effects&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;add&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="s2">&quot;(at ?r ?to)&quot;</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;delete&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="s2">&quot;(at ?r ?from)&quot;</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;numeric&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="s2">&quot;(decrease (battery-level ?r) 10.0)&quot;</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;conditional&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;condition&quot;</span><span class="p">:</span> <span class="p">[</span>
+                        <span class="s2">&quot;(has-rock-sample ?r)&quot;</span>
+                    <span class="p">],</span>
+                    <span class="s2">&quot;effect&quot;</span><span class="p">:</span> <span class="p">{</span>
+                        <span class="s2">&quot;add&quot;</span><span class="p">:</span> <span class="p">[</span>
+                            <span class="s2">&quot;(carrying-heavy-load ?r)&quot;</span>
+                        <span class="p">],</span>
+                        <span class="s2">&quot;delete&quot;</span><span class="p">:</span> <span class="p">[],</span>
+                        <span class="s2">&quot;numeric&quot;</span><span class="p">:</span> <span class="p">[]</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;desc&quot;</span><span class="p">:</span> <span class="s2">&quot;Optional (str)&quot;</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;desc&quot;</span><span class="p">:</span> <span class="s2">&quot;Optional (str)&quot;</span>
+    <span class="p">}</span>
+<span class="p">]</span>
+<span class="o">&lt;/</span><span class="n">actions</span><span class="o">&gt;</span>
 
-### Action Preconditions
-```
-(and
-    (predicate_name ?t1 ?t2) ; COMMENT DESCRIPTION
-)
-```
+<span class="c1">## RULES</span>
+<span class="mf">1.</span> <span class="n">Every</span> <span class="n">action</span> <span class="n">parameter</span> <span class="n">must</span> <span class="n">reference</span> <span class="n">a</span> <span class="n">defined</span> <span class="nb">type</span><span class="o">.</span>
+<span class="mf">2.</span> <span class="n">Preconditions</span> <span class="ow">and</span> <span class="n">effects</span> <span class="n">must</span> <span class="n">only</span> <span class="n">use</span> <span class="n">defined</span> <span class="n">predicates</span><span class="o">.</span>
 
-### Action Effects
-```
-(and
-    (predicate_name ?t1 ?t2) ; COMMENT DESCRIPTION
-)
-```
+<span class="c1">## EXAMPLE(S)</span>
+<span class="c1"># Example 1:</span>
+<span class="n">INPUT</span><span class="p">:</span> <span class="o">...</span>
+<span class="n">OUTPUT</span><span class="p">:</span> <span class="o">...</span>
 
-### New Predicates
-```
-- (predicate_name ?t1 - type_1 ?t2 - type_2): &#39;predicate_description&#39;
-```
+<span class="c1"># Example 2:</span>
+<span class="n">INPUT</span><span class="p">:</span> <span class="o">...</span>
+<span class="n">OUTPUT</span><span class="p">:</span> <span class="o">...</span>
+<span class="o">--------------------------------------------------</span>
 
-If there are no new predicates created, keep an empty space enclosed ```  ``` with the &#39;### New Predicates&#39; header.
+<span class="c1">## TASK</span>
+<span class="n">Generate</span> <span class="n">actions</span> <span class="k">for</span> <span class="n">a</span> <span class="n">logistics</span> <span class="n">domain</span><span class="o">.</span>
 
-------------------------------------------------
-[TASK]:
-Here is the task to solve:
+<span class="p">{</span><span class="n">description</span><span class="p">}</span>
 
-## Domain
-{domain_desc}
-
-## Available types
-{types}
-
-## Future actions to be implemented later
-{action_list}
-
-## Action name (to implement now)
-{action_name}
-
-## Action description (corresponding action description)
-{action_desc}
-
-## Available predicates
-{predicates}
+<span class="p">{</span><span class="n">context</span><span class="p">}</span>
 </pre></div>
 </div>
 <p>Users have the flexibility to customize all aspects of their prompts, with the exception of the provided base template. While users can include few-shot examples to guide the LLM, the base template must remain intact during inference.</p>
@@ -402,7 +454,7 @@ Here is the task to solve:
         <div class="bottom-of-page">
           <div class="left-details">
             <div class="copyright">
-                Copyright &#169; 2025, Marcus Tantakoun
+                Copyright &#169; 2026, Marcus Tantakoun
             </div>
             Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
             
@@ -441,7 +493,7 @@ Here is the task to solve:
       
     </aside>
   </div>
-</div><script src="_static/documentation_options.js?v=000c92bf"></script>
+</div><script src="_static/documentation_options.js?v=6c02275b"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/furo.js?v=46bd48cc"></script>

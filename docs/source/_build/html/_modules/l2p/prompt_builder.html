@@ -194,6 +194,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../l2p.html">L2P</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cli.html">CLI</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../paper_recreations.html">Paper Recreations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../templates.html">Templates</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../types.html">Data Types</a></li>
@@ -232,11 +233,23 @@
         <article role="main" id="furo-main-content">
           <h1>Source code for l2p.prompt_builder</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">This file uses inputted NL descriptions to generate prompts for LLM. The user does not</span>
-<span class="sd">have to use this class, but it is generally advisable for ease of use.</span>
+<span class="sd">This module defines the `PromptBuilder` class for constructing prompt templates for</span>
+<span class="sd">PDDL generation and feedback messages. Refer to l2p/templates in: https://github.com/AI-Planning/l2p for how to structurally</span>
+<span class="sd">prompt LLMs so they are compatible with class function parsing.</span>
 
-<span class="sd">    - format (str) should be fixed prompt from: /templates</span>
+<span class="sd">This file uses inputted NL descriptions to generate Markdown prompt templates for the LLM.</span>
+<span class="sd">The user does not have to use this class, but it is generally advisable for standardization.</span>
 <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">TypeVar</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">l2p.utils.pddl_prompt</span><span class="w"> </span><span class="kn">import</span> <span class="n">safe_format</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">l2p.utils.pddl_format</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;PromptBuilder&quot;</span><span class="p">]</span>
+
+<span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;T&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">BaseModel</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="PromptBuilder">
@@ -244,142 +257,197 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">PromptBuilder</span><span class="p">:</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">role</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="nb">format</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">examples</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">task</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">role</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="nb">format</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">rules</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">examples</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">task</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">role</span> <span class="o">=</span> <span class="n">role</span>  <span class="c1"># role for LLM to follow (i.e. PDDL predicate constructor)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">format</span> <span class="o">=</span> <span class="nb">format</span>  <span class="c1"># prompting format</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">examples</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">examples</span> <span class="k">if</span> <span class="n">examples</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[]</span>
-        <span class="p">)</span>  <span class="c1"># n-shot examples for LLM to follow</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">task</span> <span class="o">=</span> <span class="n">task</span>  <span class="c1"># dynamic placeholder given information to LLM</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">role</span> <span class="o">=</span> <span class="n">role</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">format</span> <span class="o">=</span> <span class="nb">format</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">task</span> <span class="o">=</span> <span class="n">task</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">rules</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_to_list</span><span class="p">(</span><span class="n">rules</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">examples</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">examples</span> <span class="ow">or</span> <span class="p">[]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_parse_to_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Helper function to allow users to pass either a single string or a list.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">item</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">item</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">item</span>
 
 <div class="viewcode-block" id="PromptBuilder.set_role">
 <a class="viewcode-back" href="../../l2p.html#l2p.PromptBuilder.set_role">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">set_role</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">role</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets the role for the LLM to perform task&quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">role</span> <span class="o">=</span> <span class="n">role</span></div>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_role</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">role_str</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;PromptBuilder&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sets the ``## ROLE`` section of the prompt.</span>
+<span class="sd">        Defines the persona or system role the LLM should adopt.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            role_str (str): The role description (e.g. &#39;You are an expert PDDL generator&#39;).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">role</span> <span class="o">=</span> <span class="n">role_str</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
 
 
 <div class="viewcode-block" id="PromptBuilder.set_format">
 <a class="viewcode-back" href="../../l2p.html#l2p.PromptBuilder.set_format">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">set_format</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">format</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets the prompting format for LLM to perform task&quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">format</span> <span class="o">=</span> <span class="nb">format</span></div>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_format</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">format_str</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;PromptBuilder&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sets the ``## OUTPUT FORMAT`` section of the prompt.</span>
+<span class="sd">        Provides instructions or schemas defining exactly how the LLM should structure its answer.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            format_str (str): The formatting instructions or JSON schema.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">format</span> <span class="o">=</span> <span class="n">format_str</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
 
 
-<div class="viewcode-block" id="PromptBuilder.set_examples">
-<a class="viewcode-back" href="../../l2p.html#l2p.PromptBuilder.set_examples">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">set_examples</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">example</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Appends a shot examples for LLM to follow&quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">examples</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">example</span><span class="p">)</span></div>
+<div class="viewcode-block" id="PromptBuilder.set_format_example">
+<a class="viewcode-back" href="../../l2p.html#l2p.PromptBuilder.set_format_example">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_format_example</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">component</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">is_list</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;PromptBuilder&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Appends a concrete JSON example for *component* (wrapped in the</span>
+<span class="sd">        model&#39;s XML tag) to the ``## OUTPUT FORMAT`` section.</span>
+<span class="sd">        Args:</span>
+<span class="sd">            component (Type[BaseModel]): A Pydantic model class</span>
+<span class="sd">                (e.g. ``PDDLType``, ``Action``, ``InitialState``)</span>
+<span class="sd">            is_list (bool): sets flag to format list of components (from single extraction)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">component</span><span class="p">,</span> <span class="s2">&quot;_example&quot;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;[ERROR] No format example defined for &#39;</span><span class="si">{</span><span class="n">component</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39;. &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Add a `_example` classmethod to the model.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">primary_tag</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">component</span><span class="o">.</span><span class="n">tag</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">component</span><span class="o">.</span><span class="n">tag</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">component</span><span class="o">.</span><span class="n">tag</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">example_data</span> <span class="o">=</span> <span class="n">component</span><span class="o">.</span><span class="n">_example</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">is_list</span><span class="p">:</span>
+            <span class="n">example_data</span> <span class="o">=</span> <span class="p">[</span><span class="n">example_data</span><span class="p">]</span>
+
+        <span class="n">json_str</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">example_data</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+        <span class="n">example_block</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&lt;</span><span class="si">{</span><span class="n">primary_tag</span><span class="si">}</span><span class="s2">&gt;</span><span class="se">\n</span><span class="si">{</span><span class="n">json_str</span><span class="si">}</span><span class="se">\n</span><span class="s2">&lt;/</span><span class="si">{</span><span class="n">primary_tag</span><span class="si">}</span><span class="s2">&gt;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">format</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">format</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n\n</span><span class="si">{</span><span class="n">example_block</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">format</span> <span class="o">=</span> <span class="n">example_block</span>
+
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+<div class="viewcode-block" id="PromptBuilder.add_rule">
+<a class="viewcode-back" href="../../l2p.html#l2p.PromptBuilder.add_rule">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_rule</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rule_str</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;PromptBuilder&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Appends a single rule to the `## RULES` section of the prompt.</span>
+<span class="sd">        Rules are automatically numbered in the final output.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            rule_str (str): A specific instruction or constraint for the LLM to follow.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rule_str</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+<div class="viewcode-block" id="PromptBuilder.add_example">
+<a class="viewcode-back" href="../../l2p.html#l2p.PromptBuilder.add_example">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_example</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">example</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;PromptBuilder&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Appends a single n-shot example to the `## EXAMPLE(S)` section of the prompt.</span>
+<span class="sd">        Examples are automatically numbered and formatted in the final output.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            example (str): A complete input/output example for the LLM to learn from.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">examples</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">example</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
 
 
 <div class="viewcode-block" id="PromptBuilder.set_task">
 <a class="viewcode-back" href="../../l2p.html#l2p.PromptBuilder.set_task">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">set_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task_str</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;PromptBuilder&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Sets a task for the LLM by providing dynamic placeholders to generate and describe domain components.</span>
-
-<span class="sd">        The `task` parameter is a structured input that includes various elements to guide the LLM in understanding</span>
-<span class="sd">        and executing the task. The task may include descriptions, types, actions, and predicates that the LLM</span>
-<span class="sd">        will process to generate appropriate outputs.</span>
-
-<span class="sd">        Here is an example of a dynamic placeholder:</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-<span class="sd">        ## Domain</span>
-<span class="sd">        {domain_desc} - A placeholder for the description of the domain, explaining the context and purpose.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
+<span class="sd">        Sets the `## TASK` section of the prompt.</span>
+<span class="sd">        Provides the specific natural language input or objective the LLM needs to solve.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            task (str): A structured string or template containing dynamic placeholders to specify the task.</span>
+<span class="sd">            task_str (str): The exact task description or natural language problem statement.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">task</span> <span class="o">=</span> <span class="n">task</span></div>
-
-
-<div class="viewcode-block" id="PromptBuilder.get_role">
-<a class="viewcode-back" href="../../l2p.html#l2p.PromptBuilder.get_role">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">get_role</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns role of the prompt given&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">role</span></div>
-
-
-<div class="viewcode-block" id="PromptBuilder.get_format">
-<a class="viewcode-back" href="../../l2p.html#l2p.PromptBuilder.get_format">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">get_format</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns prompting format of the prompt given&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">format</span></div>
-
-
-<div class="viewcode-block" id="PromptBuilder.get_examples">
-<a class="viewcode-back" href="../../l2p.html#l2p.PromptBuilder.get_examples">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">get_examples</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns list of n-examples of the prompt given&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">examples</span></div>
-
-
-<div class="viewcode-block" id="PromptBuilder.get_task">
-<a class="viewcode-back" href="../../l2p.html#l2p.PromptBuilder.get_task">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">get_task</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns dynamic placeholder task prompt&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">task</span></div>
-
-
-<div class="viewcode-block" id="PromptBuilder.remove_role">
-<a class="viewcode-back" href="../../l2p.html#l2p.PromptBuilder.remove_role">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">remove_role</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Removes role prompt&quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">role</span> <span class="o">=</span> <span class="kc">None</span></div>
-
-
-<div class="viewcode-block" id="PromptBuilder.remove_format">
-<a class="viewcode-back" href="../../l2p.html#l2p.PromptBuilder.remove_format">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">remove_format</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Removes format prompt&quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">format</span> <span class="o">=</span> <span class="kc">None</span></div>
-
-
-<div class="viewcode-block" id="PromptBuilder.remove_examples">
-<a class="viewcode-back" href="../../l2p.html#l2p.PromptBuilder.remove_examples">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">remove_examples</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Removes specific index of example list&quot;&quot;&quot;</span>
-        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">examples</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span></div>
-
-
-<div class="viewcode-block" id="PromptBuilder.remove_task">
-<a class="viewcode-back" href="../../l2p.html#l2p.PromptBuilder.remove_task">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">remove_task</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Removes dynamic placeholder task prompt&quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">task</span> <span class="o">=</span> <span class="kc">None</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">task</span> <span class="o">=</span> <span class="n">task_str</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
 
 
 <div class="viewcode-block" id="PromptBuilder.generate_prompt">
 <a class="viewcode-back" href="../../l2p.html#l2p.PromptBuilder.generate_prompt">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">generate_prompt</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generates the whole prompt in proper format&quot;&quot;&quot;</span>
-        <span class="n">prompt</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_prompt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generates the whole prompt in standard L2P format.</span>
+<span class="sd">        If kwargs are provided, it dynamically replaces placeholders (e.g. {domain_desc}).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sections</span> <span class="o">=</span> <span class="p">[]</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">role</span><span class="p">:</span>
-            <span class="n">prompt</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;[ROLE]: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">role</span><span class="si">}</span><span class="se">\n\n</span><span class="s2">&quot;</span>
-            <span class="n">prompt</span> <span class="o">+=</span> <span class="s2">&quot;------------------------------------------------</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="n">sections</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;## ROLE</span><span class="se">\n</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">role</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">format</span><span class="p">:</span>
-            <span class="n">prompt</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;[FORMAT]: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">format</span><span class="si">}</span><span class="se">\n\n</span><span class="s2">&quot;</span>
-            <span class="n">prompt</span> <span class="o">+=</span> <span class="s2">&quot;------------------------------------------------</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="n">sections</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;## OUTPUT FORMAT</span><span class="se">\n</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">format</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">examples</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">prompt</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;[EXAMPLE(S)]:</span><span class="se">\n</span><span class="s2">&quot;</span>
-            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">example</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">examples</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
-                <span class="n">prompt</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;Example </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">:</span><span class="se">\n</span><span class="si">{</span><span class="n">example</span><span class="si">}</span><span class="se">\n\n</span><span class="s2">&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rules</span><span class="p">:</span>
+            <span class="n">rules_block</span> <span class="o">=</span> <span class="s2">&quot;## RULES</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">. </span><span class="si">{</span><span class="n">rule</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">rule</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rules</span><span class="p">,</span> <span class="mi">1</span><span class="p">)]</span>
+            <span class="p">)</span>
+            <span class="n">sections</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rules_block</span><span class="p">)</span>
 
-            <span class="n">prompt</span> <span class="o">+=</span> <span class="s2">&quot;------------------------------------------------</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">examples</span><span class="p">:</span>
+            <span class="n">examples_list</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="sa">f</span><span class="s2">&quot;# Example </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">:</span><span class="se">\n</span><span class="si">{</span><span class="n">example</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">example</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">examples</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="p">]</span>
+            <span class="n">examples_block</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="s2">&quot;## EXAMPLE(S)</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">examples_list</span><span class="p">)</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{</span><span class="mi">50</span><span class="o">*</span><span class="s1">&#39;-&#39;</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+            <span class="n">sections</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">examples_block</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">task</span><span class="p">:</span>
-            <span class="n">prompt</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;[TASK]:</span><span class="se">\n</span><span class="s2">Here is the task to solve:</span><span class="se">\n</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">task</span><span class="si">}</span><span class="se">\n\n</span><span class="s2">&quot;</span>
+            <span class="n">sections</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;## TASK</span><span class="se">\n</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">task</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">prompt</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span></div>
+        <span class="c1"># inject context placeholders</span>
+        <span class="n">sections</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">{{</span><span class="s2">description</span><span class="se">}}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">sections</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">{{</span><span class="s2">context</span><span class="se">}}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">raw_prompt</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">sections</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">safe_format</span><span class="p">(</span><span class="n">raw_prompt</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">raw_prompt</span></div>
+
+
+<div class="viewcode-block" id="PromptBuilder.save_prompt">
+<a class="viewcode-back" href="../../l2p.html#l2p.PromptBuilder.save_prompt">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save_prompt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;prompt.md&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generates the prompt and saves it to a Markdown (.md) or Text (.txt) file.</span>
+<span class="sd">        If no path is provided in the filename, it saves to the current working directory.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            filename (str): The name/path of the file to save (e.g. &#39;prompt.md&#39; or &#39;out/prompt.md&#39;).</span>
+<span class="sd">            **kwargs: Dynamic placeholders passed to generate_prompt()</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">prompt_template</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_prompt</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">save_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+        <span class="n">save_path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">save_path</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">prompt_template</span><span class="p">)</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[SUCCESS] Prompt saved to: </span><span class="si">{</span><span class="n">save_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 </div>
 
 </pre></div>
@@ -394,7 +462,7 @@
         <div class="bottom-of-page">
           <div class="left-details">
             <div class="copyright">
-                Copyright &#169; 2025, Marcus Tantakoun
+                Copyright &#169; 2026, Marcus Tantakoun
             </div>
             Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
             
@@ -414,7 +482,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=000c92bf"></script>
+</div><script src="../../_static/documentation_options.js?v=6c02275b"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

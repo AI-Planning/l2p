@@ -8,6 +8,7 @@ Welcome to Language-to-Plan (L2P)!
 
    getting_started
    l2p
+   cli
    paper_recreations
    templates
    types
@@ -31,7 +32,7 @@ Usage
 -----
 :doc:`getting_started` is the place to go to hit the ground running on using l2p.
 
-The :doc:`l2p` documentation provides in-depth codeu usage for the library.
+The :doc:`l2p` documentation provides in-depth code usage for the library.
 
 
 Support
