@@ -1,6 +1,6 @@
 """
-Unified LLM wrapper built on top of BaseLLM for multiple providers using 
-simonw/llm: https://github.com/simonw/llm. Supports provider-specific 
+Unified LLM wrapper built on top of BaseLLM for multiple providers using
+simonw/llm: https://github.com/simonw/llm. Supports provider-specific
 argument differences internally while keeping a single public class for L2P.
 
 LLM supports: https://llm.datasette.io/en/stable/plugins/directory.html
@@ -15,6 +15,9 @@ configuration using the same format template.
 
 from typing_extensions import override
 from .base import BaseLLM, load_yaml
+
+__all__ = ["UnifiedLLM"]
+
 
 class UnifiedLLM(BaseLLM):
     def __init__(
@@ -32,7 +35,7 @@ class UnifiedLLM(BaseLLM):
                 "The 'tiktoken' library is required for token processing but is not installed. "
                 "Install it using: `pip install tiktoken`."
             )
-        
+
         try:
             import llm
         except ImportError:
@@ -53,7 +56,7 @@ class UnifiedLLM(BaseLLM):
                 f"{model} not found under provider {self.provider} in {config_path}. "
                 f"Available models: {self.valid_models()}"
             )
-        
+
         model_config = self._config.get(self.provider, {}).get(model, {})
 
         # model alias and handle
@@ -81,19 +84,25 @@ class UnifiedLLM(BaseLLM):
         self.query_log = []
 
         # pricing
-        self.cost_per_input_token = model_config.get("cost_usd_mtok", {}).get("input", 0)
-        self.cost_per_output_token = model_config.get("cost_usd_mtok", {}).get("output", 0)
+        self.cost_per_input_token = model_config.get("cost_usd_mtok", {}).get(
+            "input", 0
+        )
+        self.cost_per_output_token = model_config.get("cost_usd_mtok", {}).get(
+            "output", 0
+        )
 
         # store LLM parameters (provider-specific)
         self.model_params = model_config.get("model_params", {})
 
     @override
-    def query(self, prompt: str, end_when_error=False, max_retry=3, est_margin=200) -> str:
+    def query(
+        self, prompt: str, end_when_error=False, max_retry=3, est_margin=200
+    ) -> str:
         """Query the LLM w/ prompt using parameters defined in YAML."""
-        
+
         if not isinstance(prompt, str) or not prompt.strip():
             raise ValueError("Prompt must be a non-empty string.")
-        
+
         # estimate tokens
         current_tokens = len(self.tok.encode(prompt))
 
@@ -105,7 +114,7 @@ class UnifiedLLM(BaseLLM):
                 )
 
                 # build kwargs
-                kwargs = dict(self.model_params) # all provider-specific params
+                kwargs = dict(self.model_params)  # all provider-specific params
                 kwargs["prompt"] = prompt
                 if self.api_key and "key" not in kwargs:
                     kwargs["key"] = self.api_key
@@ -115,21 +124,24 @@ class UnifiedLLM(BaseLLM):
                 llm_output = response.text()
                 if llm_output is None:
                     raise ValueError("LLM returned no output.")
-                
+
                 # track usage
                 usage = response.usage()
                 details = getattr(usage, "details", None)
 
                 if usage:
-                    self.input_tokens = usage.input
-                    self.output_tokens = usage.output
+                    in_tok = usage.input
+                    out_tok = usage.output
                 else:
-                    self.input_tokens = current_tokens
-                    self.output_tokens = len(self.tok.encode(llm_output))
+                    in_tok = current_tokens
+                    out_tok = len(self.tok.encode(llm_output))
+
+                self.input_tokens = in_tok
+                self.output_tokens = out_tok
 
                 # cost calculation
-                input_cost = (self.input_tokens / 1_000_000) * self.cost_per_input_token
-                output_cost = (self.output_tokens / 1_000_000) * self.cost_per_output_token
+                input_cost = (in_tok / 1_000_000) * self.cost_per_input_token
+                output_cost = (out_tok / 1_000_000) * self.cost_per_output_token
                 total_cost = input_cost + output_cost
 
                 self.query_log.append(
@@ -137,19 +149,17 @@ class UnifiedLLM(BaseLLM):
                         "model": self.model_alias,
                         "prompt": prompt,
                         "response": llm_output,
-                        "input_tokens": self.input_tokens,
-                        "output_tokens": self.output_tokens,
+                        "input_tokens": in_tok,
+                        "output_tokens": out_tok,
                         "details": details,
                         "input_cost_usd": input_cost,
                         "output_cost_usd": output_cost,
-                        "total_cost_usd": total_cost
+                        "total_cost_usd": total_cost,
                     }
                 )
 
-                # reset temporary token counts
-                self.reset_tokens()
                 conn_success = True
-            
+
             except Exception as e:
                 print(f"ERROR {e}")
                 if end_when_error:
@@ -157,19 +167,21 @@ class UnifiedLLM(BaseLLM):
             n_retry += 1
 
         if not conn_success:
-            raise ConnectionError(f"[ERROR] Failed to connect to LLM after {max_retry} retries.")
+            raise ConnectionError(
+                f"[ERROR] Failed to connect to LLM after {max_retry} retries."
+            )
 
         return llm_output
-    
+
     def get_query_log(self) -> list:
         return self.query_log
-    
+
     def reset_query_log(self) -> None:
         self.query_log = []
-    
+
     def get_tokens(self) -> tuple[int, int]:
         return self.input_tokens, self.output_tokens
-    
+
     def reset_tokens(self) -> None:
         self.input_tokens = 0
         self.output_tokens = 0
@@ -180,4 +192,4 @@ class UnifiedLLM(BaseLLM):
         try:
             return list(self._config.get(self.provider, {}).keys())
         except KeyError:
-            return []   
+            return []

@@ -15,6 +15,8 @@ from retry import retry
 from typing_extensions import override
 from .base import BaseLLM, load_yaml
 
+__all__ = ["OPENAI"]
+
 
 class OPENAI(BaseLLM):
     def __init__(
@@ -75,7 +77,7 @@ class OPENAI(BaseLLM):
         super().__init__(model, api_key)
 
         if provider == "mistral":
-            self.client = Mistral(api_key=api_key, base_url=base_url)    
+            self.client = Mistral(api_key=api_key, base_url=base_url)
         else:
             self.client = OpenAI(api_key=api_key, base_url=base_url)
 
@@ -121,9 +123,11 @@ class OPENAI(BaseLLM):
             raise ValueError("Prompt must be a non-empty string.")
 
         messages = messages or [{"role": "user", "content": prompt}]
-        
+
         kwargs = dict(self.model_params)
-        self.max_completion_tokens = kwargs.get('max_completion_tokens', kwargs.get('max_tokens', None))
+        self.max_completion_tokens = kwargs.get(
+            "max_completion_tokens", kwargs.get("max_tokens", None)
+        )
 
         # estimate current usage of tokens
         current_tokens = sum(len(self.tok.encode(m["content"])) for m in messages)
@@ -160,18 +164,27 @@ class OPENAI(BaseLLM):
                 # record token usage
                 usage = getattr(response, "usage", None)
                 if usage:
-                    self.in_tokens += usage.prompt_tokens
-                    self.out_tokens += usage.completion_tokens
+                    in_tok = usage.prompt_tokens
+                    out_tok = usage.completion_tokens
+                    total_tok = usage.total_tokens
+                    reasoning_tok = getattr(
+                        getattr(usage, "completion_tokens_details", None),
+                        "reasoning_tokens",
+                        0,
+                    )
                 else:
-                    self.in_tokens += current_tokens
-                    self.out_tokens += len(self.tok.encode(llm_output))
+                    in_tok = current_tokens
+                    out_tok = len(self.tok.encode(llm_output))
+                    total_tok = in_tok + out_tok
+                    reasoning_tok = 0
+
+                self.in_tokens = in_tok
+                self.out_tokens = out_tok
 
                 # calculate cost (USD) per million tokens
-                input_cost = (self.in_tokens / 1_000_000) * self.cost_per_input_token
-                output_cost = (self.out_tokens / 1_000_000) * self.cost_per_output_token
+                input_cost = (in_tok / 1_000_000) * self.cost_per_input_token
+                output_cost = (out_tok / 1_000_000) * self.cost_per_output_token
                 total_cost = input_cost + output_cost
-
-                self.reset_tokens() # reset tokens after each query
 
                 conn_success = True
 
@@ -193,29 +206,13 @@ class OPENAI(BaseLLM):
                 "model": self.model_alias,
                 "messages": messages,
                 "response": llm_output,
-                "input_tokens": usage.prompt_tokens if usage else current_tokens,
-                "output_tokens": (
-                    usage.completion_tokens
-                    if usage
-                    else len(self.tok.encode(llm_output))
-                ),
-                "reasoning_tokens": (
-                    getattr(
-                        getattr(usage, "completion_tokens_details", None),
-                        "reasoning_tokens",
-                        0,
-                    )
-                    if usage
-                    else 0
-                ),
-                "total_tokens": (
-                    usage.total_tokens
-                    if usage
-                    else current_tokens + len(self.tok.encode(llm_output))
-                ),
+                "input_tokens": in_tok,
+                "output_tokens": out_tok,
+                "reasoning_tokens": reasoning_tok,
+                "total_tokens": total_tok,
                 "input_cost_usd": input_cost,
                 "output_cost_usd": output_cost,
-                "total_cost_usd": total_cost
+                "total_cost_usd": total_cost,
             }
         )
 

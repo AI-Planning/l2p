@@ -11,6 +11,8 @@ import yaml
 
 LOG: logging.Logger = logging.getLogger(__name__)
 
+__all__ = ["BaseLLM", "require_llm", "resolve_config_path", "load_yaml"]
+
 
 def resolve_config_path(config_path: str) -> str:
     if config_path.startswith("l2p/"):
@@ -18,6 +20,7 @@ def resolve_config_path(config_path: str) -> str:
         yaml_filename = parts[-1] if parts else "llm.yaml"
         try:
             import importlib.resources
+
             with importlib.resources.path("l2p.llm.utils", yaml_filename) as p:
                 resolved = p.resolve()
         except Exception:

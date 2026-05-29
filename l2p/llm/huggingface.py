@@ -15,6 +15,8 @@ from .base import BaseLLM, load_yaml
 from .utils.prompt_templates import prompt_templates
 import warnings
 
+__all__ = ["HUGGING_FACE"]
+
 warnings.filterwarnings("ignore", message="`do_sample` is set to `False`.*")
 
 
@@ -247,7 +249,7 @@ class HUGGING_FACE(BaseLLM):
                 if self.stop is not None:
                     llm_output = llm_output.split(self.stop)[0]
 
-                self.reset_tokens() # reset tokens after each query
+                self.reset_tokens()  # reset tokens after each query
 
                 conn_success = True
 

@@ -1,1775 +1,1475 @@
-from l2p import *
-import unittest, textwrap
+import unittest
+from l2p.utils.pddl_types import *
+from l2p.validators.domain import DomainValidator, DomainSemantics
+from l2p.validators.problem import ProblemValidator, ProblemSemantics
+
+# =============================================================================
+# DOMAIN VALIDATOR RULES
+# =============================================================================
 
 
-class TestSyntaxValidator(unittest.TestCase):
+class TestDomainValidatorNaming(unittest.TestCase):
+    """Tests for validate_pddl_naming rule on domain components."""
+
     def setUp(self):
-        self.syntax_validator = SyntaxValidator()
+        self.validator = DomainValidator()
 
-    def test_validate_params(self):
+    def _validate(self, target, context=None):
+        return self.validator.validate_component(target, context or {})
 
-        types = {
-            "arm": "arm for a robot",
-            "block": "block that can be stacked and unstacked",
-        }
+    # --- valid names ---
+    def test_valid_name_passes(self):
+        t = PDDLType(name="robot", parent="object")
+        r = self._validate(t, {PDDLType: [t]})
+        self.assertTrue(r.valid)
 
-        params = OrderedDict([("?a", "arm"), ("?top", "block"), ("?bottom", "block")])
+    def test_name_with_hyphen_passes(self):
+        t = PDDLType(name="battery-level", parent="object")
+        r = self._validate(t, {PDDLType: [t]})
+        self.assertTrue(r.valid)
 
-        # case 1: parameters are typed and types available
-        flag, _ = self.syntax_validator.validate_params(parameters=params, types=types)
-        self.assertEqual(flag, True)
+    def test_name_with_underscore_passes(self):
+        t = PDDLType(name="my_type", parent="object")
+        r = self._validate(t, {PDDLType: [t]})
+        self.assertTrue(r.valid)
 
-        # case 2: parameters are untyped and types available
-        untyped_params = OrderedDict([("?a", "arm"), ("?top", ""), ("?bottom", "")])
-        flag, _ = self.syntax_validator.validate_params(
-            parameters=untyped_params, types=types
+    def test_name_with_numbers_passes(self):
+        t = PDDLType(name="type1", parent="object")
+        r = self._validate(t, {PDDLType: [t]})
+        self.assertTrue(r.valid)
+
+    # --- invalid names ---
+    def test_name_starts_with_question_mark_fails(self):
+        t = PDDLType(name="?robot", parent="object")
+        r = self._validate(t, {PDDLType: [t]})
+        self.assertFalse(r.valid)
+        self.assertIn("?", r.errors[0])
+
+    def test_name_with_special_chars_fails(self):
+        t = PDDLType(name="robot@1", parent="object")
+        r = self._validate(t, {PDDLType: [t]})
+        self.assertFalse(r.valid)
+
+    def test_name_starts_with_number_fails(self):
+        t = PDDLType(name="1robot", parent="object")
+        r = self._validate(t, {PDDLType: [t]})
+        self.assertFalse(r.valid)
+
+    def test_name_is_pddl_keyword_fails(self):
+        t = PDDLType(name="and", parent="object")
+        r = self._validate(t, {PDDLType: [t]})
+        self.assertFalse(r.valid)
+
+    # --- duplicate names ---
+    def test_duplicate_name_fails(self):
+        t1 = PDDLType(name="robot", parent="object")
+        t2 = PDDLType(name="robot", parent="object")
+        r = self._validate(t2, {PDDLType: [t1, t2]})
+        self.assertFalse(r.valid)
+        self.assertIn("already in use", r.errors[0])
+
+    def test_duplicate_name_case_insensitive_fails(self):
+        t1 = PDDLType(name="Robot", parent="object")
+        t2 = PDDLType(name="robot", parent="object")
+        r = self._validate(t2, {PDDLType: [t1, t2]})
+        self.assertFalse(r.valid)
+
+    def test_unique_names_pass(self):
+        t1 = PDDLType(name="robot", parent="object")
+        t2 = PDDLType(name="drone", parent="object")
+        r = self._validate(t2, {PDDLType: [t1, t2]})
+        self.assertTrue(r.valid)
+
+    def test_predicate_name_duplicate_with_type_fails(self):
+        t = PDDLType(name="robot", parent="object")
+        p = Predicate(name="robot", params=[Parameter(variable="?x", type="object")])
+        r = self._validate(p, {PDDLType: [t], Predicate: [p]})
+        self.assertFalse(r.valid)
+
+    # --- uppercase warning ---
+    def test_uppercase_generates_warning(self):
+        t = PDDLType(name="RobotArm", parent="object")
+        r = self._validate(t, {PDDLType: [t]})
+        self.assertTrue(r.valid)
+        self.assertEqual(len(r.warnings), 1)
+        self.assertIn("uppercase", r.warnings[0])
+
+    def test_lowercase_no_warning(self):
+        t = PDDLType(name="robotarm", parent="object")
+        r = self._validate(t, {PDDLType: [t]})
+        self.assertEqual(len(r.warnings), 0)
+
+    # --- empty name ---
+    def test_empty_name_skips_validation(self):
+        t = PDDLType(name="", parent="object")
+        r = self._validate(t, {PDDLType: [t]})
+        self.assertTrue(r.valid)
+
+    # --- applies to all relevant types ---
+    def test_naming_applies_to_constant(self):
+        c = Constant(name="base1", type="location")
+        r = self._validate(
+            c, {Constant: [c], PDDLType: [PDDLType(name="location", parent="object")]}
         )
-        self.assertEqual(flag, True)
+        self.assertTrue(r.valid)
 
-        # case 3: no types available
-        flag, _ = self.syntax_validator.validate_params(parameters=params)
-        self.assertEqual(flag, False)
-
-        # case 3: parameter types not found in types
-        incorrect_params = OrderedDict(
-            [("?a", "table"), ("?top", "block"), ("?bottom", "block")]
+    def test_naming_applies_to_function(self):
+        f = Function(name="battery", params=[Parameter(variable="?r", type="robot")])
+        r = self._validate(
+            f, {Function: [f], PDDLType: [PDDLType(name="robot", parent="object")]}
         )
-        flag, _ = self.syntax_validator.validate_params(
-            parameters=incorrect_params, types=types
-        )
-        self.assertEqual(flag, False)
+        self.assertTrue(r.valid)
 
-        # case 4: parameter does not contain `?` in front of it
-        missing_char_params = OrderedDict(
-            [("a", "arm"), ("?top", "block"), ("bottom", "block")]
-        )
-        flag, _ = self.syntax_validator.validate_params(
-            parameters=missing_char_params, types=types
-        )
-        self.assertEqual(flag, False)
 
-    def test_validate_types_predicates(self):
+class TestDomainValidatorTypeInheritance(unittest.TestCase):
+    """Tests for check_type_inheritance rule."""
 
-        types = {
-            "arm": "arm for a robot",
-            "block": "block that can be stacked and unstacked",
-            "table": "table that blocks sits on",
-        }
+    def setUp(self):
+        self.validator = DomainValidator()
 
-        predicates = [
-            Predicate(
-                {
-                    "name": "on_top",
-                    "desc": "true if the block ?b1 is on top of the block ?b2",
-                    "raw": "(on_top ?b1 - block ?b2 - block): true if the block ?b1 is on top of the block ?b2",
-                    "params": OrderedDict([("?b1", "block"), ("?b2", "block")]),
-                    "clean": "(on_top ?b1 - block ?b2 - block): true if the block ?b1 is on top of the block ?b2",
-                }
-            )
+    def test_parent_exists_passes(self):
+        types = [
+            PDDLType(name="vehicle", parent="object"),
+            PDDLType(name="rover", parent="vehicle"),
         ]
+        r = self.validator.validate_component(types[1], {PDDLType: types})
+        self.assertTrue(r.valid)
 
-        # case 1: correct predicates and types
-        flag, _ = self.syntax_validator.validate_types_predicates(
-            predicates=predicates, types=types
-        )
-        self.assertEqual(flag, True)
-
-        # case 2: no types
-        flag, _ = self.syntax_validator.validate_types_predicates(predicates=predicates)
-        self.assertEqual(flag, True)
-
-        # case 3: predicate name is the same as a type
-        incorrect_predicates = [
-            Predicate(
-                {
-                    "name": "on_top",
-                    "desc": "true if the block ?b1 is on top of the block ?b2",
-                    "raw": "(on_top ?b1 - block ?b2 - block): true if the block ?b1 is on top of the block ?b2",
-                    "params": OrderedDict([("?b1", "block"), ("?b2", "block")]),
-                    "clean": "(on_top ?b1 - block ?b2 - block)",
-                }
-            ),
-            Predicate(
-                {
-                    "name": "under",
-                    "desc": "true if the block ?b1 is under block ?b2",
-                    "raw": "(under ?b1 - block ?b2 - block): true if the block ?b1 is under block ?b2",
-                    "params": OrderedDict([("?b1", "block"), ("?b2", "block")]),
-                    "clean": "(under ?b1 - block ?b2 - block)",
-                }
-            ),
+    def test_parent_missing_fails(self):
+        types = [
+            PDDLType(name="rover", parent="vehicle"),
         ]
+        r = self.validator.validate_component(types[0], {PDDLType: types})
+        self.assertFalse(r.valid)
 
-        types = {
-            "on_top": "true if the block ?b1 is on top of the block ?b2",
-            "under": "true if the block ?b1 is under block ?b2",
-            "table": "table that blocks sits on",
-        }
+    def test_parent_object_skipped(self):
+        t = PDDLType(name="robot", parent="object")
+        r = self.validator.validate_component(t, {PDDLType: [t]})
+        self.assertTrue(r.valid)
 
-        flag, _ = self.syntax_validator.validate_types_predicates(
-            predicates=incorrect_predicates, types=types
-        )
-        self.assertEqual(flag, False)
+    def test_no_types_in_context_returns_error(self):
+        t = PDDLType(name="rover", parent="vehicle")
+        r = self.validator.validate_component(t, {PDDLType: [t]})
+        self.assertFalse(r.valid)
 
-    def test_validate_duplicate_predicates(self):
 
-        # case 1: duplicate predicate names but same parameters (identical predicates)
-        predicates_1 = [
-            Predicate(
-                {
-                    "name": "on_top",
-                    "desc": "true if the block ?b1 is on top of the block ?b2",
-                    "raw": "(on_top ?b1 - block ?b2 - block): true if the block ?b1 is on top of the block ?b2",
-                    "params": OrderedDict([("?b1", "block"), ("?b2", "block")]),
-                    "clean": "(on_top ?b1 - block ?b2 - block)",
-                }
-            ),
-            Predicate(
-                {
-                    "name": "under",
-                    "desc": "true if the block ?b1 is under block ?b2",
-                    "raw": "(under ?b1 - block ?b2 - block): true if the block ?b1 is under block ?b2",
-                    "params": OrderedDict([("?b1", "block"), ("?b2", "block")]),
-                    "clean": "(under ?b1 - block ?b2 - block)",
-                }
-            ),
+class TestDomainValidatorTypeCycle(unittest.TestCase):
+    """Tests for check_type_cycle rule."""
+
+    def setUp(self):
+        self.validator = DomainValidator()
+
+    def test_acyclic_passes(self):
+        types = [
+            PDDLType(name="vehicle", parent="object"),
+            PDDLType(name="rover", parent="vehicle"),
+            PDDLType(name="drone", parent="vehicle"),
         ]
+        for t in types:
+            r = self.validator.validate_component(t, {PDDLType: types})
+            self.assertTrue(r.valid)
 
-        predicates_2 = [
-            Predicate(
-                {
-                    "name": "on_top",
-                    "desc": "true if the block ?b1 is on top of the block ?b2",
-                    "raw": "(on_top ?b1 - block ?b2 - block): true if the block ?b1 is on top of the block ?b2",
-                    "params": OrderedDict([("?b1", "block"), ("?b2", "block")]),
-                    "clean": "(on_top ?b1 - block ?b2 - block)",
-                }
-            )
+    def test_self_cycle_fails(self):
+        types = [PDDLType(name="paradox", parent="paradox")]
+        r = self.validator.validate_component(types[0], {PDDLType: types})
+        self.assertFalse(r.valid)
+        self.assertIn("cycle", r.errors[0])
+
+    def test_cross_cycle_fails(self):
+        types = [
+            PDDLType(name="a", parent="b"),
+            PDDLType(name="b", parent="a"),
         ]
+        r = self.validator.validate_component(types[0], {PDDLType: types})
+        self.assertFalse(r.valid)
 
-        flag, _ = self.syntax_validator.validate_duplicate_predicates(
-            curr_predicates=predicates_1, new_predicates=predicates_2
-        )
-        self.assertEqual(flag, True)
-
-        # case 2: duplicate predicate names but different parameters
-        predicates_3 = [
-            Predicate(
-                {
-                    "name": "on_top",
-                    "desc": "true if the block ?b1 is on top of the block ?b2",
-                    "raw": "(on_top ?b2 - block ?b1 - block): true if the block ?b1 is on top of the block ?b2",
-                    "params": OrderedDict([("?b2", "block"), ("?b1", "block")]),
-                    "clean": "(on_top ?b2 - block ?b1 - block)",
-                }
-            )
+    def test_chain_cycle_fails(self):
+        types = [
+            PDDLType(name="a", parent="b"),
+            PDDLType(name="b", parent="c"),
+            PDDLType(name="c", parent="a"),
         ]
+        r = self.validator.validate_component(types[0], {PDDLType: types})
+        self.assertFalse(r.valid)
 
-        flag, _ = self.syntax_validator.validate_duplicate_predicates(
-            curr_predicates=predicates_1, new_predicates=predicates_3
-        )
-        self.assertEqual(flag, False)
 
-        # case 3: different predicates
-        predicates_4 = [
-            Predicate(
-                {
-                    "name": "next_to",
-                    "desc": "true if the block ?b1 is next to block ?b2",
-                    "raw": "(next_to ?b1 - block ?b2 - block): true if the block ?b1 is next_to block ?b2",
-                    "params": OrderedDict([("?b1", "block"), ("?b2", "block")]),
-                    "clean": "(next_to ?b1 - block ?b2 - block)",
-                }
-            )
+class TestDomainValidatorConstantInheritance(unittest.TestCase):
+    """Tests for check_constant_inheritance rule."""
+
+    def setUp(self):
+        self.validator = DomainValidator()
+
+    def test_type_exists_passes(self):
+        types = [PDDLType(name="robot", parent="object")]
+        c = Constant(name="r1", type="robot")
+        r = self.validator.validate_component(c, {PDDLType: types, Constant: [c]})
+        self.assertTrue(r.valid)
+
+    def test_type_missing_fails(self):
+        c = Constant(name="r1", type="robot")
+        r = self.validator.validate_component(c, {Constant: [c]})
+        self.assertFalse(r.valid)
+
+    def test_type_object_skipped(self):
+        c = Constant(name="r1", type="object")
+        r = self.validator.validate_component(c, {Constant: [c]})
+        self.assertTrue(r.valid)
+
+    def test_empty_name_skipped(self):
+        c = Constant(name="", type="robot")
+        r = self.validator.validate_component(c, {Constant: [c]})
+        self.assertTrue(r.valid)
+
+
+class TestDomainValidatorParameterTypes(unittest.TestCase):
+    """Tests for check_parameter_types rule."""
+
+    def setUp(self):
+        self.validator = DomainValidator()
+
+    def test_valid_typed_params_passes(self):
+        types = [
+            PDDLType(name="robot", parent="object"),
+            PDDLType(name="location", parent="object"),
         ]
-        flag, _ = self.syntax_validator.validate_duplicate_predicates(
-            curr_predicates=predicates_1, new_predicates=predicates_4
-        )
-        self.assertEqual(flag, True)
-
-    def test_validate_format_predicate(self):
-
-        # case 1: predicates are formatted correctly w/ correct predicate name, parameter string syntax
-        predicates = [
-            Predicate(
-                {
-                    "name": "on_top",
-                    "desc": "true if the block ?b1 is on top of the block ?b2",
-                    "raw": "(on_top ?b1 - block ?b2 - block): true if the block ?b1 is on top of the block ?b2",
-                    "params": OrderedDict([("?b1", "block"), ("?b2", "block")]),
-                    "clean": "(on_top ?b1 - block ?b2 - block)",
-                }
-            )
-        ]
-
-        types = {
-            "arm": "arm for a robot",
-            "block": "block that can be stacked and unstacked",
-            "table": "table that blocks sits on",
-        }
-
-        flag, _ = self.syntax_validator.validate_format_predicates(
-            predicates=predicates, types=types
-        )
-        self.assertEqual(flag, True)
-
-        # case 2: predicate name is missing / starts with incorrect `?`
-        pred_missing_name = [
-            Predicate(
-                {
-                    "name": "",
-                    "desc": "true if the block ?b1 is on top of the block ?b2",
-                    "raw": "(?b1 - block ?b2 - block): true if the block ?b1 is on top of the block ?b2",
-                    "params": OrderedDict([("?b1", "block"), ("?b2", "block")]),
-                    "clean": "(?b1 - block ?b2 - block)",
-                }
-            )
-        ]
-
-        flag, _ = self.syntax_validator.validate_format_predicates(
-            predicates=pred_missing_name, types=types
-        )
-        self.assertEqual(flag, False)
-
-        # case 3: parameter variables do not start with `?` syntax
-        pred_incorrect_var = [
-            Predicate(
-                {
-                    "name": "on_top",
-                    "desc": "true if the block b1 is on top of the block ?b2",
-                    "raw": "(on_top b1 - block ?b2 - block): true if the block b1 is on top of the block ?b2",
-                    "params": OrderedDict([("b1", "block"), ("?b2", "block")]),
-                    "clean": "(on_top b1 - block ?b2 - block)",
-                }
-            )
-        ]
-
-        flag, _ = self.syntax_validator.validate_format_predicates(
-            predicates=pred_incorrect_var, types=types
-        )
-        self.assertEqual(flag, False)
-
-        # other placement
-        pred_incorrect_var = [
-            Predicate(
-                {
-                    "name": "on_top",
-                    "desc": "true if the block ?b1 is on top of the block ?b2",
-                    "raw": "(on_top ?b1 - block b2 - block): true if the block ?b1 is on top of the block ?b2",
-                    "params": OrderedDict([("?b1", "block"), ("b2", "block")]),
-                    "clean": "(on_top ?b1 - block b2 - block)",
-                }
-            )
-        ]
-
-        flag, _ = self.syntax_validator.validate_format_predicates(
-            predicates=pred_incorrect_var, types=types
-        )
-        self.assertEqual(flag, False)
-
-        # case 4: missing `-` syntax or using some other random character
-        pred_incorrect_char = [
-            Predicate(
-                {
-                    "name": "on_top",
-                    "desc": "true if the block ?b1 is on top of the block ?b2",
-                    "raw": "(on_top ?b1 - block ?b2 - ): true if the block ?b1 is on top of the block ?b2",
-                    "params": OrderedDict([("?b1", "block"), ("?b2", "")]),
-                    "clean": "(on_top ?b1 - block ?b2 - )",
-                }
-            )
-        ]
-
-        flag, _ = self.syntax_validator.validate_format_predicates(
-            predicates=pred_incorrect_char, types=types
-        )
-        self.assertEqual(flag, False)
-
-        pred_incorrect_char = [
-            Predicate(
-                {
-                    "name": "on_top",
-                    "desc": "true if the block ?b1 is on top of the block ?b2",
-                    "raw": "(on_top ?b1 | block ?b2 | block): true if the block ?b1 is on top of the block ?b2",
-                    "params": OrderedDict([("?b1", "block"), ("?b2", "block")]),
-                    "clean": "(on_top ?b1 | block ?b2 | block)",
-                }
-            )
-        ]
-
-        flag, _ = self.syntax_validator.validate_format_predicates(
-            predicates=pred_incorrect_char, types=types
-        )
-        self.assertEqual(flag, False)
-
-        # case 5: variable is untyped (allowed in PDDL)
-        pred_untyped = [
-            Predicate(
-                {
-                    "name": "on_top",
-                    "desc": "true if the block ?b1 is on top of ?x",
-                    "raw": "(on_top ?b1 - block ?x): true if the block ?b1 is on top of ?x",
-                    "params": OrderedDict([("?b1", "block"), ("?x", "")]),
-                    "clean": "(on_top ?b1 - block ?x)",
-                }
-            ),
-            Predicate(
-                {
-                    "name": "bottom",
-                    "desc": "",
-                    "raw": "(bottom ?b1 - block ?x ?y ?z): ",
-                    "params": OrderedDict(
-                        [("?b1", "block"), ("?x", ""), ("?y", ""), ("?z", "")]
-                    ),
-                    "clean": "(bottom ?b1 - block ?x ?y ?z)",
-                }
-            ),
-        ]
-
-        flag, _ = self.syntax_validator.validate_format_predicates(
-            predicates=pred_untyped, types=types
-        )
-        self.assertEqual(flag, True)
-
-        # case 6: parameter types are not found in types list
-        pred_incorrect_param_type = [
-            Predicate(
-                {
-                    "name": "on_top",
-                    "desc": "true if the block ?b1 is on top of the block ?b2",
-                    "raw": "(on_top ?b1 - box ?b2 - triangle): true if the box ?b1 is on top of the triangle ?b2",
-                    "params": OrderedDict([("?b1", "box"), ("?b2", "triangle")]),
-                    "clean": "(on_top ?b1 - box ?b2 - triangle)",
-                }
-            )
-        ]
-
-        flag, _ = self.syntax_validator.validate_format_predicates(
-            predicates=pred_incorrect_param_type, types=types
-        )
-        self.assertEqual(flag, False)
-
-        # no types exist
-        flag, _ = self.syntax_validator.validate_format_predicates(
-            predicates=pred_incorrect_param_type
-        )
-        self.assertEqual(flag, False)
-
-    def test_validate_pddl_action(self):
-
-        # case 1: correct implementation – predicate aligns with action parameters and types
-        types = {
-            "arm": "arm for a robot",
-            "block": "block that can be stacked and unstacked",
-            "table": "table that blocks sits on",
-        }
-
-        predicates = [
-            Predicate(
-                {
-                    "name": "on",
-                    "desc": "true if the block ?b1 is on top of the block ?b2",
-                    "raw": "(on ?b1 - block ?b2 - block): true if the block ?b1 is on top of the block ?b2",
-                    "params": OrderedDict([("?b1", "block"), ("?b2", "block")]),
-                    "clean": "(on ?b1 - block ?b2 - block)",
-                }
-            ),
-            Predicate(
-                {
-                    "name": "holding",
-                    "desc": "true if arm is holding a block",
-                    "raw": "(holding ?a - arm ?b - block): true if arm is holding a block",
-                    "params": OrderedDict([("?a", "arm"), ("?b", "block")]),
-                    "clean": "(holding ?a - arm ?b - block)",
-                }
-            ),
-            Predicate(
-                {
-                    "name": "clear",
-                    "desc": "true if a block does not have anything on top of it",
-                    "raw": "(clear ?b - block): true if a block does not have anything on top of it",
-                    "params": OrderedDict([("?b", "block")]),
-                    "clean": "(clear ?b - block)",
-                }
-            ),
-        ]
-
-        precond_str = "( and      ( holding ?a ?b1 )  ; The arm is holding the top block      (clear ?b2 )  ; The bottom block is clear  )"
-        params_info = (
-            OrderedDict({"?b1": "block", "?b2": "block", "?a": "arm"}),
-            [
-                "- ?b1 - block: The block being stacked on top",
-                "- ?b2 - block: The block being stacked upon",
-                "- ?a - arm: The arm performing the stacking action",
+        p = Predicate(
+            name="at-location",
+            params=[
+                Parameter(variable="?r", type="robot"),
+                Parameter(variable="?l", type="location"),
             ],
         )
+        r = self.validator.validate_component(p, {PDDLType: types, Predicate: [p]})
+        self.assertTrue(r.valid)
 
-        flag, _ = self.syntax_validator.validate_pddl_action(
-            pddl=precond_str,
-            predicates=predicates,
-            action_params=params_info[0],
-            types=types,
-            part="preconditions",
+    def test_missing_question_mark_fails(self):
+        types = [PDDLType(name="robot", parent="object")]
+        p = Predicate.model_construct(
+            name="at-location",
+            params=[Parameter.model_construct(variable="r", type="robot")],
         )
-        self.assertEqual(flag, True)
+        r = self.validator.validate_component(p, {PDDLType: types, Predicate: [p]})
+        self.assertFalse(r.valid)
 
-        # case 2: incorrect number of predicate parameters in pddl component
-        precond_str = "( and      ( holding ?b1 )  ; The arm is holding the top block      (clear ?b2 )  ; The bottom block is clear  )"
-        flag, _ = self.syntax_validator.validate_pddl_action(
-            pddl=precond_str,
-            predicates=predicates,
-            action_params=params_info[0],
-            types=types,
-            part="preconditions",
+    def test_undeclared_type_fails(self):
+        types = [PDDLType(name="robot", parent="object")]
+        p = Predicate(name="at", params=[Parameter(variable="?r", type="alien")])
+        r = self.validator.validate_component(p, {PDDLType: types, Predicate: [p]})
+        self.assertFalse(r.valid)
+
+    def test_untyped_param_passes(self):
+        p = Predicate(name="pred", params=[Parameter(variable="?x", type="object")])
+        r = self.validator.validate_component(p, {Predicate: [p]})
+        self.assertTrue(r.valid)
+
+    def test_allows_constant_types(self):
+        types = [PDDLType(name="robot", parent="object")]
+        consts = [Constant(name="r1", type="robot")]
+        p = Predicate(
+            name="at-location", params=[Parameter(variable="?r", type="robot")]
         )
-        self.assertEqual(flag, False)
-
-        # case 3: predicate parameters include object types
-        precond_str = "( and      ( holding ?a - arm ?b1 - block)  ; The arm is holding the top block      (clear ?b2 )  ; The bottom block is clear  )"
-        flag, _ = self.syntax_validator.validate_pddl_action(
-            pddl=precond_str,
-            predicates=predicates,
-            action_params=params_info[0],
-            types=types,
-            part="preconditions",
+        r = self.validator.validate_component(
+            p, {PDDLType: types, Constant: consts, Predicate: [p]}
         )
-        self.assertEqual(flag, False)
+        self.assertTrue(r.valid)
 
-        # case 3: parameters declared in predicate not found in action parameter
-        precond_str = "( and      ( holding ?a ?b1)  ; The arm is holding the top block      (clear ?rock )  ; The bottom block is clear  )"
+    def test_applies_to_functions(self):
+        types = [PDDLType(name="robot", parent="object")]
+        f = Function(name="battery", params=[Parameter(variable="?r", type="robot")])
+        r = self.validator.validate_component(f, {PDDLType: types, Function: [f]})
+        self.assertTrue(r.valid)
 
-        flag, _ = self.syntax_validator.validate_pddl_action(
-            pddl=precond_str,
-            predicates=predicates,
-            action_params=params_info[0],
-            types=types,
-            part="preconditions",
-        )
-        self.assertEqual(flag, False)
 
-        # case 4: check if declared predicate object types align with original predicate types
-        params_info = (
-            OrderedDict({"?b1": "block", "?b2": "block", "?a": "arm"}),
-            [
-                "- ?b1 - block: The block being stacked on top",
-                "- ?b2 - block: The block being stacked upon",
-                "- ?a - arm: The arm performing the stacking action",
+class TestDomainValidatorDerivedPredicate(unittest.TestCase):
+    """Tests for check_derived_predicate rule."""
+
+    def setUp(self):
+        self.validator = DomainValidator()
+
+    def test_valid_symbols_passes(self):
+        ctx = {
+            PDDLType: [PDDLType(name="robot", parent="object")],
+            Predicate: [
+                Predicate(
+                    name="battery", params=[Parameter(variable="?r", type="robot")]
+                )
             ],
+        }
+        dp = DerivedPredicate(
+            name="can-move",
+            params=[Parameter(variable="?r", type="robot")],
+            condition="(> (battery ?r) 0)",
         )
+        r = self.validator.validate_component(dp, ctx | {DerivedPredicate: [dp]})
+        self.assertTrue(r.valid)
 
-        # `clear` predicate parameter should be type `block` but instead `arm`
-        precond_str = "( and      ( holding ?a ?b1)  ; The arm is holding the top block      (clear ?a )  ; The bottom block is clear  )"
-
-        flag, _ = self.syntax_validator.validate_pddl_action(
-            pddl=precond_str,
-            predicates=predicates,
-            action_params=params_info[0],
-            types=types,
-            part="preconditions",
+    def test_undeclared_symbol_fails(self):
+        ctx = {Predicate: []}
+        dp = DerivedPredicate(
+            name="can-move",
+            params=[Parameter(variable="?r", type="robot")],
+            condition="(> (unknown ?r) 0)",
         )
-        self.assertEqual(flag, False)
+        r = self.validator.validate_component(dp, ctx | {DerivedPredicate: [dp]})
+        self.assertFalse(r.valid)
 
-        # case 5: types is empty but action parameter or predicate in pddl contains types
-        types = {}
 
-        predicates = [
-            Predicate(
-                {
-                    "name": "on",
-                    "desc": "true if the block ?b1 is on top of the block ?b2",
-                    "raw": "(on ?b1 ?b2): true if the block ?b1 is on top of the block ?b2",
-                    "params": OrderedDict([("?b1", ""), ("?b2", "")]),
-                    "clean": "(on ?b1 ?b2)",
-                }
-            ),
-            Predicate(
-                {
-                    "name": "holding",
-                    "desc": "true if arm is holding a block",
-                    "raw": "(holding ?a - arm ?b - block): true if arm is holding a block",
-                    "params": OrderedDict([("?a", "arm"), ("?b", "block")]),
-                    "clean": "(holding ?a - arm ?b - block)",
-                }
-            ),
-            Predicate(
-                {
-                    "name": "clear",
-                    "desc": "true if a block does not have anything on top of it",
-                    "raw": "(clear ?b): true if a block does not have anything on top of it",
-                    "params": OrderedDict([("?b", "")]),
-                    "clean": "(clear ?b)",
-                }
-            ),
-        ]
+class TestDomainValidatorActionPrecondition(unittest.TestCase):
+    """Tests for check_action_precondition rule."""
 
-        predicates_with_types = [
-            Predicate(
-                {
-                    "name": "on",
-                    "desc": "true if the block ?b1 is on top of the block ?b2",
-                    "raw": "(on ?b1 - block ?b2 - block): true if the block ?b1 is on top of the block ?b2",
-                    "params": OrderedDict([("?b1", "block"), ("?b2", "block")]),
-                    "clean": "(on ?b1 - block ?b2 - block)",
-                }
-            ),
-            Predicate(
-                {
-                    "name": "holding",
-                    "desc": "true if arm is holding a block",
-                    "raw": "(holding ?a - arm ?b - block): true if arm is holding a block",
-                    "params": OrderedDict([("?a", "arm"), ("?b", "block")]),
-                    "clean": "(holding ?a - arm ?b - block)",
-                }
-            ),
-            Predicate(
-                {
-                    "name": "clear",
-                    "desc": "true if a block does not have anything on top of it",
-                    "raw": "(clear ?b - block): true if a block does not have anything on top of it",
-                    "params": OrderedDict([("?b", "block")]),
-                    "clean": "(clear ?b - block)",
-                }
-            ),
-        ]
+    def setUp(self):
+        self.validator = DomainValidator()
 
-        precond_str = "( and      ( holding ?a ?b1 )  ; The arm is holding the top block      (clear ?b2 )  ; The bottom block is clear  )"
-        params_info = (
-            OrderedDict({"?b1": "block", "?b2": "block", "?a": "arm"}),
-            [
-                "- ?b1 - block: The block being stacked on top",
-                "- ?b2 - block: The block being stacked upon",
-                "- ?a - arm: The arm performing the stacking action",
+    def test_valid_symbols_passes(self):
+        ctx = {
+            PDDLType: [
+                PDDLType(name="robot", parent="object"),
+                PDDLType(name="location", parent="object"),
             ],
-        )
-
-        flag, _ = self.syntax_validator.validate_pddl_action(
-            pddl=precond_str,
-            predicates=predicates,
-            action_params=params_info[0],
-            types=types,
-            part="preconditions",
-        )
-        self.assertEqual(flag, False)
-
-        flag, _ = self.syntax_validator.validate_pddl_action(
-            pddl=precond_str,
-            predicates=predicates_with_types,
-            action_params=params_info[0],
-            types=types,
-            part="preconditions",
-        )
-        self.assertEqual(flag, False)
-
-        params_info = (
-            OrderedDict({"?b1": "", "?b2": "block", "?a": ""}),
-            [
-                "- ?b1: The block being stacked on top",
-                "- ?b2 - block: The block being stacked upon",
-                "- ?a: The arm performing the stacking action",
+            Predicate: [
+                Predicate(
+                    name="at-location",
+                    params=[
+                        Parameter(variable="?r", type="robot"),
+                        Parameter(variable="?l", type="location"),
+                    ],
+                ),
+                Predicate(
+                    name="battery-dead", params=[Parameter(variable="?r", type="robot")]
+                ),
             ],
-        )
-
-        flag, _ = self.syntax_validator.validate_pddl_action(
-            pddl=precond_str,
-            predicates=predicates_with_types,
-            action_params=params_info[0],
-            types=types,
-            part="preconditions",
-        )
-        self.assertEqual(flag, False)
-
-    def test_validate_usage_action(self):
-
-        predicates = [
-            {
-                "name": "on",
-                "desc": "true if the block ?b1 is on top of the block ?b2",
-                "raw": "(on ?b1 - block ?b2 - block): true if the block ?b1 is on top of the block ?b2",
-                "params": OrderedDict([("?b1", "block"), ("?b2", "block")]),
-                "clean": "(on ?b1 - block ?b2 - block)",
-            },
-            {
-                "name": "holding",
-                "desc": "true if arm is holding a block",
-                "raw": "(holding ?a - arm ?b - block): true if arm is holding a block",
-                "params": OrderedDict([("?a", "arm"), ("?b", "block")]),
-                "clean": "(holding ?a - arm ?b - block)",
-            },
-            {
-                "name": "clear",
-                "desc": "true if a block does not have anything on top of it",
-                "raw": "(clear ?b - block): true if a block does not have anything on top of it",
-                "params": OrderedDict([("?b", "block")]),
-                "clean": "(clear ?b - block)",
-            },
-        ]
-
-        functions = [
-            {
-                "name": "weight",
-                "desc": "weight of the block",
-                "raw": "(weight ?b1 - block): weight of the block",
-                "params": OrderedDict([("?b1", "block")]),
-                "clean": "(weight ?b1 - block)",
-            },
-            {
-                "name": "battery-level",
-                "desc": "battery level of arm",
-                "raw": "(battery-level ?a - arm): battery level of arm",
-                "params": OrderedDict([("?a", "arm")]),
-                "clean": "(battery-level ?a - arm)",
-            },
-        ]
-
-        types = {
-            "arm": "arm for a robot",
-            "block": "block that can be stacked and unstacked",
-            "table": "table that blocks sits on",
         }
-
-        # case 1: correct implementation
-        llm_response = textwrap.dedent(
-            """
-            ### Action Parameters
-            ```
-            - ?a - arm: The robotic arm
-            - ?b1 - block: The block being moved
-            - ?b2 - block: The block it's being stacked upon
-            ``` 
-
-            ### Action Preconditions
-            ```
-            (and
-            
-                ; normal predicates
-                (holding ?a ?b1)
-                (clear ?b2)
-                
-                ;; object equality
-                (not (= ?b1 ?b2))
-                
-                ;; comparison operators on functions
-                (<= (weight ?b1) 30)
-                (>= (weight ?b2) 10)
-                (< (battery-level ?a) 100)
-                (> (battery-level ?a) (* 2 (weight ?b1))) ;; comparison with nested arithmetic (battery-level)
-                
-                ;; universal quantifier
-                (forall (?x - block)
-                    (or
-                        (clear ?x)
-                        (< (weight ?x) 50)
-                    )
-                )
-                
-                ;; existential quantifier
-                (exists (?y - block)
-                    (and
-                        (not (= ?y ?b1))
-                        (> (weight ?y) 25)
-                        (clear ?y)
-                    )
-                )
-            )
-            ```
-
-            ### Action Effects
-            ```
-            (and
-                (on ?b1 ?b2)
-                
-                ;; `not` logical connective
-                (not (clear ?b2))
-                (not (holding ?a ?b1))
-                
-                ;; conditional effect
-                (when (>= (weight ?b1) 20)
-                    (and
-                        (scale-down (battery-level ?a) 1.5)
-                        (when (< (battery-level ?a) 100)
-                            (assign (battery-level ?a) 100)
-                        )
-                    )
-                )
-                
-                ;; assignment oeprators
-                (increase (battery-level ?a) 5)
-                (decrease (weight ?b1) 10)
-                (scale-up (battery-level ?a) 2.5)
-                (scale-down (battery-level ?a) 5)
-            )
-            ```
-            """
-        )
-
-        flag, _ = self.syntax_validator.validate_usage_action(
-            llm_response=llm_response,
-            curr_predicates=predicates,
-            types=types,
-            functions=functions,
-        )
-
-        self.assertEqual(flag, True)
-
-        # case 2: incorrect predicate usage
-        invalid_predicates = [
-            Predicate(
-                {
-                    "name": "unstack",
-                    "desc": "true if a block does not have anything on top of it",
-                    "raw": "(unstack ?b - block): true if a block does not have anything on top of it",
-                    "params": OrderedDict([("?b", "block")]),
-                    "clean": "(unstack ?b - block)",
-                }
+        action = Action(
+            name="move",
+            params=[
+                Parameter(variable="?r", type="robot"),
+                Parameter(variable="?l", type="location"),
+            ],
+            preconditions=ActionPrecondition(
+                conditions=[
+                    "(at-location ?r ?l)",
+                    {"operator": "not", "condition": "(battery-dead ?r)"},
+                ]
             ),
-            Predicate(
-                {
-                    "name": "stack",
-                    "desc": "true if a block does not have anything on top of it",
-                    "raw": "(stack ?b - block): true if a block does not have anything on top of it",
-                    "params": OrderedDict([("?b", "block")]),
-                    "clean": "(stack ?b - block)",
-                }
-            ),
-        ]
-
-        flag, _ = self.syntax_validator.validate_usage_action(
-            llm_response=llm_response, curr_predicates=invalid_predicates, types=types
+            effects=ActionEffect(),
         )
+        r = self.validator.validate_component(action, ctx | {Action: [action]})
+        self.assertTrue(r.valid)
 
-        self.assertEqual(flag, False)
-
-        # case 3: incorrect function usage
-        invalid_functions = [
-            {
-                "name": "weight",
-                "desc": "weight of the block",
-                "raw": "(weight ?b1 - block): weight of the block",
-                "params": OrderedDict([("?b1", "block")]),
-                "clean": "(weight ?b1 - block)",
-            }
-        ]
-
-        flag, _ = self.syntax_validator.validate_usage_action(
-            llm_response=llm_response,
-            curr_predicates=predicates,
-            types=types,
-            functions=invalid_functions,
+    def test_undeclared_symbol_fails(self):
+        ctx = {Predicate: [Predicate(name="at", params=[])]}
+        action = Action(
+            name="move",
+            params=[],
+            preconditions=ActionPrecondition(conditions=["(at ?r)", "(fly ?r)"]),
+            effects=ActionEffect(),
         )
+        r = self.validator.validate_component(action, ctx | {Action: [action]})
+        self.assertFalse(r.valid)
 
-        self.assertEqual(flag, False)
 
-        # case 4: incorrect quantifier usage (invalid arguments)
-        llm_response = textwrap.dedent(
-            """
-            ### Action Parameters
-            ```
-            - ?a - arm: The robotic arm
-            - ?b1 - block: The block being moved
-            - ?b2 - block: The block it's being stacked upon
-            ``` 
+class TestDomainValidatorActionEffect(unittest.TestCase):
+    """Tests for check_action_effect rule."""
 
-            ### Action Preconditions
-            ```
-            (and
-                (forall ?x - block
-                    (or
-                        (clear ?x)
-                        (< (weight ?x) 50)
-                    )
+    def setUp(self):
+        self.validator = DomainValidator()
+
+    def test_valid_symbols_passes(self):
+        ctx = {
+            PDDLType: [
+                PDDLType(name="robot", parent="object"),
+                PDDLType(name="location", parent="object"),
+            ],
+            Predicate: [
+                Predicate(
+                    name="at-location",
+                    params=[
+                        Parameter(variable="?r", type="robot"),
+                        Parameter(variable="?l", type="location"),
+                    ],
                 )
-            )
-            ```
-
-            ### Action Effects
-            ```
-            (and)
-            ```
-            """
+            ],
+        }
+        action = Action(
+            name="move",
+            params=[
+                Parameter(variable="?r", type="robot"),
+                Parameter(variable="?l", type="location"),
+                Parameter(variable="?old", type="location"),
+            ],
+            preconditions=ActionPrecondition(),
+            effects=ActionEffect(
+                add=["(at-location ?r ?l)"], delete=["(at-location ?r ?old)"]
+            ),
         )
+        r = self.validator.validate_component(action, ctx | {Action: [action]})
+        self.assertTrue(r.valid)
 
-        flag, _ = self.syntax_validator.validate_usage_action(
-            llm_response=llm_response,
-            curr_predicates=predicates,
-            types=types,
-            functions=functions,
-        )
-
-        self.assertEqual(flag, False)
-
-        llm_response = textwrap.dedent(
-            """
-            ### Action Parameters
-            ```
-            - ?a - arm: The robotic arm
-            - ?b1 - block: The block being moved
-            - ?b2 - block: The block it's being stacked upon
-            ``` 
-
-            ### Action Preconditions
-            ```
-            (and
-                (exists (?y - block)
-                        (not (= ?y ?b1))
-                        (> (weight ?y) 25)
-                        (clear ?y)
+    def test_numeric_effects_with_declared_function(self):
+        ctx = {
+            PDDLType: [PDDLType(name="robot", parent="object")],
+            Function: [
+                Function(
+                    name="battery", params=[Parameter(variable="?r", type="robot")]
                 )
-            )
-            ```
-
-            ### Action Effects
-            ```
-            (and)
-            ```
-            """
+            ],
+        }
+        action = Action(
+            name="charge",
+            params=[Parameter(variable="?r", type="robot")],
+            preconditions=ActionPrecondition(),
+            effects=ActionEffect(numeric=["(increase (battery ?r) 10)"]),
         )
+        r = self.validator.validate_component(action, ctx | {Action: [action]})
+        # increase is a keyword, battery is a declared function
+        self.assertTrue(r.valid)
 
-        flag, _ = self.syntax_validator.validate_usage_action(
-            llm_response=llm_response,
-            curr_predicates=predicates,
-            types=types,
-            functions=functions,
+    def test_undeclared_function_in_numeric_fails(self):
+        ctx = {Function: []}
+        action = Action(
+            name="charge",
+            params=[],
+            preconditions=ActionPrecondition(),
+            effects=ActionEffect(numeric=["(increase (unknown) 10)"]),
         )
+        r = self.validator.validate_component(action, ctx | {Action: [action]})
+        self.assertFalse(r.valid)
 
-        self.assertEqual(flag, False)
 
-        # case 5: incorrect conditional effect usage
-        llm_response = textwrap.dedent(
-            """
-            ### Action Parameters
-            ```
-            - ?a - arm: The robotic arm
-            - ?b1 - block: The block being moved
-            - ?b2 - block: The block it's being stacked upon
-            ``` 
+class TestDomainValidatorComponentVariables(unittest.TestCase):
+    """Tests for check_component_variables rule - the most complex rule."""
 
-            ### Action Preconditions
-            ```
-            (and
-                (when (on ?b1 ?b2) ;; THIS SHOULD FAIL
-                        (clear ?b1)
+    def setUp(self):
+        self.validator = DomainValidator()
+
+    # --- variable existence ---
+    def test_all_variables_declared_passes(self):
+        ctx = {
+            PDDLType: [PDDLType(name="block", parent="object")],
+            Predicate: [
+                Predicate(name="clear", params=[Parameter(variable="?b", type="block")])
+            ],
+        }
+        action = Action(
+            name="pickup",
+            params=[Parameter(variable="?b", type="block")],
+            preconditions=ActionPrecondition(conditions=["(clear ?b)"]),
+            effects=ActionEffect(add=[], delete=["(clear ?b)"]),
+        )
+        r = self.validator.validate_component(action, ctx | {Action: [action]})
+        self.assertTrue(r.valid)
+
+    def test_undeclared_variable_fails(self):
+        ctx = {
+            PDDLType: [PDDLType(name="block", parent="object")],
+            Predicate: [
+                Predicate(name="clear", params=[Parameter(variable="?b", type="block")])
+            ],
+        }
+        action = Action(
+            name="pickup",
+            params=[Parameter(variable="?b", type="block")],
+            preconditions=ActionPrecondition(conditions=["(clear ?x)"]),
+            effects=ActionEffect(),
+        )
+        r = self.validator.validate_component(action, ctx | {Action: [action]})
+        self.assertFalse(r.valid)
+        self.assertIn("?x", r.errors[0])
+
+    # --- arity checking ---
+    def test_arity_mismatch_fails(self):
+        ctx = {
+            PDDLType: [PDDLType(name="block", parent="object")],
+            Predicate: [
+                Predicate(
+                    name="on",
+                    params=[
+                        Parameter(variable="?b1", type="block"),
+                        Parameter(variable="?b2", type="block"),
+                    ],
                 )
-            )
-            ```
+            ],
+        }
+        action = Action(
+            name="check",
+            params=[Parameter(variable="?b", type="block")],
+            preconditions=ActionPrecondition(conditions=["(on ?b)"]),
+            effects=ActionEffect(),
+        )
+        r = self.validator.validate_component(action, ctx | {Action: [action]})
+        self.assertFalse(r.valid)
+        self.assertIn("expects 2 arguments", r.errors[0])
 
-            ### Action Effects
-            ```
-            (and
-                (when on ?b1 ?b2 ;; THIS SHOULD FAILURE DUE TO PDDL MALFORMITY
-                        (clear ?b1)
+    # --- type matching ---
+    def test_type_mismatch_fails(self):
+        ctx = {
+            PDDLType: [
+                PDDLType(name="arm", parent="object"),
+                PDDLType(name="block", parent="object"),
+            ],
+            Predicate: [
+                Predicate(
+                    name="holding",
+                    params=[
+                        Parameter(variable="?a", type="arm"),
+                        Parameter(variable="?b", type="block"),
+                    ],
                 )
-            )
-            ```
-            """
-        )
-        flag, msg = self.syntax_validator.validate_usage_action(
-            llm_response=llm_response,
-            curr_predicates=predicates,
-            types=types,
-            functions=functions,
-        )
-
-        self.assertEqual(flag, False)
-
-        # case 6: predicate used as function - vice versa
-        llm_response = textwrap.dedent(
-            """
-            ### Action Parameters
-            ```
-            - ?a - arm: The robotic arm
-            - ?b1 - block: The block being moved
-            - ?b2 - block: The block it's being stacked upon
-            ``` 
-
-            ### Action Preconditions
-            ```
-            (and
-                (< (holding ?a ?b1) 100)
-            )
-            ```
-
-            ### Action Effects
-            ```
-            (and)
-            ```
-            """
-        )
-
-        flag, _ = self.syntax_validator.validate_usage_action(
-            llm_response=llm_response,
-            curr_predicates=predicates,
-            types=types,
-            functions=functions,
-        )
-
-        self.assertEqual(flag, False)
-
-        llm_response = textwrap.dedent(
-            """
-            ### Action Parameters
-            ```
-            - ?a - arm: The robotic arm
-            - ?b1 - block: The block being moved
-            - ?b2 - block: The block it's being stacked upon
-            ``` 
-
-            ### Action Preconditions
-            ```
-            (and
-                (battery-level ?a)
-            )
-            ```
-
-            ### Action Effects
-            ```
-            (and)
-            ```
-            """
-        )
-
-        flag, _ = self.syntax_validator.validate_usage_action(
-            llm_response=llm_response,
-            curr_predicates=predicates,
-            types=types,
-            functions=functions,
-        )
-
-        self.assertEqual(flag, False)
-
-        # case 7: incorrect object equality usage
-        llm_response = textwrap.dedent(
-            """
-            ### Action Parameters
-            ```
-            - ?left - arm: left robot arm
-            - ?right - arm: right robot arm
-            - ?b1 - block: The block being moved
-            - ?b2 - block: The block it's being stacked upon
-            ``` 
-
-            ### Action Preconditions
-            ```
-            (and
-                (not (= ?left ?right))
-                (= ?b2 5) ;; incorrect
-            )
-            ```
-
-            ### Action Effects
-            ```
-            (and)
-            ```
-            """
-        )
-
-        flag, _ = self.syntax_validator.validate_usage_action(
-            llm_response=llm_response,
-            curr_predicates=predicates,
-            types=types,
-            functions=functions,
-        )
-
-        self.assertEqual(flag, False)
-
-        llm_response = textwrap.dedent(
-            """
-            ### Action Parameters
-            ```
-            - ?a - arm: The robotic arm
-            - ?b1 - block: The block being moved
-            - ?b2 - block: The block it's being stacked upon
-            ``` 
-
-            ### Action Preconditions
-            ```
-            (and
-                (not (= ?a ?b1))
-                (= ?b2 5) ;; incorrect
-            )
-            ```
-
-            ### Action Effects
-            ```
-            (and)
-            ```
-            """
-        )
-
-        flag, _ = self.syntax_validator.validate_usage_action(
-            llm_response=llm_response,
-            curr_predicates=predicates,
-            types=types,
-            functions=functions,
-        )
-
-        self.assertEqual(flag, False)
-
-    def test_validate_overflow_predicates(self):
-
-        llm_response = textwrap.dedent(
-            """
-            ### Action Parameters
-            ```
-            - ?b1 - block: The block being stacked on top
-            - ?b2 - block: The block being stacked upon
-            - ?a - arm: The arm performing the stacking action
-            ```
-
-            ### Action Preconditions
-            ```
-            (and
-                (holding ?a ?b1) ; The arm is holding the top block
-                (clear ?b2) ; The bottom block is clear
-            )
-            ```
-
-            ### Action Effects
-            ```
-            (and
-                (not (holding ?a ?b1)) ; The arm is no longer holding the top block
-                (on ?b1 ?b2) ; The top block is now on the bottom block
-                (not (clear ?b2)) ; The bottom block is no longer clear
-            )
-            ```
-
-            ### New Predicates
-            ```
-            ```
-            """
-        )
-
-        # case 1: predicates under limit
-        flag, _ = self.syntax_validator.validate_overflow_predicates(
-            llm_response=llm_response, limit=10
-        )
-        self.assertEqual(flag, True)
-
-        # case 2: precondition predicates exceed limit
-        flag, _ = self.syntax_validator.validate_overflow_predicates(
-            llm_response=llm_response, limit=1
-        )
-        self.assertEqual(flag, False)
-
-        # case 3: effect predicates exceed limit
-        flag, _ = self.syntax_validator.validate_overflow_predicates(
-            llm_response=llm_response, limit=2
-        )
-        self.assertEqual(flag, False)
-
-    def test_validate_task_objects(self):
-        types = {
-            "arm": "arm for a robot",
-            "block": "block that can be stacked and unstacked",
-            "table": "table that blocks sits on",
+            ],
         }
+        action = Action(
+            name="pickup",
+            params=[
+                Parameter(variable="?b", type="block"),
+                Parameter(variable="?a", type="arm"),
+            ],
+            preconditions=ActionPrecondition(conditions=["(holding ?b ?a)"]),
+            effects=ActionEffect(),
+        )
+        r = self.validator.validate_component(action, ctx | {Action: [action]})
+        # ?b is block, ?a is arm - holding expects arm first, block second
+        # So ?b (block) for param 1 (expects arm) should fail
+        self.assertFalse(r.valid)
 
-        type_hierarchy = [
-            {"arm": "'arm for a robot'", "children": []},
-            {
-                "block": "block that can be stacked and unstacked",
-                "children": [
+    def test_correct_type_with_inheritance_passes(self):
+        ctx = {
+            PDDLType: [
+                PDDLType(name="vehicle", parent="object"),
+                PDDLType(name="rover", parent="vehicle"),
+                PDDLType(name="location", parent="object"),
+            ],
+            Constant: [Constant(name="base", type="location")],
+            Predicate: [
+                Predicate(
+                    name="at-location",
+                    params=[
+                        Parameter(variable="?v", type="vehicle"),
+                        Parameter(variable="?l", type="location"),
+                    ],
+                )
+            ],
+        }
+        action = Action(
+            name="move",
+            params=[Parameter(variable="?r", type="rover")],
+            preconditions=ActionPrecondition(conditions=["(at-location ?r base)"]),
+            effects=ActionEffect(),
+        )
+        r = self.validator.validate_component(action, ctx | {Action: [action]})
+        self.assertTrue(r.valid)
+
+    # --- forall / exists scope ---
+    def test_forall_introduces_scope(self):
+        ctx = {
+            PDDLType: [PDDLType(name="block", parent="object")],
+            Predicate: [
+                Predicate(name="clear", params=[Parameter(variable="?b", type="block")])
+            ],
+        }
+        action = Action(
+            name="check-all",
+            params=[Parameter(variable="?r", type="object")],
+            preconditions=ActionPrecondition(
+                conditions=[
                     {
-                        "heavy_block": "a heavy block that cannot be picked up",
-                        "children": [],
-                    },
-                    {
-                        "light_block": "a light block that can be picked up",
-                        "children": [],
-                    },
-                ],
-            },
-            {"table": "table that blocks sits on", "children": []},
-        ]
-
-        objects = {
-            "blue_block": "",
-            "red_block": "block",
-            "yellow_block": "block",
-            "green_block": "block",
-        }
-
-        # case 1: task objects are assigned correct types
-        flag, _ = self.syntax_validator.validate_task_objects(
-            objects=objects, types=types
-        )
-        self.assertEqual(flag, True)
-
-        objects = {
-            "blue_block": "",
-            "red_block": "light_block",
-            "yellow_block": "heavy_block",
-            "green_block": "block",
-        }
-
-        flag, _ = self.syntax_validator.validate_task_objects(
-            objects=objects, types=type_hierarchy
-        )
-        self.assertEqual(flag, True)
-
-        # extra case: no types assigned to objects
-        objects = {
-            "blue_block": "",
-            "red_block": "",
-            "yellow_block": "",
-            "green_block": "",
-        }
-        flag, _ = self.syntax_validator.validate_task_objects(
-            objects=objects, types=type_hierarchy
-        )
-        self.assertEqual(flag, True)
-
-        # case 2: task object contains type not found in types
-        objects = {
-            "blue_block": "",
-            "red_block": "rock",
-            "yellow_block": "triangle",
-            "green_block": "block",
-        }
-
-        flag, _ = self.syntax_validator.validate_task_objects(
-            objects=objects, types=types
-        )
-        self.assertEqual(flag, False)
-
-        flag, _ = self.syntax_validator.validate_task_objects(
-            objects=objects, types=type_hierarchy
-        )
-        self.assertEqual(flag, False)
-
-        # case 3: task object has same name as type
-        objects = {"block": "", "light_block": "", "table": "", "arm": ""}
-        flag, _ = self.syntax_validator.validate_task_objects(
-            objects=objects, types=types
-        )
-        self.assertEqual(flag, False)
-
-        flag, _ = self.syntax_validator.validate_task_objects(
-            objects=objects, types=type_hierarchy
-        )
-        self.assertEqual(flag, False)
-
-        # case 4: no types
-        flag, _ = self.syntax_validator.validate_task_objects(objects=objects)
-        self.assertEqual(flag, True)
-
-        objects = {
-            "blue_block": "",
-            "red_block": "rock",
-            "yellow_block": "triangle",
-            "green_block": "block",
-        }
-
-        flag, s = self.syntax_validator.validate_task_objects(objects=objects)
-        self.assertEqual(flag, False)
-
-    def test_validate_task_states(self):
-        initial_states = [
-            {
-                "pred_name": "on_top",
-                "params": ["blue_block", "red_block"],
-                "neg": False,
-            },
-            {
-                "pred_name": "on_top",
-                "params": ["red_block", "yellow_block"],
-                "neg": False,
-            },
-            {"pred_name": "on_table", "params": ["yellow_block"], "neg": False},
-            {"pred_name": "on_table", "params": ["green_block"], "neg": False},
-            {"pred_name": "clear", "params": ["yellow_block"], "neg": False},
-            {"pred_name": "clear", "params": ["green_block"], "neg": False},
-            {"pred_name": "clear", "params": ["red_block"], "neg": True},
-            # {'func_name': 'weight', 'params': ['blue_block'], 'value': 100, 'op': '='}
-        ]
-
-        objects = {
-            "blue_block": "block",
-            "red_block": "block",
-            "yellow_block": "block",
-            "green_block": "block",
-        }
-
-        predicates = [
-            Predicate(
-                {
-                    "name": "on_top",
-                    "desc": "true if the block ?b1 is on top of the block ?b2",
-                    "raw": "(on_top ?b1 - block ?b2 - block): true if the block ?b1 is on top of the block ?b2",
-                    "params": OrderedDict([("?b1", "block"), ("?b2", "block")]),
-                    "clean": "(on_top ?b1 - block ?b2 - block)",
-                }
+                        "quantifier": "forall",
+                        "parameters": [{"variable": "?x", "type": "block"}],
+                        "conditions": ["(clear ?x)"],
+                    }
+                ]
             ),
-            Predicate(
-                {
-                    "name": "on_table",
-                    "desc": "true if the block ?b is on table",
-                    "raw": "(on_table ?b - block): true if the block ?b is on table",
-                    "params": OrderedDict([("?b", "block")]),
-                    "clean": "(on_table ?b - block)",
-                }
+            effects=ActionEffect(),
+        )
+        r = self.validator.validate_component(action, ctx | {Action: [action]})
+        # ?x is introduced by forall, (clear ?x) should be valid
+        self.assertTrue(r.valid)
+
+    def test_exists_without_scope_but_declared_in_action_fails(self):
+        ctx = {
+            PDDLType: [PDDLType(name="block", parent="object")],
+            Predicate: [
+                Predicate(name="clear", params=[Parameter(variable="?b", type="block")])
+            ],
+        }
+        action = Action(
+            name="check",
+            params=[],
+            preconditions=ActionPrecondition(
+                conditions=[
+                    {
+                        "quantifier": "exists",
+                        "parameters": [{"variable": "?x", "type": "block"}],
+                        "conditions": ["(clear ?x)"],
+                    }
+                ]
             ),
-            Predicate(
-                {
-                    "name": "holding",
-                    "desc": "true if arm is holding a block",
-                    "raw": "(holding ?a - arm ?b - block): true if arm is holding a block",
-                    "params": OrderedDict([("?a", "arm"), ("?b", "block")]),
-                    "clean": "(holding ?a - arm ?b - block)",
-                }
+            effects=ActionEffect(),
+        )
+        r = self.validator.validate_component(action, ctx | {Action: [action]})
+        self.assertTrue(r.valid)
+
+    # --- constants as arguments ---
+    def test_constant_as_argument_passes(self):
+        ctx = {
+            PDDLType: [PDDLType(name="location", parent="object")],
+            Constant: [Constant(name="base", type="location")],
+            Predicate: [
+                Predicate(
+                    name="at",
+                    params=[
+                        Parameter(variable="?r", type="object"),
+                        Parameter(variable="?l", type="location"),
+                    ],
+                )
+            ],
+        }
+        action = Action(
+            name="move",
+            params=[Parameter(variable="?r", type="object")],
+            preconditions=ActionPrecondition(conditions=["(at ?r base)"]),
+            effects=ActionEffect(),
+        )
+        r = self.validator.validate_component(action, ctx | {Action: [action]})
+        self.assertTrue(r.valid)
+
+    # --- number literals ---
+    def test_number_literal_as_argument_passes(self):
+        ctx = {
+            PDDLType: [PDDLType(name="object", parent="object")],
+            Predicate: [
+                Predicate(
+                    name="active", params=[Parameter(variable="?r", type="object")]
+                )
+            ],
+        }
+        action = Action(
+            name="nop",
+            params=[Parameter(variable="?r", type="object")],
+            preconditions=ActionPrecondition(conditions=["(>= ?r 5)"]),
+            effects=ActionEffect(),
+        )
+        r = self.validator.validate_component(action, ctx | {Action: [action]})
+        self.assertTrue(r.valid)
+
+
+class TestDomainSemantics(unittest.TestCase):
+    """Tests for the DomainSemantics helper class."""
+
+    def test_type_parents(self):
+        ctx = {
+            PDDLType: [
+                PDDLType(name="vehicle", parent="object"),
+                PDDLType(name="rover", parent="vehicle"),
+            ]
+        }
+        sem = DomainSemantics(ctx)
+        self.assertEqual(sem.type_parents["vehicle"], "object")
+        self.assertEqual(sem.type_parents["rover"], "vehicle")
+
+    def test_is_subtype(self):
+        ctx = {
+            PDDLType: [
+                PDDLType(name="vehicle", parent="object"),
+                PDDLType(name="rover", parent="vehicle"),
+                PDDLType(name="drone", parent="vehicle"),
+            ]
+        }
+        sem = DomainSemantics(ctx)
+        self.assertTrue(sem.is_subtype("rover", "vehicle"))
+        self.assertTrue(sem.is_subtype("rover", "object"))
+        self.assertTrue(sem.is_subtype("vehicle", "vehicle"))
+        self.assertFalse(sem.is_subtype("rover", "drone"))
+
+    def test_signatures(self):
+        ctx = {
+            Predicate: [
+                Predicate(
+                    name="at",
+                    params=[
+                        Parameter(variable="?r", type="rover"),
+                        Parameter(variable="?l", type="location"),
+                    ],
+                )
+            ]
+        }
+        sem = DomainSemantics(ctx)
+        self.assertIn("at", sem.signatures)
+        self.assertEqual(sem.signatures["at"], ["rover", "location"])
+
+    def test_constants(self):
+        ctx = {Constant: [Constant(name="base", type="location")]}
+        sem = DomainSemantics(ctx)
+        self.assertEqual(sem.constants["base"], "location")
+
+
+class TestDomainValidatorDurativeActions(unittest.TestCase):
+    """Tests for durative action rules."""
+
+    def setUp(self):
+        self.validator = DomainValidator()
+
+    def test_dur_action_conditions_valid(self):
+        ctx = {
+            PDDLType: [
+                PDDLType(name="robot", parent="object"),
+                PDDLType(name="location", parent="object"),
+            ],
+            Predicate: [
+                Predicate(
+                    name="at-location",
+                    params=[
+                        Parameter(variable="?r", type="robot"),
+                        Parameter(variable="?l", type="location"),
+                    ],
+                )
+            ],
+        }
+        da = DurativeAction(
+            name="move",
+            params=[
+                Parameter(variable="?r", type="robot"),
+                Parameter(variable="?from", type="location"),
+                Parameter(variable="?to", type="location"),
+            ],
+            duration=["(>= ?duration 5.0)"],
+            conditions=DurativeActionConditions(at_start=["(at-location ?r ?from)"]),
+            effects=DurativeActionEffect(
+                at_end=ActionEffect(add=["(at-location ?r ?to)"])
             ),
-            Predicate(
-                {
-                    "name": "clear",
-                    "desc": "true if a block does not have anything on top of it",
-                    "raw": "(clear ?b - block): true if a block does not have anything on top of it",
-                    "params": OrderedDict([("?b", "block")]),
-                    "clean": "(clear ?b - block)",
-                }
-            ),
-        ]
-
-        # case 1: correct task states, objects, and predicates
-        flag, _ = self.syntax_validator.validate_task_states(
-            states=initial_states,
-            objects=objects,
-            predicates=predicates,
-            state_type="initial",
         )
-        self.assertEqual(flag, True)
+        r = self.validator.validate_component(da, ctx | {DurativeAction: [da]})
+        self.assertTrue(r.valid)
 
-        # case 2: predicates in states not found in predicate definition
-        initial_states = [
-            {"pred_name": "throw", "params": ["blue_block", "red_block"], "neg": False},
-            {"pred_name": "on", "params": ["red_block", "yellow_block"], "neg": False},
-            {"pred_name": "on_table", "params": ["yellow_block"], "neg": False},
-        ]
-
-        flag, _ = self.syntax_validator.validate_task_states(
-            states=initial_states,
-            objects=objects,
-            predicates=predicates,
-            state_type="initial",
-        )
-        self.assertEqual(flag, False)
-
-        # case 3: object variables in states are not found in task object list
-        initial_states = [
-            {
-                "pred_name": "on_top",
-                "params": ["purple_block", "red_block"],
-                "neg": False,
-            },
-            {"pred_name": "on_top", "params": ["red_block", "arm"], "neg": False},
-        ]
-
-        flag, _ = self.syntax_validator.validate_task_states(
-            states=initial_states,
-            objects=objects,
-            predicates=predicates,
-            state_type="initial",
-        )
-        self.assertEqual(flag, False)
-
-        # case 4: placement of the task predicate parameter types do not align w/ predicate definition parameter types
-        initial_states = [
-            {
-                "pred_name": "on_top",
-                "params": ["blue_block", "red_block"],
-                "neg": False,
-            },
-            {
-                "pred_name": "holding",
-                "params": ["blue_block", "red_block"],
-                "neg": False,
-            },
-        ]
-
-        objects = {
-            "blue_block": "block",
-            "red_block": "block",
-            "yellow_block": "block",
-            "green_block": "block",
-            "a": "arm",
+    def test_dur_action_effect_undeclared_fails(self):
+        ctx = {
+            PDDLType: [PDDLType(name="robot", parent="object")],
+            Predicate: [],
         }
-
-        flag, _ = self.syntax_validator.validate_task_states(
-            states=initial_states,
-            objects=objects,
-            predicates=predicates,
-            state_type="initial",
+        da = DurativeAction(
+            name="move",
+            params=[Parameter(variable="?r", type="robot")],
+            duration=["(>= ?duration 5.0)"],
+            conditions=DurativeActionConditions(at_start=["(unknown ?r ?from)"]),
+            effects=DurativeActionEffect(at_end=ActionEffect(add=["(at ?r ?to)"])),
         )
-        self.assertEqual(flag, False)
+        r = self.validator.validate_component(da, ctx | {DurativeAction: [da]})
+        # at should be undeclared; unknown should be undeclared
+        self.assertFalse(r.valid)
 
-    def test_validate_header(self):
-
-        # case 1: correct output structure
-        llm_response = textwrap.dedent(
-            """
-            ### Action Parameters
-            ```
-            ```
-
-            ### Action Preconditions
-            ```
-            ```
-
-            ### Action Effects
-            ```
-            ```
-
-            ### New Predicates
-            ```
-            ```
-            """
-        )
-
-        flag, _ = self.syntax_validator.validate_header(llm_response=llm_response)
-        self.assertEqual(flag, True)
-
-        # case 2: correct output structure (w/ removed headers)
-        llm_response = textwrap.dedent(
-            """
-            ### Action Preconditions
-            ```
-            ```
-
-            ### Action Effects
-            ```
-            ```
-            """
-        )
-
-        self.syntax_validator.headers = ["Action Preconditions", "Action Effects"]
-
-        flag, _ = self.syntax_validator.validate_header(llm_response=llm_response)
-        self.assertEqual(flag, True)
-
-        # case 3: header not declared in llm output
-
-        self.syntax_validator.headers = [
-            "Action Parameters",
-            "Action Preconditions",
-            "Action Effects",
-        ]
-
-        flag, _ = self.syntax_validator.validate_header(llm_response=llm_response)
-        self.assertEqual(flag, False)
-
-        # case 4: header contains incorrect closing code blocks
-        llm_response = textwrap.dedent(
-            """
-            ### Action Preconditions
-            ```
-
-            ### Action Effects
-            ```
-            ```
-            """
-        )
-
-        self.syntax_validator.headers = ["Action Preconditions", "Action Effects"]
-
-        flag, _ = self.syntax_validator.validate_header(llm_response=llm_response)
-        self.assertEqual(flag, False)
-
-    def test_unsupported_keywords(self):
-
-        # case 1: llm response does not contain unsupported keywords
-        llm_response = textwrap.dedent(
-            """
-            ### Action Preconditions
-            ```
-            (at ?r ?from)
-            (connected ?from ?to)
-            ```
-
-            ### Action Effects
-            ```
-            (not (at ?r ?from))
-            (at ?r ?to)
-            ```
-            """
-        )
-
-        self.syntax_validator.unsupported_keywords = ["forall", "when", "implies"]
-
-        flag, _ = self.syntax_validator.validate_unsupported_keywords(
-            llm_response=llm_response
-        )
-        self.assertEqual(flag, True)
-
-        # case 2: no unsupported keywords declared
-
-        self.syntax_validator.unsupported_keywords = []
-
-        flag, _ = self.syntax_validator.validate_unsupported_keywords(
-            llm_response=llm_response
-        )
-        self.assertEqual(flag, True)
-
-        # case 3: llm response contains unsupported keywords
-        llm_response = textwrap.dedent(
-            """
-            ### Action Preconditions
-            ```
-            (at ?r ?from)
-            (connected ?from ?to)
-            (forall (?o - obstacle) (not (blocked ?to ?o)))
-            ```
-
-            ### Action Effects
-            ```
-            (not (at ?r ?from))
-            (at ?r ?to)
-            (when (carrying ?r)
-                (update-location ?r ?to)
-            )
-            ```
-            """
-        )
-
-        self.syntax_validator.unsupported_keywords = ["forall", "when", "implies"]
-
-        flag, _ = self.syntax_validator.validate_unsupported_keywords(
-            llm_response=llm_response
-        )
-        self.assertEqual(flag, False)
-
-    def test_validate_duplicate_headers(self):
-
-        # case 1: correct llm response containing only 1 declaration per header
-        llm_response = textwrap.dedent(
-            """
-            ### Action Parameters
-            ```
-            ?x - block
-            ?y - block
-            ```
-
-            ### Action Preconditions
-            ```
-            (clear ?x)
-            (clear ?y)
-            (holding ?x)
-            ```
-
-            ### Action Effects
-            ```
-            (not (clear ?y))
-            (not (holding ?x))
-            (clear ?x)
-            (on ?x ?y)
-            (handempty)
-            ```
-
-            ### New Predicates
-            ```
-            (on ?x ?y) - block x is on block y
-            (clear ?x) - block x has nothing on top
-            (holding ?x) - the robot is holding block x
-            (handempty) - the robot's hand is empty
-            ```
-            """
-        )
-
-        self.syntax_validator.headers = [
-            "Action Parameters",
-            "Action Preconditions",
-            "Action Effects",
-            "New Predicates",
-        ]
-
-        flag, _ = self.syntax_validator.validate_duplicate_headers(
-            llm_response=llm_response
-        )
-        self.assertEqual(flag, True)
-
-        # case 2: duplicate headers in llm response
-        llm_response = textwrap.dedent(
-            """
-            ### Action Parameters
-            ```
-            ?x - block
-            ?y - block
-            ```
-
-            ### Action Parameters
-            ```
-            ?x - block
-            ```
-
-            ### Action Effects
-            ```
-            (not (clear ?y))
-            (not (holding ?x))
-            (clear ?x)
-            (on ?x ?y)
-            (handempty)
-            ```
-
-            ### New Predicates
-            ```
-            (on ?x ?y) - block x is on block y
-            (clear ?x) - block x has nothing on top
-            (holding ?x) - the robot is holding block x
-            (handempty) - the robot's hand is empty
-            ```
-
-            ### New Predicates
-            ```
-            (on ?x ?y) - block x is on block y
-            (handempty) - the robot's hand is empty
-            ```
-            """
-        )
-
-        flag, _ = self.syntax_validator.validate_duplicate_headers(
-            llm_response=llm_response
-        )
-        self.assertEqual(flag, False)
-
-    def test_validate_type(self):
-
-        # case 1: claimed type matches target type or its sub-types
-        types = {
-            "arm": "arm for a robot",
-            "block": "block that can be stacked and unstacked",
-            "table": "table that blocks sits on",
+    def test_dur_action_duration_variable(self):
+        ctx = {
+            PDDLType: [PDDLType(name="robot", parent="object")],
+            Predicate: [
+                Predicate(name="at", params=[Parameter(variable="?r", type="robot")])
+            ],
         }
-
-        type_hierarchy = [
-            {"arm": "'arm for a robot'", "children": []},
-            {
-                "block": "block that can be stacked and unstacked",
-                "children": [
-                    {
-                        "heavy_block": "a heavy block that cannot be picked up",
-                        "children": [],
-                    },
-                    {
-                        "light_block": "a light block that can be picked up",
-                        "children": [],
-                    },
-                ],
-            },
-            {"table": "table that blocks sits on", "children": []},
-        ]
-
-        target_type, claimed_type = "arm", "arm"
-
-        flag, _ = self.syntax_validator.validate_type(
-            target_type=target_type, claimed_type=claimed_type, types=types
+        da = DurativeAction(
+            name="move",
+            params=[Parameter(variable="?r", type="robot")],
+            duration=["(>= ?duration 5.0)"],
+            conditions=DurativeActionConditions(),
+            effects=DurativeActionEffect(),
         )
-        self.assertEqual(flag, True)
+        r = self.validator.validate_component(da, ctx | {DurativeAction: [da]})
+        # ?duration is automatically allowed in duration block
+        self.assertTrue(r.valid)
 
-        target_type, claimed_type = "block", "light_block"
 
-        flag, _ = self.syntax_validator.validate_type(
-            target_type=target_type, claimed_type=claimed_type, types=type_hierarchy
-        )
-        self.assertEqual(flag, True)
+class TestDomainValidatorConstraint(unittest.TestCase):
+    """Tests for check_constraint rule."""
 
-        # case 2: claimed type is not found in target type or its sub-types
-        target_type, claimed_type = "block", "ball"
-        flag, _ = self.syntax_validator.validate_type(
-            target_type=target_type, claimed_type=claimed_type, types=types
-        )
-        self.assertEqual(flag, False)
+    def setUp(self):
+        self.validator = DomainValidator()
 
-        flag, _ = self.syntax_validator.validate_type(
-            target_type=target_type, claimed_type=claimed_type, types=type_hierarchy
-        )
-        self.assertEqual(flag, False)
-
-        # case 3: target type is not found in :types definition
-        target_type, claimed_type = "rock", "ball"
-        flag, _ = self.syntax_validator.validate_type(
-            target_type=target_type, claimed_type=claimed_type, types=type_hierarchy
-        )
-        self.assertEqual(flag, False)
-
-    def test_validate_format_types(self):
-
-        # case 1: correct types
-        types = {
-            "arm": "arm for a robot",
-            "block": "block that can be stacked and unstacked",
-            "table": "table that blocks sits on",
+    def test_valid_constraint_symbols_passes(self):
+        ctx = {
+            Predicate: [
+                Predicate(
+                    name="battery-dead", params=[Parameter(variable="?r", type="robot")]
+                )
+            ],
+            Function: [
+                Function(
+                    name="battery", params=[Parameter(variable="?r", type="robot")]
+                )
+            ],
         }
+        c = Constraint(
+            condition={"operator": "always", "condition": "(not (battery-dead ?r))"}
+        )
+        r = self.validator.validate_component(c, ctx | {Constraint: [c]})
+        self.assertTrue(r.valid)
 
-        type_hierarchy = [
-            {"arm": "'arm for a robot'", "children": []},
-            {
-                "block": "block that can be stacked and unstacked",
-                "children": [
-                    {
-                        "heavy_block": "a heavy block that cannot be picked up",
-                        "children": [],
-                    },
-                    {
-                        "light_block": "a light block that can be picked up",
-                        "children": [],
-                    },
-                ],
-            },
-            {"table": "table that blocks sits on", "children": []},
-        ]
+    def test_undeclared_symbol_fails(self):
+        ctx = {Predicate: []}
+        c = Constraint(condition={"operator": "always", "condition": "(unknown ?r)"})
+        r = self.validator.validate_component(c, ctx | {Constraint: [c]})
+        self.assertFalse(r.valid)
 
-        flag, _ = self.syntax_validator.validate_format_types(types=types)
-        self.assertEqual(flag, True)
-        flag, _ = self.syntax_validator.validate_format_types(types=type_hierarchy)
-        self.assertEqual(flag, True)
 
-        # case 2: types contain `?` character
-        types = {
-            "?arm": "arm for a robot",
-            "block": "block that can be stacked and unstacked",
-            "?table": "table that blocks sits on",
+class TestDomainValidatorEdgeCases(unittest.TestCase):
+    """Edge cases and boundary tests."""
+
+    def setUp(self):
+        self.validator = DomainValidator()
+
+    def test_deeply_nested_conditions(self):
+        ctx = {
+            PDDLType: [PDDLType(name="obj", parent="object")],
+            Predicate: [
+                Predicate(name="p", params=[Parameter(variable="?x", type="obj")])
+            ],
         }
-
-        type_hierarchy = [
-            {"arm": "'arm for a robot'", "children": []},
-            {
-                "block": "block that can be stacked and unstacked",
-                "children": [
+        action = Action(
+            name="complex",
+            params=[Parameter(variable="?a", type="obj")],
+            preconditions=ActionPrecondition(
+                conditions=[
                     {
-                        "?heavy_block": "a heavy block that cannot be picked up",
-                        "children": [],
-                    },
-                    {
-                        "?light_block": "a light block that can be picked up",
-                        "children": [],
-                    },
-                ],
-            },
-            {"?table": "table that blocks sits on", "children": []},
-        ]
-
-        flag, _ = self.syntax_validator.validate_format_types(types=types)
-        self.assertEqual(flag, False)
-
-        flag, _ = self.syntax_validator.validate_format_types(types=type_hierarchy)
-        self.assertEqual(flag, False)
-
-    def test_validate_cyclic_types(self):
-
-        # case 1: type_hierarchy is acyclic
-        type_hierarchy = [
-            {
-                "block": "",
-                "children": [
-                    {"light_block": "", "children": []},
-                    {"heavy_block": "", "children": []},
-                ],
-            },
-            {
-                "arm": "",
-                "children": [
-                    {
-                        "robot_arm": "",
-                        "children": [
-                            {"little_arm": "", "children": []},
-                            {"big_arm": "", "children": []},
-                        ],
-                    },
-                ],
-            },
-        ]
-
-        types = {
-            "arm": "arm for a robot",
-            "block": "block that can be stacked and unstacked",
-            "table": "table that blocks sits on",
-        }
-
-        flag, _ = self.syntax_validator.validate_cyclic_types(type_hierarchy)
-        self.assertEqual(flag, True)
-
-        flag, _ = self.syntax_validator.validate_cyclic_types(types)
-        self.assertEqual(flag, True)
-
-        # case 2: type hierarchy is cyclic within its branches
-        type_hierarchy = [
-            {
-                "block": "",
-                "children": [
-                    {"light_block": "", "children": []},
-                    {"heavy_block": "", "children": []},
-                ],
-            },
-            {
-                "arm": "",
-                "children": [
-                    {
-                        "robot_arm": "",
-                        "children": [
+                        "operator": "and",
+                        "conditions": [
                             {
-                                "little_arm": "",
-                                "children": [{"arm": "", "children": ""}],
+                                "operator": "or",
+                                "conditions": [
+                                    "(p ?a)",
+                                    {"operator": "not", "condition": "(p ?a)"},
+                                ],
                             },
-                            {"big_arm": "", "children": []},
+                            {
+                                "quantifier": "forall",
+                                "parameters": [{"variable": "?x", "type": "obj"}],
+                                "conditions": [
+                                    {
+                                        "operator": "imply",
+                                        "antecedent": ["(p ?x)"],
+                                        "consequent": ["(p ?x)"],
+                                    }
+                                ],
+                            },
                         ],
-                    },
-                ],
-            },
-            {"table": "", "children": []},
-        ]
+                    }
+                ]
+            ),
+            effects=ActionEffect(),
+        )
+        r = self.validator.validate_component(action, ctx | {Action: [action]})
+        self.assertTrue(r.valid)
 
-        flag, _ = self.syntax_validator.validate_cyclic_types(type_hierarchy)
-        self.assertEqual(flag, False)
-
-        # case 3: type hierarchy is cyclic in its parent types
-        type_hierarchy = [
-            {
-                "block": "",
-                "children": [
-                    {"arm": "", "children": []},
-                ],
-            },
-            {
-                "arm": "",
-                "children": [
-                    {"block": "", "children": []},
-                ],
-            },
-        ]
-
-        flag, _ = self.syntax_validator.validate_cyclic_types(type_hierarchy)
-        self.assertEqual(flag, False)
-
-    def test_validate_constant_types(self):
-
-        constants = {
-            "robot1": "robot",
-            "robot2": "robot",
-            "charging-station": "location",
-            "storage-room": "location",
-            "loading-dock": "location",
+    def test_event_validation(self):
+        ctx = {
+            PDDLType: [PDDLType(name="robot", parent="object")],
+            Predicate: [
+                Predicate(
+                    name="battery-dead", params=[Parameter(variable="?r", type="robot")]
+                )
+            ],
         }
+        evt = Event(
+            name="battery-depleted",
+            params=[Parameter(variable="?r", type="robot")],
+            preconditions=ActionPrecondition(conditions=["(battery-dead ?r)"]),
+            effects=ActionEffect(add=["(dead ?r)"]),
+        )
+        r = self.validator.validate_component(evt, ctx | {Event: [evt]})
+        self.assertTrue(r.valid)
 
-        types = {"robot": "a robot", "location": "location to be at"}
+    def test_process_validation(self):
+        ctx = {
+            PDDLType: [PDDLType(name="robot", parent="object")],
+            Function: [
+                Function(
+                    name="battery", params=[Parameter(variable="?r", type="robot")]
+                )
+            ],
+        }
+        proc = Process(
+            name="solar-charging",
+            params=[Parameter(variable="?r", type="robot")],
+            preconditions=ActionPrecondition(conditions=["(in-sun ?r)"]),
+            effects=ActionEffect(numeric=["(increase (battery ?r) (* #t 2.0))"]),
+        )
+        r = self.validator.validate_component(proc, ctx | {Process: [proc]})
+        # Note: Process is not targeted by check_action_precondition, so undeclared
+        # predicates in preconditions are not caught by that rule.
+        # check_component_variables covers Process but only validates declared predicates' signatures.
+        self.assertTrue(r.valid)
 
-        self.syntax_validator.error_types = ["validate_constant_types"]
 
-        flag, _ = self.syntax_validator.validate_constant_types(
-            constants=constants, types=types
+# =============================================================================
+# PROBLEM VALIDATOR RULES
+# =============================================================================
+
+
+class TestProblemValidatorNaming(unittest.TestCase):
+    """Tests for validate_pddl_naming on PDDLObject."""
+
+    def setUp(self):
+        self.validator = ProblemValidator()
+
+    def test_valid_name_passes(self):
+        o = PDDLObject(name="rover1", type="robot")
+        r = self.validator.validate_component(
+            o, {PDDLObject: [o], PDDLType: [PDDLType(name="robot", parent="object")]}
+        )
+        self.assertTrue(r.valid)
+
+    def test_name_with_question_mark_fails(self):
+        o = PDDLObject(name="?rover1", type="robot")
+        r = self.validator.validate_component(o, {PDDLObject: [o]})
+        self.assertFalse(r.valid)
+
+    def test_duplicate_object_fails(self):
+        o1 = PDDLObject(name="rover1", type="robot")
+        o2 = PDDLObject(name="rover1", type="robot")
+        r = self.validator.validate_component(o2, {PDDLObject: [o1, o2]})
+        self.assertFalse(r.valid)
+
+    def test_reserved_keyword_fails(self):
+        o = PDDLObject(name="and", type="object")
+        r = self.validator.validate_component(o, {PDDLObject: [o]})
+        self.assertFalse(r.valid)
+
+    def test_name_with_uppercase_warns(self):
+        o = PDDLObject(name="Rover1", type="robot")
+        r = self.validator.validate_component(
+            o, {PDDLObject: [o], PDDLType: [PDDLType(name="robot", parent="object")]}
+        )
+        self.assertTrue(r.valid)
+        self.assertGreater(len(r.warnings), 0)
+
+
+class TestProblemValidatorObjTypeInheritance(unittest.TestCase):
+    """Tests for check_obj_type_inheritance rule."""
+
+    def setUp(self):
+        self.validator = ProblemValidator()
+
+    def test_type_exists_passes(self):
+        o = PDDLObject(name="r1", type="robot")
+        r = self.validator.validate_component(
+            o, {PDDLObject: [o], PDDLType: [PDDLType(name="robot", parent="object")]}
+        )
+        self.assertTrue(r.valid)
+
+    def test_type_missing_fails(self):
+        o = PDDLObject(name="r1", type="robot")
+        r = self.validator.validate_component(o, {PDDLObject: [o]})
+        self.assertFalse(r.valid)
+
+    def test_type_object_skipped(self):
+        o = PDDLObject(name="r1", type="object")
+        r = self.validator.validate_component(o, {PDDLObject: [o]})
+        self.assertTrue(r.valid)
+
+
+class TestProblemValidatorInitialState(unittest.TestCase):
+    """Tests for check_initial_state rule."""
+
+    def setUp(self):
+        self.validator = ProblemValidator()
+
+    def test_valid_initial_state_passes(self):
+        ctx = {
+            PDDLType: [PDDLType(name="block", parent="object")],
+            Predicate: [
+                Predicate(
+                    name="on",
+                    params=[
+                        Parameter(variable="?b1", type="block"),
+                        Parameter(variable="?b2", type="block"),
+                    ],
+                )
+            ],
+            PDDLObject: [
+                PDDLObject(name="a", type="block"),
+                PDDLObject(name="b", type="block"),
+            ],
+        }
+        init = InitialState(facts=["(on a b)"])
+        r = self.validator.validate_component(init, ctx | {InitialState: [init]})
+        self.assertTrue(r.valid)
+
+    def test_undeclared_object_fails(self):
+        ctx = {
+            PDDLType: [PDDLType(name="block", parent="object")],
+            Predicate: [
+                Predicate(
+                    name="on",
+                    params=[
+                        Parameter(variable="?b1", type="block"),
+                        Parameter(variable="?b2", type="block"),
+                    ],
+                )
+            ],
+            PDDLObject: [PDDLObject(name="a", type="block")],
+        }
+        init = InitialState(facts=["(on a b)"])
+        r = self.validator.validate_component(init, ctx | {InitialState: [init]})
+        # 'b' is not declared
+        self.assertFalse(r.valid)
+
+    def test_arity_mismatch_fails(self):
+        ctx = {
+            PDDLType: [PDDLType(name="block", parent="object")],
+            Predicate: [
+                Predicate(
+                    name="on",
+                    params=[
+                        Parameter(variable="?b1", type="block"),
+                        Parameter(variable="?b2", type="block"),
+                    ],
+                )
+            ],
+            PDDLObject: [
+                PDDLObject(name="a", type="block"),
+                PDDLObject(name="b", type="block"),
+            ],
+        }
+        init = InitialState(facts=["(on a)"])
+        r = self.validator.validate_component(init, ctx | {InitialState: [init]})
+        self.assertFalse(r.valid)
+
+    def test_type_mismatch_fails(self):
+        ctx = {
+            PDDLType: [
+                PDDLType(name="arm", parent="object"),
+                PDDLType(name="block", parent="object"),
+            ],
+            Predicate: [
+                Predicate(
+                    name="holding",
+                    params=[
+                        Parameter(variable="?a", type="arm"),
+                        Parameter(variable="?b", type="block"),
+                    ],
+                )
+            ],
+            PDDLObject: [
+                PDDLObject(name="arm1", type="block"),  # wrong type
+                PDDLObject(name="block1", type="block"),
+            ],
+        }
+        init = InitialState(facts=["(holding arm1 block1)"])
+        r = self.validator.validate_component(init, ctx | {InitialState: [init]})
+        self.assertFalse(r.valid)
+
+    def test_variables_in_initial_state_fails(self):
+        ctx = {
+            PDDLType: [PDDLType(name="block", parent="object")],
+            Predicate: [
+                Predicate(name="clear", params=[Parameter(variable="?b", type="block")])
+            ],
+            PDDLObject: [PDDLObject(name="a", type="block")],
+        }
+        init = InitialState(facts=["(clear ?x)"])
+        r = self.validator.validate_component(init, ctx | {InitialState: [init]})
+        self.assertFalse(r.valid)
+
+    def test_timed_fact_valid(self):
+        ctx = {
+            PDDLType: [PDDLType(name="block", parent="object")],
+            Predicate: [
+                Predicate(name="clear", params=[Parameter(variable="?b", type="block")])
+            ],
+            PDDLObject: [PDDLObject(name="a", type="block")],
+        }
+        init = InitialState(
+            facts=[], timed_facts=[TimedFact(time=5.0, fact="(clear a)")]
+        )
+        r = self.validator.validate_component(init, ctx | {InitialState: [init]})
+        self.assertTrue(r.valid)
+
+    def test_timed_fact_with_undeclared_object_fails(self):
+        ctx = {
+            PDDLType: [PDDLType(name="block", parent="object")],
+            Predicate: [
+                Predicate(name="clear", params=[Parameter(variable="?b", type="block")])
+            ],
+            PDDLObject: [],
+        }
+        init = InitialState(
+            facts=[], timed_facts=[TimedFact(time=5.0, fact="(clear a)")]
+        )
+        r = self.validator.validate_component(init, ctx | {InitialState: [init]})
+        self.assertFalse(r.valid)
+
+    def test_empty_initial_state_passes(self):
+        init = InitialState()
+        r = self.validator.validate_component(init, {InitialState: [init]})
+        self.assertTrue(r.valid)
+
+    def test_inheritance_with_objects_passes(self):
+        ctx = {
+            PDDLType: [
+                PDDLType(name="vehicle", parent="object"),
+                PDDLType(name="rover", parent="vehicle"),
+            ],
+            Predicate: [
+                Predicate(
+                    name="at",
+                    params=[
+                        Parameter(variable="?v", type="vehicle"),
+                        Parameter(variable="?l", type="object"),
+                    ],
+                )
+            ],
+            PDDLObject: [
+                PDDLObject(name="perseverance", type="rover"),
+                PDDLObject(name="base", type="object"),
+            ],
+        }
+        init = InitialState(facts=["(at perseverance base)"])
+        r = self.validator.validate_component(init, ctx | {InitialState: [init]})
+        self.assertTrue(r.valid)
+
+
+class TestProblemValidatorGoalState(unittest.TestCase):
+    """Tests for check_goal_state rule."""
+
+    def setUp(self):
+        self.validator = ProblemValidator()
+
+    def test_valid_goal_passes(self):
+        ctx = {
+            PDDLType: [PDDLType(name="block", parent="object")],
+            Predicate: [
+                Predicate(
+                    name="on",
+                    params=[
+                        Parameter(variable="?b1", type="block"),
+                        Parameter(variable="?b2", type="block"),
+                    ],
+                )
+            ],
+            PDDLObject: [
+                PDDLObject(name="a", type="block"),
+                PDDLObject(name="b", type="block"),
+            ],
+        }
+        goal = GoalState(conditions=["(on a b)"])
+        r = self.validator.validate_component(goal, ctx | {GoalState: [goal]})
+        self.assertTrue(r.valid)
+
+    def test_goal_with_logical_operator_passes(self):
+        ctx = {
+            PDDLType: [PDDLType(name="block", parent="object")],
+            Predicate: [
+                Predicate(name="clear", params=[Parameter(variable="?b", type="block")])
+            ],
+            PDDLObject: [
+                PDDLObject(name="a", type="block"),
+                PDDLObject(name="b", type="block"),
+            ],
+        }
+        goal = GoalState(
+            conditions=[
+                {
+                    "operator": "and",
+                    "conditions": [
+                        "(clear a)",
+                        {"operator": "not", "condition": "(clear b)"},
+                    ],
+                }
+            ]
+        )
+        r = self.validator.validate_component(goal, ctx | {GoalState: [goal]})
+        self.assertTrue(r.valid)
+
+    def test_goal_undeclared_object_fails(self):
+        ctx = {
+            PDDLType: [PDDLType(name="block", parent="object")],
+            Predicate: [
+                Predicate(name="clear", params=[Parameter(variable="?b", type="block")])
+            ],
+            PDDLObject: [],
+        }
+        goal = GoalState(conditions=["(clear a)"])
+        r = self.validator.validate_component(goal, ctx | {GoalState: [goal]})
+        self.assertFalse(r.valid)
+
+    def test_goal_undeclared_predicate_fails(self):
+        ctx = {
+            PDDLType: [PDDLType(name="block", parent="object")],
+            Predicate: [],
+            PDDLObject: [PDDLObject(name="a", type="block")],
+        }
+        goal = GoalState(conditions=["(unknown a)"])
+        r = self.validator.validate_component(goal, ctx | {GoalState: [goal]})
+        self.assertFalse(r.valid)
+        self.assertTrue(
+            any("unknown" in err for err in r.errors),
+            f"Expected error about undeclared 'unknown', got: {r.errors}",
         )
 
-        self.assertEqual(flag, True)
+    def test_empty_goal_passes(self):
+        goal = GoalState()
+        r = self.validator.validate_component(goal, {GoalState: [goal]})
+        self.assertTrue(r.valid)
 
-        constants = {
-            "robot1": "robot",
-            "robot2": "robo",
-            "charging-station": "location",
-            "storage-room": "location",
-            "loading-dock": "location",
+
+class TestProblemValidatorMetric(unittest.TestCase):
+    """Tests for check_metric_syntax rule."""
+
+    def setUp(self):
+        self.validator = ProblemValidator()
+
+    def test_valid_metric_with_declared_function_passes(self):
+        ctx = {Function: [Function(name="total-cost", params=[])]}
+        m = Metric(optimization="minimize", expression="(total-cost)")
+        r = self.validator.validate_component(m, ctx | {Metric: [m]})
+        self.assertTrue(r.valid)
+
+    def test_total_time_passes(self):
+        m = Metric(optimization="minimize", expression="total-time")
+        r = self.validator.validate_component(m, {Metric: [m]})
+        self.assertTrue(r.valid)
+
+    def test_variables_in_metric_fails(self):
+        ctx = {
+            Function: [
+                Function(
+                    name="battery", params=[Parameter(variable="?r", type="robot")]
+                )
+            ]
+        }
+        m = Metric(optimization="maximize", expression="(battery ?r)")
+        r = self.validator.validate_component(m, ctx | {Metric: [m]})
+        self.assertFalse(r.valid)
+
+    def test_undeclared_function_fails(self):
+        m = Metric(optimization="minimize", expression="(unknown)")
+        r = self.validator.validate_component(m, {Metric: [m]})
+        self.assertFalse(r.valid)
+
+    def test_metric_with_expression_and_is_violated_passes(self):
+        ctx = {Function: [Function(name="total-cost", params=[])]}
+        m = Metric(
+            optimization="minimize",
+            expression="(+ (total-cost) (* 10 (is-violated pref1)))",
+        )
+        r = self.validator.validate_component(m, ctx | {Metric: [m]})
+        self.assertTrue(r.valid)
+
+
+class TestProblemSemantics(unittest.TestCase):
+    """Tests for ProblemSemantics helper."""
+
+    def test_signatures_and_objects(self):
+        ctx = {
+            PDDLType: [PDDLType(name="block", parent="object")],
+            Predicate: [
+                Predicate(
+                    name="on",
+                    params=[
+                        Parameter(variable="?b1", type="block"),
+                        Parameter(variable="?b2", type="block"),
+                    ],
+                )
+            ],
+        }
+        sem = ProblemSemantics(ctx)
+        self.assertIn("on", sem.signatures)
+        self.assertEqual(sem.signatures["on"], ["block", "block"])
+
+    def test_is_subtype_in_problem(self):
+        ctx = {
+            PDDLType: [
+                PDDLType(name="vehicle", parent="object"),
+                PDDLType(name="rover", parent="vehicle"),
+            ],
+        }
+        sem = ProblemSemantics(ctx)
+        self.assertTrue(sem.is_subtype("rover", "vehicle"))
+        self.assertFalse(sem.is_subtype("vehicle", "rover"))
+
+
+class TestProblemValidatorEdgeCases(unittest.TestCase):
+    """Edge cases for problem validator."""
+
+    def setUp(self):
+        self.validator = ProblemValidator()
+
+    def test_initial_state_with_constant_from_domain(self):
+        ctx = {
+            PDDLType: [PDDLType(name="location", parent="object")],
+            Constant: [Constant(name="base", type="location")],
+            PDDLObject: [PDDLObject(name="rover1", type="object")],
+            Predicate: [
+                Predicate(
+                    name="at",
+                    params=[
+                        Parameter(variable="?r", type="object"),
+                        Parameter(variable="?l", type="location"),
+                    ],
+                )
+            ],
+        }
+        init = InitialState(facts=["(at rover1 base)"])
+        r = self.validator.validate_component(init, ctx | {InitialState: [init]})
+        self.assertTrue(r.valid)
+
+    def test_initial_state_with_numeric_assignment(self):
+        ctx = {
+            PDDLType: [PDDLType(name="rover", parent="object")],
+            Function: [
+                Function(
+                    name="battery", params=[Parameter(variable="?r", type="rover")]
+                )
+            ],
+            PDDLObject: [PDDLObject(name="r1", type="rover")],
+        }
+        init = InitialState(facts=["(= (battery r1) 100.0)"])
+        r = self.validator.validate_component(init, ctx | {InitialState: [init]})
+        self.assertTrue(r.valid)
+
+    def test_goal_with_nested_or(self):
+        ctx = {
+            PDDLType: [PDDLType(name="block", parent="object")],
+            Predicate: [
+                Predicate(
+                    name="on",
+                    params=[
+                        Parameter(variable="?b1", type="block"),
+                        Parameter(variable="?b2", type="block"),
+                    ],
+                )
+            ],
+            PDDLObject: [
+                PDDLObject(name="a", type="block"),
+                PDDLObject(name="b", type="block"),
+                PDDLObject(name="c", type="block"),
+            ],
+        }
+        goal = GoalState(
+            conditions=[{"operator": "or", "conditions": ["(on a b)", "(on a c)"]}]
+        )
+        r = self.validator.validate_component(goal, ctx | {GoalState: [goal]})
+        self.assertTrue(r.valid)
+
+
+# =============================================================================
+# DOMAIN REGISTRY FULL PIPELINE
+# =============================================================================
+
+
+class TestDomainValidatorFullPipeline(unittest.TestCase):
+    """Integration: run the full DomainValidator against a realistic scenario."""
+
+    def setUp(self):
+        self.validator = DomainValidator()
+
+    def test_complete_domain_validation_passes(self):
+        types = [
+            PDDLType(name="arm", parent="object"),
+            PDDLType(name="block", parent="object"),
+        ]
+        predicates = [
+            Predicate(
+                name="holding",
+                params=[
+                    Parameter(variable="?a", type="arm"),
+                    Parameter(variable="?b", type="block"),
+                ],
+            ),
+            Predicate(name="clear", params=[Parameter(variable="?b", type="block")]),
+            Predicate(
+                name="on",
+                params=[
+                    Parameter(variable="?b1", type="block"),
+                    Parameter(variable="?b2", type="block"),
+                ],
+            ),
+        ]
+        functions = [
+            Function(name="weight", params=[Parameter(variable="?b", type="block")]),
+        ]
+        ctx = {
+            PDDLType: types,
+            Predicate: predicates,
+            Function: functions,
         }
 
-        flag, _ = self.syntax_validator.validate_constant_types(
-            constants=constants, types=types
+        action = Action(
+            name="stack",
+            params=[
+                Parameter(variable="?b1", type="block"),
+                Parameter(variable="?b2", type="block"),
+                Parameter(variable="?a", type="arm"),
+            ],
+            preconditions=ActionPrecondition(
+                conditions=[
+                    "(holding ?a ?b1)",
+                    "(clear ?b2)",
+                    {"operator": "not", "condition": "(= ?b1 ?b2)"},
+                ]
+            ),
+            effects=ActionEffect(
+                add=["(on ?b1 ?b2)", "(clear ?b1)"],
+                delete=["(holding ?a ?b1)", "(clear ?b2)"],
+                numeric=["(decrease (weight ?b1) 5)"],
+            ),
         )
+        r = self.validator.validate_component(action, ctx | {Action: [action]})
+        self.assertTrue(r.valid)
 
-        self.assertEqual(flag, False)
+
+class TestProblemValidatorFullPipeline(unittest.TestCase):
+    """Integration: run the full ProblemValidator against a realistic scenario."""
+
+    def setUp(self):
+        self.validator = ProblemValidator()
+
+    def test_complete_problem_validation_passes(self):
+        ctx = {
+            PDDLType: [PDDLType(name="block", parent="object")],
+            Predicate: [
+                Predicate(
+                    name="on",
+                    params=[
+                        Parameter(variable="?b1", type="block"),
+                        Parameter(variable="?b2", type="block"),
+                    ],
+                ),
+                Predicate(
+                    name="clear", params=[Parameter(variable="?b", type="block")]
+                ),
+                Predicate(
+                    name="ontable", params=[Parameter(variable="?b", type="block")]
+                ),
+            ],
+            PDDLObject: [
+                PDDLObject(name="a", type="block"),
+                PDDLObject(name="b", type="block"),
+                PDDLObject(name="c", type="block"),
+            ],
+        }
+
+        init = InitialState(
+            facts=[
+                "(ontable a)",
+                "(ontable b)",
+                "(ontable c)",
+                "(clear a)",
+                "(clear b)",
+                "(clear c)",
+            ]
+        )
+        r = self.validator.validate_component(init, ctx | {InitialState: [init]})
+        self.assertTrue(r.valid)
+
+        goal = GoalState(
+            conditions=[{"operator": "and", "conditions": ["(on a b)", "(on b c)"]}]
+        )
+        r = self.validator.validate_component(goal, ctx | {GoalState: [goal]})
+        self.assertTrue(r.valid)
+
+        # combined: all objects satisfy both checks
+        total_failures = 0
+        if not self.validator.validate_component(
+            init, ctx | {InitialState: [init], GoalState: [goal]}
+        ).valid:
+            total_failures += 1
+        self.assertEqual(total_failures, 0)
 
 
 if __name__ == "__main__":

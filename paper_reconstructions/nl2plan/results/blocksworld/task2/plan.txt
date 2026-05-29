@@ -1,8 +1,0 @@
-pick_from_block blue red (1)
-place_on_table blue (1)
-pick_from_block green yellow (1)
-place_on_block green red (1)
-pick_from_table blue (1)
-place_on_block blue green (1)
-pick_from_table yellow (1)
-place_on_block yellow blue (1)

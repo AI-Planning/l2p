@@ -2,5 +2,7 @@ retry
 pddl
 typing_extensions
 pyyaml
-llm
 tiktoken
+pydantic
+llm
+rich
