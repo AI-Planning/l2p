@@ -4,9 +4,12 @@
 
 **Documentation:** https://ai-planning.github.io/l2p/docs/
 
+L2P is a tool that generates, validates, and offers feedback on PDDL domains and problems that is then run through an external planner. Users can customize their own pipelines, prompt templates, and large language models. L2P also supports tool usage by agents.
+
 ---
 
 ## Quickstart
+Here is how you would generate PDDL predicates.
 
 ```python
 import os
@@ -15,25 +18,25 @@ from l2p.domain_builder import DomainBuilder
 from l2p.utils.pddl_types import PDDLType, Predicate
 from l2p.utils.pddl_format import format_predicates
 
-llm = UnifiedLLM(provider="openai", model="gpt-4o-mini",
+llm = UnifiedLLM(provider="openai", model="gpt-5-nano",
                  api_key=os.getenv("OPENAI_API_KEY"))
 
 db = DomainBuilder()
-parsed, _ = db.formalize_component(
+results, _ = db.formalize_component(
     model=llm,
     component_class=Predicate,
     description="Blocksworld predicates.",
     types=[PDDLType(name="block", parent="object")]
 )
 
-print(format_predicates(parsed[Predicate]))
+print(format_predicates(results[Predicate]))
 ```
 
 ---
 
 ## Core Modules
 
-### `domain_builder.py` — PDDL Domain Generation
+### `domain_builder.py` - PDDL Domain Generation
 
 Core class for constructing complete PDDL domains via LLM extraction.
 
@@ -58,16 +61,18 @@ from l2p.domain_builder import DomainBuilder
 from l2p.utils.pddl_types import Predicate
 
 db = DomainBuilder()
-parsed, raw = db.formalize_component(
+results, raw = db.formalize_component(
     model=llm,
     component_class=Predicate,
     description="Model predicates for blocksworld.",
     types=[PDDLType(name="block", parent="object")]
 )
-predicates = parsed[Predicate]
+predicates = results[Predicate]
 ```
 
-### `problem_builder.py` — PDDL Problem Instance Generation
+> The library automatically infers PDDL requirements (`:strips`, `:typing`, `:numeric-fluents`, etc.) from generated components via `DomainBuilder.generate_requirements()`. Requirements are assembled from the structural features present in the model, therefore no manual annotation needed.
+
+### `problem_builder.py` - PDDL Problem Instance Generation
 
 Generates complete problem instances (objects, initial state, goals) from natural language.
 
@@ -75,40 +80,59 @@ Generates complete problem instances (objects, initial state, goals) from natura
 from l2p.problem_builder import ProblemBuilder
 
 pb = ProblemBuilder()
-parsed, _ = pb.formalize_component(
+results, _ = pb.formalize_component(
     model=llm,
     component_class=ProblemDetails,
     description="3 blocks stacked: b2 on b3, b3 on b1, b1 on table.",
     types=types,
     predicates=predicates
 )
-problem_pddl = pb.generate_problem(parsed[ProblemDetails][0])
+problem_pddl = pb.generate_problem(results[ProblemDetails][0])
 ```
 
-### `feedback_builder.py` — LLM-Driven Quality Control
+---
+
+### `feedback_builder.py` - LLM-Driven Quality Control
 
 Provides a self-improvement loop using LLMs for different kinds of feedback strategies in the literature (e.g., diagnosis, revision, evaluation, and candidate selection).
 
 | Method | Purpose |
 |--------|---------|
 | `llm_diagnose()` | Root-cause analysis of syntax/validation errors |
+| `llm_revise()` | Fix broken components using a repair plan |
 | `llm_evaluate()` | Semantic correctness against NL intent (LLM judge) |
 | `llm_reflect()` | Extract durable lessons from failures |
-| `llm_revise()` | Fix broken components using a repair plan |
 | `llm_select()` | Choose the best candidate from multiple generations |
 | `llm_evaluate_plan()` | Verify plan-level semantic soundness |
 | `llm_diagnose_plan()` | Diagnose planner failures (unsolvable, timeout) |
 
 ```python
+from l2p.feedback_builder import FeedbackBuilder
+
+predicates = [
+    Predicate(name="on-table", params=[{"variable": "?b", "type": "block"}]),
+    Predicate(name="holding", params=[{"variable": "?b", "type": "block"}]),
+    Predicate(name="clear", params=[]),
+]
+
+domain_desc = """
+Standard PDDL blocksworld.
+"""
+
 fb = FeedbackBuilder()
 diagnosis, _ = fb.llm_diagnose(
-    model=llm, artifact=predicates,
-    errors="ValidationError: ...",
+    model=llm, 
+    artifact=predicates, # feed in model to fix
+    errors="ValidationError: ...", # error derived from syntax validator
     description=domain_desc
 )
+
+print(diagnosis)
 ```
 
-### `prompt_builder.py` — Structured Prompt Assembly
+---
+
+### `prompt_builder.py` - Structured Prompt Assembly
 
 All default prompts (found in `l2p/templates`) used for `formalize_component()` in `DomainBuilder`, `ProblemBuilder`, and `FeedbackBuilder` correspond to a strict format template. User can use `PromptBuilder` to standardize LLM prompts with five configurable sections:
 
@@ -126,7 +150,7 @@ from l2p.prompt_builder import PromptBuilder
 pb = (PromptBuilder()
     .set_role("You are a PDDL types generator.")
     .set_format("Your final answer must be outputted in the following JSON structure.")
-    .set_format_example(component=PDDLType)
+    .set_format_example(component=PDDLType) # set extraction example block for component
     .add_rule("Use strict PDDL syntax.")
     .add_example("INPUT: ...\nOUTPUT: ...")
     .set_task("Generate types for a rover domain."))
@@ -168,26 +192,26 @@ from l2p.utils.pddl_prompt import load_default_template
 
 prompt = load_default_template("custom", "prompt_types_predicates_functions_actions.md")
 
-parsed, raw = db.formalize_component(
+results, raw = db.formalize_component(
     model=llm,
     component_class=[PDDLType, Predicate, Function, Action],
     prompt_template=prompt,
     description="A rover domain with battery management.",
 )
 
-types = parsed.get(PDDLType, [])
-predicates = parsed.get(Predicate, [])
-functions = parsed.get(Function, [])
-actions = parsed.get(Action, [])
+types = results[PDDLType]
+predicates = results[Predicate]
+functions = results[Function]
+actions = results[Action]
 ```
 
-Each template follows the same structure (Role, Output Format with XML tags, Rules, Task) with added cross-reference constraints — e.g., every predicate used in actions must be defined in the predicates section.
+Each template follows the same structure (Role, Output Format with XML tags, Rules, Task) with added cross-reference constraints - e.g., every predicate used in actions must be defined in the predicates section.
 
-### `planner_builder.py` — External Planner Integration
+### `planner_builder.py` - External Planner Integration
 
 Abstract interface for running classical planners on generated PDDL. Ships with two backends:
 
-**FastDownward** (submodule) — CLI-based:
+**FastDownward** (submodule) - CLI-based:
 ```python
 from l2p.planner_builder import FastDownward
 
@@ -196,7 +220,7 @@ result = planner.run_planner(domain_file="d.pddl", problem_file="p.pddl")
 print(result.is_successful, result.plan)
 ```
 
-**Unified Planning** — Python API:
+**Unified Planning** - Python API:
 ```python
 from l2p.planner_builder import UnifiedPlanning
 
@@ -216,12 +240,6 @@ class PlanningResult:
     raw_output: str
     metrics: Dict[str, Any]
 ```
-
----
-
-## PDDL Support & Requirements
-
-The library automatically infers PDDL requirements (`:strips`, `:typing`, `:numeric-fluents`, etc.) from generated components via `DomainBuilder.generate_requirements()`. Requirements are assembled from the structural features present in the model, therefore no manual annotation needed.
 
 ---
 

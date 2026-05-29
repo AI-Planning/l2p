@@ -1,4 +1,4 @@
-# L2P Utils — PDDL Data Model, Formatting, Parsing & Prompts
+# L2P Utils - PDDL Data Model, Formatting, Parsing & Prompts
 
 > Foundational types and utilities that power every L2P builder.
 
@@ -13,7 +13,7 @@ l2p/utils/
 
 ---
 
-## `pddl_types.py` — PDDL Data Models
+## `pddl_types.py` - PDDL Data Models
 
 All PDDL concepts are represented as **Pydantic v2 BaseModel** classes, giving you type validation, JSON serialization, and clear error messages out of the box.
 
@@ -48,7 +48,7 @@ All PDDL concepts are represented as **Pydantic v2 BaseModel** classes, giving y
 | `Metric` | Plan optimization | `Metric(optimization="minimize", expression="total-time")` |
 | `ProblemDetails` | Root model for a complete problem | Aggregates all above |
 
-### `LogicalCondition` — Recursive Condition Representation
+### `LogicalCondition` - Recursive Condition Representation
 
 PDDL formulas (preconditions, effects, goals) are represented as `Union[str, Dict]`:
 
@@ -64,7 +64,7 @@ Every model has a `tag` class variable that maps to XML tags used in LLM prompts
 
 ---
 
-## `pddl_format.py` — Model-to-PDDL Serialization
+## `pddl_format.py` - Model-to-PDDL Serialization
 
 Converts Pydantic models into standard PDDL string syntax.
 
@@ -90,13 +90,13 @@ Converts Pydantic models into standard PDDL string syntax.
 
 ### Helpers
 
-- **`indent(string, level)`** — Indent PDDL blocks with consistent spacing
-- **`remove_comments(text)`** — Strip `;`, `#`, `//` comments
-- **`natural_sort_key(s)`** — Natural sort (`?b2` before `?b12`)
+- **`indent(string, level)`** - Indent PDDL blocks with consistent spacing
+- **`remove_comments(text)`** - Strip `;`, `#`, `//` comments
+- **`natural_sort_key(s)`** - Natural sort (`?b2` before `?b12`)
 
 ---
 
-## `pddl_parser.py` — LLM Output & PDDL String Parsing
+## `pddl_parser.py` - LLM Output & PDDL String Parsing
 
 ### LLM Output Extraction
 
@@ -113,7 +113,7 @@ parse_element(raw_blocks, InitialState, "initial")
 # -> InitialState(facts=[...])
 ```
 
-Both `parse_component` and `parse_element` validate output against Pydantic models and provide detailed error messages showing the expected schema when validation fails — useful for LLM debugging.
+Both `parse_component` and `parse_element` validate output against Pydantic models and provide detailed error messages showing the expected schema when validation fails - useful for LLM debugging.
 
 ### PDDL String-to-Model Conversion
 
@@ -128,7 +128,7 @@ Converts raw PDDL into the internal Pydantic representation using the `pddl` lib
 
 ---
 
-## `pddl_prompt.py` — Prompt Templates & Context
+## `pddl_prompt.py` - Prompt Templates & Context
 
 ### Template Management
 

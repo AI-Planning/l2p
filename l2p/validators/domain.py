@@ -24,6 +24,12 @@ Validation Coverage
   durative conditions, durative effects, and constraints
 - Variable scoping (forall/exists introduce local scope)
 - Argument arity and type compatibility
+- Action/event/process name uniqueness (no duplicates across all action types)
+- Parameter name uniqueness (no duplicate ``?variable`` names within a component)
+- Non-empty action effects (warns if an action has no add/delete/numeric/conditional effects)
+- Orphaned predicate/function detection (warns if declared but never used in any action)
+- Requirements consistency (e.g. ``:durative-actions`` implies ``:time``)
+- Domain name format validation
 
 Usage
 -----
@@ -609,6 +615,127 @@ def _check_variables_and_types(
 
 
 # ---------------------------------------------------------------------------
+# ADDITIONAL DOMAIN RULES
+# ---------------------------------------------------------------------------
+
+
+@domain_rule(targets=[Action, DurativeAction, Event, Process])
+def check_action_name_uniqueness(
+    target: BaseModel, context: Dict[str, Any]
+) -> ValidationResult:
+    """Check that no other action/event/process shares the same name."""
+    result = ValidationResult()
+    target_name = getattr(target, "name", None)
+    if not target_name:
+        return result
+
+    for cls in [Action, DurativeAction, Event, Process]:
+        for item in context.get(cls, []):
+            if item is target:
+                continue
+            other_name = getattr(item, "name", None)
+            if other_name and other_name.lower() == target_name.lower():
+                result.add_error(
+                    f"[ERROR] Duplicate action/event/process name '{target_name}'. "
+                    f"Already used by {cls.__name__} '{other_name}'."
+                )
+                return result
+    return result
+
+
+@domain_rule(targets=[Action, DurativeAction, Event, Process])
+def check_parameter_name_uniqueness(
+    target: BaseModel, context: Dict[str, Any]
+) -> ValidationResult:
+    """Check that parameters within a component don't share the same ?variable name."""
+    result = ValidationResult()
+    params = getattr(target, "params", [])
+    seen = set()
+    for param in params:
+        var = getattr(param, "variable", None)
+        if var:
+            if var.lower() in seen:
+                result.add_error(
+                    f"[ERROR] {target.__class__.__name__} '{getattr(target, 'name', '')}' "
+                    f"has duplicate parameter '{var}'."
+                )
+            seen.add(var.lower())
+    return result
+
+
+@domain_rule(targets=[Action])
+def check_action_has_effect(
+    target: BaseModel, context: Dict[str, Any]
+) -> ValidationResult:
+    """Warn if an action declares no effects (does nothing)."""
+    result = ValidationResult()
+    effects = getattr(target, "effects", None)
+    if effects is None:
+        result.add_warning(
+            f"[WARNING] Action '{target.name}' has no effects block."
+        )
+        return result
+    if not effects.add and not effects.delete and not effects.numeric and not effects.conditional:
+        result.add_warning(
+            f"[WARNING] Action '{target.name}' has empty effects (add/delete/numeric/conditional all empty)."
+        )
+    return result
+
+
+@domain_rule(targets=[Requirement])
+def check_requirements_consistency(
+    target: BaseModel, context: Dict[str, Any]
+) -> ValidationResult:
+    """Check that requirements are consistent.
+
+    e.g. :durative-actions implies :time, :numeric-fluents needed for effects, etc.
+    """
+    result = ValidationResult()
+    reqs = {r.name.lower() for r in context.get(Requirement, [])}
+    target_req = getattr(target, "name", "").lower()
+
+    implied = {
+        ":durative-actions": ":time",
+        ":continuous-effects": ":durative-actions",
+        ":action-costs": ":numeric-fluents",
+    }
+    if target_req in implied and implied[target_req] not in reqs:
+        result.add_warning(
+            f"[WARNING] Requirement '{target_req}' is present but implied "
+            f"requirement '{implied[target_req]}' is missing."
+        )
+    return result
+
+
+@domain_rule(targets=[Predicate, Function, DerivedPredicate])
+def check_orphaned_predicate(
+    target: BaseModel, context: Dict[str, Any]
+) -> ValidationResult:
+    """Warn if a declared predicate/function is never used in any action/event/process."""
+    from l2p.validators.base import _extract_symbols as _extract
+
+    result = ValidationResult()
+    target_name = getattr(target, "name", None)
+    if not target_name:
+        return result
+    target_name_lower = target_name.lower()
+
+    # Collect all symbols used across all actions/events/processes
+    used_symbols: Set[str] = set()
+    for cls in [Action, DurativeAction, Event, Process]:
+        for item in context.get(cls, []):
+            syms = _extract(item)
+            used_symbols.update(s.lower() for s in syms)
+
+    if target_name_lower not in used_symbols:
+        result.add_warning(
+            f"[WARNING] {target.__class__.__name__} '{target_name}' is declared "
+            f"but never used in any action, event, or process."
+        )
+    return result
+
+
+# ---------------------------------------------------------------------------
 # ORCHESTRATOR FOR THE LLM PIPELINE
 # ---------------------------------------------------------------------------
 
@@ -632,3 +759,60 @@ class DomainValidator(SyntaxValidator):
         if custom_rules:
             for rule in custom_rules:
                 self.register_rule(rule)
+
+    def validate_domain(self, domain: DomainDetails) -> ValidationResult:
+        """
+        Validate every component in a DomainDetails with full cross-component context.
+
+        Iterates all 11 component fields (types, constants, predicates, functions,
+        derived_predicates, actions, durative_actions, events, processes, constraint,
+        requirements) and aggregates errors and warnings into a single result.
+
+        Args:
+            domain: A fully populated DomainDetails model.
+
+        Returns:
+            ValidationResult with all errors and warnings collected across components.
+        """
+        context = {
+            PDDLType: domain.types,
+            Predicate: domain.predicates,
+            Function: domain.functions,
+            Action: domain.actions,
+            DurativeAction: domain.durative_actions,
+            Event: domain.events,
+            Process: domain.processes,
+        }
+        result = ValidationResult()
+
+        # Domain name validation
+        if not re.match(r"^[a-zA-Z][a-zA-Z0-9_\-]*$", domain.name):
+            result.add_error(
+                f"[ERROR] Domain name '{domain.name}' contains invalid characters. "
+                "Must start with a letter and contain only letters, numbers, hyphens, or underscores."
+            )
+
+        fields = [
+            ("types", domain.types),
+            ("constants", domain.constants),
+            ("predicates", domain.predicates),
+            ("functions", domain.functions),
+            ("derived_predicates", domain.derived_predicates),
+            ("actions", domain.actions),
+            ("durative_actions", domain.durative_actions),
+            ("events", domain.events),
+            ("processes", domain.processes),
+            ("constraint", domain.constraint),
+            ("requirements", domain.requirements),
+        ]
+
+        for name, items in fields:
+            for item in items:
+                r = self.validate_component(item, context)
+                if not r.valid:
+                    for e in r.errors:
+                        result.add_error(f"[{name}] {e}")
+                for w in r.warnings:
+                    result.add_warning(f"[{name}] {w}")
+
+        return result

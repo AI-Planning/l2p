@@ -1,6 +1,8 @@
-# L2P Validators — Symbolic PDDL Syntax & Semantic Checking
+# L2P Validators - Symbolic PDDL Syntax & Semantic Checking
 
 > Rule-based validation framework for catching PDDL errors before they reach a planner.
+
+Syntax and semantic validators are the backbone to symbolic planning. Users / agents can use these classes and functions to check for code correctness. **It is heavily recommended** that one would validate after LLM PDDL generation.
 
 ```
 l2p/validators/
@@ -33,9 +35,9 @@ SyntaxValidator (orchestrator)
 
 ```python
 result = ValidationResult()
-result.valid       # bool — False if any errors were added
-result.errors      # List[str] — fatal errors
-result.warnings    # List[str] — non-fatal warnings
+result.valid       # bool - False if any errors were added
+result.errors      # List[str] - fatal errors
+result.warnings    # List[str] - non-fatal warnings
 result.add_error("...")
 result.add_warning("...")
 ```
@@ -73,11 +75,11 @@ result = validator.validate_component(
 
 ### Semantic Variable & Type Checking
 
-`check_component_variables` goes beyond simple existence — it builds a `DomainSemantics` index of all predicate/function signatures and verifies:
+`check_component_variables` goes beyond simple existence - it builds a `DomainSemantics` index of all predicate/function signatures and verifies:
 
-1. **Arity** — correct argument count per predicate
-2. **Type compatibility** — each argument's type (or declared variable type) is a subtype of the parameter's expected type (following the type hierarchy)
-3. **Scope resolution** — `forall`/`exists` quantifiers introduce new local variables
+1. **Arity** - correct argument count per predicate
+2. **Type compatibility** - each argument's type (or declared variable type) is a subtype of the parameter's expected type (following the type hierarchy)
+3. **Scope resolution** - `forall`/`exists` quantifiers introduce new local variables
 
 ---
 
@@ -143,6 +145,54 @@ def check_predicate_names(target, context):
 
 --- 
 
+## Validating a Full Domain or Problem
+
+For convenience, both validators have a method that accepts the root model directly and runs every applicable rule with cross-component context:
+
+```python
+from l2p.validators.domain import DomainValidator
+from l2p.validators.problem import ProblemValidator
+from l2p.utils.pddl_types import DomainDetails, ProblemDetails
+
+domain = DomainDetails(name="blocksworld", types=[...], predicates=[...], ...)
+result = DomainValidator().validate_domain(domain)
+if not result.valid:
+    for error in result.errors:
+        print(f"  {error}")
+```
+
+`validate_domain()` checks all **11 component fields**: types, constants, predicates, functions, derived_predicates, actions, durative_actions, events, processes, constraint, and requirements.
+
+### Cross-Domain Problem Validation
+
+To validate a problem against its domain (checking that object types exist in the domain, predicate/function calls in init and goal match declared signatures, etc.), pass the domain as a second argument:
+
+```python
+# Parse both files
+from l2p.utils.pddl_parser import parse_domain_pddl, parse_problem_pddl
+
+domain = parse_domain_pddl(open("domain.pddl").read())
+problem = parse_problem_pddl(open("problem.pddl").read())
+
+result = ProblemValidator().validate_problem(problem, domain=domain)
+if not result.valid:
+    for error in result.errors:
+        print(f"  {error}")
+```
+
+Without a domain, `validate_problem()` checks structural validity (object names, metric syntax). With a domain, it additionally verifies:
+- Object types are declared in the domain's type hierarchy
+- Initial state and goal predicates match domain predicate signatures (arity + argument types)
+- Metric expressions use declared functions
+- All predicate/function symbols referenced in init and goal are defined in the domain
+
+From the CLI:
+```bash
+l2p validate problem problem.pddl --domain domain.pddl
+```
+
+---
+
 ## Integration with Builders
 
 Validation fits naturally in the generation pipeline:
@@ -150,6 +200,7 @@ Validation fits naturally in the generation pipeline:
 ```
 1. LLM generates JSON → Pydantic model
 2. DomainValidator.validate_component(model, context)
+   Or validate the whole container: validate_domain(domain_details)
 3. If errors → FeedbackBuilder.llm_diagnose() → llm_revise()
 4. If valid → format to PDDL string → planner
 ```

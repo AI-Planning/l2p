@@ -22,6 +22,9 @@ Validation Coverage
 - Timed Initial Literal validation (same checks applied to timed facts)
 - Goal state validation (same structural checks as initial state)
 - Metric expression validation (declared functions, no variables, valid syntax)
+- Duplicate object detection (no two objects with the same name)
+- Unused object detection (warns if declared but never referenced in init/goal)
+- Trivial goal detection (warns if goal has no conditions)
 
 Usage
 -----
@@ -38,7 +41,7 @@ instance to the constructor.
 """
 
 import re
-from typing import Any, Dict, List, Type, Callable
+from typing import Any, Dict, List, Optional, Type, Callable, Set
 from pydantic import BaseModel
 
 from l2p.validators.base import (
@@ -80,10 +83,12 @@ class ProblemSemantics:
         self.signatures: Dict[str, List[str]] = {}
         self.constants: Dict[str, str] = {}
         self.type_parents: Dict[str, str] = {}
+        self.has_domain_context: bool = False
 
         for cls, items in context.items():
             name = cls.__name__
             if name == "PDDLType":
+                self.has_domain_context = True
                 for t in items:
                     self.type_parents[t.name.lower()] = (
                         getattr(t, "parent", None) or "object"
@@ -94,6 +99,7 @@ class ProblemSemantics:
                         getattr(c, "type", None) or "object"
                     ).lower()
             elif name in ["Predicate", "Function", "DerivedPredicate"]:
+                self.has_domain_context = True
                 for p in items:
                     # Map predicate name -> list of expected parameter types
                     self.signatures[p.name.lower()] = [
@@ -173,7 +179,7 @@ def _check_problem_state_types(
 
                         if not arg_type:
                             result.add_error(
-                                f"[ERROR] {location_desc}: '{arg}' is not a declared object or constant."
+                                f"[ERROR] {location_desc}: '{arg}' in '{item}' is not a declared object or constant."
                             )
                             continue
 
@@ -181,12 +187,12 @@ def _check_problem_state_types(
                     if arg_type and not sem.is_subtype(arg_type, exp_type):
                         pos = get_ordinal(i)
                         result.add_error(
-                            f"[ERROR] {location_desc}: The {pos} argument '{arg}' in '{sym}' is of type "
+                            f"[ERROR] {location_desc}: The {pos} argument '{arg}' in '{item}' is of type "
                             f"'{arg_type}', which is not compatible with the expected type '{exp_type}'."
                         )
-            elif sym not in PDDL_KEYWORDS:
+            elif sem.has_domain_context and sym not in PDDL_KEYWORDS:
                 result.add_error(
-                    f"[ERROR] {location_desc}: '{sym}' is neither a declared domain predicate/function "
+                    f"[ERROR] {location_desc}: '{sym}' in '{item}' is neither a declared domain predicate/function "
                     f"nor a built-in PDDL keyword."
                 )
 
@@ -393,6 +399,93 @@ def check_metric_syntax(target: BaseModel, context: Dict[str, Any]) -> Validatio
 
 
 # ---------------------------------------------------------------------------
+# ADDITIONAL PROBLEM RULES
+# ---------------------------------------------------------------------------
+
+
+@problem_rule(targets=[PDDLObject])
+def check_duplicate_objects(
+    target: BaseModel, context: Dict[str, Any]
+) -> ValidationResult:
+    """Check that no two objects share the same name."""
+    result = ValidationResult()
+    target_name = getattr(target, "name", None)
+    if not target_name:
+        return result
+
+    for item in context.get(PDDLObject, []):
+        if item is target:
+            continue
+        other_name = getattr(item, "name", None)
+        if other_name and other_name.lower() == target_name.lower():
+            result.add_error(
+                f"[ERROR] Duplicate object name '{target_name}'."
+            )
+            return result
+    return result
+
+
+@problem_rule(targets=[PDDLObject])
+def check_unused_objects(
+    target: BaseModel, context: Dict[str, Any]
+) -> ValidationResult:
+    """Warn if an object is declared but never referenced in init or goal."""
+    result = ValidationResult()
+    target_name = getattr(target, "name", None)
+    if not target_name:
+        return result
+    target_lower = target_name.lower()
+
+    # Collect all strings referenced in initial state and goal state
+    referenced: Set[str] = set()
+    _word_re = re.compile(r"[a-zA-Z][a-zA-Z0-9_\-]*")
+
+    for init in context.get(InitialState, []):
+        for fact in getattr(init, "facts", []):
+            if isinstance(fact, str):
+                referenced.update(
+                    m.group(0).lower()
+                    for m in _word_re.finditer(fact)
+                )
+        for tf in getattr(init, "timed_facts", []):
+            f = getattr(tf, "fact", "")
+            if isinstance(f, str):
+                referenced.update(
+                    m.group(0).lower()
+                    for m in _word_re.finditer(f)
+                )
+
+    for goal in context.get(GoalState, []):
+        for cond in getattr(goal, "conditions", []):
+            if isinstance(cond, str):
+                referenced.update(
+                    m.group(0).lower()
+                    for m in _word_re.finditer(cond)
+                )
+
+    if target_lower not in referenced:
+        result.add_warning(
+            f"[WARNING] Object '{target_name}' is declared but never referenced "
+            f"in the initial state or goal."
+        )
+    return result
+
+
+@problem_rule(targets=[GoalState])
+def check_goal_not_trivially_satisfied(
+    target: BaseModel, context: Dict[str, Any]
+) -> ValidationResult:
+    """Warn if the goal has no conditions (trivially satisfied)."""
+    result = ValidationResult()
+    conditions = getattr(target, "conditions", [])
+    if not conditions:
+        result.add_warning(
+            "[WARNING] Goal state has no conditions — the problem is trivially satisfied."
+        )
+    return result
+
+
+# ---------------------------------------------------------------------------
 # ORCHESTRATOR FOR THE LLM PIPELINE
 # ---------------------------------------------------------------------------
 
@@ -416,3 +509,80 @@ class ProblemValidator(SyntaxValidator):
         if custom_rules:
             for rule in custom_rules:
                 self.register_rule(rule)
+
+    def validate_problem(
+        self,
+        problem: ProblemDetails,
+        domain: Optional[DomainDetails] = None,
+    ) -> ValidationResult:
+        """
+        Validate every component in a ProblemDetails with full cross-component context.
+
+        Iterates all component fields (objects, initial_state, goal_state, constraint,
+        metric) and aggregates errors and warnings into a single result.
+
+        When a domain is provided, additionally validates that:
+          - Object types are declared in the domain
+          - Predicate/function calls in init and goal match declared signatures
+          - Metric expressions use declared functions
+
+        Args:
+            problem: A fully populated ProblemDetails model.
+            domain: Optional DomainDetails for cross-component domain checks.
+
+        Returns:
+            ValidationResult with all errors and warnings collected across components.
+        """
+        context = {PDDLObject: problem.objects}
+        if problem.initial_state:
+            context[InitialState] = [problem.initial_state]
+        if problem.goal_state:
+            context[GoalState] = [problem.goal_state]
+        if domain:
+            context[PDDLType] = domain.types
+            context[Predicate] = domain.predicates
+            context[Function] = domain.functions
+            
+        result = ValidationResult()
+
+        for item in problem.objects:
+            r = self.validate_component(item, context)
+            if not r.valid:
+                for e in r.errors:
+                    result.add_error(e)
+            for w in r.warnings:
+                result.add_warning(w)
+
+        if problem.initial_state:
+            r = self.validate_component(problem.initial_state, context)
+            if not r.valid:
+                for e in r.errors:
+                    result.add_error(e)
+            for w in r.warnings:
+                result.add_warning(w)
+
+        if problem.goal_state:
+            r = self.validate_component(problem.goal_state, context)
+            if not r.valid:
+                for e in r.errors:
+                    result.add_error(e)
+            for w in r.warnings:
+                result.add_warning(w)
+
+        for item in problem.constraint:
+            r = self.validate_component(item, context)
+            if not r.valid:
+                for e in r.errors:
+                    result.add_error(e)
+            for w in r.warnings:
+                result.add_warning(w)
+
+        if problem.metric:
+            r = self.validate_component(problem.metric, context)
+            if not r.valid:
+                for e in r.errors:
+                    result.add_error(e)
+            for w in r.warnings:
+                result.add_warning(w)
+
+        return result

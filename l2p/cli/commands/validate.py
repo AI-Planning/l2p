@@ -131,62 +131,27 @@ def _validate_full_domain(raw: str) -> dict:
     data = json.loads(raw)
     details = DomainDetails.model_validate(data)
     validator = DomainValidator()
-    errors = []
-    warnings = []
-
-    fields = [
-        ("types", details.types),
-        ("constants", details.constants),
-        ("predicates", details.predicates),
-        ("functions", details.functions),
-        ("derived_predicates", details.derived_predicates),
-        ("actions", details.actions),
-    ]
-    context = {
-        PDDLType: details.types,
-        Predicate: details.predicates,
-        Function: details.functions,
+    result = validator.validate_domain(details)
+    return {
+        "valid": result.valid,
+        "errors": result.errors,
+        "warnings": result.warnings,
     }
 
-    for name, items in fields:
-        for item in items:
-            result = validator.validate_component(item, context)
-            if not result.valid:
-                for e in result.errors:
-                    errors.append(f"[{name}] {e}")
-            warnings.extend(f"[{name}] {w}" for w in result.warnings)
 
-    return {"valid": len(errors) == 0, "errors": errors, "warnings": warnings}
-
-
-def _validate_full_problem(raw: str) -> dict:
+def _validate_full_problem(raw: str, domain_raw: Optional[str] = None) -> dict:
     data = json.loads(raw)
     details = ProblemDetails.model_validate(data)
+    domain = None
+    if domain_raw:
+        domain = DomainDetails.model_validate(json.loads(domain_raw))
     validator = ProblemValidator()
-    errors = []
-    warnings = []
-
-    context = {PDDLObject: details.objects}
-
-    for item in details.objects:
-        result = validator.validate_component(item, context)
-        if not result.valid:
-            errors.extend(result.errors)
-        warnings.extend(result.warnings)
-
-    if details.initial_state:
-        result = validator.validate_component(details.initial_state, context)
-        if not result.valid:
-            errors.extend(result.errors)
-        warnings.extend(result.warnings)
-
-    if details.goal_state:
-        result = validator.validate_component(details.goal_state, context)
-        if not result.valid:
-            errors.extend(result.errors)
-        warnings.extend(result.warnings)
-
-    return {"valid": len(errors) == 0, "errors": errors, "warnings": warnings}
+    result = validator.validate_problem(details, domain=domain)
+    return {
+        "valid": result.valid,
+        "errors": result.errors,
+        "warnings": result.warnings,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -263,6 +228,12 @@ def add_subparser(subparsers):
     prob_parser.add_argument(
         "--file", type=str, default=None, help="Path to ProblemDetails JSON file."
     )
+    prob_parser.add_argument(
+        "--domain",
+        type=str,
+        default=None,
+        help="Path to .pddl domain file or DomainDetails JSON string/ file (for cross-component checks).",
+    )
     prob_parser.set_defaults(func=validate_problem_command)
 
 
@@ -295,40 +266,16 @@ def _validate_domain_from_pddl(path: Path) -> dict:
         }
 
     validator = DomainValidator()
-    errors = []
-    warnings = []
-
-    fields = [
-        ("types", details.types),
-        ("constants", details.constants),
-        ("predicates", details.predicates),
-        ("functions", details.functions),
-        ("derived_predicates", details.derived_predicates),
-        ("actions", details.actions),
-    ]
-    context = {
-        PDDLType: details.types,
-        Predicate: details.predicates,
-        Function: details.functions,
-    }
-
-    for name, items in fields:
-        for item in items:
-            result = validator.validate_component(item, context)
-            if not result.valid:
-                for e in result.errors:
-                    errors.append(f"[{name}] {e}")
-            warnings.extend(f"[{name}] {w}" for w in result.warnings)
-
+    result = validator.validate_domain(details)
     return {
-        "valid": len(errors) == 0,
-        "errors": errors,
-        "warnings": warnings,
+        "valid": result.valid,
+        "errors": result.errors,
+        "warnings": result.warnings,
         "name": details.name,
     }
 
 
-def _validate_problem_from_pddl(path: Path) -> dict:
+def _validate_problem_from_pddl(path: Path, domain_path: Optional[Path] = None) -> dict:
     raw = path.read_text()
     try:
         details = parse_problem_pddl(raw)
@@ -339,33 +286,23 @@ def _validate_problem_from_pddl(path: Path) -> dict:
             "warnings": [],
         }
 
+    domain = None
+    if domain_path:
+        try:
+            domain = parse_domain_pddl(domain_path.read_text())
+        except Exception as e:
+            return {
+                "valid": False,
+                "errors": [f"Failed to parse domain file '{domain_path}': {e}"],
+                "warnings": [],
+            }
+
     validator = ProblemValidator()
-    errors = []
-    warnings = []
-    context = {PDDLObject: details.objects}
-
-    for item in details.objects:
-        result = validator.validate_component(item, context)
-        if not result.valid:
-            errors.extend(result.errors)
-        warnings.extend(result.warnings)
-
-    if details.initial_state:
-        result = validator.validate_component(details.initial_state, context)
-        if not result.valid:
-            errors.extend(result.errors)
-        warnings.extend(result.warnings)
-
-    if details.goal_state:
-        result = validator.validate_component(details.goal_state, context)
-        if not result.valid:
-            errors.extend(result.errors)
-        warnings.extend(result.warnings)
-
+    result = validator.validate_problem(details, domain=domain)
     return {
-        "valid": len(errors) == 0,
-        "errors": errors,
-        "warnings": warnings,
+        "valid": result.valid,
+        "errors": result.errors,
+        "warnings": result.warnings,
         "name": details.name,
     }
 
@@ -403,7 +340,14 @@ def validate_domain_command(args):
 def validate_problem_command(args):
     p = _resolve_path(args)
     if p and p.suffix == ".pddl":
-        result = _validate_problem_from_pddl(p)
+        domain_path = None
+        if getattr(args, "domain", None):
+            dp = Path(args.domain).expanduser().resolve()
+            if not dp.exists():
+                print(f"[ERROR] Domain file not found: {dp}", file=sys.stderr)
+                sys.exit(1)
+            domain_path = dp
+        result = _validate_problem_from_pddl(p, domain_path=domain_path)
         name = result.get("name", p.stem)
         if result["valid"]:
             print(f'[SUCCESS] Problem "{name}" is valid')
@@ -421,9 +365,17 @@ def validate_problem_command(args):
             sys.exit(1)
         return
 
+    domain_raw = None
+    if getattr(args, "domain", None):
+        domain_arg = args.domain
+        if domain_arg.startswith("@"):
+            domain_raw = Path(domain_arg[1:]).read_text()
+        else:
+            domain_raw = domain_arg
+
     try:
         raw = _load_data(args)
-        result = _validate_full_problem(raw)
+        result = _validate_full_problem(raw, domain_raw=domain_raw)
     except Exception as e:
         print(f"[ERROR] Problem validation failed: {e}", file=sys.stderr)
         sys.exit(1)

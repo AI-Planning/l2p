@@ -1,4 +1,4 @@
-# L2P LLM — Multi-Provider Language Model Interface
+# L2P LLM - Multi-Provider Language Model Interface
 
 > Unified abstraction over LLM backends for PDDL generation.
 
@@ -44,7 +44,7 @@ llm.reset_query_log()
 
 ---
 
-## `OPENAI` — OpenAI SDK Backend
+## `OPENAI` - OpenAI SDK Backend
 
 Compatible with any provider that implements the OpenAI chat completions API format:
 
@@ -94,7 +94,7 @@ Key features:
 
 ---
 
-## `UnifiedLLM` — simonw/llm Backend
+## `UnifiedLLM` - simonw/llm Backend
 
 Wraps the [`llm` library](https://llm.datasette.io), supporting all providers available through its plugin system:
 
@@ -128,7 +128,7 @@ The `model_alias` field follows the `llm` plugin convention (e.g., `ollama/llama
 
 ---
 
-## `HUGGING_FACE` — Local Transformers
+## `HUGGING_FACE` - Local Transformers
 
 Run models locally via HuggingFace `transformers` with automatic prompt formatting (*NOTE:* users must pass in their own .yaml config file):
 
@@ -161,11 +161,11 @@ Two YAML files ship with the library:
 Users can define custom providers/models by adding entries to these files or pointing to their own YAML via `config_path`.
 
 Each entry supports:
-- `model_alias` — actual name passed to the API
-- `model_context_length` — max tokens window
-- `cost_usd_mtok` — input/output pricing (for cost tracking)
-- `model_params` — generation parameters (temperature, max_tokens, etc.)
-- `model_config` — hardware settings (dtype, device_map, ngpu)
+- `model_alias` - actual name passed to the API
+- `model_context_length` - max tokens window
+- `cost_usd_mtok` - input/output pricing (for cost tracking)
+- `model_params` - generation parameters (temperature, max_tokens, etc.)
+- `model_config` - hardware settings (dtype, device_map, ngpu)
 
 ---
 

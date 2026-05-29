@@ -1,4 +1,4 @@
-# L2P CLI — Command-Line Interface
+# L2P CLI - Command-Line Interface
 
 > PDDL generation, validation, planning, and LLM agent tooling - all from your terminal.
 
@@ -6,21 +6,21 @@
 l2p/cli/
 ├── main.py               # Entry point & argument dispatch
 ├── commands/
-│   ├── init.py           # l2p init — model configuration
-│   ├── models.py         # l2p models — list, switch, test
-│   ├── generate.py       # l2p generate — interactive pipelines
+│   ├── init.py           # l2p init - model configuration
+│   ├── models.py         # l2p models - list, switch, test
+│   ├── generate.py       # l2p generate - interactive pipelines
 │   ├── generators/
 │   │   ├── domain.py     # Interactive domain generator
 │   │   └── problem.py    # Interactive problem generator
-│   ├── set.py            # l2p set — inject components from JSON
-│   ├── build.py          # l2p build — assemble domain/problem PDDL
-│   ├── validate.py       # l2p validate — validate components & files
-│   ├── plan.py           # l2p plan — run planners
-│   ├── schema.py         # l2p schema — output Pydantic JSON schemas
-│   ├── config.py         # l2p config — show, edit, reset
-│   ├── templates.py      # l2p templates — list, show, find
-│   ├── new.py            # l2p new — blank PDDL files
-│   ├── chat.py           # l2p chat — interactive LLM session
+│   ├── set.py            # l2p set - inject components from JSON
+│   ├── build.py          # l2p build - assemble domain/problem PDDL
+│   ├── validate.py       # l2p validate - validate components & files
+│   ├── plan.py           # l2p plan - run planners
+│   ├── schema.py         # l2p schema - output Pydantic JSON schemas
+│   ├── config.py         # l2p config - show, edit, reset
+│   ├── templates.py      # l2p templates - list, show, find
+│   ├── new.py            # l2p new - blank PDDL files
+│   ├── chat.py           # l2p chat - interactive LLM session
 └── utils/
     ├── config.py         # ConfigManager (YAML-based)
     ├── errors.py         # CLIError with troubleshooting
@@ -137,9 +137,9 @@ l2p new pb1.pddl --type problem --domain-name blocksworld
 
 ## Agentic Workflow (non-interactive commands)
 
-These commands accept structured JSON input and produce machine-readable output — designed for LLM tool-calling agents and automation scripts.
+These commands accept structured JSON input and produce machine-readable output - designed for LLM tool-calling agents and automation scripts.
 
-### `l2p set` — Inject & validate a component
+### `l2p set` - Inject & validate a component
 
 Inject individual PDDL components from JSON. Each call validates the data against L2P's semantic rules and optionally outputs the formatted result.
 
@@ -164,15 +164,15 @@ l2p set types --schema
 
 Available components: `requirements`, `types`, `constants`, `predicates`, `functions`, `derived-predicates`, `actions`, `durative-actions`, `events`, `processes`, `constraints`, `objects`, `initial-state`, `goal-state`, `metric`.
 
-### `l2p build` — Assemble and render PDDL
+### `l2p build` - Assemble and render PDDL
 
 Build the final PDDL string from a complete `DomainDetails` or `ProblemDetails` JSON, or from individual component files.
 
 ```bash
-# Full JSON — one-shot domain
+# Full JSON - one-shot domain
 l2p build domain --data '{"name":"bw","types":[...],"predicates":[...],"actions":[...]}' -o domain.pddl
 
-# Full JSON — one-shot problem
+# Full JSON - one-shot problem
 l2p build problem --data '{"name":"pb1","domain_name":"bw","objects":[...],"initial_state":{...},"goal_state":{...}}' -o problem.pddl
 
 # Individual component files
@@ -184,7 +184,7 @@ l2p build domain --name blocksworld \
 l2p build domain --data '{...}' --json
 ```
 
-### `l2p validate` — Semantic & syntax checking
+### `l2p validate` - Semantic & syntax checking
 
 Validate individual JSON components or entire `.pddl` files against L2P's rule engine (naming conventions, type inheritance, variable scope, arity matching, undeclared symbols).
 
@@ -196,13 +196,13 @@ l2p validate types --data '[{"name":"block","parent":"object"}]'
 l2p validate domain domain.pddl
 
 # Validate a .pddl problem file
-l2p validate problem problem.pddl
+l2p validate problem problem.pddl --domain domain.pddl
 
 # Validate against JSON
 l2p validate domain --data '{"name":"bw","types":[],"predicates":[],"actions":[]}'
 ```
 
-### `l2p plan` — Run a planner
+### `l2p plan` - Run a planner
 
 Execute FastDownward or Unified Planning on domain/problem PDDL strings directly (no temp files needed).
 
@@ -233,7 +233,7 @@ Output with `--json` returns a structured `PlanningResult`:
 }
 ```
 
-### `l2p schema` — JSON Schema reference for LLMs
+### `l2p schema` - JSON Schema reference for LLMs
 
 Output the Pydantic JSON Schema for any PDDL component. LLMs read this to know the exact JSON structure expected by `l2p set` and `l2p build`.
 

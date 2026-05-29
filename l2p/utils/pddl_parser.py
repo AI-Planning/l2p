@@ -187,7 +187,7 @@ def parse_domain_pddl(domain_str: str) -> DomainDetails:
     )
 
 
-def parse_problem_pddl(pddl_str: str) -> ProblemDetails:
+def parse_problem_pddl(problem_str: str) -> ProblemDetails:
     """
     Parse a raw PDDL problem string into a :class:`ProblemDetails` model.
     Args:
@@ -195,7 +195,7 @@ def parse_problem_pddl(pddl_str: str) -> ProblemDetails:
     Returns:
         ProblemDetails: Pydantic L2P BaseModel
     """
-    problem = write_temp_pddl(pddl_str, parse_problem)
+    problem = write_temp_pddl(problem_str, parse_problem)
 
     return ProblemDetails(
         name=problem.name,
