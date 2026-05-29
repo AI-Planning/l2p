@@ -5,33 +5,6 @@ prompt LLMs so they are compatible with class function parsing.
 
 This file uses inputted NL descriptions to generate Markdown prompt templates for the LLM.
 The user does not have to use this class, but it is generally advisable for standardization.
-
-Standardized format prompt.md:
-```
-## ROLE
-[...]
-
-## OUTPUT FORMAT
-[...]
-
-## RULES
-[...]
-
-## EXAMPLE(S)
-# Example 1:
-[...]
-    .
-    .
-    .
-# Example n:
-[...]
---------------------------------------------------
-
-## TASK
-[...]
-
-{context}
-```
 """
 
 import json
