@@ -7,64 +7,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Fira+Code:wght@400;500&display=swap');
-        
-        :root {
-            --bg-dark: #020617;
-            --accent-primary: #38bdf8;
-            --accent-secondary: #818cf8;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-dark);
-            color: #e2e8f0;
-            overflow-x: hidden;
-        }
-
-        .glass {
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .text-gradient {
-            background: linear-gradient(to right, var(--accent-primary), var(--accent-secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .code-font {
-            font-family: 'Fira Code', monospace;
-        }
-
-        .hero-gradient {
-            background: radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.1) 0%, rgba(2, 6, 23, 0) 50%);
-        }
-
-        .node-pattern {
-            background-image: radial-gradient(rgba(56, 189, 248, 0.15) 1px, transparent 1px);
-            background-size: 30px 30px;
-        }
-
-        /* Hide the default details arrow */
-        details > summary {
-            list-style: none;
-        }
-        details > summary::-webkit-details-marker {
-            display: none;
-        }
-        
-        /* Animate the custom arrow icon when open */
-        details[open] summary .expand-icon {
-            transform: rotate(180deg);
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body class="node-pattern">
 
-        <!-- Top Announcement Bar -->
+    <!-- Top Announcement Bar -->
     <a href="https://icaps26.icaps-conference.org" target="_blank" class="fixed top-0 w-full h-10 z-[60] bg-indigo-600/20 backdrop-blur-md border-b border-indigo-500/30 hover:bg-indigo-600/30 transition-colors cursor-pointer group flex items-center justify-center">
         <div class="max-w-7xl mx-auto px-6 flex items-center justify-center gap-2">
             <span class="flex h-2 w-2 relative">
@@ -79,7 +26,6 @@
     </a>
 
     <!-- Navigation -->
-    <!-- Set to top-10 exactly matching the h-10 of the announcement bar above -->
     <nav class="fixed top-10 w-full z-50 glass border-b border-white/5">
         <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
             <div class="text-xl font-bold tracking-tighter text-gradient">Language-to-Plan (L2P)</div>
@@ -115,20 +61,15 @@
         </div>
     </section>
 
-        <!-- Authors Section -->
-        <!-- Authors Section -->
+    <!-- Authors Section -->
     <section id="authors" class="py-20 px-6 bg-slate-950/50">
         <div class="max-w-7xl mx-auto">
             <h2 class="text-sm font-bold text-sky-500 uppercase tracking-[0.3em] text-center mb-12" data-aos="fade-up">Presenter</h2>
             
-            <!-- CHANGED: Replaced the 2-column grid with a centered, max-width container -->
             <div class="max-w-3xl mx-auto">
-                
-                <!-- Author 1 -->
-                <!-- CHANGED: Updated animation to fade-up instead of fade-right -->
                 <details class="glass p-8 rounded-3xl flex flex-col items-center text-center group" data-aos="fade-up">
                   <summary class="flex flex-col items-center cursor-pointer w-full">
-                    <div class="w-24 h-24 rounded-full bg-gradient-to-br from-sky-400 to-indigo-500 p-1 mb-6 group-hover:rotate-6 transition-transform">
+                    <div class="w-28 h-28 rounded-full bg-gradient-to-br from-sky-400 to-indigo-500 p-1 mb-6 group-hover:rotate-6 transition-transform">
                       <div class="w-full h-full rounded-full bg-slate-900 flex items-center justify-center overflow-hidden">
                         <img src="images/marcus.tantakoun.png" alt="Marcus Tantakoun" class="w-full h-full object-cover">
                       </div>
@@ -136,21 +77,18 @@
                     <h3 class="text-2xl font-bold text-white mb-2">Marcus Tantakoun</h3>
                     <p class="text-slate-400 text-sm mb-6">PhD in Computing, Queen's University | Pronouns: he/him</p>
                     <div class="flex flex-wrap justify-center gap-4 mb-4">
-                      <a href="20mt1@queensu.ca" class="p-2 rounded-lg bg-white/5 hover:bg-sky-500/20 transition-colors" title="Email"><i data-lucide="mail" class="w-5 h-5 text-sky-400"></i></a>
+                      <a href="mailto:20mt1@queensu.ca" class="p-2 rounded-lg bg-white/5 hover:bg-sky-500/20 transition-colors" title="Email"><i data-lucide="mail" class="w-5 h-5 text-sky-400"></i></a>
                       <a href="https://github.com/MarcusTantakoun" class="p-2 rounded-lg bg-white/5 hover:bg-sky-500/20 transition-colors text-sky-400" title="GitHub"><i data-lucide="code" class="w-5 h-5"></i></a>
                       <a href="https://scholar.google.ca/citations?user=WmVgcIgAAAAJ&hl=en" class="p-2 rounded-lg bg-white/5 hover:bg-sky-500/20 transition-colors" title="Google Scholar"><i data-lucide="graduation-cap" class="w-5 h-5 text-sky-400"></i></a>
                       <a href="https://www.linkedin.com/in/marcus-tantakoun/" class="p-2 rounded-lg bg-white/5 hover:bg-sky-500/20 transition-colors" title="LinkedIn"><i data-lucide="contact" class="w-5 h-5 text-sky-400"></i></a>
-                      <!-- Personal Website Icon -->
                       <a href="https://marcustantakoun.github.io" target="_blank" class="p-2 rounded-lg bg-white/5 hover:bg-sky-500/20 transition-colors" title="Personal Website"><i data-lucide="globe" class="w-5 h-5 text-sky-400"></i></a>
                     </div>
-                    <!-- Custom Arrow positioned centrally below contact icons -->
                     <div class="mt-2 text-slate-500 transition-colors group-hover:text-sky-400">
                         <i data-lucide="chevron-down" class="w-6 h-6 expand-icon transition-transform duration-300"></i>
                     </div>
                   </summary>
-                  <p class="mt-4 text-sm text-slate-400 px-4">I am currently a second-year PhD computing student, co-supervised by Professors Christian Muise and Xiaodan Zhu, at Queen’s University; previously completed my undergrad at Queen’s with a Bachelor’s of Computing (BCPH) in Artificial Intelligence. My research is interdisciplinary between NLP and Automated Planning. Particularly, involving the exploration of Large Language Models' (LLMs) powerful generative capabilities to complement Automated Planning systems. Outside of academics, I am an active participant in Kingston’s local music scene with a primary focus on playing bass and occasional dabbling in keys and guitar.</p>
+                  <p class="mt-4 text-sm text-slate-400 px-4">I am currently a first-year PhD computing student, co-supervised by Professors Christian Muise and Xiaodan Zhu, at Queen’s University; previously completed my undergrad at Queen’s with a Bachelor’s of Computing (BCPH) in Artificial Intelligence. My research is interdisciplinary between NLP and Automated Planning. Particularly, involving the exploration of Large Language Models' (LLMs) powerful generative capabilities to complement Automated Planning systems. Outside of academics, I am an active participant in Kingston’s local music scene with a primary focus on playing bass and occasional dabbling in keys and guitar.</p>
                 </details>
-                
             </div>
         </div>
     </section>
@@ -202,38 +140,294 @@
                 </p>
             </div>
             <div class="space-y-8">
-                <!-- Part 1 -->
+                <!-- Part 1: Foundations -->
                 <div class="glass p-8 rounded-3xl border-l-4 border-l-sky-500" data-aos="fade-left">
                     <div class="flex items-center gap-4 mb-6">
                         <span class="text-4xl font-bold text-sky-500/30">01</span>
-                        <h3 class="text-2xl font-bold">Foundations (IN DEVELOPMENT)</h3>
+                        <h3 class="text-2xl font-bold">Foundations</h3>
                     </div>
-                    <ul class="grid md:grid-cols-2 gap-4 text-slate-400">
-                        <li class="flex items-center gap-2"><i data-lucide="arrow-right" class="w-4 h-4 text-sky-500"></i> Why LLMs Should Not Replace Planners</li>
-                        <li class="flex items-center gap-2"><i data-lucide="arrow-right" class="w-4 h-4 text-sky-500"></i> Empirical reasoning limitations</li>
-                        <li class="flex items-center gap-2"><i data-lucide="arrow-right" class="w-4 h-4 text-sky-500"></i> Separation of modelling vs. solving</li>
-                        <li class="flex items-center gap-2"><i data-lucide="arrow-right" class="w-4 h-4 text-sky-500"></i> PDDL recap & failure modes</li>
-                    </ul>
+                    <div class="space-y-4">
+                        <details class="bg-white/5 rounded-2xl p-5 group">
+                            <summary class="flex items-center justify-between cursor-pointer list-none">
+                                <div class="flex items-center gap-3">
+                                    <i data-lucide="arrow-right" class="w-4 h-4 text-sky-500 shrink-0"></i>
+                                    <span class="text-slate-200 font-semibold">Why LLMs Should Not Replace Planners</span>
+                                </div>
+                                <i data-lucide="chevron-down" class="w-5 h-5 text-slate-500 expand-icon transition-transform duration-300 shrink-0"></i>
+                            </summary>
+                            <div class="mt-4 pl-7 space-y-3 text-sm text-slate-400">
+                                <p>LLMs excel at text generation but lack the soundness guarantees required for planning. A planner provides provable correctness; an LLM provides heuristically plausible text. Treating LLMs as planners leads to hallucinated actions, invalid state transitions, and plans that cannot be executed.</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <a href="https://aclanthology.org/2025.findings-acl.1291.pdf" target="_blank" class="px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-400 text-xs hover:bg-sky-500 hover:text-white transition-all">ACL Survey Paper</a>
+                                    <a href="https://arxiv.org/pdf/2402.01817" target="_blank" class="px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-400 text-xs hover:bg-sky-500 hover:text-white transition-all">LLM-Modulo Framework</a>
+                                    <a href="https://arxiv.org/pdf/2409.13373" target="_blank" class="px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-400 text-xs hover:bg-sky-500 hover:text-white transition-all">LLMs Still Can't Plan; Can LRMs?</a>
+                                </div>
+                            </div>
+                        </details>
+                        <details class="bg-white/5 rounded-2xl p-5 group">
+                            <summary class="flex items-center justify-between cursor-pointer list-none">
+                                <div class="flex items-center gap-3">
+                                    <i data-lucide="arrow-right" class="w-4 h-4 text-sky-500 shrink-0"></i>
+                                    <span class="text-slate-200 font-semibold">Empirical Reasoning Limitations</span>
+                                </div>
+                                <i data-lucide="chevron-down" class="w-5 h-5 text-slate-500 expand-icon transition-transform duration-300 shrink-0"></i>
+                            </summary>
+                            <div class="mt-4 pl-7 space-y-3 text-sm text-slate-400">
+                                <p>Current LLMs struggle with causal reasoning, long-horizon dependencies, and maintaining consistent world state across multiple steps. Empirical studies show that even state-of-the-art models fail on simple planning benchmarks, revealing fundamental gaps in their reasoning capabilities.</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <a href="https://arxiv.org/abs/2405.04776" target="_blank" class="px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-400 text-xs hover:bg-sky-500 hover:text-white transition-all">Chain of Thoughtlessness? An Analysis of CoT in Planning</a>
+                                    <a href="https://arxiv.org/abs/2310.12397" target="_blank" class="px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-400 text-xs hover:bg-sky-500 hover:text-white transition-all">An Analysis of Iterative Prompting for Reasoning Problems</a>
+                                    <a href="https://arxiv.org/abs/2310.08118" target="_blank" class="px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-400 text-xs hover:bg-sky-500 hover:text-white transition-all">Can Large Language Models Really Improve by Self-critiquing Their Own Plans?</a>
+                                </div>
+                            </div>
+                        </details>
+                        <details class="bg-white/5 rounded-2xl p-5 group">
+                            <summary class="flex items-center justify-between cursor-pointer list-none">
+                                <div class="flex items-center gap-3">
+                                    <i data-lucide="arrow-right" class="w-4 h-4 text-sky-500 shrink-0"></i>
+                                    <span class="text-slate-200 font-semibold">Separation of Modelling vs. Solving</span>
+                                </div>
+                                <i data-lucide="chevron-down" class="w-5 h-5 text-slate-500 expand-icon transition-transform duration-300 shrink-0"></i>
+                            </summary>
+                            <div class="mt-4 pl-7 space-y-3 text-sm text-slate-400">
+                                <p>A key insight of the L2P framework is that writing a PDDL model (the domain and problem) is fundamentally different from solving it. LLMs are well-suited to assist with the creative task of modelling a domain from natural language, while classical planners should handle the search for valid plans. This separation leverages the strengths of both AI paradigms.</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <a href="https://arxiv.org/pdf/2412.09879" target="_blank" class="px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-400 text-xs hover:bg-sky-500 hover:text-white transition-all">On the Limit of Language Models as Planning Formalizers</a>
+                                    <a href="https://arxiv.org/pdf/2603.23844" target="_blank" class="px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-400 text-xs hover:bg-sky-500 hover:text-white transition-all">Language Model Planners do not Scale, but do Formalizers?</a>
+                                </div>
+                            </div>
+                        </details>
+                        <details class="bg-white/5 rounded-2xl p-5 group">
+                            <summary class="flex items-center justify-between cursor-pointer list-none">
+                                <div class="flex items-center gap-3">
+                                    <i data-lucide="arrow-right" class="w-4 h-4 text-sky-500 shrink-0"></i>
+                                    <span class="text-slate-200 font-semibold">PDDL Recap &amp; Failure Modes</span>
+                                </div>
+                                <i data-lucide="chevron-down" class="w-5 h-5 text-slate-500 expand-icon transition-transform duration-300 shrink-0"></i>
+                            </summary>
+                            <div class="mt-4 pl-7 space-y-3 text-sm text-slate-400">
+                                <p>A quick refresher on PDDL syntax, types, predicates, actions, and problem definitions - followed by common failure modes when LLMs attempt PDDL generation: type mismatches, undeclared predicates, inconsistent state transitions, and malformed action effects.</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <a href="https://planning.wiki/guide/whatis/pddl" target="_blank" class="px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-400 text-xs hover:bg-sky-500 hover:text-white transition-all">planning.wiki PDDL Guide</a>
+                                    <a href="https://arxiv.org/pdf/2305.16151" target="_blank" class="px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-400 text-xs hover:bg-sky-500 hover:text-white transition-all">Understanding the Capabilities of Large Language Models for Automated Planning</a>
+                                </div>
+                            </div>
+                        </details>
+                    </div>
                 </div>
-                <!-- Part 2 -->
+
+                <!-- Part 2: Live L2P Tutorial -->
                 <div class="glass p-8 rounded-3xl border-l-4 border-l-indigo-500" data-aos="fade-left" data-aos-delay="100">
                     <div class="flex items-center gap-4 mb-6">
                         <span class="text-4xl font-bold text-indigo-500/30">02</span>
-                        <h3 class="text-2xl font-bold">Live L2P Tutorial (IN DEVELOPMENT)</h3>
+                        <h3 class="text-2xl font-bold">Live L2P Tutorial</h3>
                     </div>
-                    <p class="text-slate-400">A live demonstration walking through the L2P toolkit architecture and basic deployment.</p>
+                    <p class="text-slate-400 mb-6">A live walkthrough of the L2P toolkit from three perspectives: the end-user, the CLI, and programmatic/agent usage.</p>
+                    <div class="space-y-4">
+                        <details class="bg-white/5 rounded-2xl p-5 group">
+                            <summary class="flex items-center justify-between cursor-pointer list-none">
+                                <div class="flex items-center gap-3">
+                                    <i data-lucide="user" class="w-4 h-4 text-indigo-400 shrink-0"></i>
+                                    <span class="text-slate-200 font-semibold">Interactive User Workflow</span>
+                                </div>
+                                <i data-lucide="chevron-down" class="w-5 h-5 text-slate-500 expand-icon transition-transform duration-300 shrink-0"></i>
+                            </summary>
+                            <div class="mt-4 pl-7 space-y-3 text-sm text-slate-400">
+                                <p>Using <code class="code-font text-sky-400">l2p init</code> to configure an LLM provider, then <code class="code-font text-sky-400">l2p generate domain</code> and <code class="code-font text-sky-400">l2p generate problem</code> for step-by-step interactive PDDL generation guided by the LLM. The <code class="code-font text-sky-400">l2p chat</code> REPL session enables natural-language-driven PDDL editing with live validation.</p>
+                            </div>
+                        </details>
+                        <details class="bg-white/5 rounded-2xl p-5 group">
+                            <summary class="flex items-center justify-between cursor-pointer list-none">
+                                <div class="flex items-center gap-3">
+                                    <i data-lucide="terminal" class="w-4 h-4 text-indigo-400 shrink-0"></i>
+                                    <span class="text-slate-200 font-semibold">CLI Feature Deep-Dive</span>
+                                </div>
+                                <i data-lucide="chevron-down" class="w-5 h-5 text-slate-500 expand-icon transition-transform duration-300 shrink-0"></i>
+                            </summary>
+                            <div class="mt-4 pl-7 space-y-3 text-sm text-slate-400">
+                                <p>Stateless commands for building PDDL without an LLM: <code class="code-font text-sky-400">l2p set</code> to inject individual components, <code class="code-font text-sky-400">l2p build</code> to assemble full domain/problem files, <code class="code-font text-sky-400">l2p validate</code> for semantic checking, and <code class="code-font text-sky-400">l2p plan</code> to run classical planners like Fast Downward and Unified Planning.</p>
+                            </div>
+                        </details>
+                        <details class="bg-white/5 rounded-2xl p-5 group">
+                            <summary class="flex items-center justify-between cursor-pointer list-none">
+                                <div class="flex items-center gap-3">
+                                    <i data-lucide="bot" class="w-4 h-4 text-indigo-400 shrink-0"></i>
+                                    <span class="text-slate-200 font-semibold">LLM Agent Integration</span>
+                                </div>
+                                <i data-lucide="chevron-down" class="w-5 h-5 text-slate-500 expand-icon transition-transform duration-300 shrink-0"></i>
+                            </summary>
+                            <div class="mt-4 pl-7 space-y-3 text-sm text-slate-400">
+                                <p>How LLM agents can use the CLI's JSON-based stateless commands in tool-calling loops: <code class="code-font text-sky-400">l2p schema --examples</code> to discover expected schemas, <code class="code-font text-sky-400">l2p build --data</code> to generate full PDDL in one call, and <code class="code-font text-sky-400">l2p validate</code> for verification - all pipeable for chained agent workflows.</p>
+                            </div>
+                        </details>
+                    </div>
+                    <div class="mt-6 flex flex-wrap gap-3">
+                        <a href="https://github.com/AI-Planning/l2p" target="_blank" class="px-4 py-2 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-bold hover:bg-indigo-500 hover:text-white transition-all">GitHub Repo</a>
+                        <a href="https://ai-planning.github.io/l2p/docs/" target="_blank" class="px-4 py-2 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-bold hover:bg-indigo-500 hover:text-white transition-all">Documentation</a>
+                        <a href="https://ai-planning.github.io/l2p/docs/cli.html" target="_blank" class="px-4 py-2 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-bold hover:bg-indigo-500 hover:text-white transition-all">CLI Reference</a>
+                    </div>
                 </div>
-                <!-- Part 3 -->
+
+                <!-- Part 3: Hands-On Session -->
                 <div class="glass p-8 rounded-3xl border-l-4 border-l-purple-500" data-aos="fade-left" data-aos-delay="200">
                     <div class="flex items-center gap-4 mb-6">
                         <span class="text-4xl font-bold text-purple-500/30">03</span>
-                        <h3 class="text-2xl font-bold">Hands-On Session (IN DEVELOPMENT)</h3>
+                        <h3 class="text-2xl font-bold">Hands-On Session</h3>
                     </div>
-                    <p class="text-slate-400 mb-6">The core interactive component. Use your own local LLM or API keys to build pipelines.</p>
-                    <div class="grid md:grid-grid-scale-2 gap-4 bg-white/5 p-6 rounded-2xl">
-                        <div class="flex items-center gap-3 text-sm text-slate-300"><i data-lucide="terminal" class="w-4 h-4 text-purple-400"></i> Connect local LLM (Ollama)</li>
-                        <div class="flex items-center gap-3 text-sm text-slate-300"><i data-lucide="terminal" class="w-4 h-4 text-purple-400"></i> Generate entire domains/problems</li>
-                        <div class="flex items-center gap-3 text-sm text-slate-300"><i data-lucide="terminal" class="w-4 h-4 text-purple-400"></i> Create custom generation pipelines</li>
+                    <p class="text-slate-400 mb-6">The core interactive component. Use your own local LLM or API keys to build pipelines. Click each topic for detailed setup instructions.</p>
+                    <div class="space-y-4">
+                        <details class="bg-white/5 rounded-2xl p-5 group">
+                            <summary class="flex items-center justify-between cursor-pointer list-none">
+                                <div class="flex items-center gap-3">
+                                    <i data-lucide="terminal" class="w-4 h-4 text-purple-400 shrink-0"></i>
+                                    <span class="text-slate-200 font-semibold">Connect Local LLMs (Ollama) or LLM API</span>
+                                </div>
+                                <i data-lucide="chevron-down" class="w-5 h-5 text-slate-500 expand-icon transition-transform duration-300 shrink-0"></i>
+                            </summary>
+                            <div class="mt-4 pl-7 space-y-6 text-sm text-slate-400">
+                                <div>
+                                    <p class="mb-3 font-semibold text-slate-300">Option 1: Local model via Ollama</p>
+                                    <p class="mb-3">L2P supports local models via <a href="https://ollama.com" target="_blank" class="text-sky-400 hover:underline">Ollama</a> through the <code class="code-font text-sky-400">UnifiedLLM</code> class:</p>
+                                    <div class="bg-black/40 rounded-xl p-4 code-font text-xs">
+<pre><span class="text-slate-500"># Install Ollama and pull a model</span>
+curl -fsSL https://ollama.com/install.sh | sh
+ollama pull llama2:7b
+
+<span class="text-slate-500"># Use UnifiedLLM with Ollama provider</span>
+<span class="text-purple-400">from</span> l2p.llm.unified <span class="text-purple-400">import</span> UnifiedLLM
+
+llm = UnifiedLLM(
+    provider=<span class="text-sky-400">"ollama"</span>,
+    model=<span class="text-sky-400">"llama2:7b"</span>,
+    config_path=<span class="text-sky-400">"l2p/llm/utils/llm.yaml"</span>
+)
+
+response = llm.query(<span class="text-sky-400">"Hello, world!"</span>)
+print(response)</pre>
+                                    </div>
+                                    <p class="mt-3">Refer to the <a href="https://github.com/AI-Planning/l2p?tab=readme-ov-file#ollama" target="_blank" class="text-sky-400 hover:underline">Ollama setup in the README</a> for model configuration options including tokenizer settings and generation parameters.</p>
+                                </div>
+                                <div>
+                                    <p class="mb-3 font-semibold text-slate-300">Option 2: Cloud LLM via API key</p>
+                                    <p class="mb-3">L2P also supports cloud-based LLMs via API keys. Here is an example using OpenAI:</p>
+                                    <div class="bg-black/40 rounded-xl p-4 code-font text-xs">
+<pre><span class="text-slate-500"># Set your API key</span>
+<span class="text-purple-400">import</span> os
+os.environ[<span class="text-sky-400">"OPENAI_API_KEY"</span>] = <span class="text-sky-400">"sk-your-key-here"</span>
+
+<span class="text-slate-500"># Use UnifiedLLM with OpenAI provider</span>
+<span class="text-purple-400">from</span> l2p.llm.unified <span class="text-purple-400">import</span> UnifiedLLM
+
+llm = UnifiedLLM(
+    provider=<span class="text-sky-400">"openai"</span>,
+    model=<span class="text-sky-400">"gpt-5-nano"</span>,
+    api_key=os.getenv(<span class="text-sky-400">"OPENAI_API_KEY"</span>),
+    config_path=<span class="text-sky-400">"l2p/llm/utils/llm.yaml"</span>
+)
+
+response = llm.query(<span class="text-sky-400">"Hello, world!"</span>)
+print(response)</pre>
+                                    </div>
+                                    <p class="mt-3">This pattern works for any provider supported by the UnifiedLLM backend, including Anthropic, DeepSeek, and Mistral. See the <a href="https://github.com/AI-Planning/l2p?tab=readme-ov-file#api-keys" target="_blank" class="text-sky-400 hover:underline">API key setup in the README</a> for details.</p>
+                                </div>
+                            </div>
+                        </details>
+                        <details class="bg-white/5 rounded-2xl p-5 group">
+                            <summary class="flex items-center justify-between cursor-pointer list-none">
+                                <div class="flex items-center gap-3">
+                                    <i data-lucide="terminal" class="w-4 h-4 text-purple-400 shrink-0"></i>
+                                    <span class="text-slate-200 font-semibold">Generate Entire Domains/Problems</span>
+                                </div>
+                                <i data-lucide="chevron-down" class="w-5 h-5 text-slate-500 expand-icon transition-transform duration-300 shrink-0"></i>
+                            </summary>
+                            <div class="mt-4 pl-7 space-y-6 text-sm text-slate-400">
+                                <div>
+                                    <p class="mb-3 font-semibold text-slate-300">Generating a Domain with DomainDetails</p>
+                                    <p class="mb-3">Use <code class="code-font text-sky-400">DomainBuilder</code> and <code class="code-font text-sky-400">DomainDetails</code> to generate a complete PDDL domain from natural language:</p>
+                                    <div class="bg-black/40 rounded-xl p-4 code-font text-xs">
+<pre><span class="text-purple-400">import</span> os
+<span class="text-purple-400">from</span> l2p <span class="text-purple-400">import</span> DomainBuilder, UnifiedLLM
+<span class="text-purple-400">from</span> l2p.utils.pddl_types <span class="text-purple-400">import</span> DomainDetails
+
+llm = UnifiedLLM(
+    provider=<span class="text-sky-400">"openai"</span>,
+    model=<span class="text-sky-400">"gpt-5-nano"</span>,
+    api_key=os.getenv(<span class="text-sky-400">"OPENAI_API_KEY"</span>)
+)
+db = DomainBuilder()
+
+results, _ = db.formalize_component(
+    model=llm,
+    component_class=DomainDetails,
+    description=<span class="text-sky-400">"I want you to model a standard blocksworld domain."</span>,
+)
+
+domain = results[DomainDetails][0]
+print(db.generate_domain(domain))</pre>
+                                    </div>
+                                </div>
+                                <div>
+                                    <p class="mb-3 font-semibold text-slate-300">Generating a Problem with ProblemDetails</p>
+                                    <p class="mb-3">Use <code class="code-font text-sky-400">ProblemBuilder</code> and <code class="code-font text-sky-400">ProblemDetails</code> to generate a PDDL problem:</p>
+                                    <div class="bg-black/40 rounded-xl p-4 code-font text-xs">
+<span class="text-purple-400">import</span> os                                        
+<pre><span class="text-purple-400">from</span> l2p <span class="text-purple-400">import</span> ProblemBuilder, UnifiedLLM
+<span class="text-purple-400">from</span> l2p.utils.pddl_types <span class="text-purple-400">import</span> ProblemDetails, PDDLType, Predicate
+
+llm = UnifiedLLM(provider=<span class="text-sky-400">"openai"</span>, model=<span class="text-sky-400">"gpt-5-nano"</span>, api_key=<span class="text-sky-400">os.getenv("OPENAI_API_KEY")</span>)
+pb = ProblemBuilder()
+
+types = [PDDLType(name=<span class="text-sky-400">"block"</span>, parent=<span class="text-sky-400">"object"</span>)]
+predicates = [
+    Predicate(name=<span class="text-sky-400">"on"</span>, params=[{<span class="text-sky-400">"variable"</span>: <span class="text-sky-400">"?x"</span>, <span class="text-sky-400">"type"</span>: <span class="text-sky-400">"block"</span>}, {<span class="text-sky-400">"variable"</span>: <span class="text-sky-400">"?y"</span>, <span class="text-sky-400">"type"</span>: <span class="text-sky-400">"block"</span>}]),
+    Predicate(name=<span class="text-sky-400">"on-table"</span>, params=[{<span class="text-sky-400">"variable"</span>: <span class="text-sky-400">"?x"</span>, <span class="text-sky-400">"type"</span>: <span class="text-sky-400">"block"</span>}]),
+    Predicate(name=<span class="text-sky-400">"holding"</span>, params=[{<span class="text-sky-400">"variable"</span>: <span class="text-sky-400">"?x"</span>, <span class="text-sky-400">"type"</span>: <span class="text-sky-400">"block"</span>}]),
+    Predicate(name=<span class="text-sky-400">"clear"</span>, params=[{<span class="text-sky-400">"variable"</span>: <span class="text-sky-400">"?x"</span>, <span class="text-sky-400">"type"</span>: <span class="text-sky-400">"block"</span>}]),
+    Predicate(name=<span class="text-sky-400">"arm-empty"</span>, params=[])]
+
+results, _ = pb.formalize_component(
+    model=llm, component_class=ProblemDetails,
+    description=<span class="text-sky-400">"3 blocks. b2 on b3, b3 on b1, b1 on table. Goal: stack b2 on b3."</span>,
+    types=types, predicates=predicates)
+
+problem = results[ProblemDetails][0]
+print(pb.generate_problem(problem))</pre>
+                                    </div>
+                                </div>
+                                <p>Check the <a href="https://github.com/AI-Planning/l2p?tab=readme-ov-file#quickstart" target="_blank" class="text-sky-400 hover:underline">README Quickstart</a> and <a href="https://ai-planning.github.io/l2p/docs/getting_started.html" target="_blank" class="text-sky-400 hover:underline">Getting Started docs</a> for full examples of generating predicates, actions, problems, and using interactive generation via <code class="code-font text-sky-400">l2p generate domain</code>.</p>
+                            </div>
+                        </details>
+                        <details class="bg-white/5 rounded-2xl p-5 group">
+                            <summary class="flex items-center justify-between cursor-pointer list-none">
+                                <div class="flex items-center gap-3">
+                                    <i data-lucide="terminal" class="w-4 h-4 text-purple-400 shrink-0"></i>
+                                    <span class="text-slate-200 font-semibold">Create Custom Generation Pipelines</span>
+                                </div>
+                                <i data-lucide="chevron-down" class="w-5 h-5 text-slate-500 expand-icon transition-transform duration-300 shrink-0"></i>
+                            </summary>
+                            <div class="mt-4 pl-7 space-y-4 text-sm text-slate-400">
+                                <p>Chain CLI commands together for automated, stateless pipelines - ideal for scripts and LLM agents:</p>
+                                <div class="bg-black/40 rounded-xl p-4 code-font text-xs">
+<pre><span class="text-slate-500"># 1. Output schema for LLM reference</span>
+l2p schema domain --examples
+
+<span class="text-slate-500"># 2. Build domain from JSON</span>
+l2p build domain --data '{
+  <span class="text-sky-400">"name"</span>: <span class="text-sky-400">"blocksworld"</span>,
+  <span class="text-sky-400">"types"</span>: [{<span class="text-sky-400">"name"</span>:<span class="text-sky-400">"block"</span>,<span class="text-sky-400">"parent"</span>:<span class="text-sky-400">"object"</span>}],
+  <span class="text-sky-400">"predicates"</span>: [...],
+  <span class="text-sky-400">"actions"</span>: [...]
+}' -o domain.pddl
+
+<span class="text-slate-500"># 3. Validate</span>
+l2p validate domain domain.pddl
+
+<span class="text-slate-500"># 4. Plan</span>
+l2p plan --domain @domain.pddl --problem @problem.pddl --json</pre>
+                                </div>
+                                <p>See the <a href="https://github.com/AI-Planning/l2p?tab=readme-ov-file#agentic-cli-for-llm-agents--automation" target="_blank" class="text-sky-400 hover:underline">Agentic CLI section in the README</a> and the <a href="https://ai-planning.github.io/l2p/docs/cli.html#agentic-workflow-for-automation-llm-agents" target="_blank" class="text-sky-400 hover:underline">CLI Agentic Workflow docs</a> for end-to-end examples.</p>
+                            </div>
+                        </details>
                     </div>
                 </div>
             </div>
@@ -265,34 +459,34 @@
                         </div>
                         <div class="p-5 code-font text-xs leading-relaxed overflow-x-auto">
 <pre><code><span class="text-purple-400">import</span> <span class="text-white">os</span>
-<span class="text-purple-400">from</span> <span class="text-white">l2p.llm.unified</span> <span class="text-purple-400">import</span> <span class="text-white">UnifiedLLM</span>
-<span class="text-purple-400">from</span> <span class="text-white">l2p.utils</span> <span class="text-purple-400">import</span> <span class="text-white">load_file</span>
+<span class="text-purple-400">from</span> <span class="text-white">l2p</span> <span class="text-purple-400">import</span> <span class="text-white">UnifiedLLM</span>
 <span class="text-purple-400">from</span> <span class="text-white">l2p.domain_builder</span> <span class="text-purple-400">import</span> <span class="text-white">DomainBuilder</span>
+<span class="text-purple-400">from</span> <span class="text-white">l2p.utils.pddl_types</span> <span class="text-purple-400">import</span> <span class="text-white">Predicate, PDDLType</span>
+<span class="text-purple-400">from</span> <span class="text-white">l2p.utils.pddl_format</span> <span class="text-purple-400">import</span> <span class="text-white">format_predicates</span>
 
-<span class="text-white">domain_builder = DomainBuilder()</span>
+<span class="text-slate-500"># set up LLM</span>
+<span class="text-white">api_key = os.getenv(</span><span class="text-sky-400">"OPENAI_API_KEY"</span><span class="text-white">)</span>
+<span class="text-white">llm = UnifiedLLM(provider=</span><span class="text-sky-400">"openai"</span><span class="text-white">, model=</span><span class="text-sky-400">"gpt-5-nano"</span><span class="text-white">, api_key=api_key)</span>
 
-<span class="text-white">api_key = os.environ.get(</span><span class="text-sky-400">'OPENAI_API_KEY'</span><span class="text-white">)</span>
-<span class="text-white">llm = UnifiedLLM(model=</span><span class="text-sky-400">"gpt-4o-mini"</span><span class="text-white">, api_key=api_key)</span>
+<span class="text-white">db = DomainBuilder() </span><span class="text-slate-500"># instantiate DomainBuilder class</span>
 
-<span class="text-slate-500"># retrieve prompt information</span>
-<span class="text-white">base_path = </span><span class="text-sky-400">'tests/usage/prompts/domain/'</span>
-<span class="text-white">domain_desc = load_file(</span><span class="text-sky-400">f'{base_path}blocksworld_domain.txt'</span><span class="text-white">)</span>
-<span class="text-white">predicates_prompt = load_file(</span><span class="text-sky-400">f'{base_path}formalize_predicates.txt'</span><span class="text-white">)</span>
-<span class="text-white">types = load_file(</span><span class="text-sky-400">f'{base_path}types.json'</span><span class="text-white">)</span>
-<span class="text-white">action = load_file(</span><span class="text-sky-400">f'{base_path}action.json'</span><span class="text-white">)</span>
+<span class="text-slate-500"># context</span>
+<span class="text-white">types = [PDDLType(name=</span><span class="text-sky-400">"block"</span><span class="text-white">, parent=</span><span class="text-sky-400">"object"</span><span class="text-white">)]</span>
+<span class="text-white">desc = </span><span class="text-sky-400">"I want you to model predicates from a standard PDDL blocksworld domain."</span>
 
-<span class="text-slate-500"># extract predicates via LLM</span>
-<span class="text-white">predicates, llm_output, validation_info = domain_builder.formalize_predicates(</span>
+<span class="text-slate-500"># generate predicates</span>
+<span class="text-white">results, raw_output = db.formalize_component(</span>
 <span class="text-white">    model=llm,</span>
-<span class="text-white">    domain_desc=domain_desc,</span>
-<span class="text-white">    prompt_template=predicates_prompt,</span>
-<span class="text-white">    types=types</span>
+<span class="text-white">    component_class=Predicate, </span><span class="text-slate-500"># component to generate</span>
+<span class="text-white">    description=desc,</span>
+<span class="text-white">    types=types                </span><span class="text-slate-500"># pass in kwargs context</span>
 <span class="text-white">)</span>
 
-<span class="text-slate-500"># format key info into PDDL strings</span>
-<span class="text-white">predicate_str = </span><span class="text-sky-400">"\n"</span><span class="text-white">.join([pred[</span><span class="text-sky-400">"raw"</span><span class="text-white">].replace(</span><span class="text-sky-400">":"</span><span class="text-white">, </span><span class="text-sky-400">" ; "</span><span class="text-white">) </span><span class="text-purple-400">for</span> <span class="text-white">pred</span> <span class="text-purple-400">in</span> <span class="text-white">predicates])</span>
+<span class="text-slate-500"># parse out predicates list from dictionary</span>
+<span class="text-white">predicates = results[Predicate]</span>
+<span class="text-white">predicates_str = format_predicates(predicates) </span><span class="text-slate-500"># format nicely</span>
 
-<span class="text-purple-400">print</span><span class="text-white">(</span><span class="text-sky-400">f"PDDL domain predicates:\n{predicate_str}"</span><span class="text-white">)</span></code></pre>
+<span class="text-purple-400">print</span><span class="text-white">(predicates_str)</span></code></pre>
                         </div>
                     </div>
 
@@ -303,12 +497,12 @@
                             <span class="text-xs text-slate-400 ml-1 code-font">Terminal Output</span>
                         </div>
                         <div class="p-5 code-font text-xs leading-relaxed overflow-x-auto bg-black/40">
-<pre><code><span class="text-slate-600">1  -------------------------------------------------------------------------------------</span>
-<span class="text-slate-600">2</span>  <span class="text-white font-bold">### OUTPUT</span>
-<span class="text-slate-600">3</span>  <span class="text-slate-300">-</span> <span class="text-purple-400">(holding ?a - arm ?b - block)</span> <span class="text-slate-500">; true if the arm ?a is currently holding the block ?b</span>
-<span class="text-slate-600">4</span>  <span class="text-slate-300">-</span> <span class="text-purple-400">(on_table ?b - block)</span> <span class="text-slate-500">; true if the block ?b is on the table</span>
-<span class="text-slate-600">5</span>  <span class="text-slate-300">-</span> <span class="text-purple-400">(clear ?b - block)</span> <span class="text-slate-500">; true if the block ?b is clear (no block on top of it)</span>
-<span class="text-slate-600">6</span>  <span class="text-slate-300">-</span> <span class="text-purple-400">(on_top ?b1 - block ?b2 - block)</span> <span class="text-slate-500">; true if the block ?b1 is on top of the block ?b2</span></code></pre>
+<pre><code><span class="text-slate-600">1</span>  <span class="text-white font-bold">### OUTPUT</span>
+<span class="text-slate-600">2</span>  <span class="text-slate-300">-</span> <span class="text-purple-400">(clear ?x - block)</span> <span class="text-slate-500">; true if block ?x has no other blocks on top of it</span>
+<span class="text-slate-600">3</span>  <span class="text-slate-300">-</span> <span class="text-purple-400">(arm-empty )</span> <span class="text-slate-500">; true if the robotic arm is currently not holding any block</span>
+<span class="text-slate-600">4</span>  <span class="text-slate-300">-</span> <span class="text-purple-400">(holding ?x - block)</span> <span class="text-slate-500">; true if the robotic arm is holding block ?x</span>
+<span class="text-slate-600">5</span>  <span class="text-slate-300">-</span> <span class="text-purple-400">(on ?x - block ?y - block)</span> <span class="text-slate-500">; true if block ?x is stacked directly on top of block ?y</span>
+<span class="text-slate-600">6</span>  <span class="text-slate-300">-</span> <span class="text-purple-400">(on-table ?x - block)</span> <span class="text-slate-500">; true if block ?x is resting directly on the table</span></code></pre>
                         </div>
                     </div>
                     
@@ -333,7 +527,7 @@
                     <h3 class="font-bold mb-2">GitHub Repo</h3>
                     <p class="text-sm text-slate-500">Access the L2P toolkit</p>
                 </a>
-                <a href="https://marcustantakoun.github.io/l2p.github.io/" target="_blank" class="glass p-8 rounded-3xl hover:border-sky-500/50 transition-all group">
+                <a href="https://ai-planning.github.io/l2p/docs/" target="_blank" class="glass p-8 rounded-3xl hover:border-sky-500/50 transition-all group">
                     <i data-lucide="book-open" class="w-10 h-10 text-sky-400 mx-auto mb-4 group-hover:-translate-y-2 transition-transform"></i>
                     <h3 class="font-bold mb-2">Documentation</h3>
                     <p class="text-sm text-slate-500">Detailed usage guides</p>
@@ -347,9 +541,8 @@
         <div class="max-w-7xl mx-auto">
             <p class="mb-4">Proposed for ICAPS-26: Generative AI Techniques for Planning and Scheduling</p>
             <div class="flex justify-center gap-6">
-                <a href="#" class="hover:text-white transition-colors">Privacy</a>
-                <a href="#" class="hover:text-white transition-colors">Contact</a>
-                <a href="#" class="hover:text-white transition-colors">All Rights Reserved &copy; 2026</a>
+                <a href="mailto:20mt1@queensu.ca" class="hover:text-white transition-colors">Contact</a>
+                <span class="text-slate-500">All Rights Reserved &copy; 2026</span>
             </div>
         </div>
     </footer>
@@ -360,31 +553,6 @@
     </button>
 
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-    <script>
-        // Initialize animations
-        AOS.init({
-            duration: 800,
-            once: true,
-            easing: 'ease-out-quad'
-        });
-
-        // Initialize icons
-        lucide.createIcons();
-
-        // Scroll to Top functionality
-        const scrollToTopBtn = document.getElementById("scrollToTopBtn");
-        
-        window.addEventListener("scroll", () => {
-            if (window.scrollY > 300) {
-                // Show button when scrolled down
-                scrollToTopBtn.classList.remove("opacity-0", "pointer-events-none", "translate-y-4");
-                scrollToTopBtn.classList.add("opacity-100", "translate-y-0");
-            } else {
-                // Hide button when near top
-                scrollToTopBtn.classList.add("opacity-0", "pointer-events-none", "translate-y-4");
-                scrollToTopBtn.classList.remove("opacity-100", "translate-y-0");
-            }
-        });
-    </script>
+    <script src="scripts.js"></script>
 </body>
 </html>
