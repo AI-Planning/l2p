@@ -421,3 +421,141 @@ domain and plan:
 
    # 5. Plan
    l2p plan --domain @domain.pddl --problem @problem.pddl --json
+
+.. _cli_agents_md:
+
+AGENTS.md for LLM Agent Tooling
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+LLM-powered coding assistants (such as `OpenCode <https://opencode.ai>`_) use
+an ``AGENTS.md`` file placed at the project root to understand a codebase -
+covering setup, architecture, CLI commands, conventions, and testing.
+
+Copy the following ``AGENTS.md`` into the root of your L2P checkout so your
+agent has all the context it needs to work effectively:
+
+.. code-block:: text
+   :caption: AGENTS.md - place at project root
+
+   # Agent Instructions for L2P
+
+   L2P is a Python library that generates, validates, and plans PDDL models from natural language via LLMs.
+
+   ## Setup & Dependencies
+
+   - Python >=3.10 (CI uses 3.10)
+   - Install: `pip install -r requirements.txt` then `pip install -e .`
+   - Extra install groups (use as needed): `cli`, `openai`, `mistral`, `huggingface`, `planner`, `all`
+     - `cli` (`llm` + `rich`) is required for the `l2p` CLI
+     - `planner` (`unified-planning`) required for `UnifiedPlanning` planner backend
+   - Tests: `pytest` (unittest-based, no coverage/typechecking configured)
+   - Lint (errors only): `flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics`
+   - Lint (all warnings): `flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics`
+
+   ## Environment
+
+   - Required: `OPENAI_API_KEY` for OpenAI models
+   - Optional: `CLAUDE_API_KEY`, `DEEPSEEK_API_KEY`, `OLLAMA_API_KEY`
+   - LLM config YAMLs: `l2p/llm/utils/llm.yaml` (UnifiedLLM) or `l2p/llm/utils/openaiSDK.yaml` (OPENAI SDK)
+
+   ## FastDownward Submodule (planner)
+
+   - Path: `downward/` - must initialize with `git submodule update --init --recursive`
+   - Planner executable: `downward/fast-downward.py` (note: may need building; see FastDownward docs)
+   - Default alias: `lama-first`
+
+   ## Architecture
+
+   Two usage modes: **Python API** (programmatic) and **CLI** (stateless, agent-friendly).
+
+   ### Core classes (`from l2p import ...`)
+
+   | Class | File | Purpose |
+   |-------|------|---------|
+   | `DomainBuilder` | `l2p/domain_builder.py` | Construct PDDL domains; has `formalize_component()` (LLM extraction), `set_*()` methods, `generate_domain()` |
+   | `ProblemBuilder` | `l2p/problem_builder.py` | Construct PDDL problems; same pattern as DomainBuilder |
+   | `FeedbackBuilder` | `l2p/feedback_builder.py` | LLM-driven feedback loops: diagnose, revise, evaluate, reflect, select |
+   | `PromptBuilder` | `l2p/prompt_builder.py` | Assemble structured prompts with Role/Format/Rules/Examples/Task sections |
+   | `FastDownward`, `UnifiedPlanning` | `l2p/planner_builder.py` | Run external planners; returns `PlanningResult` dataclass |
+   | `UnifiedLLM`, `OPENAI`, `HUGGING_FACE` | `l2p/llm/` | LLM backends |
+
+   ### PDDL Type Models (`l2p/utils/pddl_types.py`)
+
+   All PDDL components are Pydantic v2 models: `PDDLType`, `Predicate`, `Action`, `DurativeAction`, `Function`, `DerivedPredicate`, `Constant`, `Requirement`, `Constraint`, `Event`, `Process`, `PDDLObject`, `InitialState`, `GoalState`, `Metric`, `DomainDetails`, `ProblemDetails`.
+
+   Domain components are set via `DomainBuilder.set_*(value, append=False)`. Problem components via `ProblemBuilder.set_*`. Setting `None` clears the list; `append=True` adds to existing list.
+
+   ### LLM Extraction Pattern (`formalize_component`)
+
+   `DomainBuilder.formalize_component()` and `ProblemBuilder.formalize_component()` take:
+   - `model`: LLM instance
+   - `component_class`: single class or list of classes (e.g., `Predicate`, `[PDDLType, Predicate]`)
+   - `description`: natural language description
+   - `**ctx_kwargs`: context like `types=`, `predicates=`
+   - Returns `(dict[Type[BaseModel], List[BaseModel]], raw_llm_output)`
+
+   The LLM must output JSON wrapped in XML tags like `<types>...</types>`. Default prompts are auto-selected per component class. Using a list of multiple component classes requires a custom `prompt_template`.
+
+   Requirements are **auto-generated** by `DomainBuilder.generate_requirements()` based on which components are present.
+
+   ## CLI Commands
+
+   Entry point: `l2p` (via `l2p.cli.main:main`). All commands are stateless (pass full data each call).
+
+   | Command | Purpose | Key Flags |
+   |---------|---------|-----------|
+   | `l2p init` | Configure LLM (interactive or `--backend/--provider/--model`) | `--backend unified|openai` |
+   | `l2p config show/edit/reset/validate` | Manage config at `~/.l2p/config.yaml` | |
+   | `l2p models test` | Test LLM connection | |
+   | `l2p schema <component>` | Show Pydantic JSON Schema for LLM reference | `--examples` |
+   | `l2p set <component>` | Validate and inject a single PDDL component from JSON | `--data`, `--file`, `--stdin`, `--json`, `--pddl`, `--schema` |
+   | `l2p build domain|problem` | Assemble full PDDL from JSON or component files | `--data`, `-o`, `--json` |
+   | `l2p validate <component|domain|problem>` | Validate components or .pddl files | `--data`, `--file`, path argument for .pddl |
+   | `l2p plan` | Run planner on PDDL (raw strings or `@file`) | `--domain`, `--problem`, `--planner`, `--alias`, `--json` |
+   | `l2p generate domain|problem` | Interactive LLM-driven generation (requires `l2p init` first) | `--max-retries` |
+   | `l2p templates show/list/set` | Manage prompt templates | |
+
+   ### CLI Data Input
+
+   - `--data '...'` - raw JSON string
+   - `--file path.json` - read from file
+   - `--stdin` - pipe JSON from stdin
+   - `@file.pddl` - prefix with `@` to read from file (used in `build` and `plan`)
+
+   ### CLI Pipeline Pattern (agent-friendly)
+
+   ```bash
+   l2p schema types --examples         # learn JSON shape
+   l2p set types --data '[...]' --json | l2p set predicates --stdin --json
+   l2p build domain --data '{"name":"bw","types":[...]}' -o domain.pddl
+   l2p validate domain domain.pddl
+   l2p plan --domain @domain.pddl --problem @problem.pddl --json
+   ```
+
+   ### Recommendations for Agents
+
+   - **Use the CLI** (`set`/`build`/`validate`/`plan`) for stateless, scriptable workflows. The Python API is better for custom loops.
+   - Before generating any PDDL with an LLM, always run `l2p schema <component> --examples` to get the exact JSON schema an LLM should output.
+   - Always validate generated PDDL before planning: `l2p validate domain domain.pddl`.
+   - For FastDownward, default alias is `lama-first`. Other options: `seq-opt-fdss-1`, `seq-opt-bjolp`.
+   - For UnifiedPlanning backend: `pip install unified-planning unified-planning[engines]` then `--engine aries`.
+
+   ## Testing
+
+   - `pytest` runs all tests. No special flags needed.
+   - Mock LLM at `tests/mock_llm.py` - set `mock.output` to a string to simulate LLM responses.
+   - Test data (prompts, PDDL files) under `tests/pddl/`.
+   - Tests use `unittest.TestCase` - runnable with `pytest` or `python -m unittest`.
+
+   ## Key Conventions
+
+   - PDDL keywords output by LLMs (AND/OR) are **lowercased** automatically by `generate_domain()` and `generate_problem()`.
+   - Use `format_*` functions from `l2p/utils/pddl_format.py` for standalone PDDL formatting.
+   - Validators in `l2p/validators/` check naming, type hierarchy, param types, variable scope, symbol references, arity.
+   - Backend (`unified` vs `openai`) is automatically inferred from config_path (`llm.yaml` -> unified, `openaiSDK.yaml` -> openai).
+   - The `@require_llm` decorator on `formalize_component()` validates that the model parameter is a `BaseLLM` instance.
+
+This file is designed to be consumed by LLM agent tools like `OpenCode <https://opencode.ai>`_
+that use ``AGENTS.md`` (or ``.opencode/`` skills) to bootstrap context for
+the coding assistant - see the
+`OpenCode documentation <https://opencode.ai>`_ for more details.
