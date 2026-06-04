@@ -10,7 +10,7 @@
 
 This library is a collection of tools for PDDL model generation extracted from natural language driven by large language models. This library is an expansion from the survey paper [**LLMs as Planning Formalizers: A Survey for Leveraging Large Language Models to Construct Automated Planning Specifications**](https://aclanthology.org/2025.findings-acl.1291.pdf).
 
-L2P is an offline, natural language-to-planning model system that supports domain-agnostic planning. It does this via creating an intermediate [PDDL](https://planning.wiki/guide/whatis/pddl) representation of the domain and task, which can then be solved by a classical planner. To stay up to date with the most current papers, please visit [**here**](https://ai-planning.github.io/l2p/docs/paper_feed.html).
+L2P is an offline, natural language-to-planning system (that wraps an LLM backend) to support domain-agnostic planning. It does this via creating an intermediate [PDDL](https://planning.wiki/guide/whatis/pddl) representation of the domain and task, which can then be solved by a classical planner. To stay up to date with the most current papers, please visit [**here**](https://ai-planning.github.io/l2p/docs/paper_feed.html).
 
 Full library documentation can be found: [**L2P Documention**](https://ai-planning.github.io/l2p/docs/)
 
@@ -20,8 +20,8 @@ l2p init
     |__
 l2p config
 l2p models
-l2p templates
-l2p generate
+l2p build
+l2p plan
 ``` -->
 
 ## Quickstart
@@ -259,20 +259,13 @@ print(plan_result.plan)
 
 ### Agentic CLI (for LLM agents & automation)
 
-The fastest way to build PDDL models is piping structured JSON between non-interactive commands:
+The fastest way to build PDDL models is passing full JSON to non-interactive commands:
 
 ```bash
 # 1. Look up the JSON schema an LLM should follow
 l2p schema domain --examples
 
-# 2. Set individual components (validate + format in one step)
-l2p set types --data '[{"name":"block","parent":"object"}]' --json
-l2p set predicates --data '[
-  {"name":"clear","params":[{"variable":"?x","type":"block"}]},
-  {"name":"on","params":[{"variable":"?x","type":"block"},{"variable":"?y","type":"block"}]}
-]' --pddl
-
-# 3. Assemble and render the full PDDL domain
+# 2. Assemble and render the full PDDL domain
 l2p build domain --data '{
   "name":"blocksworld",
   "types":[{"name":"block","parent":"object"}],
@@ -287,18 +280,11 @@ l2p build domain --data '{
   ]
 }' -o domain.pddl
 
-# 4. Validate the generated file
+# 3. Validate the generated file
 l2p validate domain domain.pddl
 
-# 5. Run a planner on it
+# 4. Run a planner on it
 l2p plan --domain @domain.pddl --problem @problem.pddl --planner fast-downward --json
-```
-
-Every command is **stateless**: pass full JSON via `--data` or compose from individual flags. LLM agents can chain them naturally:
-
-```bash
-# Pipe validated JSON between commands
-l2p set types --data '[...]' --json | l2p set predicates --stdin --json
 ```
 
 ## Contact

@@ -324,7 +324,7 @@ def config_validate_command(args):
             f"\n[SUCCESS] Configuration is valid and ready to use."
             f"\n\nNext steps:"
             f"\n    > Test connection: `l2p models test`"
-            f'\n    > Generate components: `l2p generate types --desc "your domain"`'
+            f"\n    > Build a domain: `l2p build domain --help`"
         )
     else:
         print("[FAIL] Configuration has issues.")

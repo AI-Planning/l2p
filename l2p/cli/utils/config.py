@@ -102,6 +102,7 @@ class ConfigManager:
             # merge with defaults to ensure all sections exist
             merged = copy.deepcopy(self.DEFAULT_CONFIG)
             self._deep_update(merged, config)
+            self.config = merged
             return merged
 
         except (yaml.YAMLError, json.JSONDecodeError) as e:
@@ -217,17 +218,6 @@ class ConfigManager:
         """Reset configuration to defaults."""
         self.config = self.DEFAULT_CONFIG.copy()
         self.save_config()
-
-
-class CLIError(Exception):
-    """Custom exception for CLI errors with troubleshooting tips."""
-
-    def __init__(self, message: str):
-        super().__init__(message)
-        self.message = message
-
-    def __str__(self):
-        return self.message
 
 
 # convenience function for getting config manager instance
