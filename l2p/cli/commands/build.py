@@ -82,7 +82,7 @@ def _build_problem_from_data(data: dict) -> str:
     return builder.generate_problem(details)
 
 
-def _build_domain_from_components(args) -> str:
+def _build_domain_from_components(args):
     types = _resolve_component(args, "types", [])
     constants = _resolve_component(args, "constants", [])
     predicates = _resolve_component(args, "predicates", [])
@@ -108,10 +108,11 @@ def _build_domain_from_components(args) -> str:
         constraint=constraints,
     )
     builder = DomainBuilder(domain_details=details)
-    return builder.generate_domain(details)
+    pddl = builder.generate_domain(details)
+    return pddl, details.model_dump(mode="json")
 
 
-def _build_problem_from_components(args) -> str:
+def _build_problem_from_components(args):
     objects = _resolve_component(args, "objects", [])
     initial_state = _resolve_component(args, "initial_state")
     goal_state = _resolve_component(args, "goal_state")
@@ -124,7 +125,8 @@ def _build_problem_from_components(args) -> str:
         goal_state=goal_state or GoalState(),
     )
     builder = ProblemBuilder(problem_details=details)
-    return builder.generate_problem(details)
+    pddl = builder.generate_problem(details)
+    return pddl, details.model_dump(mode="json")
 
 
 # ---------------------------------------------------------------------------
@@ -275,8 +277,7 @@ def build_domain_command(args):
             pddl = _build_domain_from_data(data)
             domain_json = data
         else:
-            pddl = _build_domain_from_components(args)
-            domain_json = None
+            pddl, domain_json = _build_domain_from_components(args)
 
         if args.json and domain_json:
             output = json.dumps(domain_json, indent=2)
@@ -301,8 +302,7 @@ def build_problem_command(args):
             pddl = _build_problem_from_data(data)
             problem_json = data
         else:
-            pddl = _build_problem_from_components(args)
-            problem_json = None
+            pddl, problem_json = _build_problem_from_components(args)
 
         if args.json and problem_json:
             output = json.dumps(problem_json, indent=2)

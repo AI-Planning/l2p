@@ -107,6 +107,7 @@ def build_ctx(**kwargs) -> str:
     return f"\n<existing_context>\n{combined_ctx}\n</existing_context>"
 
 
+# CONTEXT PASSING KWARGS (i.e. formalize_components(types=[...]))
 CTX_MAPPING: Dict[str, tuple[str, Callable[[Any], str]]] = {
     "requirements": ("requirements", jsonify_components),
     "types": ("types", jsonify_components),
@@ -125,6 +126,9 @@ CTX_MAPPING: Dict[str, tuple[str, Callable[[Any], str]]] = {
     "durative_effects": ("durative_effects", jsonify_components),
     "events": ("events", jsonify_components),
     "processes": ("processes", jsonify_components),
+    "objects": ("objects", jsonify_components),
+    "initial_state": ("initial_state", jsonify_components),
+    "goal_state": ("goal_state", jsonify_components),
 }
 
 # DEFAULT DOMAIN SYSTEM PROMPT TEMPLATES

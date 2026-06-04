@@ -259,8 +259,8 @@ def init_command(args):
                 print(
                     f"\n{steps_offset}. Test connection:"
                     f"\n   `l2p models test`"
-                    f"\n{steps_offset + 1}. Generate your first PDDL domain:"
-                    f"\n   `l2p generate domain`"
+                    f"\n{steps_offset + 1}. Build your first PDDL domain:"
+                    f"\n   `l2p build domain --data '{{\"name\": \"my_domain\", \"types\": [], \"predicates\": []}}' -o domain.pddl`"
                 )
 
             except ImportError as e:

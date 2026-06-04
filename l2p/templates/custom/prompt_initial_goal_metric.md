@@ -62,7 +62,7 @@ End your final answer by wrapping the initial state, goal state, and metric defi
 
 7. **Cross-Reference Consistency:** The initial state and goal state must use the same predicate names, function names, and object names consistently. For example, if the goal references `(at rover1 wp2)`, the initial state should be consistent with that same object naming convention.
 
-8. All objects referenced in initial state and goal state are assumed to be defined externally (e.g., via a prior `l2p set objects` call). Use concrete object names like `rover1`, not `?`-prefixed variables.
+8. All objects referenced in initial state and goal state are assumed to be defined externally. Use concrete object names like `rover1`, not `?`-prefixed variables.
 
 9. Ensure the final JSON is perfectly formatted with no trailing commas.
 

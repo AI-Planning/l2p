@@ -1,7 +1,7 @@
 """Output the Pydantic JSON Schema for any PDDL component.
 
 Use this to tell an LLM what JSON structure it should produce for
-l2p set and l2p build commands.
+l2p build commands.
 
 Each schema describes the exact fields, types, and constraints of the
 Pydantic model underlying that PDDL component.  This includes field
@@ -33,6 +33,7 @@ Example output shape::
 
 import argparse
 import json
+import sys
 from typing import Type, Dict
 
 from pydantic import BaseModel

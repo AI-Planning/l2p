@@ -11,8 +11,8 @@ import yaml
 from pathlib import Path
 
 from l2p.llm.base import resolve_config_path
-from l2p.cli.utils.config import CLIError, get_config_manager
-from l2p.cli.utils.errors import handle_error
+from l2p.cli.utils.config import get_config_manager
+from l2p.cli.utils.errors import CLIError, handle_error
 from l2p.cli.utils.helpers import _input_or_exit, YELLOW, RESET
 
 

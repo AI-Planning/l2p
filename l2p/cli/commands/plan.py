@@ -137,6 +137,8 @@ def plan_command(args):
         print("[ERROR] Both --domain and --problem are required.", file=sys.stderr)
         sys.exit(1)
 
+    domain_path = None
+    problem_path = None
     domain_path = _write_temp_pddl(domain_pddl)
     problem_path = _write_temp_pddl(problem_pddl)
 
@@ -208,5 +210,7 @@ def plan_command(args):
         print(f"[ERROR] Planner failed: {e}", file=sys.stderr)
         sys.exit(1)
     finally:
-        Path(domain_path).unlink(missing_ok=True)
-        Path(problem_path).unlink(missing_ok=True)
+        if domain_path:
+            Path(domain_path).unlink(missing_ok=True)
+        if problem_path:
+            Path(problem_path).unlink(missing_ok=True)
