@@ -330,28 +330,6 @@ a single node in a PDDL formula. Nearly every condition/effect model uses it.</p
 <p><strong>Fields</strong>: <code class="docutils literal notranslate"><span class="pre">name</span></code> (<em>str</em>), <code class="docutils literal notranslate"><span class="pre">parent</span></code> (<em>str</em>), <code class="docutils literal notranslate"><span class="pre">desc</span></code> (<em>Optional[str]</em>)</p>
 <p>A flat dict <code class="docutils literal notranslate"><span class="pre">{name:</span> <span class="pre">desc}</span></code> is still accepted as input to the LLM prompt,
 but the canonical form is the structured JSON above.</p>
-<p><strong>Nested (hierarchical) types</strong> can be represented as a list of inheritance chains:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span>
-    <span class="p">{</span>
-        <span class="s2">&quot;parent_type_1&quot;</span><span class="p">:</span> <span class="s2">&quot;description for parent type 1&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;children&quot;</span><span class="p">:</span> <span class="p">[</span>
-            <span class="p">{</span>
-                <span class="s2">&quot;child_type_1&quot;</span><span class="p">:</span> <span class="s2">&quot;description for child type 1&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;children&quot;</span><span class="p">:</span> <span class="p">[</span>
-                    <span class="p">{</span><span class="s2">&quot;child_child_type_1&quot;</span><span class="p">:</span> <span class="s2">&quot;description&quot;</span><span class="p">,</span> <span class="s2">&quot;children&quot;</span><span class="p">:</span> <span class="p">[]}</span>
-                <span class="p">]</span>
-            <span class="p">}</span>
-        <span class="p">]</span>
-    <span class="p">}</span>
-<span class="p">]</span>
-</pre></div>
-</div>
-<p>Converted via <code class="docutils literal notranslate"><span class="pre">format_types(types)</span></code> into PDDL:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">parent_type_1</span> <span class="p">;</span> <span class="n">description</span> <span class="k">for</span> <span class="n">parent</span> <span class="nb">type</span> <span class="mi">1</span>
-<span class="n">child_type_1</span> <span class="o">-</span> <span class="n">parent_type_1</span> <span class="p">;</span> <span class="n">description</span> <span class="k">for</span> <span class="n">child</span> <span class="nb">type</span> <span class="mi">1</span>
-<span class="n">child_child_type_1</span> <span class="o">-</span> <span class="n">child_type_1</span> <span class="p">;</span> <span class="n">description</span> <span class="k">for</span> <span class="n">child</span> <span class="n">child</span> <span class="nb">type</span> <span class="mi">1</span>
-</pre></div>
-</div>
 </section>
 <section id="constant">
 <h3>Constant<a class="headerlink" href="#constant" title="Link to this heading">¶</a></h3>

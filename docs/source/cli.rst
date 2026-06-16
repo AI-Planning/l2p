@@ -9,7 +9,7 @@ Configuration is stored at ``~/.l2p/config.yaml`` and managed via the
 :ref:`cli_init` and :ref:`cli_config` commands.
 
 .. tip::
-   Non-interactive commands (``l2p set``, ``l2p build``, ``l2p validate``,
+   Non-interactive commands (``l2p build``, ``l2p validate``,
    ``l2p plan``, ``l2p schema``) accept structured JSON input and produce
    machine-readable output - ideal for LLM tool-calling agents. See
    :ref:`cli_agentic` below.
@@ -24,8 +24,6 @@ Quick Reference
 +==================================+====================================================+=================+
 | :ref:`cli_init`                  | Configure LLM provider & model                     | Human + Agent   |
 +----------------------------------+----------------------------------------------------+-----------------+
-| :ref:`cli_set`                   | Inject a PDDL component from JSON                  | Agent           |
-+----------------------------------+----------------------------------------------------+-----------------+
 | :ref:`cli_build`                 | Assemble & render full PDDL domain or problem      | Agent           |
 +----------------------------------+----------------------------------------------------+-----------------+
 | :ref:`cli_validate`              | Validate JSON components or ``.pddl`` files        | Agent           |
@@ -39,8 +37,6 @@ Quick Reference
 | :ref:`cli_models`                | List, switch, and test configured models           | Human + Agent   |
 +----------------------------------+----------------------------------------------------+-----------------+
 | :ref:`cli_config`                | Show, edit, validate, or reset configuration       | Human + Agent   |
-+----------------------------------+----------------------------------------------------+-----------------+
-| :ref:`cli_templates`             | List, show, and find prompt templates              | Human + Agent   |
 +----------------------------------+----------------------------------------------------+-----------------+
 | :ref:`cli_new`                   | Create blank PDDL domain or problem file           | Human + Agent   |
 +----------------------------------+----------------------------------------------------+-----------------+
@@ -192,29 +188,6 @@ Create minimal PDDL domain or problem skeleton files.
    # Create a problem file
    l2p new pb1.pddl --type problem --domain-name blocksworld
 
-.. _cli_templates:
-
-``l2p templates`` - Prompt Template Management
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-List, show, and find built-in prompt templates used by the generation
-commands.
-
-.. code-block:: bash
-
-   # List all templates
-   l2p templates list
-   l2p templates list --category domain   # filter by category
-   l2p templates list --details           # show source & path
-
-   # Show template content
-   l2p templates show --name types
-
-   # Find template file path
-   l2p templates find --name actions
-
-Three categories are available: ``domain``, ``task``, and ``feedback``.
-
 .. _cli_agentic:
 
 Agentic Workflow (for automation & LLM agents)
@@ -223,46 +196,6 @@ Agentic Workflow (for automation & LLM agents)
 These commands accept structured JSON input, perform a single operation, and
 produce machine-readable output. They are designed for non-interactive use by
 LLM tool-calling agents and shell scripts.
-
-.. tip::
-   Every agentic command is **stateless** - pass full JSON via ``--data`` or
-   compose from individual flags. Pipe validated JSON between commands::
-
-      l2p set types --data '[...]' --json | l2p set predicates --stdin --json
-
-.. _cli_set:
-
-``l2p set`` - Inject & Validate a Component
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Inject individual PDDL components from JSON. Each call validates the data
-against L2P's semantic rules and optionally outputs the formatted result.
-
-.. code-block:: bash
-
-   # Inject types
-   l2p set types --data '[{"name":"block","parent":"object"}]'
-
-   # Inject predicates, output PDDL
-   l2p set predicates --data '[
-     {"name":"clear","params":[{"variable":"?x","type":"block"}]}
-   ]' --pddl
-
-   # Inject from file
-   l2p set actions --file actions.json --json
-
-   # Pipe between commands
-   l2p set types --data '[...]' --json | l2p set predicates --stdin
-
-   # Show JSON Schema for LLM
-   l2p set types --schema
-
-Available components:
-
-* Domain: ``requirements``, ``types``, ``constants``, ``predicates``,
-  ``functions``, ``derived-predicates``, ``actions``, ``durative-actions``,
-  ``events``, ``processes``, ``constraints``
-* Problem: ``objects``, ``initial-state``, ``goal-state``, ``metric``
 
 .. _cli_build:
 
@@ -370,7 +303,7 @@ Two planner backends:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Output the Pydantic JSON Schema for any PDDL component. LLMs can read this to
-know the exact JSON structure expected by ``l2p set`` and ``l2p build``.
+know the exact JSON structure expected by ``l2p build``.
 
 .. code-block:: bash
 
@@ -443,11 +376,11 @@ agent has all the context it needs to work effectively:
 
    ## Setup & Dependencies
 
-   - Python >=3.10 (CI uses 3.10)
+   - Python ≥3.10 (CI uses 3.10)
    - Install: `pip install -r requirements.txt` then `pip install -e .`
    - Extra install groups (use as needed): `cli`, `openai`, `mistral`, `huggingface`, `planner`, `all`
-     - `cli` (`llm` + `rich`) is required for the `l2p` CLI
-     - `planner` (`unified-planning`) required for `UnifiedPlanning` planner backend
+   - `cli` (`llm` + `rich`) is required for the `l2p` CLI
+   - `planner` (`unified-planning`) required for `UnifiedPlanning` planner backend
    - Tests: `pytest` (unittest-based, no coverage/typechecking configured)
    - Lint (errors only): `flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics`
    - Lint (all warnings): `flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics`
@@ -460,7 +393,7 @@ agent has all the context it needs to work effectively:
 
    ## FastDownward Submodule (planner)
 
-   - Path: `downward/` - must initialize with `git submodule update --init --recursive`
+   - Path: `downward/` — must initialize with `git submodule update --init --recursive`
    - Planner executable: `downward/fast-downward.py` (note: may need building; see FastDownward docs)
    - Default alias: `lama-first`
 
@@ -496,7 +429,7 @@ agent has all the context it needs to work effectively:
 
    The LLM must output JSON wrapped in XML tags like `<types>...</types>`. Default prompts are auto-selected per component class. Using a list of multiple component classes requires a custom `prompt_template`.
 
-   Requirements are **auto-generated** by `DomainBuilder.generate_requirements()` based on which components are present.
+   Requirements are **auto-generated** by `DomainBuilder.generate_requirements()` based on which components are present — you don't need to set them manually.
 
    ## CLI Commands
 
@@ -504,29 +437,25 @@ agent has all the context it needs to work effectively:
 
    | Command | Purpose | Key Flags |
    |---------|---------|-----------|
-   | `l2p init` | Configure LLM (interactive or `--backend/--provider/--model`) | `--backend unified|openai` |
+   | `l2p init` | Configure LLM (interactive or `--backend/--provider/--model`) | `--backend unified\|openai` |
    | `l2p config show/edit/reset/validate` | Manage config at `~/.l2p/config.yaml` | |
    | `l2p models test` | Test LLM connection | |
    | `l2p schema <component>` | Show Pydantic JSON Schema for LLM reference | `--examples` |
-   | `l2p set <component>` | Validate and inject a single PDDL component from JSON | `--data`, `--file`, `--stdin`, `--json`, `--pddl`, `--schema` |
-   | `l2p build domain|problem` | Assemble full PDDL from JSON or component files | `--data`, `-o`, `--json` |
-   | `l2p validate <component|domain|problem>` | Validate components or .pddl files | `--data`, `--file`, path argument for .pddl |
+   | `l2p build domain\|problem` | Assemble full PDDL from JSON or component files | `--data`, `-o`, `--json` |
+   | `l2p validate <component\|domain\|problem>` | Validate components or .pddl files | `--data`, `--file`, path argument for .pddl |
    | `l2p plan` | Run planner on PDDL (raw strings or `@file`) | `--domain`, `--problem`, `--planner`, `--alias`, `--json` |
-   | `l2p generate domain|problem` | Interactive LLM-driven generation (requires `l2p init` first) | `--max-retries` |
-   | `l2p templates show/list/set` | Manage prompt templates | |
 
    ### CLI Data Input
 
-   - `--data '...'` - raw JSON string
-   - `--file path.json` - read from file
-   - `--stdin` - pipe JSON from stdin
-   - `@file.pddl` - prefix with `@` to read from file (used in `build` and `plan`)
+   - `--data '...'` — raw JSON string
+   - `--file path.json` — read from file
+   - `--stdin` — pipe JSON from stdin
+   - `@file.pddl` — prefix with `@` to read from file (used in `build` and `plan`)
 
    ### CLI Pipeline Pattern (agent-friendly)
 
    ```bash
    l2p schema types --examples         # learn JSON shape
-   l2p set types --data '[...]' --json | l2p set predicates --stdin --json
    l2p build domain --data '{"name":"bw","types":[...]}' -o domain.pddl
    l2p validate domain domain.pddl
    l2p plan --domain @domain.pddl --problem @problem.pddl --json
@@ -534,28 +463,20 @@ agent has all the context it needs to work effectively:
 
    ### Recommendations for Agents
 
-   - **Use the CLI** (`set`/`build`/`validate`/`plan`) for stateless, scriptable workflows. The Python API is better for custom loops.
+   - **Use the CLI** (`build`/`validate`/`plan`) for stateless, scriptable workflows. The Python API is better for custom loops.
    - Before generating any PDDL with an LLM, always run `l2p schema <component> --examples` to get the exact JSON schema an LLM should output.
    - Always validate generated PDDL before planning: `l2p validate domain domain.pddl`.
    - For FastDownward, default alias is `lama-first`. Other options: `seq-opt-fdss-1`, `seq-opt-bjolp`.
    - For UnifiedPlanning backend: `pip install unified-planning unified-planning[engines]` then `--engine aries`.
-
-   ## Testing
-
-   - `pytest` runs all tests. No special flags needed.
-   - Mock LLM at `tests/mock_llm.py` - set `mock.output` to a string to simulate LLM responses.
-   - Test data (prompts, PDDL files) under `tests/pddl/`.
-   - Tests use `unittest.TestCase` - runnable with `pytest` or `python -m unittest`.
 
    ## Key Conventions
 
    - PDDL keywords output by LLMs (AND/OR) are **lowercased** automatically by `generate_domain()` and `generate_problem()`.
    - Use `format_*` functions from `l2p/utils/pddl_format.py` for standalone PDDL formatting.
    - Validators in `l2p/validators/` check naming, type hierarchy, param types, variable scope, symbol references, arity.
-   - Backend (`unified` vs `openai`) is automatically inferred from config_path (`llm.yaml` -> unified, `openaiSDK.yaml` -> openai).
+   - Backend (`unified` vs `openai`) is automatically inferred from config_path (`llm.yaml` → unified, `openaiSDK.yaml` → openai).
    - The `@require_llm` decorator on `formalize_component()` validates that the model parameter is a `BaseLLM` instance.
 
 This file is designed to be consumed by LLM agent tools like `OpenCode <https://opencode.ai>`_
 that use ``AGENTS.md`` (or ``.opencode/`` skills) to bootstrap context for
-the coding assistant - see the
-`OpenCode documentation <https://opencode.ai>`_ for more details.
+the coding assistant - see the `OpenCode documentation <https://opencode.ai>`_ for more details.

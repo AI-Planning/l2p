@@ -247,7 +247,7 @@ human users and <strong>stateless</strong> command pipelines for automation and 
 <a class="reference internal" href="#cli-init"><span class="std std-ref">l2p init - Initial Setup</span></a> and <a class="reference internal" href="#cli-config"><span class="std std-ref">l2p config - Configuration Management</span></a> commands.</p>
 <div class="admonition tip">
 <p class="admonition-title">Tip</p>
-<p>Non-interactive commands (<code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">set</span></code>, <code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">build</span></code>, <code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">validate</span></code>,
+<p>Non-interactive commands (<code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">build</span></code>, <code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">validate</span></code>,
 <code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">plan</span></code>, <code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">schema</span></code>) accept structured JSON input and produce
 machine-readable output - ideal for LLM tool-calling agents. See
 <a class="reference internal" href="#cli-agentic"><span class="std std-ref">Agentic Workflow (for automation &amp; LLM agents)</span></a> below.</p>
@@ -267,40 +267,32 @@ machine-readable output - ideal for LLM tool-calling agents. See
 <td><p>Configure LLM provider &amp; model</p></td>
 <td><p>Human + Agent</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#cli-set"><span class="std std-ref">l2p set - Inject &amp; Validate a Component</span></a></p></td>
-<td><p>Inject a PDDL component from JSON</p></td>
-<td><p>Agent</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#cli-build"><span class="std std-ref">l2p build - Assemble &amp; Render PDDL</span></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#cli-build"><span class="std std-ref">l2p build - Assemble &amp; Render PDDL</span></a></p></td>
 <td><p>Assemble &amp; render full PDDL domain or problem</p></td>
 <td><p>Agent</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#cli-validate"><span class="std std-ref">l2p validate - Semantic &amp; Syntax Checking</span></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#cli-validate"><span class="std std-ref">l2p validate - Semantic &amp; Syntax Checking</span></a></p></td>
 <td><p>Validate JSON components or <code class="docutils literal notranslate"><span class="pre">.pddl</span></code> files</p></td>
 <td><p>Agent</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#cli-plan"><span class="std std-ref">l2p plan - Run a Planner</span></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#cli-plan"><span class="std std-ref">l2p plan - Run a Planner</span></a></p></td>
 <td><p>Run a planner on domain/problem strings</p></td>
 <td><p>Agent</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#cli-schema"><span class="std std-ref">l2p schema - JSON Schema Reference for LLMs</span></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#cli-schema"><span class="std std-ref">l2p schema - JSON Schema Reference for LLMs</span></a></p></td>
 <td><p>Output Pydantic JSON Schema for LLM reference</p></td>
 <td><p>Agent</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#cli-generate"><span class="std std-ref">l2p generate - Interactive PDDL Generation</span></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#cli-generate"><span class="std std-ref">l2p generate - Interactive PDDL Generation</span></a></p></td>
 <td><p>Interactive domain &amp; problem generation</p></td>
 <td><p>Human</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#cli-models"><span class="std std-ref">l2p models - Model Management</span></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#cli-models"><span class="std std-ref">l2p models - Model Management</span></a></p></td>
 <td><p>List, switch, and test configured models</p></td>
 <td><p>Human + Agent</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#cli-config"><span class="std std-ref">l2p config - Configuration Management</span></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#cli-config"><span class="std std-ref">l2p config - Configuration Management</span></a></p></td>
 <td><p>Show, edit, validate, or reset configuration</p></td>
-<td><p>Human + Agent</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#cli-templates"><span class="std std-ref">l2p templates - Prompt Template Management</span></a></p></td>
-<td><p>List, show, and find prompt templates</p></td>
 <td><p>Human + Agent</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#cli-new"><span class="std std-ref">l2p new - Blank PDDL Files</span></a></p></td>
@@ -428,68 +420,12 @@ l2p<span class="w"> </span>new<span class="w"> </span>pb1.pddl<span class="w"> <
 </pre></div>
 </div>
 </section>
-<section id="l2p-templates-prompt-template-management">
-<span id="cli-templates"></span><h3><code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">templates</span></code> - Prompt Template Management<a class="headerlink" href="#l2p-templates-prompt-template-management" title="Link to this heading">¶</a></h3>
-<p>List, show, and find built-in prompt templates used by the generation
-commands.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># List all templates</span>
-l2p<span class="w"> </span>templates<span class="w"> </span>list
-l2p<span class="w"> </span>templates<span class="w"> </span>list<span class="w"> </span>--category<span class="w"> </span>domain<span class="w">   </span><span class="c1"># filter by category</span>
-l2p<span class="w"> </span>templates<span class="w"> </span>list<span class="w"> </span>--details<span class="w">           </span><span class="c1"># show source &amp; path</span>
-
-<span class="c1"># Show template content</span>
-l2p<span class="w"> </span>templates<span class="w"> </span>show<span class="w"> </span>--name<span class="w"> </span>types
-
-<span class="c1"># Find template file path</span>
-l2p<span class="w"> </span>templates<span class="w"> </span>find<span class="w"> </span>--name<span class="w"> </span>actions
-</pre></div>
-</div>
-<p>Three categories are available: <code class="docutils literal notranslate"><span class="pre">domain</span></code>, <code class="docutils literal notranslate"><span class="pre">task</span></code>, and <code class="docutils literal notranslate"><span class="pre">feedback</span></code>.</p>
-</section>
 </section>
 <section id="agentic-workflow-for-automation-llm-agents">
 <span id="cli-agentic"></span><h2>Agentic Workflow (for automation &amp; LLM agents)<a class="headerlink" href="#agentic-workflow-for-automation-llm-agents" title="Link to this heading">¶</a></h2>
 <p>These commands accept structured JSON input, perform a single operation, and
 produce machine-readable output. They are designed for non-interactive use by
 LLM tool-calling agents and shell scripts.</p>
-<div class="admonition tip">
-<p class="admonition-title">Tip</p>
-<p>Every agentic command is <strong>stateless</strong> - pass full JSON via <code class="docutils literal notranslate"><span class="pre">--data</span></code> or
-compose from individual flags. Pipe validated JSON between commands:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">l2p</span> <span class="nb">set</span> <span class="n">types</span> <span class="o">--</span><span class="n">data</span> <span class="s1">&#39;[...]&#39;</span> <span class="o">--</span><span class="n">json</span> <span class="o">|</span> <span class="n">l2p</span> <span class="nb">set</span> <span class="n">predicates</span> <span class="o">--</span><span class="n">stdin</span> <span class="o">--</span><span class="n">json</span>
-</pre></div>
-</div>
-</div>
-<section id="l2p-set-inject-validate-a-component">
-<span id="cli-set"></span><h3><code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">set</span></code> - Inject &amp; Validate a Component<a class="headerlink" href="#l2p-set-inject-validate-a-component" title="Link to this heading">¶</a></h3>
-<p>Inject individual PDDL components from JSON. Each call validates the data
-against L2P’s semantic rules and optionally outputs the formatted result.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Inject types</span>
-l2p<span class="w"> </span><span class="nb">set</span><span class="w"> </span>types<span class="w"> </span>--data<span class="w"> </span><span class="s1">&#39;[{&quot;name&quot;:&quot;block&quot;,&quot;parent&quot;:&quot;object&quot;}]&#39;</span>
-
-<span class="c1"># Inject predicates, output PDDL</span>
-l2p<span class="w"> </span><span class="nb">set</span><span class="w"> </span>predicates<span class="w"> </span>--data<span class="w"> </span><span class="s1">&#39;[</span>
-<span class="s1">  {&quot;name&quot;:&quot;clear&quot;,&quot;params&quot;:[{&quot;variable&quot;:&quot;?x&quot;,&quot;type&quot;:&quot;block&quot;}]}</span>
-<span class="s1">]&#39;</span><span class="w"> </span>--pddl
-
-<span class="c1"># Inject from file</span>
-l2p<span class="w"> </span><span class="nb">set</span><span class="w"> </span>actions<span class="w"> </span>--file<span class="w"> </span>actions.json<span class="w"> </span>--json
-
-<span class="c1"># Pipe between commands</span>
-l2p<span class="w"> </span><span class="nb">set</span><span class="w"> </span>types<span class="w"> </span>--data<span class="w"> </span><span class="s1">&#39;[...]&#39;</span><span class="w"> </span>--json<span class="w"> </span><span class="p">|</span><span class="w"> </span>l2p<span class="w"> </span><span class="nb">set</span><span class="w"> </span>predicates<span class="w"> </span>--stdin
-
-<span class="c1"># Show JSON Schema for LLM</span>
-l2p<span class="w"> </span><span class="nb">set</span><span class="w"> </span>types<span class="w"> </span>--schema
-</pre></div>
-</div>
-<p>Available components:</p>
-<ul class="simple">
-<li><p>Domain: <code class="docutils literal notranslate"><span class="pre">requirements</span></code>, <code class="docutils literal notranslate"><span class="pre">types</span></code>, <code class="docutils literal notranslate"><span class="pre">constants</span></code>, <code class="docutils literal notranslate"><span class="pre">predicates</span></code>,
-<code class="docutils literal notranslate"><span class="pre">functions</span></code>, <code class="docutils literal notranslate"><span class="pre">derived-predicates</span></code>, <code class="docutils literal notranslate"><span class="pre">actions</span></code>, <code class="docutils literal notranslate"><span class="pre">durative-actions</span></code>,
-<code class="docutils literal notranslate"><span class="pre">events</span></code>, <code class="docutils literal notranslate"><span class="pre">processes</span></code>, <code class="docutils literal notranslate"><span class="pre">constraints</span></code></p></li>
-<li><p>Problem: <code class="docutils literal notranslate"><span class="pre">objects</span></code>, <code class="docutils literal notranslate"><span class="pre">initial-state</span></code>, <code class="docutils literal notranslate"><span class="pre">goal-state</span></code>, <code class="docutils literal notranslate"><span class="pre">metric</span></code></p></li>
-</ul>
-</section>
 <section id="l2p-build-assemble-render-pddl">
 <span id="cli-build"></span><h3><code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">build</span></code> - Assemble &amp; Render PDDL<a class="headerlink" href="#l2p-build-assemble-render-pddl" title="Link to this heading">¶</a></h3>
 <p>Build the final PDDL string from a complete <code class="docutils literal notranslate"><span class="pre">DomainDetails</span></code> or
@@ -579,7 +515,7 @@ l2p<span class="w"> </span>plan<span class="w"> </span>--domain<span class="w"> 
 <section id="l2p-schema-json-schema-reference-for-llms">
 <span id="cli-schema"></span><h3><code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">schema</span></code> - JSON Schema Reference for LLMs<a class="headerlink" href="#l2p-schema-json-schema-reference-for-llms" title="Link to this heading">¶</a></h3>
 <p>Output the Pydantic JSON Schema for any PDDL component. LLMs can read this to
-know the exact JSON structure expected by <code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">set</span></code> and <code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">build</span></code>.</p>
+know the exact JSON structure expected by <code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">build</span></code>.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Schema for a single component</span>
 l2p<span class="w"> </span>schema<span class="w"> </span>types
 l2p<span class="w"> </span>schema<span class="w"> </span>predicates
@@ -642,11 +578,11 @@ L2P is a Python library that generates, validates, and plans PDDL models from na
 
 ## Setup &amp; Dependencies
 
-- Python &gt;=3.10 (CI uses 3.10)
+- Python ≥3.10 (CI uses 3.10)
 - Install: `pip install -r requirements.txt` then `pip install -e .`
 - Extra install groups (use as needed): `cli`, `openai`, `mistral`, `huggingface`, `planner`, `all`
-  - `cli` (`llm` + `rich`) is required for the `l2p` CLI
-  - `planner` (`unified-planning`) required for `UnifiedPlanning` planner backend
+- `cli` (`llm` + `rich`) is required for the `l2p` CLI
+- `planner` (`unified-planning`) required for `UnifiedPlanning` planner backend
 - Tests: `pytest` (unittest-based, no coverage/typechecking configured)
 - Lint (errors only): `flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics`
 - Lint (all warnings): `flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics`
@@ -659,7 +595,7 @@ L2P is a Python library that generates, validates, and plans PDDL models from na
 
 ## FastDownward Submodule (planner)
 
-- Path: `downward/` - must initialize with `git submodule update --init --recursive`
+- Path: `downward/` — must initialize with `git submodule update --init --recursive`
 - Planner executable: `downward/fast-downward.py` (note: may need building; see FastDownward docs)
 - Default alias: `lama-first`
 
@@ -695,7 +631,7 @@ Domain components are set via `DomainBuilder.set_*(value, append=False)`. Proble
 
 The LLM must output JSON wrapped in XML tags like `&lt;types&gt;...&lt;/types&gt;`. Default prompts are auto-selected per component class. Using a list of multiple component classes requires a custom `prompt_template`.
 
-Requirements are **auto-generated** by `DomainBuilder.generate_requirements()` based on which components are present.
+Requirements are **auto-generated** by `DomainBuilder.generate_requirements()` based on which components are present — you don&#39;t need to set them manually.
 
 ## CLI Commands
 
@@ -703,29 +639,25 @@ Entry point: `l2p` (via `l2p.cli.main:main`). All commands are stateless (pass f
 
 | Command | Purpose | Key Flags |
 |---------|---------|-----------|
-| `l2p init` | Configure LLM (interactive or `--backend/--provider/--model`) | `--backend unified|openai` |
+| `l2p init` | Configure LLM (interactive or `--backend/--provider/--model`) | `--backend unified\|openai` |
 | `l2p config show/edit/reset/validate` | Manage config at `~/.l2p/config.yaml` | |
 | `l2p models test` | Test LLM connection | |
 | `l2p schema &lt;component&gt;` | Show Pydantic JSON Schema for LLM reference | `--examples` |
-| `l2p set &lt;component&gt;` | Validate and inject a single PDDL component from JSON | `--data`, `--file`, `--stdin`, `--json`, `--pddl`, `--schema` |
-| `l2p build domain|problem` | Assemble full PDDL from JSON or component files | `--data`, `-o`, `--json` |
-| `l2p validate &lt;component|domain|problem&gt;` | Validate components or .pddl files | `--data`, `--file`, path argument for .pddl |
+| `l2p build domain\|problem` | Assemble full PDDL from JSON or component files | `--data`, `-o`, `--json` |
+| `l2p validate &lt;component\|domain\|problem&gt;` | Validate components or .pddl files | `--data`, `--file`, path argument for .pddl |
 | `l2p plan` | Run planner on PDDL (raw strings or `@file`) | `--domain`, `--problem`, `--planner`, `--alias`, `--json` |
-| `l2p generate domain|problem` | Interactive LLM-driven generation (requires `l2p init` first) | `--max-retries` |
-| `l2p templates show/list/set` | Manage prompt templates | |
 
 ### CLI Data Input
 
-- `--data &#39;...&#39;` - raw JSON string
-- `--file path.json` - read from file
-- `--stdin` - pipe JSON from stdin
-- `@file.pddl` - prefix with `@` to read from file (used in `build` and `plan`)
+- `--data &#39;...&#39;` — raw JSON string
+- `--file path.json` — read from file
+- `--stdin` — pipe JSON from stdin
+- `@file.pddl` — prefix with `@` to read from file (used in `build` and `plan`)
 
 ### CLI Pipeline Pattern (agent-friendly)
 
 ```bash
 l2p schema types --examples         # learn JSON shape
-l2p set types --data &#39;[...]&#39; --json | l2p set predicates --stdin --json
 l2p build domain --data &#39;{&quot;name&quot;:&quot;bw&quot;,&quot;types&quot;:[...]}&#39; -o domain.pddl
 l2p validate domain domain.pddl
 l2p plan --domain @domain.pddl --problem @problem.pddl --json
@@ -733,33 +665,25 @@ l2p plan --domain @domain.pddl --problem @problem.pddl --json
 
 ### Recommendations for Agents
 
-- **Use the CLI** (`set`/`build`/`validate`/`plan`) for stateless, scriptable workflows. The Python API is better for custom loops.
+- **Use the CLI** (`build`/`validate`/`plan`) for stateless, scriptable workflows. The Python API is better for custom loops.
 - Before generating any PDDL with an LLM, always run `l2p schema &lt;component&gt; --examples` to get the exact JSON schema an LLM should output.
 - Always validate generated PDDL before planning: `l2p validate domain domain.pddl`.
 - For FastDownward, default alias is `lama-first`. Other options: `seq-opt-fdss-1`, `seq-opt-bjolp`.
 - For UnifiedPlanning backend: `pip install unified-planning unified-planning[engines]` then `--engine aries`.
-
-## Testing
-
-- `pytest` runs all tests. No special flags needed.
-- Mock LLM at `tests/mock_llm.py` - set `mock.output` to a string to simulate LLM responses.
-- Test data (prompts, PDDL files) under `tests/pddl/`.
-- Tests use `unittest.TestCase` - runnable with `pytest` or `python -m unittest`.
 
 ## Key Conventions
 
 - PDDL keywords output by LLMs (AND/OR) are **lowercased** automatically by `generate_domain()` and `generate_problem()`.
 - Use `format_*` functions from `l2p/utils/pddl_format.py` for standalone PDDL formatting.
 - Validators in `l2p/validators/` check naming, type hierarchy, param types, variable scope, symbol references, arity.
-- Backend (`unified` vs `openai`) is automatically inferred from config_path (`llm.yaml` -&gt; unified, `openaiSDK.yaml` -&gt; openai).
+- Backend (`unified` vs `openai`) is automatically inferred from config_path (`llm.yaml` → unified, `openaiSDK.yaml` → openai).
 - The `@require_llm` decorator on `formalize_component()` validates that the model parameter is a `BaseLLM` instance.
 </pre></div>
 </div>
 </div>
 <p>This file is designed to be consumed by LLM agent tools like <a class="reference external" href="https://opencode.ai">OpenCode</a>
 that use <code class="docutils literal notranslate"><span class="pre">AGENTS.md</span></code> (or <code class="docutils literal notranslate"><span class="pre">.opencode/</span></code> skills) to bootstrap context for
-the coding assistant - see the
-<a class="reference external" href="https://opencode.ai">OpenCode documentation</a> for more details.</p>
+the coding assistant - see the <a class="reference external" href="https://opencode.ai">OpenCode documentation</a> for more details.</p>
 </section>
 </section>
 </section>
@@ -828,11 +752,9 @@ the coding assistant - see the
 <li><a class="reference internal" href="#l2p-models-model-management"><code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">models</span></code> - Model Management</a></li>
 <li><a class="reference internal" href="#l2p-config-configuration-management"><code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">config</span></code> - Configuration Management</a></li>
 <li><a class="reference internal" href="#l2p-new-blank-pddl-files"><code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">new</span></code> - Blank PDDL Files</a></li>
-<li><a class="reference internal" href="#l2p-templates-prompt-template-management"><code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">templates</span></code> - Prompt Template Management</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#agentic-workflow-for-automation-llm-agents">Agentic Workflow (for automation &amp; LLM agents)</a><ul>
-<li><a class="reference internal" href="#l2p-set-inject-validate-a-component"><code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">set</span></code> - Inject &amp; Validate a Component</a></li>
 <li><a class="reference internal" href="#l2p-build-assemble-render-pddl"><code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">build</span></code> - Assemble &amp; Render PDDL</a></li>
 <li><a class="reference internal" href="#l2p-validate-semantic-syntax-checking"><code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">validate</span></code> - Semantic &amp; Syntax Checking</a></li>
 <li><a class="reference internal" href="#l2p-plan-run-a-planner"><code class="docutils literal notranslate"><span class="pre">l2p</span> <span class="pre">plan</span></code> - Run a Planner</a></li>

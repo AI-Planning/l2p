@@ -4,13 +4,28 @@ Must-read papers on LLM-driven automated planning specification.
 
 New Papers!
 -------------------------------------------------------
+
+    + **"Agentic LLM Planning via Step-Wise PDDL Simulation: An Empirical Characterisation"** Göbel et al. (2026) `[paper] <https://arxiv.org/abs/2603.06064>`__
+    + **"A Close Look At World Model Recovery In Supervised Fine-Tuned LLM Planners"** Emami et al. (2026) `[paper] <https://arxiv.org/abs/2606.03685>`__
+    + **"Language Model Planners do not Scale, but do Formalizers?"** Jiang et al. (2026) `[paper] <https://arxiv.org/abs/2603.23844>`__
+    + **"Generating Domain Models for Automated Planning from Natural Language Descriptions"** Acitelli et al. (2026) `[paper] <https://ieeexplore.ieee.org/abstract/document/11536232?casa_token=0LSI3X6k2lQAAAAA:-a6zJeZmwUdyDtS50hRnbQrL_ACrLDDR-Grvj4stxaZ26Yz_6qLlH3RRY0gVmrPAb2trEljILcA>`__
+    + **"Property-Guided LLM Program Synthesis for Planning"** Pereira et al. (2026) `[paper] <https://arxiv.org/abs/2605.16142>`__
+    + **"LLM-Evolved Domain-Independent Heuristics for Symbolic AI Planning"** Gestrin & Seipp (2026) `[paper] <https://arxiv.org/abs/2605.29649>`__
+    + **"Planning in the LLM Era: Building for Reliability and Efficiency"** Katz et al. (2026) `[paper] <https://arxiv.org/abs/2605.21902>`__
+    + **"Improved Generalized Planning with LLMs through Strategy Refinement and Reflection"** Stein et al. (2025) `[paper] <https://arxiv.org/abs/2508.13876>`__
+    + **"One Demo Is All It Takes: Planning Domain Derivation with LLMs from A Single Demonstration"** Huang et al. (2025) `[paper] <https://arxiv.org/abs/2505.18382>`__
+    + **"Successor-Generator Planning with LLM-generated Heuristics"** Tuisov et al. (2025) `[paper] <https://arxiv.org/abs/2501.18784>`__
+    + **"UniDomain: Pretraining a Unified PDDL Domain from Real-World Demonstrations for Generalizable Robot Task Planning"** Ye et al. (2025) `[paper] <https://arxiv.org/abs/2507.21545>`__
+    + **"Toward PDDL Planning Copilot"** Benyamin et al. (2025) `[paper] <https://arxiv.org/abs/2509.12987v1>`__
+    + **"End-to-end PDDL Planning with Hardcoded and Dynamic Agents"** La Malfa et al. (2025) `[paper] <https://arxiv.org/abs/2512.09629>`__
+    + **"Agent2World: Learning to Generate Symbolic World Models via Adaptive Multi-Agent Feedback"** Hu et al. (2025) `[paper] <https://arxiv.org/abs/2512.22336>`__
     + **"Make Planning Research Rigorous Again!"** Katz et al. (2025) `[paper] <https://arxiv.org/abs/2505.21674>`__
     + **"Achieving Scalable Robot Autonomy via neurosymbolic planning using lightweight local LLM"** Attolino et al. (2025) `[paper] <https://arxiv.org/abs/2505.08492>`__ `[code] <https://github.com/NichAttGH/Gideon>`__
     + **"LODGE: Joint Hierarchical Task Planning and Learning of Domain Models with Grounded Execution"** Kienle et al. (2025) `[paper] <https://arxiv.org/abs/2505.13497>`__ `[code] <https://claudius-kienle.github.io/lodge>`__
     + **"Large Language Models for Planning: A Comprehensive and Systematic Survey"** Cao et al. (2025) `[paper] <https://arxiv.org/abs/2505.19683>`__ `[code] <https://github.com/Quester-one/Awesome-LLM-Planning>`__
     + **"Text2World: Benchmarking Large Language Models for Symbolic World Model Generation"** Hu et al. (2025) `[paper] <https://arxiv.org/abs/2502.13092>`__ `[code] <https://github.com/Aaron617/text2world>`__
     + **"Language Models For Generalised PDDL Planning: Synthesising Sound and Programmatic Policies"** Chen et al. (2025) `[paper] <https://openreview.net/pdf?id=cxpdzaWCFj>`__ `[code] <https://github.com/DillonZChen/lmplan>`__
-    + **"Open-World Planning via Lifted Regression with LLM-based Affordances for Embodied Agents"** Liu et al. (2025) `[paper] <https://aclanthology.org/2025.acl-long.1018.pdf>`__ `[code] <>`__
+    + **"Open-World Planning via Lifted Regression with LLM-based Affordances for Embodied Agents"** Liu et al. (2025) `[paper] <https://aclanthology.org/2025.acl-long.1018.pdf>`__
 
 Paper List
 -------------------------------------------------------
@@ -252,5 +267,5 @@ This section presents a taxonomy of research within Model Construction, organize
 
 The following is the core summary of model generation frameworks in `"LLMs as Planning Formalizers: A Survey for Leveraging Large Language Models to Construct Automated Planning Models" <https://arxiv.org/abs/2503.18971v1>`_:
 
-.. image:: ../_static/survey_table.png
+.. image:: ../_images/survey_table.png
    :alt: no image available

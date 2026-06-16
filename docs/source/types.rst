@@ -101,28 +101,6 @@ A PDDL type, optionally with a parent type for inheritance.
 A flat dict ``{name: desc}`` is still accepted as input to the LLM prompt,
 but the canonical form is the structured JSON above.
 
-**Nested (hierarchical) types** can be represented as a list of inheritance chains::
-
-    [
-        {
-            "parent_type_1": "description for parent type 1",
-            "children": [
-                {
-                    "child_type_1": "description for child type 1",
-                    "children": [
-                        {"child_child_type_1": "description", "children": []}
-                    ]
-                }
-            ]
-        }
-    ]
-
-Converted via ``format_types(types)`` into PDDL::
-
-    parent_type_1 ; description for parent type 1
-    child_type_1 - parent_type_1 ; description for child type 1
-    child_child_type_1 - child_type_1 ; description for child child type 1
-
 Constant
 ~~~~~~~~
 A named object that is available in every problem instance of a domain.
