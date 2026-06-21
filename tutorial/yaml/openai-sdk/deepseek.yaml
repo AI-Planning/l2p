@@ -1,0 +1,80 @@
+# Prices vary for respective API providers. Default prices may not reflect current prices.
+
+# [Structure template]
+# {PROVIDER}:
+#   {MODEL_NAME}:
+#     model_family: {FAMILY_NAME}
+#     model_alias: {MODEL_API_NAME}
+#     model_context_length: {MODEL_WINDOW}
+#     model_params:
+#       {custom parameter arguments}. For example:
+#       max_completion_tokens: 
+#       temperature:
+#       top_p:
+#       context_length:
+#       stop:
+#       extra_body:
+
+# DEEPSEEK
+deepseek:
+  base_url: https://api.deepseek.com
+  deepseek-coder:
+    model_family: deepseek
+    model_alias: deepseek-coder
+    model_context_length: 128000
+    model_params:
+      max_tokens: 4096
+      temperature: 0.0
+      top_p: 1.0
+      stop:
+    cost_usd_mtok:
+      input: 0.028
+      output: 0.42
+  deepseek-chat:
+    model_family: deepseek
+    model_alias: deepseek-chat
+    model_context_length: 128000
+    model_params:
+      max_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+      stop:
+    cost_usd_mtok:
+      input: 0.028
+      output: 0.42
+  deepseek-reasoner:
+    model_family: deepseek
+    model_alias: deepseek-reasoner
+    model_context_length: 128000
+    model_params:
+      max_tokens: 8192 # max 64k
+      temperature: 0.0
+      top_p: 1.0
+      stop:
+    cost_usd_mtok:
+      input: 0.028
+      output: 0.42
+  deepseek-v4-pro:
+    model_family: deepseek
+    model_alias: deepseek-v4-pro
+    model_context_length: 1000000
+    model_params:
+      max_tokens: 8192 # max 64k
+      temperature: 0.0
+      top_p: 1.0
+      stop:
+    cost_usd_mtok:
+      input: 0.003625
+      output: 0.87
+  deepseek-v4-flash:
+    model_family: deepseek
+    model_alias: deepseek-v4-flash
+    model_context_length: 1000000
+    model_params:
+      max_tokens: 8192 # max 64k
+      temperature: 0.0
+      top_p: 1.0
+      stop:
+    cost_usd_mtok:
+      input: 0.0028
+      output: 0.28

@@ -1,0 +1,149 @@
+# Config file for llm: https://github.com/simonw/llm 
+# Prices vary for respective API providers. Default prices may not reflect current prices.
+
+# [Structure template]
+# {PROVIDER}:
+#   {MODEL_NAME}:
+#     model_family: {MODEL_FAMILY_NAME}
+#     model_alias: {MODEL_API_NAME}
+#     model_context_length: {MODEL_WINDOW}
+#     model_params:
+#       {custom parameter arguments}. For example:
+#       max_completion_tokens: 
+#       think: (OPTIONAL)
+#       temperature:
+#       top_p:
+#       stop:
+
+# GEMINI
+google:
+  gemma-4-31b-it:
+    model_family: gemma4
+    model_alias: gemma-4-31b-it
+    model_context_length: 256000
+    model_params:
+      max_output_tokens: 16384 # max: 65536
+      temperature: 1.0
+      top_p: 1.0
+      # thinking_level: medium <- temporarily unavailable
+    cost_usd_mtok:
+      input: 0.00
+      output: 0.00
+  gemma-4-26b-a4b-it:
+    model_family: gemma4
+    model_alias: gemma-4-26b-a4b-it
+    model_context_length: 1048576
+    model_params:
+      max_output_tokens: 16384 # max: 65536
+      temperature: 1.0
+      top_p: 1.0
+      # thinking_level: medium <- temporarily unavailable
+    cost_usd_mtok:
+      input: 0.00
+      output: 0.00
+  gemini-3.1-pro-preview:
+    model_family: gemini-3
+    model_alias: gemini-3.1-pro-preview
+    model_context_length: 1048576
+    model_params:
+      max_output_tokens: 16384 # max: 65536
+      temperature: 1.0
+      top_p: 1.0
+      thinking_level: medium # low/medium/high
+    cost_usd_mtok:
+      input: 2.00
+      output: 12.00
+  gemini-3.1-flash-lite-preview:
+    model_family: gemini-3
+    model_alias: gemini-3.1-flash-lite-preview
+    model_context_length: 1048576
+    model_params:
+      max_output_tokens: 16384 # max: 65536
+      temperature: 1.0
+      top_p: 1.0
+      thinking_level: medium # low/medium/high
+    cost_usd_mtok:
+      input: 0.25
+      output: 1.50
+  gemini-3-pro-preview:
+    model_family: gemini-3
+    model_alias: gemini-3-pro-preview
+    model_context_length: 1048576
+    model_params:
+      max_output_tokens: 16384 # max: 65536
+      temperature: 1.0
+      top_p: 1.0
+      thinking_level: medium # low/medium/high
+    cost_usd_mtok:
+      input: 2.00
+      output: 12.00
+  gemini-3-flash-preview:
+    model_family: gemini-3
+    model_alias: gemini-3-flash-preview
+    model_context_length: 1048576
+    model_params:
+      max_output_tokens: 16384 # max: 65536
+      temperature: 1.0
+      top_p: 1.0
+      thinking_level: medium # low/medium/high
+    cost_usd_mtok:
+      input: 0.50
+      output: 3.00
+  gemini-2.5-pro:
+    model_family: gemini-2.5
+    model_alias: gemini-2.5-pro
+    model_context_length: 1048576
+    model_params:
+      max_output_tokens: 16384 # max: 65,536
+      temperature: 1.0
+      top_p: 1.0
+      thinking_budget: 8192 # ~medium
+    cost_usd_mtok:
+      input: 1.25
+      output: 10.00
+  gemini-2.5-flash:
+    model_family: gemini-2.5
+    model_alias: gemini-2.5-flash
+    model_context_length: 1048576
+    model_params:
+      max_output_tokens: 16384 # max: 65,536
+      temperature: 1.0
+      top_p: 1.0
+      thinking_budget: 8192 # ~medium
+    cost_usd_mtok:
+      input: 0.30
+      output: 2.50
+  gemini-2.5-flash-lite:
+    model_family: gemini-2.5
+    model_alias: gemini-2.5-flash-lite
+    model_context_length: 1048576
+    model_params:
+      max_output_tokens: 16384 # max: 65,536
+      temperature: 1.0
+      top_p: 1.0
+      thinking_budget: 8192 # ~medium
+    cost_usd_mtok:
+      input: 0.10
+      output: 0.40
+  gemini-2.0-flash:
+    model_family: gemini-2.0
+    model_alias: gemini-2.0-flash
+    model_context_length: 1048576
+    model_params:
+      max_output_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 0.10
+      output: 0.40
+  gemini-2.0-flash-lite:
+    model_family: gemini-2.0
+    model_alias: gemini-2.0-flash-lite
+    model_context_length: 1048576
+    model_params:
+      max_output_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 0.075
+      output: 0.30

@@ -128,6 +128,195 @@
         </div>
     </section>
 
+    <!-- Requirements Section -->
+    <section class="py-24 px-6 bg-slate-900/20">
+        <div class="max-w-5xl mx-auto">
+            <div class="text-center mb-16" data-aos="fade-up">
+                <h2 class="text-4xl font-bold mb-4">Requirements before the Tutorial</h2>
+                <p class="text-slate-400 text-lg">Ensure you have the following tools and environment ready before the hands-on session.</p>
+            </div>
+            <div class="space-y-4">
+
+                <!-- 1. LLM Setup -->
+                <details class="bg-white/5 rounded-2xl p-5 group">
+                    <summary class="flex items-center justify-between cursor-pointer list-none">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="cpu" class="w-4 h-4 text-sky-500 shrink-0"></i>
+                            <span class="text-slate-200 font-semibold">LLM Setup: Local (Ollama) or API Key</span>
+                        </div>
+                        <i data-lucide="chevron-down" class="w-5 h-5 text-slate-500 expand-icon transition-transform duration-300 shrink-0"></i>
+                    </summary>
+                    <div class="mt-4 pl-7 space-y-6 text-sm text-slate-400">
+                        <div>
+                            <p class="mb-3 font-semibold text-slate-300">Option 1: Local model via Ollama (Recommended for the tutorial)</p>
+                            <p class="mb-3">Follow these steps to set up a local LLM using <a href="https://ollama.com" target="_blank" class="text-sky-400 hover:underline">Ollama</a>:</p>
+
+                            <p class="mb-2 mt-4 font-medium text-slate-300">Step 1: Install Ollama</p>
+                            <div class="bg-black/40 rounded-xl p-4 code-font text-xs mb-4">
+<pre>curl -fsSL https://ollama.com/install.sh | sh</pre>
+                            </div>
+
+                            <p class="mb-2 font-medium text-slate-300">Step 2: Pull a model</p>
+                            <p class="mb-2 text-xs">We recommend <code class="code-font text-sky-400">llama2:7b</code> or <code class="code-font text-sky-400">mistral:7b</code> for this tutorial:</p>
+                            <div class="bg-black/40 rounded-xl p-4 code-font text-xs mb-4">
+<pre>ollama pull llama2:7b</pre>
+                            </div>
+
+                            <p class="mb-2 font-medium text-slate-300">Step 3: Verify the model works</p>
+                            <div class="bg-black/40 rounded-xl p-4 code-font text-xs mb-4">
+<pre>ollama run llama2:7b "Hello, how are you?"</pre>
+                            </div>
+
+                            <p class="mb-2 font-medium text-slate-300">Step 4: Use the model with L2P</p>
+                            <div class="bg-black/40 rounded-xl p-4 code-font text-xs">
+<pre><span class="text-purple-400">from</span> l2p.llm.unified <span class="text-purple-400">import</span> UnifiedLLM
+
+llm = UnifiedLLM(
+    provider=<span class="text-sky-400">"ollama"</span>,
+    model=<span class="text-sky-400">"llama2:7b"</span>
+)
+
+response = llm.query(<span class="text-sky-400">"Hello!"</span>)
+<span class="text-purple-400">print</span>(response)</pre>
+                            </div>
+
+                            <p class="mt-3">Refer to the <a href="https://github.com/AI-Planning/l2p?tab=readme-ov-file#ollama" target="_blank" class="text-sky-400 hover:underline">Ollama setup in the L2P README</a> for additional configuration options including tokenizer settings and generation parameters.</p>
+                        </div>
+                        <div>
+                            <p class="mb-3 font-semibold text-slate-300">Option 2: Cloud LLM via API key</p>
+                            <p class="mb-3">If you cannot run a local model, obtain an API key from a provider and set it as an environment variable:</p>
+                            <div class="bg-black/40 rounded-xl p-4 code-font text-xs">
+<pre><span class="text-slate-500"># Set your API key (macOS/Linux)</span>
+<span class="text-sky-400">export</span> OPENAI_API_KEY=<span class="text-sky-400">"sk-your-key-here"</span>
+
+<span class="text-slate-500"># Or set it in Python</span>
+<span class="text-purple-400">import</span> os
+os.environ[<span class="text-sky-400">"OPENAI_API_KEY"</span>] = <span class="text-sky-400">"sk-your-key-here"</span></pre>
+                            </div>
+                            <p class="mt-3">Supported providers: <a href="https://platform.openai.com/api-keys" target="_blank" class="text-sky-400 hover:underline">OpenAI</a>, <a href="https://console.anthropic.com" target="_blank" class="text-sky-400 hover:underline">Anthropic</a>, <a href="https://platform.deepseek.com" target="_blank" class="text-sky-400 hover:underline">DeepSeek</a>, <a href="https://mistral.ai" target="_blank" class="text-sky-400 hover:underline">Mistral</a>, <a href="https://ai.google.dev/gemini-api/docs" target="_blank" class="text-sky-400 hover:underline">Gemini</a>, <a href="https://z.ai/model-api" target="_blank" class="text-sky-400 hover:underline">GLM</a>, <a href="https://docs.ollama.com/cloud" target="_blank" class="text-sky-400 hover:underline">Ollama-Cloud</a>.</p>
+                        </div>
+                    </div>
+                </details>
+
+                <!-- 2. Python Environment -->
+                <details class="bg-white/5 rounded-2xl p-5 group">
+                    <summary class="flex items-center justify-between cursor-pointer list-none">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="terminal" class="w-4 h-4 text-sky-500 shrink-0"></i>
+                            <span class="text-slate-200 font-semibold">Python Environment (&gt;3.10) &amp; Dependencies</span>
+                        </div>
+                        <i data-lucide="chevron-down" class="w-5 h-5 text-slate-500 expand-icon transition-transform duration-300 shrink-0"></i>
+                    </summary>
+                    <div class="mt-4 pl-7 space-y-3 text-sm text-slate-400">
+                        <p>Ensure you have <strong class="text-slate-300">Python 3.10 or newer</strong> installed. <a href="https://www.python.org/downloads/" target="_blank" class="text-sky-400 hover:underline">Download Python</a> if needed.</p>
+                        <p>Install the required packages:</p>
+                        <div class="bg-black/40 rounded-xl p-4 code-font text-xs">
+<pre>pip install l2p llm openai</pre>
+                        </div>
+                        <p>The <code class="code-font text-sky-400">l2p</code> package provides the core framework, <code class="code-font text-sky-400">llm</code> is a general-purpose LLM CLI tool, and <code class="code-font text-sky-400">openai</code> is the OpenAI Python SDK.</p>
+                    </div>
+                </details>
+
+                <!-- 3. Text Editor & Virtual Environment -->
+                <details class="bg-white/5 rounded-2xl p-5 group">
+                    <summary class="flex items-center justify-between cursor-pointer list-none">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="code" class="w-4 h-4 text-sky-500 shrink-0"></i>
+                            <span class="text-slate-200 font-semibold">Text Editor &amp; Virtual Environment</span>
+                        </div>
+                        <i data-lucide="chevron-down" class="w-5 h-5 text-slate-500 expand-icon transition-transform duration-300 shrink-0"></i>
+                    </summary>
+                    <div class="mt-4 pl-7 space-y-6 text-sm text-slate-400">
+                        <div>
+                            <p class="mb-3 font-semibold text-slate-300">Recommended: Visual Studio Code</p>
+                            <p class="mb-3">Download from <a href="https://code.visualstudio.com" target="_blank" class="text-sky-400 hover:underline">code.visualstudio.com</a>. Install the <strong>Python extension</strong> by Microsoft for syntax highlighting, IntelliSense, and debugging.</p>
+                        </div>
+                        <div>
+                            <p class="mb-3 font-semibold text-slate-300">Setting up a Virtual Environment</p>
+                            <p class="mb-3">Create and activate a virtual environment to isolate your tutorial dependencies:</p>
+                            <div class="bg-black/40 rounded-xl p-4 code-font text-xs">
+<pre><span class="text-slate-500"># Create virtual environment</span>
+python3 -m venv l2p-tutorial-env
+
+<span class="text-slate-500"># Activate (macOS/Linux)</span>
+<span class="text-sky-400">source</span> l2p-tutorial-env/bin/activate
+
+<span class="text-slate-500"># Activate (Windows)</span>
+l2p-tutorial-env\Scripts\activate
+
+<span class="text-slate-500"># Install dependencies inside the environment</span>
+pip install l2p llm openai</pre>
+                            </div>
+                            <p class="mt-3">In VS Code, press <kbd class="px-1.5 py-0.5 rounded bg-white/10 text-xs text-slate-300">Cmd+Shift+P</kbd> (macOS) or <kbd class="px-1.5 py-0.5 rounded bg-white/10 text-xs text-slate-300">Ctrl+Shift+P</kbd> (Windows/Linux), search for <em>"Python: Select Interpreter"</em>, and point it to the virtual environment you just created.</p>
+                        </div>
+                    </div>
+                </details>
+
+            </div>
+
+            <!-- LLM Configuration Files -->
+            <div class="mt-16" data-aos="fade-up">
+                <h3 class="text-2xl font-bold mb-4">LLM Configuration Files</h3>
+                <p class="text-slate-400 text-sm mb-8">L2P uses YAML configuration files to connect to LLM backends. The <code class="code-font text-sky-400">UnifiedLLM</code> and <code class="code-font text-sky-400">OPENAI</code> classes both derive from the <code class="code-font text-sky-400">BaseLLM</code> abstract class, which defines the interface for querying language models. The YAML config specifies provider, model, endpoint, and generation parameters. Click the buttons below to download placeholder YAML files - replace the values with your actual configuration.</p>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="glass p-6 rounded-2xl border border-white/10">
+                        <i data-lucide="file-text" class="w-8 h-8 text-sky-400 mb-3"></i>
+                        <h4 class="font-semibold text-slate-200 mb-1">OpenAI SDK (OPENAI)</h4>
+                        <p class="text-xs text-slate-500 mb-4">Provider configurations for the OpenAI SDK-based LLM backend:</p>
+                        <div class="flex flex-wrap gap-2">
+                            <a href="yaml/openai-sdk/openai.yaml" download class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-400 text-xs font-bold hover:bg-sky-500 hover:text-white transition-all">
+                                <i data-lucide="download" class="w-3 h-3"></i>openai
+                            </a>
+                            <a href="yaml/openai-sdk/deepseek.yaml" download class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-400 text-xs font-bold hover:bg-sky-500 hover:text-white transition-all">
+                                <i data-lucide="download" class="w-3 h-3"></i>deepseek
+                            </a>
+                            <a href="yaml/openai-sdk/mistral.yaml" download class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-400 text-xs font-bold hover:bg-sky-500 hover:text-white transition-all">
+                                <i data-lucide="download" class="w-3 h-3"></i>mistral
+                            </a>
+                            <a href="yaml/openai-sdk/gemini.yaml" download class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-400 text-xs font-bold hover:bg-sky-500 hover:text-white transition-all">
+                                <i data-lucide="download" class="w-3 h-3"></i>gemini
+                            </a>
+                            <a href="yaml/openai-sdk/anthropic.yaml" download class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-400 text-xs font-bold hover:bg-sky-500 hover:text-white transition-all">
+                                <i data-lucide="download" class="w-3 h-3"></i>anthropic
+                            </a>
+                            <a href="yaml/openai-sdk/glm.yaml" download class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-400 text-xs font-bold hover:bg-sky-500 hover:text-white transition-all">
+                                <i data-lucide="download" class="w-3 h-3"></i>glm
+                            </a>
+                            <a href="yaml/openai-sdk/ollama-cloud.yaml" download class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-400 text-xs font-bold hover:bg-sky-500 hover:text-white transition-all">
+                                <i data-lucide="download" class="w-3 h-3"></i>ollama-cloud
+                            </a>
+                        </div>
+                    </div>
+                    <div class="glass p-6 rounded-2xl border border-white/10">
+                        <i data-lucide="file-text" class="w-8 h-8 text-indigo-400 mb-3"></i>
+                        <h4 class="font-semibold text-slate-200 mb-1">llm (UnifiedLLM)</h4>
+                        <p class="text-xs text-slate-500 mb-4">Provider configurations for the UnifiedLLM multi-provider backend:</p>
+                        <div class="flex flex-wrap gap-2">
+                            <a href="yaml/unified-llm/openai.yaml" download class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-bold hover:bg-indigo-500 hover:text-white transition-all">
+                                <i data-lucide="download" class="w-3 h-3"></i>openai
+                            </a>
+                            <a href="yaml/unified-llm/deepseek.yaml" download class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-bold hover:bg-indigo-500 hover:text-white transition-all">
+                                <i data-lucide="download" class="w-3 h-3"></i>deepseek
+                            </a>
+                            <a href="yaml/unified-llm/mistral.yaml" download class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-bold hover:bg-indigo-500 hover:text-white transition-all">
+                                <i data-lucide="download" class="w-3 h-3"></i>mistral
+                            </a>
+                            <a href="yaml/unified-llm/gemini.yaml" download class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-bold hover:bg-indigo-500 hover:text-white transition-all">
+                                <i data-lucide="download" class="w-3 h-3"></i>gemini
+                            </a>
+                            <a href="yaml/unified-llm/anthropic.yaml" download class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-bold hover:bg-indigo-500 hover:text-white transition-all">
+                                <i data-lucide="download" class="w-3 h-3"></i>anthropic
+                            </a>
+                            <a href="yaml/unified-llm/ollama.yaml" download class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-bold hover:bg-indigo-500 hover:text-white transition-all">
+                                <i data-lucide="download" class="w-3 h-3"></i>ollama
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Tutorial Outline Section -->
     <section id="outline" class="py-24 px-6 bg-slate-900/30">
         <div class="max-w-5xl mx-auto">
@@ -441,9 +630,33 @@ l2p plan --domain @domain.pddl --problem @problem.pddl --json</pre>
                 <div data-aos="fade-right">
                     <h2 class="text-4xl font-bold mb-6">Visualizing the <span class="text-gradient">Pipeline</span></h2>
                     <p class="text-slate-400 mb-8 text-lg">Watch how the L2P toolkit transforms unstructured natural language into executable PDDL models via a streamlined CLI experience.</p>
-                    <div class="glass aspect-video rounded-2xl overflow-hidden border border-white/10 flex items-center justify-center group cursor-pointer relative">
-                        <i data-lucide="play-circle" class="w-16 h-16 text-sky-500 group-hover:scale-110 transition-transform"></i>
-                        <span class="absolute bottom-4 left-4 text-xs text-slate-500">Video Demonstration (Coming soon!)</span>
+                    <div id="demo-video-container" class="glass aspect-video rounded-2xl overflow-hidden border border-white/10 relative group cursor-pointer">
+                        <video id="demo-video" class="absolute inset-0 w-full h-full object-cover" preload="metadata" playsinline>
+                            <source src="videos/demo.mp4" type="video/mp4">
+                        </video>
+                        <div id="demo-video-overlay" class="absolute inset-0 flex items-center justify-center bg-slate-900/50 transition-opacity duration-300">
+                            <i data-lucide="play-circle" class="w-16 h-16 text-sky-500 group-hover:scale-110 transition-transform"></i>
+                        </div>
+                        <div id="demo-video-controls" class="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                            <div class="pointer-events-auto">
+                                <div id="progress-bar" class="w-full h-1.5 bg-white/20 rounded-full cursor-pointer mb-2 hover:h-2 transition-all">
+                                    <div id="progress-fill" class="h-full bg-sky-500 rounded-full" style="width: 0%"></div>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <button id="rewind-btn" class="text-white/80 hover:text-white transition-colors" aria-label="Rewind 10 seconds">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 19l-7-7 7-7"/><path d="M18 19V5"/></svg>
+                                    </button>
+                                    <button id="play-btn" class="text-white/80 hover:text-white transition-colors" aria-label="Play">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="play-icon"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="pause-icon" class="hidden"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                                    </button>
+                                    <button id="forward-btn" class="text-white/80 hover:text-white transition-colors" aria-label="Forward 10 seconds">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 19l7-7-7-7"/><path d="M6 19V5"/></svg>
+                                    </button>
+                                    <span id="time-display" class="text-xs text-white/60 ml-auto code-font">0:00 / 0:00</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div data-aos="fade-left" class="flex flex-col gap-4">

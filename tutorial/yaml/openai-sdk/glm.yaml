@@ -1,0 +1,216 @@
+# Prices vary for respective API providers. Default prices may not reflect current prices.
+
+# [Structure template]
+# {PROVIDER}:
+#   {MODEL_NAME}:
+#     model_family: {FAMILY_NAME}
+#     model_alias: {MODEL_API_NAME}
+#     model_context_length: {MODEL_WINDOW}
+#     model_params:
+#       {custom parameter arguments}. For example:
+#       max_completion_tokens: 
+#       temperature:
+#       top_p:
+#       context_length:
+#       stop:
+#       extra_body:
+
+# GLM
+glm:
+  base_url: https://api.z.ai/api/paas/v4/
+  glm-5.2:
+    model_family: glm-5
+    model_alias: glm-5.2
+    model_context_length: 1000000
+    model_params:
+      max_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+      stop:
+      extra_body:
+        thinking:
+          type: enabled
+        reasoning_effort: max
+    cost_usd_mtok:
+      input: 1.40
+      output: 4.40
+  glm-5.1:
+    model_family: glm-5
+    model_alias: glm-5.1
+    model_context_length: 200000
+    model_params:
+      max_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+      stop:
+      extra_body:
+        thinking:
+          type: enabled
+    cost_usd_mtok:
+      input: 1.40
+      output: 4.40
+  glm-5-turbo:
+    model_family: glm-5
+    model_alias: glm-5-turbo
+    model_context_length: 200000
+    model_params:
+      max_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+      stop:
+      extra_body:
+        thinking:
+          type: enabled
+    cost_usd_mtok:
+      input: 1.20
+      output: 4.00
+  glm-5:
+    model_family: glm-5
+    model_alias: glm-5
+    model_context_length: 200000
+    model_params:
+      max_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+      stop:
+      extra_body:
+        thinking:
+          type: enabled
+    cost_usd_mtok:
+      input: 1.00
+      output: 3.20
+  glm-4.7:
+    model_family: glm-4
+    model_alias: glm-4.7
+    model_context_length: 200000
+    model_params:
+      max_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+      stop:
+      extra_body:
+        thinking:
+          type: enabled
+    cost_usd_mtok:
+      input: 0.60
+      output: 2.20
+  glm-4.7-flash:
+    model_family: glm-4
+    model_alias: glm-4.7-flash
+    model_context_length: 200000
+    model_params:
+      max_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+      stop:
+      extra_body:
+        thinking:
+          type: enabled
+    cost_usd_mtok:
+      input: 0.00
+      output: 0.00
+  glm-4.7-flashx:
+    model_family: glm-4
+    model_alias: glm-4.7-flashx
+    model_context_length: 200000
+    model_params:
+      max_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+      stop:
+      extra_body:
+        thinking:
+          type: enabled
+    cost_usd_mtok:
+      input: 0.07
+      output: 0.40
+  glm-4.6:
+    model_family: glm-4
+    model_alias: glm-4.6
+    model_context_length: 200000
+    model_params:
+      max_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+      stop:
+      extra_body:
+        thinking:
+          type: enabled
+    cost_usd_mtok:
+      input: 0.60
+      output: 2.20
+  glm-4.5:
+    model_family: glm-4
+    model_alias: glm-4.5
+    model_context_length: 128000
+    model_params:
+      max_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+      stop:
+      extra_body:
+        thinking:
+          type: enabled
+    cost_usd_mtok:
+      input: 0.60
+      output: 2.20
+  glm-4.5x:
+    model_family: glm-4
+    model_alias: glm-4.5x
+    model_context_length: 128000
+    model_params:
+      max_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+      stop:
+      extra_body:
+        thinking:
+          type: enabled
+    cost_usd_mtok:
+      input: 2.20
+      output: 8.90
+  glm-4.5-air:
+    model_family: glm-4
+    model_alias: glm-4.5-air
+    model_context_length: 128000
+    model_params:
+      max_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+      stop:
+      extra_body:
+        thinking:
+          type: enabled
+    cost_usd_mtok:
+      input: 0.20
+      output: 1.10
+  glm-4.5-airx:
+    model_family: glm-4
+    model_alias: glm-4.5-airx
+    model_context_length: 128000
+    model_params:
+      max_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+      stop:
+      extra_body:
+        thinking:
+          type: enabled
+    cost_usd_mtok:
+      input: 1.10
+      output: 4.50
+  glm-4.5-flash:
+    model_family: glm-4
+    model_alias: glm-4.5-flash
+    model_context_length: 128000
+    model_params:
+      max_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+      stop:
+      extra_body:
+        thinking:
+          type: enabled
+    cost_usd_mtok:
+      input: 0.00
+      output: 0.00

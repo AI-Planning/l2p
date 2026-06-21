@@ -1,0 +1,135 @@
+# Config file for llm: https://github.com/simonw/llm 
+# Prices vary for respective API providers. Default prices may not reflect current prices.
+
+# [Structure template]
+# {PROVIDER}:
+#   {MODEL_NAME}:
+#     model_family: {MODEL_FAMILY_NAME}
+#     model_alias: {MODEL_API_NAME}
+#     model_context_length: {MODEL_WINDOW}
+#     model_params:
+#       {custom parameter arguments}. For example:
+#       max_completion_tokens: 
+#       think: (OPTIONAL)
+#       temperature:
+#       top_p:
+#       stop:
+
+# ANTHROPIC
+anthropic:
+  claude-opus-4.5:
+    model_family: opus
+    model_alias: claude-opus-4.5
+    model_context_length: 200000
+    model_params:
+      max_tokens: 16384 # max: 64k
+      temperature: 1.0 # temp must equal 1 when thinking enabled
+      thinking: True
+      thinking_budget: 8192
+    cost_usd_mtok:
+      input: 5.00
+      output: 25.00
+  claude-opus-4.1:
+    model_family: opus
+    model_alias: claude-opus-4.1
+    model_context_length: 200000
+    model_params:
+      max_tokens: 16384 # max: 32k
+      temperature: 1.0 # temp must equal 1 when thinking enabled
+      thinking: True
+      thinking_budget: 8192
+    cost_usd_mtok:
+      input: 15.00
+      output: 75.00
+  claude-4-opus:
+    model_family: opus
+    model_alias: claude-4-opus
+    model_context_length: 200000
+    model_params:
+      max_tokens: 16384 # max: 32k
+      temperature: 1.0 # temp must equal 1 when thinking enabled
+      thinking: True
+      thinking_budget: 8192
+    cost_usd_mtok:
+      input: 15.00
+      output: 75.00
+  claude-sonnet-4.5:
+    model_family: sonnet
+    model_alias: claude-sonnet-4.5
+    model_context_length: 200000
+    model_params:
+      max_tokens: 16384 # max: 160k
+      temperature: 1.0 # temp must equal 1 when thinking enabled
+      thinking: True
+      thinking_budget: 8192
+    cost_usd_mtok:
+      input: 3.00
+      output: 15.00
+  claude-4-sonnet:
+    model_family: sonnet
+    model_alias: claude-4-sonnet
+    model_context_length: 200000
+    model_params:
+      max_tokens: 16384 # max: 64k
+      temperature: 1.0 # temp must equal 1 when thinking enabled
+      thinking: True
+      thinking_budget: 8192
+    cost_usd_mtok:
+      input: 3.00
+      output: 15.00
+  claude-3.7-sonnet: # deprecated
+    model_family: sonnet
+    model_alias: claude-3.7-sonnet
+    model_context_length: 200000
+    model_params:
+      max_tokens: 8192 # max: 128k
+      temperature: 0.0 # only one of top_p or temperature can be set
+      # top_p: 1.0
+    cost_usd_mtok:
+      input: 3.00
+      output: 15.00
+  claude-3.5-sonnet:
+    model_family: sonnet
+    model_alias: claude-3.5-sonnet
+    model_context_length: 200000
+    model_params:
+      max_tokens: 4096
+      temperature: 0.0 # only one of top_p or temperature can be set
+      # top_p: 1.0
+    cost_usd_mtok:
+      input: 3.00
+      output: 15.00
+  claude-haiku-4.5:
+    model_family: haiku
+    model_alias: claude-haiku-4.5
+    model_context_length: 200000
+    model_params:
+      max_tokens: 16384 # max: 64k
+      temperature: 1.0 # temp must equal 1 when thinking enabled
+      thinking: True
+      thinking_budget: 8192
+    cost_usd_mtok:
+      input: 1.00
+      output: 5.00
+  claude-3.5-haiku:
+    model_family: haiku
+    model_alias: claude-3.5-haiku
+    model_context_length: 200000
+    model_params:
+      max_tokens: 4096
+      temperature: 0.0 # only one of top_p or temperature can be set
+      # top_p = 1.0
+    cost_usd_mtok:
+      input: 0.80
+      output: 4.00
+  claude-3-haiku:
+    model_family: haiku
+    model_alias: claude-3-haiku
+    model_context_length: 200000
+    model_params:
+      max_tokens: 4096
+      temperature: 0.0 # only one of top_p or temperature can be set
+      # top_p: 1.0
+    cost_usd_mtok:
+      input: 0.25
+      output: 1.25

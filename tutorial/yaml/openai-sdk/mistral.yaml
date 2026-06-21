@@ -1,0 +1,119 @@
+# Prices vary for respective API providers. Default prices may not reflect current prices.
+
+# [Structure template]
+# {PROVIDER}:
+#   {MODEL_NAME}:
+#     model_family: {FAMILY_NAME}
+#     model_alias: {MODEL_API_NAME}
+#     model_context_length: {MODEL_WINDOW}
+#     model_params:
+#       {custom parameter arguments}. For example:
+#       max_completion_tokens: 
+#       temperature:
+#       top_p:
+#       context_length:
+#       stop:
+#       extra_body:
+
+# MISTRAL
+mistral:
+  base_url: https://api.mistral.ai/v1
+  magistral-medium:
+    model_family: magistral
+    model_alias: magistral-medium
+    model_context_length: 8192
+    model_params:
+      max_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 2.00
+      output: 5.00
+  magistral-small: # DEPRECATED
+    model_family: magistral
+    model_alias: magistral-small
+    model_context_length: 8192
+    model_params:
+      max_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 0.50
+      output: 1.50
+  mistral-large:
+    model_family: mistral
+    model_alias: mistral-large
+    model_context_length: 256000
+    model_params:
+      max_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 2.00
+      output: 6.00
+  mistral-medium-3: # mistral-medium-3.5
+    model_family: mistral
+    model_alias: mistral-medium-3
+    model_context_length: 256000
+    model_params:
+      max_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 1.50
+      output: 7.50
+  mistral-medium-latest: # mistral-medium-3.1
+    model_family: mistral
+    model_alias: mistral-medium-latest
+    model_context_length: 128000
+    model_params:
+      max_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 0.40
+      output: 2.00
+  mistral-small:
+    model_family: mistral
+    model_alias: mistral-small
+    model_context_length: 128000
+    model_params:
+      max_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 0.15
+      output: 0.60
+  ministral-8b:
+    model_family: ministral
+    model_alias: ministral-8b
+    model_context_length: 256000
+    model_params:
+      max_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 0.15
+      output: 0.15
+  ministral-3b:
+    model_family: ministral
+    model_alias: ministral-3b
+    model_context_length: 256000
+    model_params:
+      max_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 0.10
+      output: 0.10
+  codestral:
+    model_family: codestral
+    model_alias: codestral
+    model_context_length: 128000
+    model_params:
+      max_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 0.30
+      output: 0.90

@@ -1,0 +1,96 @@
+# Config file for llm: https://github.com/simonw/llm 
+# Prices vary for respective API providers. Default prices may not reflect current prices.
+
+# [Structure template]
+# {PROVIDER}:
+#   {MODEL_NAME}:
+#     model_family: {MODEL_FAMILY_NAME}
+#     model_alias: {MODEL_API_NAME}
+#     model_context_length: {MODEL_WINDOW}
+#     model_params:
+#       {custom parameter arguments}. For example:
+#       max_completion_tokens: 
+#       think: (OPTIONAL)
+#       temperature:
+#       top_p:
+#       stop:
+
+# MISTRAL
+mistral:
+  magistral-medium: # magistral-medium-latest
+    model_family: mistral
+    model_alias: magistral-medium
+    model_context_length: 128000
+    model_params:
+      max_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 2.00
+      output: 5.00
+  mistral-large: # mistral-large-latest
+    model_family: mistral
+    model_alias: mistral-large
+    model_context_length: 256000
+    model_params:
+      max_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 0.50
+      output: 1.50
+  mistral-medium: # mistral-medium-latest
+    model_family: mistral
+    model_alias: mistral-medium
+    model_context_length: 128000
+    model_params:
+      max_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 0.40
+      output: 2.00
+  mistral-small: # mistral-small-latest
+    model_family: mistral
+    model_alias: mistral-small
+    model_context_length: 128000
+    model_params:
+      max_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 0.15
+      output: 0.60
+  ministral-8b: # ministral-8b-latest
+    model_family: ministral
+    model_alias: ministral-8b
+    model_context_length: 256000
+    model_params:
+      max_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 0.15
+      output: 0.15
+  ministral-3b: # ministral-3b-latest
+    model_family: ministral
+    model_alias: ministral-3b
+    model_context_length: 256000
+    model_params:
+      max_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 0.10
+      output: 0.10
+  codestral: # codestral-latest
+    model_family: codestral
+    model_alias: codestral
+    model_context_length: 128000
+    model_params:
+      max_tokens: 8192
+      temperature: 0.0
+      top_p: 1.0
+    cost_usd_mtok:
+      input: 0.30
+      output: 0.90

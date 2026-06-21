@@ -1,0 +1,758 @@
+# Config file for llm: https://github.com/simonw/llm 
+# Prices vary for respective API providers. Default prices may not reflect current prices.
+
+# [Structure template]
+# {PROVIDER}:
+#   {MODEL_NAME}:
+#     model_family: {MODEL_FAMILY_NAME}
+#     model_alias: {MODEL_API_NAME}
+#     model_context_length: {MODEL_WINDOW}
+#     model_params:
+#       {custom parameter arguments}. For example:
+#       max_completion_tokens: 
+#       think: (OPTIONAL)
+#       temperature:
+#       top_p:
+#       stop:
+
+# max tokens == num_predict
+# reasoning level = medium (~8192 budget)
+ollama:
+  gpt-oss:120b:
+    model_family: gpt-oss
+    model_alias: gpt-oss:120b
+    model_context_length: 128000
+    model_params:
+      num_predict: 8192
+      think: True
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  gpt-oss:20b:
+    model_family: gpt-oss
+    model_alias: gpt-oss:20b
+    model_context_length: 128000
+    model_params:
+      num_predict: 8192 
+      think: True
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+
+  deepseek-r1:671b:
+    model_family: deepseek-reasoner
+    model_alias: deepseek-r1:671b
+    model_context_length: 160000
+    model_params:
+      num_predict: 8192
+      think: True
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  deepseek-r1:70b:
+    model_family: deepseek-reasoner
+    model_alias: deepseek-r1:70b
+    model_context_length: 128000
+    model_params:
+      num_predict: 8192
+      think: True
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  deepseek-r1:32b:
+    model_family: deepseek-reasoner
+    model_alias: deepseek-r1:32b
+    model_context_length: 128000
+    model_params:
+      num_predict: 8192
+      think: True
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  deepseek-r1:14b:
+    model_family: deepseek-reasoner
+    model_alias: deepseek-r1:14b
+    model_context_length: 128000
+    model_params:
+      num_predict: 8192
+      think: True
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  deepseek-r1:8b:
+    model_family: deepseek-reasoner
+    model_alias: deepseek-r1:8b
+    model_context_length: 128000
+    model_params:
+      num_predict: 8192
+      think: True
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  deepseek-r1:7b:
+    model_family: deepseek-reasoner
+    model_alias: deepseek-r1:7b
+    model_context_length: 128000
+    model_params:
+      num_predict: 8192
+      think: True
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  deepseek-r1:1.5b:
+    model_family: deepseek-reasoner
+    model_alias: deepseek-r1:1.5b
+    model_context_length: 128000
+    model_params:
+      num_predict: 8192
+      think: True
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  deepseek-v3:671b:
+    model_family: deepseek-chat
+    model_alias: deepseek-v3:671b
+    model_context_length: 160000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  deepseek-coder:33b:
+    model_family: deepseek-coder
+    model_alias: deepseek-coder:33b
+    model_context_length: 16000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  deepseek-coder:6.7b:
+    model_family: deepseek-coder
+    model_alias: deepseek-coder:6.7b
+    model_context_length: 16000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  deepseek-coder:1.3b:
+    model_family: deepseek-coder
+    model_alias: deepseek-coder:1.3b
+    model_context_length: 16000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+
+  magistral:24b:
+    model_family: magistral
+    model_alias: magistral:24b
+    model_context_length: 39000
+    model_params:
+      num_predict: 8192
+      think: True
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  mistral-large:123b:
+    model_family: mistral
+    model_alias: mistral-large:123b
+    model_context_length: 128000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  mistral-small:24b:
+    model_family: mistral
+    model_alias: mistral-small:24b
+    model_context_length: 32000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  mistral-small:22b:
+    model_family: mistral
+    model_alias: mistral-small:22b
+    model_context_length: 128000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  mistral:7b:
+    model_family: mistral
+    model_alias: mistral:7b
+    model_context_length: 32000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  mistral-medium-3.5:128b:
+    model_family: ministral-medium-3
+    model_alias: mistral-medium-3.5:128b
+    model_context_length: 256000
+    model_params:
+      num_predict: 8192
+      think: True
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  ministral-3:14b:
+    model_family: ministral-3
+    model_alias: ministral-3:14b
+    model_context_length: 256000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  ministral-3:8b:
+    model_family: ministral-3
+    model_alias: ministral-3:8b
+    model_context_length: 256000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  ministral-3:3b:
+    model_family: ministral-3
+    model_alias: ministral-3:3b
+    model_context_length: 256000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+
+  mixtral:8x22b:
+    model_family: mixtral
+    model_alias: mixtral:8x22b
+    model_context_length: 64000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  mixtral:8x7b:
+    model_family: mixtral
+    model_alias: mixtral:8x7b
+    model_context_length: 32000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+
+  llama3.2:3b:
+    model_family: llama3.2
+    model_alias: llama3.2:3b
+    model_context_length: 128000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  llama3.2:1b:
+    model_family: llama3.2
+    model_alias: llama3.2:1b
+    model_context_length: 128000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+
+  llama3.1:405b:
+    model_family: llama3.1
+    model_alias: llama3.1:405b
+    model_context_length: 128000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  llama3.1:70b:
+    model_family: llama3.1
+    model_alias: llama3.1:70b
+    model_context_length: 128000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  llama3.1:8b:
+    model_family: llama3.1
+    model_alias: llama3.1:8b
+    model_context_length: 128000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+
+  llama3:70b:
+    model_family: llama3
+    model_alias: llama3:70b
+    model_context_length: 8000
+    model_params:
+      num_predict: 4096
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  llama3:8b:
+    model_family: llama3
+    model_alias: llama3:8b
+    model_context_length: 8000
+    model_params:
+      num_predict: 4096
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+
+  llama2:70b:
+    model_family: llama2
+    model_alias: llama2:70b
+    model_context_length: 4000
+    model_params:
+      num_predict: 1024
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  llama2:13b:
+    model_family: llama2
+    model_alias: llama2:13b
+    model_context_length: 4000
+    model_params:
+      num_predict: 1024
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  llama2:7b:
+    model_family: llama2
+    model_alias: llama2:7b
+    model_context_length: 4000
+    model_params:
+      num_predict: 1024
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+
+  qwen3-coder:480b:
+    model_family: qwen3-coder
+    model_alias: qwen3-coder:480b
+    model_context_length: 256000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  qwen3-coder:30b:
+    model_family: qwen3-coder
+    model_alias: qwen3-coder:30b
+    model_context_length: 256000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  qwen3.5:122b:
+    model_family: qwen3.5
+    model_alias: qwen3.5:122b
+    model_context_length: 256000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  qwen3.5:35b:
+    model_family: qwen3.5
+    model_alias: qwen3.5:35b
+    model_context_length: 256000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  qwen3.5:27b:
+    model_family: qwen3.5
+    model_alias: qwen3.5:27b
+    model_context_length: 256000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  qwen3.5:9b:
+    model_family: qwen3.5
+    model_alias: qwen3.5:9b
+    model_context_length: 256000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  qwen3.5:4b:
+    model_family: qwen3.5
+    model_alias: qwen3.5:4b
+    model_context_length: 256000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  qwen3.5:2b:
+    model_family: qwen3.5
+    model_alias: qwen3.5:2b
+    model_context_length: 256000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  qwen3.5:0.8b:
+    model_family: qwen3.5
+    model_alias: qwen3.5:0.8b
+    model_context_length: 256000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+
+  qwen3:235b:
+    model_family: qwen3
+    model_alias: qwen3:235b
+    model_context_length: 256000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  qwen3:32b:
+    model_family: qwen3
+    model_alias: qwen3:32b
+    model_context_length: 40000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  qwen3:30b:
+    model_family: qwen3
+    model_alias: qwen3:30b
+    model_context_length: 256000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  qwen3:14b:
+    model_family: qwen3
+    model_alias: qwen3:14b
+    model_context_length: 40000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  qwen3:8b:
+    model_family: qwen3
+    model_alias: qwen3:8b
+    model_context_length: 40000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  qwen3:4b:
+    model_family: qwen3
+    model_alias: qwen3:4b
+    model_context_length: 256000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  qwen3:1.7b:
+    model_family: qwen3
+    model_alias: qwen3:1.7b
+    model_context_length: 40000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  qwen3:0.6b:
+    model_family: qwen3
+    model_alias: qwen3:0.6b
+    model_context_length: 40000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+
+  qwen2.5:72b:
+    model_family: qwen2.5
+    model_alias: qwen2.5:72b
+    model_context_length: 32000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  qwen2.5:32b:
+    model_family: qwen2.5
+    model_alias: qwen2.5:32b
+    model_context_length: 32000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  qwen2.5:14b:
+    model_family: qwen2.5
+    model_alias: qwen2.5:14b
+    model_context_length: 32000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  qwen2.5:7b:
+    model_family: qwen2.5
+    model_alias: qwen2.5:7b
+    model_context_length: 32000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+
+  phi4-reasoning:14b:
+    model_family: phi4
+    model_alias: phi4-reasoning:14b
+    model_context_length: 32000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  phi4-mini-reasoning:3.8b:
+    model_family: phi4
+    model_alias: phi4-mini-reasoning:3.8b
+    model_context_length: 128000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  phi4:14b:
+    model_family: phi4
+    model_alias: phi4:14b
+    model_context_length: 16000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  phi4-mini:3.8b:
+    model_family: phi4
+    model_alias: phi4-mini:3.8b
+    model_context_length: 128000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  phi3.5:3.8b:
+    model_family: phi3.5
+    model_alias: phi3.5:3.8b
+    model_context_length: 128000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  phi3:3.14b:
+    model_family: phi3
+    model_alias: phi3:3.14b
+    model_context_length: 128000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  phi3:3.8b:
+    model_family: phi3
+    model_alias: phi3:3.8b
+    model_context_length: 128000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  phi:2.7b:
+    model_family: phi
+    model_alias: phi:2.7b
+    model_context_length: 2000
+    model_params:
+      num_predict: 800
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+
+  command-a:111b:
+    model_family: command-a
+    model_alias: command-a:111b
+    model_context_length: 16000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  command-r:35b:
+    model_family: command-r
+    model_alias: command-r:35b
+    model_context_length: 128000
+    model_params:
+      num_predict: 8192
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  aya:35b:
+    model_family: aya
+    model_alias: aya:35b
+    model_context_length: 8000
+    model_params:
+      num_predict: 4096
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  aya:8b:
+    model_family: aya
+    model_alias: aya:8b
+    model_context_length: 8000
+    model_params:
+      num_predict: 4096
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+
+  gemma4:31b:
+    model_family: gemma4
+    model_alias: gemma4:31b
+    model_context_length: 256000
+    model_params:
+      num_predict: 8192
+      think: True
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  gemma4:26b:
+    model_family: gemma4
+    model_alias: gemma4:26b
+    model_context_length: 256000
+    model_params:
+      num_predict: 8192
+      think: True
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  gemma4:e4b:
+    model_family: gemma4
+    model_alias: gemma4:e4b
+    model_context_length: 128000
+    model_params:
+      num_predict: 8192
+      think: True
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0
+  gemma4:e2b:
+    model_family: gemma4
+    model_alias: gemma4:e2b
+    model_context_length: 128000
+    model_params:
+      num_predict: 8192
+      think: True
+      temperature: 0.0
+      top_p: 1.0
+      top_k: 0.0
+      repeat_penalty: 1.0

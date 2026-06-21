@@ -1,0 +1,55 @@
+# Config file for llm: https://github.com/simonw/llm 
+# Prices vary for respective API providers. Default prices may not reflect current prices.
+
+# [Structure template]
+# {PROVIDER}:
+#   {MODEL_NAME}:
+#     model_family: {MODEL_FAMILY_NAME}
+#     model_alias: {MODEL_API_NAME}
+#     model_context_length: {MODEL_WINDOW}
+#     model_params:
+#       {custom parameter arguments}. For example:
+#       max_completion_tokens: 
+#       think: (OPTIONAL)
+#       temperature:
+#       top_p:
+#       stop:
+
+# DEEPSEEK
+deepseek:
+  deepseek-coder:
+    model_family: deepseek
+    model_alias: deepseek-coder
+    model_context_length: 128000
+    model_params:
+      max_tokens: 4096
+      temperature: 0.0
+      top_p: 1.0
+      stop:
+    cost_usd_mtok:
+      input: 0.028
+      output: 0.42
+  deepseek-chat:
+    model_family: deepseek
+    model_alias: deepseek-chat
+    model_context_length: 128000
+    model_params:
+      max_tokens: 8192 # max 8k
+      temperature: 0.0
+      top_p: 1.0
+      stop:
+    cost_usd_mtok:
+      input: 0.028
+      output: 0.42
+  deepseek-reasoner:
+    model_family: deepseek
+    model_alias: deepseek-reasoner
+    model_context_length: 128000
+    model_params:
+      max_tokens: 8192 # max 64k
+      temperature: 0.0
+      top_p: 1.0
+      stop:
+    cost_usd_mtok:
+      input: 0.028
+      output: 0.42
